@@ -10,7 +10,6 @@ const nextConfig = {
   },
   output: 'standalone',
   experimental: {
-    appDir: true,
     serverComponentsExternalPackages: ['@prisma/client'],
   },
   webpack: (config) => {
