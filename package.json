@@ -7,24 +7,23 @@
     "build": "next build",
     "start": "next start -p $PORT",
     "lint": "next lint",
-    "format": "prettier --write .",
-    "postinstall": "next build"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "next": "14.2.33",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
-  },
-  "devDependencies": {
+    "react-dom": "18.3.1",
+    "typescript": "5.3.3",
     "@types/node": "20.11.24",
     "@types/react": "18.3.3",
-    "@types/react-dom": "18.3.0",
+    "@types/react-dom": "18.3.0"
+  },
+  "devDependencies": {
     "autoprefixer": "10.4.16",
     "eslint": "8.56.0",
-    "eslint-config-next": "14.2.3",
+    "eslint-config-next": "14.2.33",
     "postcss": "8.4.31",
-    "tailwindcss": "3.4.1",
-    "typescript": "5.3.3"
+    "tailwindcss": "3.4.1"
   },
   "engines": {
     "node": ">=18.0.0"
