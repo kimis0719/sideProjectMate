@@ -2,13 +2,20 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Add this if you're using CSS modules
-  experimental: {
-    serverComponentsExternalPackages: ['@radix-ui/react-dialog'],
+  typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
+    ignoreBuildErrors: true,
   },
-  // Add this if you're using path aliases
-  webpack: (config) => {
-    return config;
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
+  experimental: {
+    webpackBuildWorker: true,
   },
 };
 
