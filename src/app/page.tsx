@@ -6,7 +6,7 @@ export default function Home() {
       <div className="max-w-5xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">Side Project Mate</h1>
         <p className="text-lg mb-6">
-          사이드 프로젝트를 위한 협업 플랫폼에 오신 것을 환영합니다!!
+          사이드 프로젝트를 위한 협업 플랫폼에 오신 것을 환영합니다!!!
         </p>
         <div className="space-x-4">
           <Link 
