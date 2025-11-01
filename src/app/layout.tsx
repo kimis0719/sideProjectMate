@@ -23,7 +23,7 @@ export default function RootLayout({
               <div className="flex justify-between items-center">
                 <h1 className="text-xl font-semibold text-gray-900">
                   <a href="/" className="hover:text-blue-600 transition-colors">
-                    Side Project Mate
+                    Side Project Mate!
                   </a>
                 </h1>
                 <nav className="space-x-4">
