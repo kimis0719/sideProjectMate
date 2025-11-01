@@ -6,7 +6,7 @@
 
 - **프레임워크**: Next.js 14.2.33 (App Router)
 - **언어**: TypeScript 5.3.3
-- **런타임**: Node.js 18+
+- **런타임**: Node.js 20.x (권장)
 - **UI 라이브러리**: React 18.3.1
 - **스타일링**: Tailwind CSS 3.4.1
 - **코드 품질**: 
@@ -15,18 +15,21 @@
   - TypeScript 타입 체크
 - **배포**: Render.com
 
+- **백엔드/DB**: Next.js API Routes, MongoDB (Mongoose 8)
+- **인증**: JSON Web Token (jsonwebtoken), 비밀번호 해싱(bcryptjs)
+
 ## 🚀 시작하기
 
 ### 필수 사항
 
-- Node.js 16.8 이상
-- npm 7.0 이상
+- Node.js 20.x 권장 (>=18 지원)
+- npm 8 이상
 
 ### 개발 환경 설정
 
 1. 저장소 클론 및 이동
 ```bash
-git clone https://github.com/your-username/sideProjectMate.git
+git clone https://github.com/kimis0719/sideProjectMate.git
 cd sideProjectMate
 ```
 
@@ -54,14 +57,19 @@ http://localhost:3000
 
 ```
 src/
-├── app/                  # Next.js 13+ App Router
-│   ├── favicon.ico      # 파비콘
-│   ├── globals.css      # 전역 스타일
-│   ├── layout.tsx       # 레이아웃 컴포넌트
-│   └── page.tsx         # 메인 페이지
-├── components/          # 재사용 가능한 컴포넌트들
-├── lib/                 # 유틸리티 함수들
-└── styles/              # 전역 스타일 시트
+├── app/                    # Next.js 13+ App Router
+│   ├── globals.css        # 전역 스타일
+│   ├── layout.tsx         # 루트 레이아웃 (Header 사용)
+│   ├── page.tsx           # 메인 페이지
+│   ├── login/page.tsx     # 로그인 (client component)
+│   ├── register/page.tsx  # 회원가입 (client component)
+│   ├── profile/page.tsx   # 내 정보 (client component)
+│   └── api/               # API Routes (auth, users, status 등)
+├── components/            # 재사용 컴포넌트 (Header 등)
+├── lib/                   # 유틸/DB/모델
+│   ├── mongodb.ts         # MongoDB 연결
+│   └── models/            # Mongoose 모델 (User, Post 등)
+└── .env.local             # 로컬 환경 변수 (gitignore)
 ```
 
 ### 주요 스크립트
@@ -81,20 +89,43 @@ src/
 3. GitHub 저장소 연결
 4. 배포 설정:
    - **Name**: `sideprojectmate`
-   - **Region**: `Singapore` (또는 가까운 지역)
+   - **Region**: 가까운 지역
    - **Branch**: `main`
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm start`
+   - (권장) **Node Version**: `20.x`
 5. "Create Web Service" 클릭
 
 ## 🔧 환경 변수
 
-`.env.local` 파일을 생성하여 다음 변수들을 설정할 수 있습니다:
+로컬은 `.env.local`, 배포는 Render 환경 변수 화면에서 아래 값을 설정하세요:
 
 ```
-NEXT_PUBLIC_API_URL=API_BASE_URL
-# 기타 필요한 환경 변수들...
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority
+MONGODB_DB=<dbname>
+JWT_SECRET=<강력한_시크릿_문자열>
 ```
+
+> Render 배포 시 "Error: secretOrPrivateKey must have a value" 가 보이면 `JWT_SECRET`이 설정되지 않은 것입니다. 환경변수를 추가하고 재배포하세요.
+
+## 🔐 인증 흐름
+
+- `POST /api/auth/login`: 이메일/비밀번호 검증 → JWT 발급 → 클라이언트는 `localStorage`에 `token`, `user` 저장
+- `POST /api/auth/register`: 사용자 생성(중복 검사, 비밀번호 해싱)
+- `src/components/Header.tsx`: `localStorage` 상태로 로그인/회원가입 버튼을 토글, 라우트 변경 및 storage 이벤트로 동기화
+- `src/app/profile/page.tsx`: 미로그인 시 `/login`으로 리다이렉트
+
+## ⚠️ 트러블슈팅
+
+- **Unsupported Server Component type: {...}**
+  - 클라이언트 전용 페이지(`/login`, `/register`, `/profile`) 상단에 `'use client'`가 필요합니다.
+  - 필요 시 페이지 상단에 아래를 추가하여 프리렌더를 비활성화합니다:
+    ```ts
+    export const dynamic = 'force-dynamic'
+    ```
+- **헤더가 로그인 상태를 반영하지 않음**
+  - `layout.tsx`에서 정적 마크업 대신 `Header` 컴포넌트를 사용합니다.
+  - `Header.tsx`는 `usePathname()` + `storage` 이벤트로 상태를 갱신합니다.
 
 ## 🤝 기여하기
 
