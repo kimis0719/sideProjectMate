@@ -25,21 +25,21 @@
   }
 
   body {
-    @apply bg-white text-gray-900 font-sans;
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply px-6 py-2.5 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition-colors duration-200;
+    @apply px-6 py-2.5 bg-gray-800 dark:bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors duration-200;
   }
 
   .btn-secondary {
-    @apply px-6 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors duration-200;
+    @apply px-6 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden;
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden;
   }
 
   .scrollbar-hide {
