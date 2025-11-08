@@ -55,14 +55,14 @@ export default function Header() {
   const subCategories = ['추천', '최신', '인기', '마감임박'];
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       {/* 상단 헤더 */}
-      <div className="border-b border-gray-100">
+      <div className="border-b border-gray-100 dark:border-gray-700">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* 로고 & 대분류 메뉴 */}
             <div className="flex items-center gap-8">
-              <Link href="/" className="text-2xl font-bold text-gray-800 hover:text-gray-900 transition-colors">
+              <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
                 SPM
               </Link>
               <nav className="hidden md:flex items-center gap-6">
@@ -70,7 +70,7 @@ export default function Header() {
                   <Link
                     key={category.label}
                     href={category.path}
-                    className="text-base font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    className="text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     {category.label}
                   </Link>
@@ -82,25 +82,25 @@ export default function Header() {
             <div className="flex items-center gap-4">
               {user ? (
                 <>
-                  <button className="hidden md:block text-gray-600 hover:text-gray-900 transition-colors">
+                  <button className="hidden md:block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   </button>
-                  <button className="hidden md:block text-gray-600 hover:text-gray-900 transition-colors">
+                  <button className="hidden md:block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </button>
                   <Link
                     href="/profile"
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     마이페이지
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+                    className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     로그아웃
                   </button>
@@ -109,13 +109,13 @@ export default function Header() {
                 <>
                   <Link
                     href="/login"
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     로그인
                   </Link>
                   <Link
                     href="/register"
-                    className="px-4 py-2 bg-gray-800 text-white text-sm font-semibold rounded-lg hover:bg-gray-900 transition-colors"
+                    className="px-4 py-2 bg-gray-800 dark:bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors"
                   >
                     + 멤버
                   </Link>
@@ -128,7 +128,7 @@ export default function Header() {
 
       {/* 하단 헤더 (중분류) - /projects 페이지에서만 보임 */}
       {pathname === '/projects' && (
-        <div className="bg-gray-50">
+        <div className="bg-gray-50 dark:bg-gray-800">
           <div className="container mx-auto px-4">
             <nav className="flex items-center gap-8 h-12 overflow-x-auto scrollbar-hide">
               {subCategories.map((category) => (
@@ -137,8 +137,8 @@ export default function Header() {
                   onClick={() => setActiveCategory(category)}
                   className={`text-sm font-semibold whitespace-nowrap transition-colors ${
                     activeCategory === category
-                      ? 'text-gray-900 border-b-2 border-gray-900'
-                      : 'text-gray-600 hover:text-gray-800'
+                            ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                   }`}
                 >
                   {category}
