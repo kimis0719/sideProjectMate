@@ -47,7 +47,11 @@ export default function Header() {
     router.refresh?.();
   };
 
-  const mainCategories = ['기술서', '프로젝트', '칸반보드'];
+  const mainCategories = [
+    { label: '기술서', path: '/tech' },
+    { label: '프로젝트', path: '/projects' },
+    { label: '칸반보드', path: '/kanban' },
+  ];
   const subCategories = ['추천', '최신', '인기', '마감임박'];
 
   return (
@@ -64,11 +68,11 @@ export default function Header() {
               <nav className="hidden md:flex items-center gap-6">
                 {mainCategories.map((category) => (
                   <Link
-                    key={category}
-                    href={`/${category.toLowerCase()}`}
+                    key={category.label}
+                    href={category.path}
                     className="text-base font-medium text-gray-700 hover:text-gray-900 transition-colors"
                   >
-                    {category}
+                    {category.label}
                   </Link>
                 ))}
               </nav>
@@ -122,27 +126,28 @@ export default function Header() {
         </div>
       </div>
 
-      {/* 하단 헤더 (중분류) */}
-      <div className="bg-gray-50">
-        <div className="container mx-auto px-4">
-          <nav className="flex items-center gap-8 h-12 overflow-x-auto scrollbar-hide">
-            {subCategories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`text-sm font-semibold whitespace-nowrap transition-colors ${
-                  activeCategory === category
-                    ? 'text-gray-900 border-b-2 border-gray-900'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </nav>
+      {/* 하단 헤더 (중분류) - /projects 페이지에서만 보임 */}
+      {pathname === '/projects' && (
+        <div className="bg-gray-50">
+          <div className="container mx-auto px-4">
+            <nav className="flex items-center gap-8 h-12 overflow-x-auto scrollbar-hide">
+              {subCategories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`text-sm font-semibold whitespace-nowrap transition-colors ${
+                    activeCategory === category
+                      ? 'text-gray-900 border-b-2 border-gray-900'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }
-

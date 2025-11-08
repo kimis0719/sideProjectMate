@@ -5,6 +5,9 @@ node_modules/
 /.next/
 /out/
 
+# seed
+/src/app/api/seed/
+
 # Testing
 /coverage
 
