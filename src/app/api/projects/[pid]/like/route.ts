@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth"; // 경로 수정
+import { authOptions } from "@/lib/auth";
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: Request,

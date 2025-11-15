@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth'; // 경로 수정
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import User from '@/lib/models/User';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: Request,

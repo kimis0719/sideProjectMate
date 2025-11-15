@@ -6,6 +6,8 @@ import Notification from '@/lib/models/Notification';
 import User from '@/lib/models/User';
 import Project from '@/lib/models/Project';
 
+export const dynamic = 'force-dynamic'; // 동적 렌더링을 강제하는 코드 추가
+
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,10 +16,6 @@ export async function GET(request: Request) {
     }
 
     await dbConnect();
-
-    // populate를 실행하기 전에, 참조할 모델들을 Mongoose에 명시적으로 알려줌
-    // 이것은 Next.js 개발 환경의 HMR(Hot Module Replacement)과 Mongoose 모델 등록 충돌을 피하기 위한 트릭
-    const _ = User && Project;
 
     const notifications = await Notification.find({ recipient: session.user._id })
       .sort({ createdAt: -1 })

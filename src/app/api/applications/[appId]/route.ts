@@ -6,6 +6,8 @@ import Project from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import Notification from '@/lib/models/Notification';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(
   request: Request,
   { params }: { params: { appId: string } }
@@ -93,12 +95,10 @@ export async function DELETE(
     const isOwner = project.author.toString() === session.user._id;
     const isApplicant = application.applicantId.toString() === session.user._id;
 
-    // 인가: 지원자 본인이거나 프로젝트 작성자만 삭제 가능
     if (!isApplicant && !isOwner) {
       return NextResponse.json({ success: false, message: '지원서를 삭제할 권한이 없습니다.' }, { status: 403 });
     }
 
-    // 이미 수락된 지원서는 작성자도 취소 불가 (별도 멤버 관리 기능 필요)
     if (application.status === 'accepted') {
       return NextResponse.json({ success: false, message: '이미 수락된 지원은 취소/삭제할 수 없습니다.' }, { status: 400 });
     }
