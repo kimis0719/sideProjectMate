@@ -5,11 +5,15 @@ import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import Notification from '@/lib/models/Notification';
+import { headers } from 'next/headers';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: Request,
   { params }: { params: { pid: string } }
 ) {
+  headers();
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
@@ -56,12 +60,6 @@ export async function POST(
       message,
     });
 
-    // --- 디버깅 로그 추가 ---
-    console.log('[APPLY API] 알림 생성 시작...');
-    console.log('[APPLY API] 받는 사람 (작성자):', project.author);
-    console.log('[APPLY API] 보내는 사람 (지원자):', applicantId);
-    console.log('[APPLY API] 관련 프로젝트 ID:', project._id);
-    
     await Notification.create({
       recipient: project.author,
       sender: applicantId,
@@ -69,13 +67,9 @@ export async function POST(
       project: project._id,
     });
 
-    console.log('[APPLY API] 알림 생성 성공!');
-    // --- 여기까지 ---
-
     return NextResponse.json({ success: true, message: '프로젝트에 성공적으로 지원했습니다.' }, { status: 201 });
 
   } catch (error: any) {
-    console.error('[APPLY API ERROR]', error); // 에러 로그 추가
     return NextResponse.json(
       { success: false, message: '지원 처리 중 오류가 발생했습니다.', error: error.message },
       { status: 500 }

@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth"; // 경로 수정
+import { authOptions } from "@/lib/auth";
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
+import { headers } from 'next/headers';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: Request,
   { params }: { params: { pid: string } }
 ) {
+  headers();
   try {
     const session = await getServerSession(authOptions);
 

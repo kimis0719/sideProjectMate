@@ -1,12 +1,17 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth"; // 경로 수정
+import { authOptions } from "@/lib/auth"; 
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Counter from '@/lib/models/Counter';
 import TechStack from '@/lib/models/TechStack';
+import ProjectMember from '@/lib/models/ProjectMember';
+import { headers } from 'next/headers';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  headers();
   try {
     await dbConnect();
 
@@ -70,29 +75,22 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: Request) {
+  headers();
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session || !session.user || !session.user._id) {
-      return NextResponse.json(
-        { success: false, message: '인증되지 않은 사용자입니다.' },
-        { status: 401 }
-      );
+    if (!session || !session.user?._id) {
+      return NextResponse.json({ success: false, message: '인증되지 않은 사용자입니다.' }, { status: 401 });
     }
 
     await dbConnect();
-
     const body = await request.json();
-    const { title, category, content, members, deadline, images, tags } = body;
+    const { title, category, content, recruitmentRoles, deadline, images, tags } = body;
 
-    if (!title || !content || !category || !members || members.length === 0) {
-      return NextResponse.json(
-        { success: false, message: '필수 입력 항목이 누락되었습니다.' },
-        { status: 400 }
-      );
+    if (!title || !content || !category || !recruitmentRoles || recruitmentRoles.length === 0) {
+      return NextResponse.json({ success: false, message: '필수 입력 항목이 누락되었습니다.' }, { status: 400 });
     }
 
-    const author = session.user._id; 
+    const authorId = session.user._id; 
 
     const counter = await Counter.findOneAndUpdate(
       { _id: 'project_pid' },
@@ -104,13 +102,20 @@ export async function POST(request: Request) {
       pid: counter!.seq,
       title,
       category,
-      author,
-      members,
+      author: authorId,
+      recruitmentRoles,
       deadline,
       images: images && images.length > 0 ? images : ['🚀'],
       tags,
       content,
       status: 'recruiting',
+    });
+
+    await ProjectMember.create({
+      projectId: newProject._id,
+      userId: authorId,
+      role: '작성자',
+      status: 'author',
     });
 
     const populatedProject = await Project.findById(newProject._id)

@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth'; // 경로 수정
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Notification from '@/lib/models/Notification';
+import { headers } from 'next/headers';
+
+export const dynamic = 'force-dynamic';
 
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  headers();
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
