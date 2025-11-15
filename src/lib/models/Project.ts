@@ -1,19 +1,24 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import './TechStack'; // Mongoose가 'TechStack' 모델을 인식하도록 함
+import './TechStack';
+import { IUser } from './User';
 
 export interface IProject extends Document {
   pid: number;
   title: string;
   category: string;
-  author: string; // TODO: User 모델과 연결
+  author: IUser['_id'];
   members: {
+    role: string;
     current: number;
     max: number;
-  };
-  tags: (mongoose.Types.ObjectId | string)[]; // TechStack 모델의 ID 배열
-  images: string[]; // 이미지 URL 배열
+  }[];
+  tags: (mongoose.Types.ObjectId | string)[];
+  images: string[];
   content: string;
   status: 'recruiting' | 'in-progress' | 'completed';
+  deadline?: Date;
+  views: number;
+  likes: IUser['_id'][];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,15 +28,18 @@ const ProjectSchema: Schema = new Schema(
     pid: { type: Number, required: true, unique: true },
     title: { type: String, required: true, trim: true },
     category: { type: String, required: true },
-    author: { type: String, required: true }, // TODO: { type: Schema.Types.ObjectId, ref: 'User' }
-    members: {
-      current: { type: Number, required: true, default: 1 },
-      max: { type: Number, required: true, default: 4 },
-    },
+    author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    members: [
+      {
+        role: { type: String, required: true },
+        current: { type: Number, required: true, default: 0 },
+        max: { type: Number, required: true, default: 1 },
+      },
+    ],
     tags: [{ type: Schema.Types.ObjectId, ref: 'TechStack' }],
     images: {
       type: [String],
-      default: ['🚀'], // 기본 이미지
+      default: ['🚀'],
     },
     content: { type: String, required: true },
     status: {
@@ -39,17 +47,29 @@ const ProjectSchema: Schema = new Schema(
       enum: ['recruiting', 'in-progress', 'completed'],
       default: 'recruiting',
     },
+    deadline: { type: Date },
+    views: { type: Number, default: 0 },
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );
 
-// 가상 필드(virtual field) 추가: membersString
-ProjectSchema.virtual('membersString').get(function () {
-  return `${this.members.current}/${this.members.max}`;
+// 가상 필드 getter에 방어 코드 추가
+ProjectSchema.virtual('membersString').get(function (this: IProject) {
+  if (!this.members) {
+    return '';
+  }
+  return this.members.map(m => `${m.role} ${m.current}/${m.max}`).join(', ');
 });
 
-// toJSON, toObject 설정
+ProjectSchema.virtual('likesCount').get(function (this: IProject) {
+  if (!this.likes) {
+    return 0;
+  }
+  return this.likes.length;
+});
+
 ProjectSchema.set('toJSON', { virtuals: true });
 ProjectSchema.set('toObject', { virtuals: true });
 
-export default mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema, 'projects');
+export default mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema);

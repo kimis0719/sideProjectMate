@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ITechStack extends Document {
+  _id: string;
   name: string;
   category: 'frontend' | 'backend' | 'database' | 'devops' | 'mobile' | 'etc';
   logoUrl?: string; // 로고 이미지 URL (선택)

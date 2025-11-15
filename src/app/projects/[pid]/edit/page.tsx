@@ -1,15 +1,55 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { ITechStack } from '@/lib/models/TechStack';
 import Image from 'next/image';
 
+// dnd-kit 관련 import
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-export default function NewProjectPage() {
+// --- DraggableImageList의 컴포넌트들을 페이지 내부에 직접 정의 ---
+// Item 컴포넌트 정의
+function Item({ url }: { url: string }) {
+  return (
+    <div className="relative w-32 h-32 shadow-2xl rounded-lg">
+      <Image src={url} alt="드래그 중인 이미지" fill className="rounded-lg object-cover" draggable={false} />
+    </div>
+  );
+}
+
+// SortableImage 컴포넌트 정의
+function SortableImage({ id, url, onRemove }: { id: string; url: string; onRemove: (id: string) => void; }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="relative w-32 h-32 touch-none select-none">
+      <Image src={url} alt="업로드 이미지" fill className="rounded-lg object-cover" draggable={false} />
+      <button
+        type="button"
+        onPointerDown={(e) => { e.stopPropagation(); onRemove(id); }}
+        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none z-10 cursor-pointer"
+      >
+        X
+      </button>
+    </div>
+  );
+}
+// --- 여기까지 DraggableImageList의 컴포넌트 ---
+
+export default function EditProjectPage() {
+  const router = useRouter();
+  const params = useParams();
+  const pid = params.pid as string;
+  const { data: session, status: sessionStatus } = useSession();
+
   const [formData, setFormData] = useState({
     title: '',
     category: '개발',
@@ -18,47 +58,53 @@ export default function NewProjectPage() {
     deadline: '',
     selectedTags: new Set<string>(),
   });
-
-  const [images, setImages] = useState<{ id: string; url: string; file: File }[]>([]);
+  
+  const [images, setImages] = useState<{ id: string; url: string; file?: File }[]>([]);
   const [techStacks, setTechStacks] = useState<ITechStack[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
+  const [isOwner, setIsOwner] = useState(false);
+  
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const activeImage = images.find(img => img.id === activeId);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  // --- SortableImage 컴포넌트들을 페이지 컴포넌트 내부에 정의 ---
-  const SortableImage = ({ id, url }: { id: string; url: string; }) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
+  useEffect(() => {
+    if (!pid || sessionStatus === 'loading') return;
+    const fetchProjectData = async () => {
+      try {
+        const res = await fetch(`/api/projects/${pid}`);
+        const data = await res.json();
+        if (data.success) {
+          const project = data.data;
+          if (!session || typeof project.author !== 'object' || project.author._id !== session.user._id) {
+            setError('이 프로젝트를 수정할 권한이 없습니다.');
+            setIsOwner(false);
+            setIsLoading(false);
+            return;
+          }
+          setIsOwner(true);
+          const deadlineDate = project.deadline ? new Date(project.deadline).toISOString().split('T')[0] : '';
+          setFormData({
+            title: project.title,
+            category: project.category,
+            content: project.content,
+            members: project.members,
+            deadline: deadlineDate,
+            selectedTags: new Set(project.tags.map((tag: any) => tag._id)),
+          });
+          setImages((project.images || []).map((url: string) => ({ id: url, url })));
+        } else {
+          throw new Error('프로젝트 데이터를 불러오는데 실패했습니다.');
+        }
+      } catch (e: any) {
+        setError(e.message);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    return (
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="relative w-32 h-32 touch-none select-none">
-        <Image src={url} alt="업로드 이미지" fill className="rounded-lg object-cover" draggable={false} />
-        <button
-          type="button"
-          onPointerDown={(e) => { e.stopPropagation(); handleRemoveImage(id); }}
-          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none z-10 cursor-pointer"
-        >
-          X
-        </button>
-      </div>
-    );
-  };
-
-  const Item = ({ url }: { url: string }) => {
-    return (
-      <div className="relative w-32 h-32 shadow-2xl rounded-lg">
-        <Image src={url} alt="드래그 중인 이미지" fill className="rounded-lg object-cover" draggable={false} />
-      </div>
-    );
-  };
-  // --- 여기까지 내부 컴포넌트 정의 ---
+    fetchProjectData();
+  }, [pid, session, sessionStatus]);
 
   useEffect(() => {
     const fetchTechStacks = async () => {
@@ -71,27 +117,23 @@ export default function NewProjectPage() {
     fetchTechStacks();
   }, []);
 
-  const groupedTechStacks = useMemo(() => {
-    return techStacks.reduce((acc, tech) => {
-      const { category } = tech;
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(tech);
-      return acc;
-    }, {} as Record<string, ITechStack[]>);
-  }, [techStacks]);
+  const groupedTechStacks = useMemo(() => techStacks.reduce((acc, tech) => {
+    const { category } = tech;
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(tech);
+    return acc;
+  }, {} as Record<string, ITechStack[]>), [techStacks]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
   const handleMemberChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const newMembers = [...formData.members];
     newMembers[index] = { ...newMembers[index], [name]: name === 'max' ? Number(value) : value };
     setFormData(prev => ({ ...prev, members: newMembers }));
   };
-
   const addMemberRole = () => setFormData(prev => ({ ...prev, members: [...prev.members, { role: '', current: 0, max: 1 }] }));
   const removeMemberRole = (index: number) => setFormData(prev => ({ ...prev, members: formData.members.filter((_, i) => i !== index) }));
   const handleTagChange = (tagId: string) => {
@@ -102,7 +144,6 @@ export default function NewProjectPage() {
       return { ...prev, selectedTags: newSelectedTags };
     });
   };
-
   const handleNewImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
@@ -114,7 +155,6 @@ export default function NewProjectPage() {
       setImages(prev => [...prev, ...newImageObjects]);
     }
   };
-
   const handleRemoveImage = (idToRemove: string) => {
     setImages(prev => prev.filter(image => image.id !== idToRemove));
   };
@@ -136,15 +176,18 @@ export default function NewProjectPage() {
     setIsLoading(true);
     setError(null);
     try {
+      const newFilesToUpload = images.filter(img => img.file);
+      const existingImageUrls = images.filter(img => !img.file).map(img => img.url);
+      
       const uploadedImageUrls = [];
-      if (images.length > 0) {
+      if (newFilesToUpload.length > 0) {
         const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
         const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'side-project-mate';
         if (!cloudName) throw new Error('Cloudinary 설정이 필요합니다.');
 
-        for (const img of images) {
+        for (const img of newFilesToUpload) {
           const formData = new FormData();
-          formData.append('file', img.file);
+          formData.append('file', img.file!);
           formData.append('upload_preset', uploadPreset);
           const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: formData });
           if (!uploadRes.ok) throw new Error('이미지 업로드에 실패했습니다.');
@@ -153,17 +196,21 @@ export default function NewProjectPage() {
         }
       }
 
-      const projectData = { ...formData, tags: Array.from(formData.selectedTags), images: uploadedImageUrls };
-      const createRes = await fetch('/api/projects', {
-        method: 'POST',
+      const finalImages = [...existingImageUrls, ...uploadedImageUrls];
+      const projectData = { ...formData, tags: Array.from(formData.selectedTags), images: finalImages };
+
+      const res = await fetch(`/api/projects/${pid}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(projectData),
       });
-      const createData = await createRes.json();
-      if (createData.success) {
-        router.push(`/projects/${createData.data.pid}`);
+
+      const data = await res.json();
+      if (data.success) {
+        alert('프로젝트가 성공적으로 수정되었습니다.');
+        router.push(`/projects/${pid}`);
       } else {
-        throw new Error(createData.message || '프로젝트 생성에 실패했습니다.');
+        throw new Error(data.message || '프로젝트 수정에 실패했습니다.');
       }
     } catch (err: any) {
       setError(err.message);
@@ -172,14 +219,17 @@ export default function NewProjectPage() {
     }
   };
 
+  if (isLoading || sessionStatus === 'loading') return <div className="text-center py-20">데이터를 불러오는 중...</div>;
+  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
+  if (!isOwner) return <div className="text-center py-20 text-red-500">이 프로젝트를 수정할 권한이 없습니다.</div>;
+
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
       <div className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold">새 프로젝트 만들기</h1>
-          <p className="text-gray-600 mt-2">당신의 아이디어를 현실로 만들어보세요!</p>
+          <h1 className="text-3xl md:text-4xl font-bold">프로젝트 수정하기</h1>
+          <p className="text-gray-600 mt-2">프로젝트 정보를 업데이트하세요.</p>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
             <label htmlFor="title" className="block text-sm font-bold mb-1">프로젝트 제목</label>
@@ -236,7 +286,7 @@ export default function NewProjectPage() {
               <SortableContext items={images.map(img => img.id)} strategy={rectSortingStrategy}>
                 <div className="flex flex-wrap gap-4 mb-4">
                   {images.map(({ id, url }) => (
-                    <SortableImage key={id} id={id} url={url} />
+                    <SortableImage key={id} id={id} url={url} onRemove={handleRemoveImage} />
                   ))}
                 </div>
               </SortableContext>
@@ -256,7 +306,7 @@ export default function NewProjectPage() {
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <div className="text-right">
             <button type="submit" disabled={isLoading} className="bg-gray-900 text-white font-bold py-3 px-6 rounded-lg">
-              {isLoading ? '생성 중...' : '프로젝트 생성하기'}
+              {isLoading ? '수정 중...' : '수정 완료'}
             </button>
           </div>
         </form>
