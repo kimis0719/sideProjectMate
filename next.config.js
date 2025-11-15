@@ -18,7 +18,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  output: 'standalone',
+  //output: 'standalone',
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client'],
   },
