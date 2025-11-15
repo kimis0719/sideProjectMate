@@ -5,10 +5,12 @@ import dbConnect from '@/lib/mongodb';
 import Notification from '@/lib/models/Notification';
 import User from '@/lib/models/User';
 import Project from '@/lib/models/Project';
+import { headers } from 'next/headers';
 
-export const dynamic = 'force-dynamic'; // 동적 렌더링을 강제하는 코드 추가
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  headers(); // 이 라우트가 동적임을 명시적으로 알림
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {

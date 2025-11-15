@@ -5,6 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import User from '@/lib/models/User';
+import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,7 @@ export async function GET(
   request: Request,
   { params }: { params: { pid: string } }
 ) {
+  headers();
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
