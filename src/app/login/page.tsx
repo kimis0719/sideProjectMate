@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -25,22 +26,18 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      const result = await signIn('credentials', {
+        redirect: false, // 페이지 새로고침 방지
+        authorEmail: formData.authorEmail,
+        password: formData.password,
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        localStorage.setItem('token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
+      if (result?.ok) {
+        // 로그인 성공 시 홈으로 이동
         router.push('/');
       } else {
-        setError(data.error);
+        // 로그인 실패 시 에러 메시지 설정
+        setError(result?.error || '로그인에 실패했습니다.');
       }
     } catch (err) {
       setError('로그인 중 오류가 발생했습니다.');
@@ -118,4 +115,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
