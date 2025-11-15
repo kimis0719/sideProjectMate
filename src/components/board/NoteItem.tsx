@@ -1,7 +1,24 @@
 'use client';
 
 import React from 'react';
-import { useBoardStore } from '@/store/boardStore';
+import { useBoardStore, Note } from '@/store/boardStore';
+
+// --- Debounce Helper ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  const debounced = (...args: Parameters<F>) => {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+    timeout = setTimeout(() => func(...args), waitFor);
+  };
+
+  return debounced;
+}
+// --------------------
 
 type Props = {
   id: string;
@@ -11,100 +28,145 @@ type Props = {
   color?: string;
 };
 
+const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
+
 export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
-  const moveNote = useBoardStore((s) => s.moveNote);
-  const updateNote = useBoardStore((s) => s.updateNote);
-  const removeNote = useBoardStore((s) => s.removeNote);
+  const {
+    moveNote,
+    updateNote,
+    removeNote,
+    selectedNoteId,
+    selectNote,
+    openPaletteNoteId,
+    setOpenPaletteNoteId,
+  } = useBoardStore((s) => ({
+    moveNote: s.moveNote,
+    updateNote: s.updateNote,
+    removeNote: s.removeNote,
+    selectedNoteId: s.selectedNoteId,
+    selectNote: s.selectNote,
+    openPaletteNoteId: s.openPaletteNoteId,
+    setOpenPaletteNoteId: s.setOpenPaletteNoteId,
+  }));
 
-  const [dragging, setDragging] = React.useState(false); // 드래그 상태
-  const [isEditing, setIsEditing] = React.useState(false); // 편집 모드
-  const [draft, setDraft] = React.useState(text); // 편집 초안
-  const startRef = React.useRef({ sx: 0, sy: 0, ox: 0, oy: 0 }); // 드래그 시작 스냅샷
+  const [dragging, setDragging] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(text);
+  const startRef = React.useRef({ sx: 0, sy: 0, ox: 0, oy: 0 });
 
-  // 외부 텍스트가 바뀌면, 편집 중이 아닐 때만 draft 동기화
+  const isSelected = selectedNoteId === id;
+  const isPaletteOpen = openPaletteNoteId === id;
+  const isTempNote = id.startsWith('temp-'); // 임시 노트 여부 확인
+
+  // --- 서버 저장 로직 ---
+  const saveChanges = React.useCallback(
+    (patch: Partial<Omit<Note, 'id'>>) => {
+      // 임시 노트(아직 서버에 생성되지 않음)는 저장하지 않음
+      if (isTempNote) return;
+
+      fetch(`/api/kanban/notes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      }).catch((error) => {
+        console.error('Failed to save note changes:', error);
+        // TODO: 저장 실패 시 사용자에게 알림 (예: 토스트 메시지)
+      });
+    },
+    [id, isTempNote]
+  );
+
+  // 500ms 디바운싱 적용된 저장 함수
+  const debouncedSave = React.useMemo(() => debounce(saveChanges, 500), [saveChanges]);
+  // --------------------
+
   React.useEffect(() => {
     if (!isEditing) setDraft(text);
   }, [text, isEditing]);
 
-  // 편집 시작(더블클릭)
   const beginEdit = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     setDraft(text);
     setIsEditing(true);
-  }, [text]);
+    selectNote(id);
+  }, [text, id, selectNote]);
 
-  // 편집 저장
   const saveEdit = React.useCallback(() => {
+    // UI 즉시 업데이트
     updateNote(id, { text: draft });
+    // 서버에 변경사항 저장
+    saveChanges({ text: draft });
     setIsEditing(false);
-  }, [draft, id, updateNote]);
+  }, [draft, id, updateNote, saveChanges]);
 
-  // 편집 취소
   const cancelEdit = React.useCallback(() => {
     setDraft(text);
     setIsEditing(false);
   }, [text]);
 
-    /* onPointerDown(callback: React.PointerEvent<HTMLDivElement>), dependencies: [x, y])
-      * 드래그의 시작 시점의 노트 원점(ox, oy) 를 [x, y]로 기록
-      *
-      * 1. pointerdown에서 시작값 기록 + 캡처 시작
-      * - e.currentTarget.setPointerCapture(e.pointerId)
-      * - ref에 시작 좌표/원점 좌표 저장
-      * - dragging 상태 true
-      * */
-    const onPointerDown = React.useCallback(
+  const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (isEditing) return;
       e.stopPropagation();
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
       startRef.current = { sx: e.clientX, sy: e.clientY, ox: x, oy: y };
       setDragging(true);
+      selectNote(id);
     },
-    [x, y, isEditing]
+    [x, y, isEditing, id, selectNote]
   );
-    /* onPointerMove(callback: React.PointerEvent<HTMLDivElement>, dependencies: [dragging, id, moveNote])
-    *  드래그 이동 중 현재 대상(id) 의 드래그 수치 값 (dx,dy)을 현재 좌표값(startRef.current.ox, oy) 에 더하여
-    *  moveNote(id, x, y) store 갱신
-    *
-    * 2. pointermove에서 이동 처리
-    * - dragging일 때만 dx, dy 계산해서 위치 업데이트
-    * - ref.current로 시작 스냅샷을 읽어 최신 델타 계산
-    * */
+
   const onPointerMove = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!dragging || isEditing) return;
       const dx = e.clientX - startRef.current.sx;
       const dy = e.clientY - startRef.current.sy;
-      moveNote(id, startRef.current.ox + dx, startRef.current.oy + dy);
+      const newX = startRef.current.ox + dx;
+      const newY = startRef.current.oy + dy;
+      // UI 즉시 업데이트
+      moveNote(id, newX, newY);
+      // 서버 저장 (디바운스)
+      debouncedSave({ x: newX, y: newY });
     },
-    [dragging, id, moveNote, isEditing]
+    [dragging, id, moveNote, isEditing, debouncedSave]
   );
 
-    /*
-     * onPointerUp(callback: React.PointerEvent<HTMLDivElement>)
-     * 드래그 이동 종료 시 상태값 false, 캡처 해제
-     * 1. pointerup 또는 pointercancel에서 종료 + 캡처 해제
-     * - dragging 상태 false
-     * - e.currentTarget.releasePointerCapture(e.pointerId)
-     * - 필요 시 저장/정리 작업
-     */
-  const onPointerUp = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragging) return;
-    setDragging(false);
-    (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-  }, [dragging]);
+  const onPointerUp = React.useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!dragging) return;
+      setDragging(false);
+      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+      // 드래그 종료 시점에 최종 위치 즉시 저장 시도 (디바운스 취소 및 즉시 실행)
+      // debouncedSave.flush(); // lodash.debounce 사용 시
+      saveChanges({ x, y });
+    },
+    [dragging, saveChanges, x, y]
+  );
 
-  // 포인터 취소
   const onPointerCancel = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     setDragging(false);
     (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
   }, []);
 
+  const changeColor = React.useCallback(
+    (newColor: string) => {
+      // UI 즉시 업데이트
+      updateNote(id, { color: newColor });
+      // 서버에 변경사항 저장
+      saveChanges({ color: newColor });
+    },
+    [id, updateNote, saveChanges]
+  );
+
+  const togglePalette = () => {
+    setOpenPaletteNoteId(isPaletteOpen ? null : id);
+  };
+
   return (
     <div
       role="note"
       aria-grabbed={dragging}
+      onClick={(e) => e.stopPropagation()}
       onDoubleClick={beginEdit}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -120,25 +182,69 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
         background: color,
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         borderRadius: 10,
-        padding: 12,
+        padding: 10,
         cursor: isEditing ? 'text' : dragging ? 'grabbing' : 'grab',
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
+        borderWidth: 2,
+        borderColor: isSelected ? '#3B82F6' : 'transparent',
+        opacity: isTempNote ? 0.7 : 1, // 임시 노트는 약간 투명하게
       }}
     >
-      {/* 삭제 버튼 */}
+      {/* ... (팔레트, 버튼 등 나머지 JSX는 동일) ... */}
+      {isPaletteOpen && (
+        <div style={{ position: 'absolute', top: 36, left: 6, display: 'flex', gap: 4, background: 'white', padding: '4px', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 10 }}>
+          {COLOR_PALETTE.map((c) => (
+            <button
+              key={c}
+              type="button"
+              aria-label={`색상 ${c}로 변경`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => changeColor(c)}
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: c,
+                border: c === color ? '2px solid #3B82F6' : '1px solid rgba(0,0,0,0.1)',
+                cursor: 'pointer',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        aria-label="색상 팔레트 열기"
+        title="색상 변경"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={togglePalette}
+        style={{
+          position: 'absolute',
+          top: 6,
+          right: 36,
+          width: 28,
+          height: 28,
+          color: '#111827',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+        }}
+      >
+        ...
+      </button>
+
       <button
         type="button"
         aria-label="노트 삭제"
         title="삭제"
-        onPointerDown={(e) => {
-          // 드래그 시작 방지
-          e.stopPropagation();
-        }}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
-          removeNote(id);
+          if (!isTempNote) removeNote(id);
         }}
         style={{
           position: 'absolute',
@@ -146,9 +252,6 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
           right: 6,
           width: 28,
           height: 28,
-          // borderRadius: 6,
-          // border: '1px solid rgba(0,0,0,0.12)',
-          // background: 'rgba(255,255,255,0.9)',
           color: '#111827',
           display: 'flex',
           alignItems: 'center',
@@ -161,7 +264,6 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
         ×
       </button>
 
-      {/* 보기 모드 */}
       {!isEditing && (
         <div
           style={{
@@ -170,13 +272,13 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
             color: '#111827',
             whiteSpace: 'pre-wrap',
             height: '100%',
+            paddingTop: 24,
           }}
         >
           {text}
         </div>
       )}
 
-      {/* 편집 모드 */}
       {isEditing && (
         <textarea
           autoFocus
@@ -187,10 +289,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
             if (e.key === 'Escape') {
               e.preventDefault();
               cancelEdit();
-              return;
-            }
-            // Cmd(맥)/Ctrl(윈) + Enter → 저장
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
               saveEdit();
             }
@@ -199,6 +298,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
           style={{
             position: 'absolute',
             inset: 8,
+            top: 40,
             resize: 'none',
             outline: '2px solid rgba(59,130,246,0.5)',
             borderRadius: 8,
