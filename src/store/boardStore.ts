@@ -1,134 +1,152 @@
 'use client';
 
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { devtools } from 'zustand/middleware';
+import type { INote } from '@/lib/models/kanban/NoteModel';
+import type { IBoard } from '@/lib/models/kanban/BoardModel';
 
-export type Note = {
-  id: string;
-  x: number;
-  y: number;
-  text: string;
-  color?: string;
-};
+export type Note = Omit<INote, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
+export type Board = Omit<IBoard, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
 
-// 팔레트(순환 적용)
 const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
-// 생성 오프셋 규칙
 const SEED_POS = { x: 120, y: 120 };
 const OFFSET_STEP = 24;
-const OFFSET_CYCLE = 8; // 8번마다 한 바퀴
+const OFFSET_CYCLE = 8;
 
 type BoardState = {
+  boardId: string | null;
   notes: Note[];
   zoom: number;
   pan: { x: number; y: number };
-
-  // 내부 카운터(순환 인덱스)
+  selectedNoteId: string | null;
+  openPaletteNoteId: string | null;
   spawnIndex: number;
   nextColorIndex: number;
 
-  // actions
-  /*
-  * Partial<Note> : Note의 모든 속성을 "있어도 되고 없어도 되는(optional)" 형태로 바꿈
-  * 즉, { id?: string; x?: number; y?: number; text?: string; color?: string } 처럼 됨
-  * undefined 가 와도 됨, 일부만 채워도 됨
-  */
-  addNote: (partial?: Partial<Note>) => void;
-  addNoteAt: (x: number, y: number, partial?: Partial<Note>) => void;
+  initBoard: (pid: number) => Promise<void>;
+  addNote: () => Promise<void>;
   moveNote: (id: string, x: number, y: number) => void;
-  updateNote: (id: string, patch: Partial<Note>) => void;
-  removeNote: (id: string) => void;
+  updateNote: (id: string, patch: Partial<Omit<Note, 'id'>>) => void;
+  removeNote: (id: string) => Promise<void>;
+  selectNote: (id: string | null) => void;
+  setOpenPaletteNoteId: (id: string | null) => void;
   setZoom: (z: number) => void;
   setPan: (x: number, y: number) => void;
 };
 
+const transformDoc = (doc: any) => {
+  const { _id, ...rest } = JSON.parse(JSON.stringify(doc));
+  return { id: _id, ...rest };
+};
+
 export const useBoardStore = create<BoardState>()(
   devtools(
-    persist(
-      (set, get) => ({
-        notes: [],
-        zoom: 1,
-        pan: { x: 0, y: 0 },
+    (set, get) => ({
+      boardId: null,
+      notes: [],
+      zoom: 1,
+      pan: { x: 0, y: 0 },
+      selectedNoteId: null,
+      openPaletteNoteId: null,
+      spawnIndex: 0,
+      nextColorIndex: 0,
 
-        // 내부 카운터 초기값
-        spawnIndex: 0,
-        nextColorIndex: 0,
+      initBoard: async (pid) => {
+        set({ notes: [], boardId: null }); // 초기화
+        try {
+          // 1. pid로 보드 정보 가져오기
+          const boardRes = await fetch(`/api/kanban/boards?pid=${pid}`);
+          if (!boardRes.ok) throw new Error('Failed to fetch board');
+          const boardDoc = await boardRes.json();
+          const board = transformDoc(boardDoc);
+          set({ boardId: board.id });
 
-        // 연속 생성 시 겹침을 줄이기 위한 오프셋 + 색상 순환
-        addNote: (partial = {}) =>
-          set((state) => {
-            const idx = state.spawnIndex;
-            const offset = (idx % OFFSET_CYCLE) * OFFSET_STEP;
+          // 2. 가져온 boardId로 노트 목록 가져오기
+          const notesRes = await fetch(`/api/kanban/notes?boardId=${board.id}`);
+          if (!notesRes.ok) throw new Error('Failed to fetch notes');
+          const noteDocs = await notesRes.json();
+          const notes = noteDocs.map(transformDoc);
 
-            const colorIdx = state.nextColorIndex % COLOR_PALETTE.length;
-            const color = partial.color ?? COLOR_PALETTE[colorIdx];
+          set({ notes });
+        } catch (error) {
+          console.error(error);
+          set({ notes: [], boardId: null });
+        }
+      },
 
-            const x = partial.x ?? SEED_POS.x + offset;
-            const y = partial.y ?? SEED_POS.y + offset;
+      addNote: async () => {
+        const { spawnIndex, nextColorIndex, notes, boardId } = get();
+        if (!boardId) return;
 
-            const id =
-              typeof crypto !== 'undefined' && 'randomUUID' in crypto
-                ? crypto.randomUUID()
-                : Math.random().toString(36).slice(2);
+        const optimisticNote: Omit<Note, 'id'> & { id: string | null } = {
+          id: `temp-${crypto.randomUUID()}`,
+          x: SEED_POS.x + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP,
+          y: SEED_POS.y + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP,
+          text: '새 노트',
+          color: COLOR_PALETTE[nextColorIndex % COLOR_PALETTE.length],
+          boardId: boardId as any,
+        };
 
-            return {
-              notes: state.notes.concat({
-                id,
-                x,
-                y,
-                text: partial.text ?? '새 노트',
-                color,
-              }),
-              spawnIndex: state.spawnIndex + 1,
-              nextColorIndex: state.nextColorIndex + 1,
-            };
-          }),
+        set((state) => ({
+          notes: [...state.notes, optimisticNote as Note],
+          spawnIndex: state.spawnIndex + 1,
+          nextColorIndex: state.nextColorIndex + 1,
+          selectedNoteId: optimisticNote.id,
+        }));
 
-        // 지정 좌표에 생성(향후 보드 클릭 위치 생성 등에 사용)
-        addNoteAt: (x, y, partial = {}) =>
-          set((state) => {
-            const colorIdx = state.nextColorIndex % COLOR_PALETTE.length;
-            const color = partial.color ?? COLOR_PALETTE[colorIdx];
+        try {
+          const response = await fetch('/api/kanban/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...optimisticNote, boardId }),
+          });
+          if (!response.ok) throw new Error('Failed to save note');
+          const savedNoteDoc = await response.json();
+          const savedNote = transformDoc(savedNoteDoc);
 
-            const id =
-              typeof crypto !== 'undefined' && 'randomUUID' in crypto
-                ? crypto.randomUUID()
-                : Math.random().toString(36).slice(2);
-
-            return {
-              notes: state.notes.concat({
-                id,
-                x,
-                y,
-                text: partial.text ?? '새 노트',
-                color,
-              }),
-              // 좌표 지정 생성도 순환 인덱스를 한 칸 전진시킴
-              spawnIndex: state.spawnIndex + 1,
-              nextColorIndex: state.nextColorIndex + 1,
-            };
-          }),
-
-        moveNote: (id, x, y) =>
           set((state) => ({
-            notes: state.notes.map((n) => (n.id === id ? { ...n, x, y } : n)),
-          })),
+            notes: state.notes.map((n) => (n.id === optimisticNote.id ? savedNote : n)),
+            selectedNoteId: savedNote.id,
+          }));
+        } catch (error) {
+          console.error(error);
+          set({ notes });
+        }
+      },
 
-        updateNote: (id, patch) =>
-          set((state) => ({
-            notes: state.notes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
-          })),
+      removeNote: async (id) => {
+        const originalNotes = get().notes;
+        set((state) => ({
+          notes: state.notes.filter((n) => n.id !== id),
+          selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId,
+        }));
 
-        removeNote: (id) =>
-          set((state) => ({
-            notes: state.notes.filter((n) => n.id !== id),
-          })),
+        try {
+          const response = await fetch(`/api/kanban/notes/${id}`, { method: 'DELETE' });
+          if (!response.ok) throw new Error('Failed to delete note');
+        } catch (error) {
+          console.error(error);
+          set({ notes: originalNotes });
+        }
+      },
 
-        setZoom: (z) => set({ zoom: Math.max(0.25, Math.min(3, z)) }),
-        setPan: (x, y) => set({ pan: { x, y } }),
-      }),
-      { name: 'board-store' }
-    ),
+      moveNote: (id, x, y) => set((state) => ({
+        notes: state.notes.map((n) => (n.id === id ? { ...n, x, y } : n)),
+      })),
+
+      updateNote: (id, patch) => set((state) => ({
+        notes: state.notes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
+      })),
+
+      selectNote: (id) => set((state) => ({
+        selectedNoteId: id,
+        openPaletteNoteId: state.selectedNoteId !== id ? null : state.openPaletteNoteId,
+      })),
+
+      setOpenPaletteNoteId: (id) => set({ openPaletteNoteId: id }),
+      setZoom: (z) => set({ zoom: Math.max(0.25, Math.min(3, z)) }),
+      setPan: (x, y) => set({ pan: { x, y } }),
+    }),
     { name: 'BoardStore' }
   )
 );
