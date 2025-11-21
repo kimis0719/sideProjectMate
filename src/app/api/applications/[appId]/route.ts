@@ -48,12 +48,13 @@ export async function PUT(
     await application.save();
 
     if (status === 'accepted') {
-      // ProjectMember로 추가하는 로직은 그대로 유지
+      // ProjectMember로 추가
+      // userId를 사용하여 멤버 등록
       await ProjectMember.create({
         projectId: project._id,
         userId: application.applicantId,
         role: application.role,
-        status: 'member',
+        status: 'active',
       });
     }
 

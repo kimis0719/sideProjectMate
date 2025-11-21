@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IProjectMember extends Document {
   projectId: mongoose.Types.ObjectId;
-  memberEmail: string;
+  userId: mongoose.Types.ObjectId;
   role: string;
   status: 'active' | 'inactive' | 'removed';
   createdAt: Date;
@@ -16,10 +16,10 @@ const ProjectMemberSchema: Schema = new Schema(
       ref: 'Project',
       required: true,
     },
-    memberEmail: {
-      type: String,
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
-      trim: true,
     },
     role: {
       type: String,
@@ -38,6 +38,6 @@ const ProjectMemberSchema: Schema = new Schema(
 );
 
 // 프로젝트 멤버 인덱스 설정
-ProjectMemberSchema.index({ projectId: 1, memberEmail: 1 }, { unique: true });
+ProjectMemberSchema.index({ projectId: 1, userId: 1 }, { unique: true });
 
-export default mongoose.models.ProjectMember || mongoose.model<IProjectMember>('ProjectMember', ProjectMemberSchema, 'project_members');
+export default mongoose.models.ProjectMember || mongoose.model<IProjectMember>('ProjectMember', ProjectMemberSchema, 'projectmembers');

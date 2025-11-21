@@ -69,6 +69,13 @@ ProjectSchema.virtual('likesCount').get(function (this: IProject) {
   return this.likes.length;
 });
 
+// ProjectMember와의 가상 관계 설정
+ProjectSchema.virtual('projectMembers', {
+  ref: 'ProjectMember',
+  localField: '_id',
+  foreignField: 'projectId',
+});
+
 ProjectSchema.set('toJSON', { virtuals: true });
 ProjectSchema.set('toObject', { virtuals: true });
 

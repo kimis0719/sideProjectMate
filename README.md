@@ -2,6 +2,32 @@
 
 사이드 프로젝트 메이트는 개발자들이 사이드 프로젝트를 함께 진행할 팀원을 찾고 협업할 수 있는 플랫폼입니다.
 
+## ✨ 주요 기능
+
+- **🔐 인증 (Authentication)**
+  - 회원가입, 로그인, 로그아웃
+  - JWT 기반 세션 관리 및 보안
+
+- **📁 프로젝트 관리 (Project Management)**
+  - **프로젝트 생성**: 이미지 드래그 & 드롭 업로드, 기술 스택 선택, 모집 포지션 설정
+  - **프로젝트 조회**: 카테고리/상태/정렬 필터링, 키워드 검색
+  - **프로젝트 수정/삭제**: 작성자 권한 관리
+
+- **🤝 지원 시스템 (Application System)**
+  - **지원하기**: 희망 역할 선택 및 지원 메시지 작성
+  - **지원자 관리**: 프로젝트 작성자가 지원자 목록 확인 및 수락/거절 처리
+
+- **📊 칸반 보드 (Kanban Board)**
+  - 프로젝트별 업무 진행 상황 시각화 (To Do, In Progress, Done)
+  - 드래그 & 드롭으로 업무 상태 변경 (dnd-kit 활용)
+
+- **👤 마이페이지 (My Page)**
+  - 내 정보 관리 (프로필 수정)
+  - 내가 생성한 프로젝트 및 지원한 프로젝트 현황 확인
+
+- **🔔 알림 (Notifications)**
+  - 실시간 알림 시스템 (지원 결과, 새 지원자 알림 등)
+
 ## 🛠 기술 스택
 
 - **프레임워크**: Next.js 14.2.33 (App Router)
@@ -110,10 +136,10 @@ JWT_SECRET=<강력한_시크릿_문자열>
 
 ## 🔐 인증 흐름
 
-- `POST /api/auth/login`: 이메일/비밀번호 검증 → JWT 발급 → 클라이언트는 `localStorage`에 `token`, `user` 저장
-- `POST /api/auth/register`: 사용자 생성(중복 검사, 비밀번호 해싱)
-- `src/components/Header.tsx`: `localStorage` 상태로 로그인/회원가입 버튼을 토글, 라우트 변경 및 storage 이벤트로 동기화
-- `src/app/profile/page.tsx`: 미로그인 시 `/login`으로 리다이렉트
+- `POST /api/auth/callback/credentials`: NextAuth를 이용한 로그인 (세션 쿠키 관리)
+- `POST /api/auth/register`: 사용자 생성 (중복 검사, 비밀번호 해싱)
+- `src/components/Header.tsx`: `useSession` 훅을 통해 로그인 상태 감지 및 UI 변경
+- `src/app/profile/page.tsx`: 미로그인 시 `/login`으로 리다이렉트 (Middleware 또는 클라이언트 리다이렉트)
 
 ## ⚠️ 트러블슈팅
 

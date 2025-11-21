@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth"; 
+import { authOptions } from "@/lib/auth";
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Counter from '@/lib/models/Counter';
@@ -84,13 +84,13 @@ export async function POST(request: Request) {
 
     await dbConnect();
     const body = await request.json();
-    const { title, category, content, recruitmentRoles, deadline, images, tags } = body;
+    const { title, category, content, members, deadline, images, tags } = body;
 
-    if (!title || !content || !category || !recruitmentRoles || recruitmentRoles.length === 0) {
+    if (!title || !content || !category || !members || members.length === 0) {
       return NextResponse.json({ success: false, message: '필수 입력 항목이 누락되었습니다.' }, { status: 400 });
     }
 
-    const authorId = session.user._id; 
+    const authorId = session.user._id;
 
     const counter = await Counter.findOneAndUpdate(
       { _id: 'project_pid' },
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       title,
       category,
       author: authorId,
-      recruitmentRoles,
+      members,
       deadline,
       images: images && images.length > 0 ? images : ['🚀'],
       tags,
@@ -111,12 +111,18 @@ export async function POST(request: Request) {
       status: 'recruiting',
     });
 
-    await ProjectMember.create({
-      projectId: newProject._id,
-      userId: authorId,
-      role: '작성자',
-      status: 'author',
-    });
+    // 작성자를 프로젝트 멤버로 자동 등록
+    try {
+      await ProjectMember.create({
+        projectId: newProject._id,
+        userId: session.user._id,
+        role: '작성자',
+        status: 'active',
+      });
+    } catch (memberError: any) {
+      console.error('[ERROR] Failed to add author to ProjectMember:', memberError);
+      // 멤버 등록 실패 시에도 프로젝트 생성은 성공으로 처리하되, 에러 로그는 남김
+    }
 
     const populatedProject = await Project.findById(newProject._id)
       .populate('author', 'nName')
