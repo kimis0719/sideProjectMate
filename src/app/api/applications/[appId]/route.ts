@@ -56,6 +56,13 @@ export async function PUT(
         role: application.role,
         status: 'active',
       });
+
+      // 프로젝트의 members 배열에서 해당 역할의 current 값 증가
+      const memberIndex = project.members.findIndex((m: any) => m.role === application.role);
+      if (memberIndex !== -1) {
+        project.members[memberIndex].current += 1;
+        await project.save();
+      }
     }
 
     await Notification.create({
