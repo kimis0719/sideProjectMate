@@ -45,6 +45,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     if (!pid) return;
     const fetchProject = async () => {
       try {
+        console.log('@@@@@@@@@@@@ isOwner >>> ', isOwner);
         const response = await fetch(`/api/projects/${pid}`);
         const data = await response.json();
         if (data.success) {
