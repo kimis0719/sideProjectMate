@@ -33,28 +33,35 @@ const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#
 export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
   const {
     moveNote,
+    moveNotes, // 다중 이동 액션
     updateNote,
+    updateNotes, // 일괄 수정 액션
     removeNote,
-    selectedNoteId,
+    selectedNoteIds, // 다중 선택 상태
     selectNote,
     openPaletteNoteId,
     setOpenPaletteNoteId,
+    zoom, // zoom 상태 가져오기
   } = useBoardStore((s) => ({
     moveNote: s.moveNote,
+    moveNotes: s.moveNotes,
     updateNote: s.updateNote,
+    updateNotes: s.updateNotes,
     removeNote: s.removeNote,
-    selectedNoteId: s.selectedNoteId,
+    selectedNoteIds: s.selectedNoteIds,
     selectNote: s.selectNote,
     openPaletteNoteId: s.openPaletteNoteId,
     setOpenPaletteNoteId: s.setOpenPaletteNoteId,
+    zoom: s.zoom,
   }));
 
-  const [dragging, setDragging] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(text);
-  const startRef = React.useRef({ sx: 0, sy: 0, ox: 0, oy: 0 });
+  const isDragging = React.useRef(false);
+  const lastPointerRef = React.useRef({ x: 0, y: 0 });
 
-  const isSelected = selectedNoteId === id;
+  // 이 노트가 선택되었는지 여부 확인
+  const isSelected = selectedNoteIds.includes(id);
   const isPaletteOpen = openPaletteNoteId === id;
   const isTempNote = id.startsWith('temp-'); // 임시 노트 여부 확인
 
@@ -80,10 +87,6 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
   const debouncedSave = React.useMemo(() => debounce(saveChanges, 500), [saveChanges]);
   // --------------------
 
-  React.useEffect(() => {
-    if (!isEditing) setDraft(text);
-  }, [text, isEditing]);
-
   const beginEdit = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     setDraft(text);
@@ -104,55 +107,89 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
     setIsEditing(false);
   }, [text]);
 
+  React.useEffect(() => {
+    if (!isEditing) setDraft(text);
+    if (!isSelected && isEditing) {
+      saveEdit();
+    }
+  }, [text, isEditing, isSelected, saveEdit]);
+
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (isEditing) return;
       e.stopPropagation();
+      if (isEditing) return;
+
+      if (e.shiftKey) {
+        selectNote(id, true);
+      } else if (!isSelected) {
+        selectNote(id, false);
+      }
+
+      isDragging.current = true;
+      lastPointerRef.current = { x: e.clientX, y: e.clientY }; // 시작 포인터 위치 저장
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-      startRef.current = { sx: e.clientX, sy: e.clientY, ox: x, oy: y };
-      setDragging(true);
-      selectNote(id);
     },
-    [x, y, isEditing, id, selectNote]
+    [isEditing, id, selectNote, isSelected]
   );
 
   const onPointerMove = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragging || isEditing) return;
-      const dx = e.clientX - startRef.current.sx;
-      const dy = e.clientY - startRef.current.sy;
-      const newX = startRef.current.ox + dx;
-      const newY = startRef.current.oy + dy;
-      // UI 즉시 업데이트
-      moveNote(id, newX, newY);
-      // 서버 저장 (디바운스)
-      debouncedSave({ x: newX, y: newY });
+      if (!isDragging.current || isEditing) return;
+
+      const dx = (e.clientX - lastPointerRef.current.x) / zoom;
+      const dy = (e.clientY - lastPointerRef.current.y) / zoom;
+
+      if (dx !== 0 || dy !== 0) {
+        if (selectedNoteIds.length > 1 && isSelected) {
+          // 그룹 이동: UI만 업데이트하고 개별 저장은 하지 않음 (BoardShell에서 일괄 처리)
+          moveNotes(selectedNoteIds, dx, dy);
+        } else {
+          // 단일 이동: UI 업데이트 및 디바운스 저장
+          moveNote(id, x + dx, y + dy);
+          debouncedSave({ x: x + dx, y: y + dy });
+        }
+        // 포인터 위치 갱신
+        lastPointerRef.current = { x: e.clientX, y: e.clientY };
+      }
     },
-    [dragging, id, moveNote, isEditing, debouncedSave]
+    [isEditing, zoom, selectedNoteIds, isSelected, moveNotes, moveNote, id, x, y, debouncedSave]
   );
 
   const onPointerUp = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!dragging) return;
-      setDragging(false);
+      if (!isDragging.current) return;
+      isDragging.current = false;
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-      // 드래그 종료 시점에 최종 위치 즉시 저장 시도 (디바운스 취소 및 즉시 실행)
-      // debouncedSave.flush(); // lodash.debounce 사용 시
-      saveChanges({ x, y });
+
+      if (selectedNoteIds.length > 1 && isSelected) {
+        // 그룹 이동 종료: 일괄 저장 수행
+        // 현재 스토어의 최신 상태에서 선택된 노트들의 위치를 가져옴
+        const currentNotes = useBoardStore.getState().notes;
+        const updates = currentNotes
+          .filter((n) => selectedNoteIds.includes(n.id))
+          .map((n) => ({
+            id: n.id,
+            changes: { x: n.x, y: n.y },
+          }));
+
+        // updateNotes 액션 호출
+        updateNotes(updates);
+      } else {
+        // 단일 선택: 개별 저장
+        saveChanges({ x, y });
+      }
     },
-    [dragging, saveChanges, x, y]
+    [saveChanges, x, y, selectedNoteIds, isSelected, updateNotes]
   );
 
   const onPointerCancel = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    setDragging(false);
+    isDragging.current = false;
     (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
   }, []);
 
   const changeColor = React.useCallback(
     (newColor: string) => {
-      // UI 즉시 업데이트
       updateNote(id, { color: newColor });
-      // 서버에 변경사항 저장
       saveChanges({ color: newColor });
     },
     [id, updateNote, saveChanges]
@@ -165,7 +202,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
   return (
     <div
       role="note"
-      aria-grabbed={dragging}
+      aria-grabbed={isDragging.current}
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={beginEdit}
       onPointerDown={onPointerDown}
@@ -176,25 +213,25 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
       style={{
         position: 'absolute',
         transform: `translate3d(${x}px, ${y}px, 0)`,
-        willChange: dragging ? 'transform' : 'auto',
         width: 200,
         height: 140,
         background: color,
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         borderRadius: 10,
         padding: 10,
-        cursor: isEditing ? 'text' : dragging ? 'grabbing' : 'grab',
+        cursor: isEditing ? 'text' : 'grab',
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
         borderWidth: 2,
         borderColor: isSelected ? '#3B82F6' : 'transparent',
-        opacity: isTempNote ? 0.7 : 1, // 임시 노트는 약간 투명하게
+        opacity: isTempNote ? 0.7 : 1,
+        zIndex: isSelected ? 10 : 1,
       }}
     >
-      {/* ... (팔레트, 버튼 등 나머지 JSX는 동일) ... */}
+      {/* 팔레트 UI */}
       {isPaletteOpen && (
-        <div style={{ position: 'absolute', top: 36, left: 6, display: 'flex', gap: 4, background: 'white', padding: '4px', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 10 }}>
+        <div style={{ position: 'absolute', top: 36, left: 6, display: 'flex', gap: 4, background: 'white', padding: '4px', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 20 }}>
           {COLOR_PALETTE.map((c) => (
             <button
               key={c}
