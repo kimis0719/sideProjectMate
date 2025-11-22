@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { IProject } from '@/lib/models/Project';
@@ -16,7 +16,12 @@ interface ProjectListProps {
     statusCodes: ICommonCode[];
 }
 
-export default function ProjectList({ categoryCodes, statusCodes }: ProjectListProps) {
+/**
+ * [내부 컴포넌트] ProjectListContent
+ * 실제 useSearchParams를 사용하고 데이터를 페칭하는 로직이 들어있는 컴포넌트입니다.
+ * 이 컴포넌트는 아래의 ProjectList(Wrapper)에 의해 Suspense로 감싸집니다.
+ */
+function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -211,5 +216,18 @@ export default function ProjectList({ categoryCodes, statusCodes }: ProjectListP
                 </div>
             </section >
         </div >
+    );
+}
+
+/**
+ * [외부 래퍼 컴포넌트] ProjectList
+ * 단순히 ProjectListContent를 Suspense로 감싸는 역할만 수행합니다.
+ * 이렇게 해야 빌드 시 useSearchParams 관련 에러를 피할 수 있습니다.
+ */
+export default function ProjectList(props: ProjectListProps) {
+    return (
+        <Suspense fallback={<div className="text-center py-20 text-gray-900 dark:text-white">페이지를 불러오는 중...</div>}>
+            <ProjectListContent {...props} />
+        </Suspense>
     );
 }
