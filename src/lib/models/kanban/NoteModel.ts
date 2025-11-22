@@ -6,6 +6,7 @@ export interface INote extends Document {
   y: number;
   color: string;
   boardId: mongoose.Types.ObjectId;
+  sectionId?: mongoose.Types.ObjectId;
 }
 
 const NoteSchema: Schema = new Schema(
@@ -31,10 +32,17 @@ const NoteSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Board', // Board 모델 참조
       required: true,
-      index: true, // boardId로 노트를 빠르게 찾기 위해 인덱스 추가
+    },
+    sectionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Section',
+      default: null,
     },
   },
   { timestamps: true }
 );
 
-export default models.Note || model<INote>('Note', NoteSchema, 'notes');
+NoteSchema.index({ boardId: 1 });
+NoteSchema.index({ sectionId: 1 });
+
+export default models.Note || model<INote>('Note', NoteSchema);

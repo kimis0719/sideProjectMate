@@ -1,12 +1,12 @@
-'use client';
-
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { INote } from '@/lib/models/kanban/NoteModel';
 import type { IBoard } from '@/lib/models/kanban/BoardModel';
+import type { ISection } from '@/lib/models/kanban/SectionModel';
 
 export type Note = Omit<INote, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
 export type Board = Omit<IBoard, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
+export type Section = Omit<ISection, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
 
 const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
 const SEED_POS = { x: 120, y: 120 };
@@ -16,9 +16,10 @@ const OFFSET_CYCLE = 8;
 type BoardState = {
   boardId: string | null;
   notes: Note[];
+  sections: Section[];
   zoom: number;
   pan: { x: number; y: number };
-  selectedNoteIds: string[]; // 다중 선택을 위해 배열로 변경
+  selectedNoteIds: string[];
   openPaletteNoteId: string | null;
   spawnIndex: number;
   nextColorIndex: number;
@@ -26,16 +27,24 @@ type BoardState = {
   initBoard: (pid: number) => Promise<void>;
   addNote: () => Promise<void>;
   moveNote: (id: string, x: number, y: number) => void;
-  moveNotes: (ids: string[], dx: number, dy: number) => void; // 다중 이동 액션 추가
+  moveNotes: (ids: string[], dx: number, dy: number) => void;
   updateNote: (id: string, patch: Partial<Omit<Note, 'id'>>) => void;
-  updateNotes: (updates: { id: string; changes: Partial<Omit<Note, 'id'>> }[]) => Promise<void>; // 일괄 수정 액션 추가
+  updateNotes: (updates: { id: string; changes: Partial<Omit<Note, 'id'>> }[]) => Promise<void>;
   removeNote: (id: string) => Promise<void>;
-  selectNote: (id: string | null, multi?: boolean) => void; // multi 옵션 추가
-  selectNotes: (ids: string[]) => void; // 다중 선택 액션 추가
+  selectNote: (id: string | null, multi?: boolean) => void;
+  selectNotes: (ids: string[]) => void;
   setOpenPaletteNoteId: (id: string | null) => void;
   setZoom: (z: number) => void;
   setPan: (x: number, y: number) => void;
   fitToContent: (containerWidth: number, containerHeight: number) => void;
+  alignmentGuides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[];
+  setAlignmentGuides: (guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[]) => void;
+
+  // Section Actions
+  addSection: (section: Section) => void;
+  updateSection: (id: string, patch: Partial<Omit<Section, 'id'>>) => void;
+  removeSection: (id: string) => void;
+  moveSection: (id: string, x: number, y: number) => void;
 };
 
 const transformDoc = (doc: any) => {
@@ -48,54 +57,83 @@ export const useBoardStore = create<BoardState>()(
     (set, get) => ({
       boardId: null,
       notes: [],
+      sections: [],
       zoom: 1,
       pan: { x: 0, y: 0 },
-      selectedNoteIds: [], // 초기값 빈 배열
+      selectedNoteIds: [],
       openPaletteNoteId: null,
       spawnIndex: 0,
       nextColorIndex: 0,
+      alignmentGuides: [],
 
       initBoard: async (pid) => {
-        set({ notes: [], boardId: null, selectedNoteIds: [] }); // 초기화
+        set({ notes: [], sections: [], boardId: null, selectedNoteIds: [] });
         try {
-          // 1. pid로 보드 정보 가져오기
           const boardRes = await fetch(`/api/kanban/boards?pid=${pid}`);
           if (!boardRes.ok) throw new Error('Failed to fetch board');
           const boardDoc = await boardRes.json();
           const board = transformDoc(boardDoc);
           set({ boardId: board.id });
 
-          // 2. 가져온 boardId로 노트 목록 가져오기
-          const notesRes = await fetch(`/api/kanban/notes?boardId=${board.id}`);
+          const [notesRes, sectionsRes] = await Promise.all([
+            fetch(`/api/kanban/notes?boardId=${board.id}`),
+            fetch(`/api/kanban/sections?boardId=${board.id}`),
+          ]);
+
           if (!notesRes.ok) throw new Error('Failed to fetch notes');
           const noteDocs = await notesRes.json();
           const notes = noteDocs.map(transformDoc);
 
-          set({ notes });
+          let sections: Section[] = [];
+          if (sectionsRes.ok) {
+            const sectionDocs = await sectionsRes.json();
+            if (sectionDocs.success) {
+              sections = sectionDocs.data.map(transformDoc);
+            }
+          }
+
+          set({ notes, sections });
         } catch (error) {
           console.error(error);
-          set({ notes: [], boardId: null });
+          set({ notes: [], sections: [], boardId: null });
         }
       },
 
       addNote: async () => {
-        const { spawnIndex, nextColorIndex, notes, boardId } = get();
+        const { spawnIndex, nextColorIndex, notes, boardId, sections } = get();
         if (!boardId) return;
+
+        const x = SEED_POS.x + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+        const y = SEED_POS.y + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+
+        const NOTE_W = 200;
+        const NOTE_H = 140;
+        const centerX = x + NOTE_W / 2;
+        const centerY = y + NOTE_H / 2;
+
+        const containingSection = sections.find(
+          (s) =>
+            centerX >= s.x &&
+            centerX <= s.x + s.width &&
+            centerY >= s.y &&
+            centerY <= s.y + s.height
+        );
 
         const optimisticNote: Omit<Note, 'id'> & { id: string | null } = {
           id: `temp-${crypto.randomUUID()}`,
-          x: SEED_POS.x + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP,
-          y: SEED_POS.y + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP,
+          x,
+          y,
           text: '새 노트',
           color: COLOR_PALETTE[nextColorIndex % COLOR_PALETTE.length],
           boardId: boardId as any,
+          sectionId: containingSection ? (containingSection.id as any) : null,
         };
 
         set((state) => ({
           notes: [...state.notes, optimisticNote as Note],
           spawnIndex: state.spawnIndex + 1,
           nextColorIndex: state.nextColorIndex + 1,
-          selectedNoteIds: [optimisticNote.id!], // 새 노트만 선택
+          selectedNoteIds: [optimisticNote.id!],
         }));
 
         try {
@@ -110,7 +148,7 @@ export const useBoardStore = create<BoardState>()(
 
           set((state) => ({
             notes: state.notes.map((n) => (n.id === optimisticNote.id ? savedNote : n)),
-            selectedNoteIds: [savedNote.id], // 저장 후에도 선택 유지
+            selectedNoteIds: [savedNote.id],
           }));
         } catch (error) {
           console.error(error);
@@ -122,7 +160,7 @@ export const useBoardStore = create<BoardState>()(
         const originalNotes = get().notes;
         set((state) => ({
           notes: state.notes.filter((n) => n.id !== id),
-          selectedNoteIds: state.selectedNoteIds.filter((sid) => sid !== id), // 삭제된 노트 선택 해제
+          selectedNoteIds: state.selectedNoteIds.filter((sid) => sid !== id),
         }));
 
         try {
@@ -134,11 +172,28 @@ export const useBoardStore = create<BoardState>()(
         }
       },
 
-      moveNote: (id, x, y) => set((state) => ({
-        notes: state.notes.map((n) => (n.id === id ? { ...n, x, y } : n)),
-      })),
+      moveNote: (id, x, y) => set((state) => {
+        // 섹션 포함 여부 확인
+        const NOTE_W = 200;
+        const NOTE_H = 140;
+        const centerX = x + NOTE_W / 2;
+        const centerY = y + NOTE_H / 2;
 
-      // 다중 노트 이동: 선택된 노트들을 dx, dy만큼 이동시킵니다.
+        const containingSection = state.sections.find(
+          (s) =>
+            centerX >= s.x &&
+            centerX <= s.x + s.width &&
+            centerY >= s.y &&
+            centerY <= s.y + s.height
+        );
+
+        const newSectionId = containingSection ? containingSection.id : null;
+
+        return {
+          notes: state.notes.map((n) => (n.id === id ? { ...n, x, y, sectionId: newSectionId as any } : n)),
+        };
+      }),
+
       moveNotes: (ids, dx, dy) => set((state) => ({
         notes: state.notes.map((n) =>
           ids.includes(n.id) ? { ...n, x: n.x + dx, y: n.y + dy } : n
@@ -149,108 +204,125 @@ export const useBoardStore = create<BoardState>()(
         notes: state.notes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
       })),
 
-      // 일괄 수정 액션
       updateNotes: async (updates) => {
-        // 1. Optimistic Update (UI 즉시 반영)
         set((state) => {
-          const newNotes = state.notes.map((n) => {
-            const update = updates.find((u) => u.id === n.id);
-            return update ? { ...n, ...update.changes } : n;
+          const newNotes = [...state.notes];
+          updates.forEach(({ id, changes }) => {
+            const idx = newNotes.findIndex((n) => n.id === id);
+            if (idx !== -1) {
+              newNotes[idx] = { ...newNotes[idx], ...changes };
+            }
           });
           return { notes: newNotes };
         });
 
-        // 2. Server Request
         try {
           const response = await fetch('/api/kanban/notes/batch', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ updates }),
           });
-          if (!response.ok) throw new Error('Batch update failed');
+          if (!response.ok) throw new Error('Failed to batch update notes');
         } catch (error) {
           console.error(error);
-          // 실패 시 롤백 로직이 필요할 수 있음 (여기서는 생략)
         }
       },
 
-      // 노트 선택: multi가 true면 토글, false면 단일 선택
       selectNote: (id, multi = false) => set((state) => {
-        if (id === null) {
-          return { selectedNoteIds: [], openPaletteNoteId: null };
-        }
-
+        if (id === null) return { selectedNoteIds: [] };
         if (multi) {
-          // 이미 선택된 경우 해제, 아니면 추가
           const isSelected = state.selectedNoteIds.includes(id);
-          const newSelectedIds = isSelected
-            ? state.selectedNoteIds.filter((sid) => sid !== id)
-            : [...state.selectedNoteIds, id];
-          return { selectedNoteIds: newSelectedIds, openPaletteNoteId: null };
-        } else {
-          // 단일 선택: 해당 노트만 선택
-          return { selectedNoteIds: [id], openPaletteNoteId: null };
+          return {
+            selectedNoteIds: isSelected
+              ? state.selectedNoteIds.filter((sid) => sid !== id)
+              : [...state.selectedNoteIds, id],
+          };
         }
+        return { selectedNoteIds: [id] };
       }),
 
-      // 다중 선택 (영역 선택용): 주어진 ids로 선택 목록을 교체
-      selectNotes: (ids) => set({ selectedNoteIds: ids, openPaletteNoteId: null }),
+      selectNotes: (ids) => set({ selectedNoteIds: ids }),
 
       setOpenPaletteNoteId: (id) => set({ openPaletteNoteId: id }),
-      setZoom: (z) => set({ zoom: Math.max(0.1, Math.min(z, 2)) }), // 10% ~ 200% 제한
+      setZoom: (z) => set({ zoom: z }),
       setPan: (x, y) => set({ pan: { x, y } }),
 
-      fitToContent: (containerWidth: number, containerHeight: number) => {
+      fitToContent: (containerWidth, containerHeight) => {
         const { notes } = get();
-        if (notes.length === 0) {
-          // 노트가 없으면 (0,0) 및 줌 100%로 리셋
-          set({ pan: { x: 0, y: 0 }, zoom: 1 });
-          return;
-        }
+        const { sections } = get();
+        if (notes.length === 0 || sections.length === 0) return;
 
-        // 노트 크기 (NoteItem.tsx 참조)
+        const PADDING = 50;
         const NOTE_WIDTH = 200;
         const NOTE_HEIGHT = 140;
-        const PADDING = 50; // 여백
 
-        // Bounding Box 계산
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-
-        notes.forEach((n) => {
-          if (n.x < minX) minX = n.x;
-          if (n.y < minY) minY = n.y;
-          if (n.x + NOTE_WIDTH > maxX) maxX = n.x + NOTE_WIDTH;
-          if (n.y + NOTE_HEIGHT > maxY) maxY = n.y + NOTE_HEIGHT;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        sections.forEach((s) => {
+          minX = Math.min(minX, s.x);
+          minY = Math.min(minY, s.y);
+          maxX = Math.max(maxX, s.x + s.width);
+          maxY = Math.max(maxY, s.y + s.height);
         });
 
-        const contentWidth = maxX - minX;
-        const contentHeight = maxY - minY;
+        notes.forEach((n) => {
+          minX = Math.min(minX, n.x);
+          minY = Math.min(minY, n.y);
+          maxX = Math.max(maxX, n.x + NOTE_WIDTH);
+          maxY = Math.max(maxY, n.y + NOTE_HEIGHT);
+        });
 
-        // 화면 중앙점
-        const contentCenterX = minX + contentWidth / 2;
-        const contentCenterY = minY + contentHeight / 2;
+        const contentWidth = maxX - minX + PADDING * 2;
+        const contentHeight = maxY - minY + PADDING * 2;
 
-        // 적절한 줌 레벨 계산 (여백 포함)
-        const zoomX = (containerWidth - PADDING * 2) / contentWidth;
-        const zoomY = (containerHeight - PADDING * 2) / contentHeight;
-        let newZoom = Math.min(zoomX, zoomY);
+        const scaleX = containerWidth / contentWidth;
+        const scaleY = containerHeight / contentHeight;
+        const newZoom = Math.min(scaleX, scaleY, 1);
 
-        // 줌 레벨 제한 (10% ~ 150%) - 너무 크게 확대되는 것 방지
-        newZoom = Math.max(0.1, Math.min(newZoom, 1.5));
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
 
-        // Pan 계산: (화면중앙 - 콘텐츠중앙 * 줌)
-        // 화면의 중앙 좌표: containerWidth / 2, containerHeight / 2
-        // 콘텐츠의 중앙이 화면 중앙에 오도록 하려면:
-        // panX = (containerWidth / 2) - (contentCenterX * newZoom)
-        const newPanX = containerWidth / 2 - contentCenterX * newZoom;
-        const newPanY = containerHeight / 2 - contentCenterY * newZoom;
+        const newPanX = containerWidth / 2 - centerX * newZoom;
+        const newPanY = containerHeight / 2 - centerY * newZoom;
 
         set({ zoom: newZoom, pan: { x: newPanX, y: newPanY } });
       },
-    }),
-    { name: 'board-store' }
+
+      alignmentGuides: [],
+      setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
+
+      // --- Section Actions ---
+      addSection: (section) => set((state) => ({
+        sections: [...state.sections, section],
+      })),
+
+      updateSection: (id, patch) => set((state) => ({
+        sections: state.sections.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+      })),
+
+      removeSection: (id) => set((state) => ({
+        sections: state.sections.filter((s) => s.id !== id),
+      })),
+
+      moveSection: (id, x, y) => set((state) => {
+        const section = state.sections.find((s) => s.id === id);
+        if (!section) return state;
+
+        const dx = x - section.x;
+        const dy = y - section.y;
+
+        // 1. 섹션 이동
+        const newSections = state.sections.map((s) => (s.id === id ? { ...s, x, y } : s));
+
+        // 2. 하위 노트 이동 (sectionId가 일치하는 노트들)
+        const newNotes = state.notes.map((n) => {
+          if (n.sectionId === id) {
+            return { ...n, x: n.x + dx, y: n.y + dy };
+          }
+          return n;
+        });
+
+        return { sections: newSections, notes: newNotes };
+      }),
+    })
   )
 );
