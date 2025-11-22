@@ -15,7 +15,7 @@ export interface IProject extends Document {
   tags: (mongoose.Types.ObjectId | string)[];
   images: string[];
   content: string;
-  status: 'recruiting' | 'in-progress' | 'completed';
+  status: '01' | '02' | '03'; // 01: 모집중, 02: 진행중, 03: 완료
   deadline?: Date;
   views: number;
   likes: IUser['_id'][];
@@ -44,8 +44,8 @@ const ProjectSchema: Schema = new Schema(
     content: { type: String, required: true },
     status: {
       type: String,
-      enum: ['recruiting', 'in-progress', 'completed'],
-      default: 'recruiting',
+      enum: ['01', '02', '03'], // 01: 모집중, 02: 진행중, 03: 완료
+      default: '01',
     },
     deadline: { type: Date },
     views: { type: Number, default: 0 },

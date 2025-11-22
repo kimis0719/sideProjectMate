@@ -6,17 +6,20 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { IProject } from '@/lib/models/Project';
-import { useNotificationStore } from '@/lib/store/notificationStore'; // 1. 스토어 import
+import { useNotificationStore } from '@/lib/store/notificationStore';
 
+// 동적 임포트를 사용하여 이미지 슬라이더 컴포넌트를 로드 (SSR 제외)
 const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider'), {
   ssr: false,
   loading: () => <div className="aspect-video bg-gray-100 rounded-lg animate-pulse" />,
 });
 
+// 프로젝트 데이터 타입 확장 (populate된 필드 포함)
 interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
   author: { _id: string; nName: string } | string;
   tags: { _id: string; name: string; category: string }[];
   likesCount: number;
+  projectMembers?: any[]; // projectMembers 필드 추가
 }
 
 interface ProjectPageProps {
@@ -37,33 +40,89 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [selectedRole, setSelectedRole] = useState('');
   const [applyMessage, setApplyMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 카테고리 라벨 표시를 위한 상태
+  const [categoryLabel, setCategoryLabel] = useState('');
+  // 상태 라벨 표시를 위한 상태
+  const [statusLabel, setStatusLabel] = useState('');
+  // 사용자의 지원 여부 상태
+  const [hasApplied, setHasApplied] = useState(false);
 
-  const { fetchNotifications } = useNotificationStore(); // 2. 함수 가져오기
+  const { fetchNotifications } = useNotificationStore();
   const isOwner = session?.user?._id && typeof project?.author === 'object' && project.author._id === session.user._id;
+
+  // 현재 사용자가 프로젝트 멤버인지 확인
+  const isMember = project?.projectMembers?.some((m: any) =>
+    m.userId && (m.userId._id === session?.user?._id || m.userId === session?.user?._id)
+  );
 
   useEffect(() => {
     if (!pid) return;
-    const fetchProject = async () => {
+
+    // 프로젝트 데이터와 카테고리/상태 정보를 함께 가져오는 비동기 함수
+    const fetchData = async () => {
       try {
-        console.log('@@@@@@@@@@@@ isOwner >>> ', isOwner);
-        const response = await fetch(`/api/projects/${pid}`);
-        const data = await response.json();
-        if (data.success) {
-          setProject(data.data);
-          setLikeCount(data.data.likesCount || 0);
-          if (session?.user?._id) {
-            setIsLiked(data.data.likes.includes(session.user._id));
-          }
-        } else {
-          throw new Error(data.message || '프로젝트를 불러오는데 실패했습니다.');
+        // 1. 프로젝트 데이터 조회
+        const projectRes = await fetch(`/api/projects/${pid}`);
+        const projectData = await projectRes.json();
+
+        if (!projectData.success) {
+          throw new Error(projectData.message || '프로젝트를 불러오는데 실패했습니다.');
         }
+
+        const project = projectData.data;
+        setProject(project);
+        setLikeCount(project.likesCount || 0);
+        if (session?.user?._id) {
+          setIsLiked(project.likes.includes(session.user._id));
+        }
+
+        // 2. 카테고리 라벨 조회 (공통 코드 API 호출)
+        try {
+          const categoryRes = await fetch('/api/common-codes?group=CATEGORY');
+          const categoryData = await categoryRes.json();
+          if (categoryData.success) {
+            const matchedCategory = categoryData.data.find((c: any) => c.code === project.category);
+            setCategoryLabel(matchedCategory ? matchedCategory.label : project.category);
+          }
+        } catch (e) {
+          console.error('카테고리 정보 로딩 실패', e);
+          setCategoryLabel(project.category);
+        }
+
+        // 3. 상태 라벨 조회 (공통 코드 API 호출)
+        try {
+          const statusRes = await fetch('/api/common-codes?group=STATUS');
+          const statusData = await statusRes.json();
+          if (statusData.success) {
+            const matchedStatus = statusData.data.find((c: any) => c.code === project.status);
+            setStatusLabel(matchedStatus ? matchedStatus.label : project.status);
+          }
+        } catch (e) {
+          console.error('상태 정보 로딩 실패', e);
+          setStatusLabel(project.status);
+        }
+
+        // 4. 지원 여부 확인 (로그인한 경우)
+        if (session?.user?._id) {
+          try {
+            const applyRes = await fetch(`/api/projects/${pid}/application/me`);
+            const applyData = await applyRes.json();
+            if (applyData.success) {
+              setHasApplied(applyData.applied);
+            }
+          } catch (e) {
+            console.error('지원 내역 확인 실패', e);
+          }
+        }
+
       } catch (err: any) {
         setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchProject();
+
+    fetchData();
   }, [pid, session]);
 
   const handleLike = async () => {
@@ -77,7 +136,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       if (data.success) {
         setLikeCount(data.data.likesCount);
         setIsLiked(data.data.likes.includes(session.user._id));
-        fetchNotifications(); // 3. 헤더 알림 새로고침
+        fetchNotifications();
       } else {
         alert(data.message || '요청에 실패했습니다.');
       }
@@ -144,7 +203,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         alert('성공적으로 지원했습니다.');
         setIsApplyModalOpen(false);
         setApplyMessage('');
-        fetchNotifications(); // 3. 헤더 알림 새로고침
+        setHasApplied(true); // 지원 상태 업데이트
+        fetchNotifications();
       } else {
         throw new Error(data.message || '지원에 실패했습니다.');
       }
@@ -159,11 +219,24 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   if (error) return <div className="flex justify-center items-center min-h-screen text-red-500 dark:text-red-400">오류: {error}</div>;
   if (!project) return <div className="flex justify-center items-center min-h-screen text-gray-900 dark:text-white">프로젝트를 찾을 수 없습니다.</div>;
 
-  const statusText = {
-    recruiting: '모집중',
-    'in-progress': '진행중',
-    completed: '완료',
-  };
+  // 버튼 텍스트 및 상태 결정
+  let buttonText = '프로젝트 참여하기';
+  let isButtonDisabled = false;
+
+  if (isOwner) {
+    buttonText = '내 프로젝트';
+    isButtonDisabled = true;
+  } else if (isMember) {
+    buttonText = '참여중';
+    isButtonDisabled = true;
+  } else if (hasApplied) {
+    buttonText = '지원완료';
+    isButtonDisabled = true;
+  } else if (project.status !== '01') {
+    // 모집중이 아닌 경우 (진행중, 완료 등)
+    buttonText = '모집 마감';
+    isButtonDisabled = true;
+  }
 
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
@@ -182,7 +255,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           </div>
         )}
         <div className="mb-8 md:mb-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{project.category}</p>
+          {/* 카테고리 라벨 표시 (예: 개발) */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{categoryLabel}</p>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">{project.title}</h1>
           <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center">
@@ -225,18 +299,28 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">상태</p>
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === 'recruiting' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>{statusText[project.status]}</span>
+                  {/* 동적으로 가져온 상태 라벨 표시 */}
+                  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === '01' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>{statusLabel || project.status}</span>
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">기술 스택</p>
                   <div className="flex flex-wrap gap-2">{project.tags.map(tag => (<span key={tag._id} className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded-full">{tag.name}</span>))}</div>
                 </div>
               </div>
-              <button onClick={handleOpenApplyModal} disabled={isOwner} className="mt-8 w-full bg-gray-900 text-white font-bold py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">{isOwner ? '내 프로젝트' : '프로젝트 참여하기'}</button>
+              <button
+                onClick={handleOpenApplyModal}
+                disabled={isButtonDisabled}
+                className={`mt-8 w-full font-bold py-3 rounded-lg transition-colors ${isButtonDisabled
+                  ? 'bg-gray-400 cursor-not-allowed text-white'
+                  : 'bg-gray-900 text-white hover:bg-gray-800'
+                  }`}
+              >
+                {buttonText}
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </div >
       {isApplyModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-8 w-full max-w-md">
@@ -260,7 +344,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             </form>
           </div>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }

@@ -12,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities';
 export default function NewProjectPage() {
   const [formData, setFormData] = useState({
     title: '',
-    category: '개발',
+    category: 'DEVELOPMENT', // 기본값은 코드로 설정 (나중에 API 로드 후 변경 가능)
     content: '',
     members: [{ role: '프론트엔드', current: 0, max: 1 }],
     deadline: '',
@@ -21,6 +21,7 @@ export default function NewProjectPage() {
 
   const [images, setImages] = useState<{ id: string; url: string; file: File }[]>([]);
   const [techStacks, setTechStacks] = useState<ITechStack[]>([]);
+  const [categories, setCategories] = useState<{ code: string; label: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -68,7 +69,26 @@ export default function NewProjectPage() {
         if (data.success) setTechStacks(data.data);
       } catch (e) { console.error('기술 스택 로딩 실패', e); }
     };
+
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/common-codes?group=CATEGORY');
+        const data = await res.json();
+        if (data.success) {
+          setCategories(data.data);
+          // 카테고리 로드 후 첫 번째 값으로 기본값 설정
+          if (data.data.length > 0) {
+            // 기존 formData.category가 유효한 코드가 아닐 수 있으므로 첫 번째 코드로 설정
+            // 단, 사용자가 이미 선택했을 수도 있으니 초기 로드 시에만 적용하는게 좋지만,
+            // 여기서는 단순하게 첫 번째 값으로 덮어씌움 (초기화 시점)
+            setFormData(prev => ({ ...prev, category: data.data[0].code }));
+          }
+        }
+      } catch (e) { console.error('카테고리 로딩 실패', e); }
+    };
+
     fetchTechStacks();
+    fetchCategories();
   }, []);
 
   const groupedTechStacks = useMemo(() => {
@@ -188,7 +208,10 @@ export default function NewProjectPage() {
           <div>
             <label htmlFor="category" className="block text-sm font-bold mb-1">카테고리</label>
             <select id="category" name="category" value={formData.category} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg">
-              <option>개발</option> <option>디자인</option> <option>게임</option> <option>데이터</option> <option>AI</option> <option>기획</option> <option>마케팅</option>
+              {categories.map((cat) => (
+                <option key={cat.code} value={cat.code}>{cat.label}</option>
+              ))}
+              {categories.length === 0 && <option value="DEVELOPMENT">개발</option>}
             </select>
           </div>
           <div>

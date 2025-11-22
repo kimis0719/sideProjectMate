@@ -33,12 +33,15 @@ export async function GET(request: NextRequest) {
         { content: { $regex: searchTerm, $options: 'i' } },
       ];
     }
+
+    // 카테고리와 상태는 이제 코드로 직접 조회
     if (category && category !== 'all') {
       query.category = category;
     }
     if (status && status !== 'all') {
       query.status = status;
     }
+
     if (authorId) {
       query.author = authorId;
     }

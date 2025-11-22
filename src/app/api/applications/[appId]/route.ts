@@ -61,6 +61,13 @@ export async function PUT(
       const memberIndex = project.members.findIndex((m: any) => m.role === application.role);
       if (memberIndex !== -1) {
         project.members[memberIndex].current += 1;
+
+        // 모든 역할의 모집이 완료되었는지 확인
+        const isAllFull = project.members.every((m: any) => m.current >= m.max);
+        if (isAllFull) {
+          project.status = '02'; // 진행중으로 변경
+        }
+
         await project.save();
       }
     }
@@ -86,5 +93,40 @@ export async function DELETE(
   request: Request,
   { params }: { params: { appId: string } }
 ) {
-  // ... (DELETE 핸들러는 변경 없음)
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?._id) {
+      return NextResponse.json({ success: false, message: '인증이 필요합니다.' }, { status: 401 });
+    }
+
+    await dbConnect();
+    const { appId } = params;
+
+    const application = await Application.findById(appId).populate('projectId');
+    if (!application) {
+      return NextResponse.json({ success: false, message: '지원서를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const project = application.projectId as any;
+    const isOwner = project.author.toString() === session.user._id;
+    const isApplicant = application.applicantId.toString() === session.user._id;
+
+    if (!isApplicant && !isOwner) {
+      return NextResponse.json({ success: false, message: '지원서를 삭제할 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (application.status === 'accepted') {
+      return NextResponse.json({ success: false, message: '이미 수락된 지원은 취소/삭제할 수 없습니다.' }, { status: 400 });
+    }
+
+    await Application.findByIdAndDelete(appId);
+
+    return NextResponse.json({ success: true, message: '지원서가 삭제되었습니다.' });
+
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: '지원서 삭제 중 오류가 발생했습니다.', error: error.message },
+      { status: 500 }
+    );
+  }
 }
