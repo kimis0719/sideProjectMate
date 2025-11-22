@@ -16,6 +16,13 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
     timeout = setTimeout(() => func(...args), waitFor);
   };
 
+  debounced.cancel = () => {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+
   return debounced;
 }
 // --------------------
@@ -26,11 +33,14 @@ type Props = {
   y: number;
   text: string;
   color?: string;
+  zIndex?: number;
 };
 
 const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
+const SNAP_THRESHOLD = 3; // 스냅 거리 (픽셀) - 5px -> 3px로 축소
+const GRID_SIZE = 10; // 그리드 크기 (픽셀)
 
-export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
+export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1 }: Props) {
   const {
     moveNote,
     moveNotes, // 다중 이동 액션
@@ -42,6 +52,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
     openPaletteNoteId,
     setOpenPaletteNoteId,
     zoom, // zoom 상태 가져오기
+    setAlignmentGuides, // 가이드라인 설정 액션
   } = useBoardStore((s) => ({
     moveNote: s.moveNote,
     moveNotes: s.moveNotes,
@@ -53,6 +64,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
     openPaletteNoteId: s.openPaletteNoteId,
     setOpenPaletteNoteId: s.setOpenPaletteNoteId,
     zoom: s.zoom,
+    setAlignmentGuides: s.setAlignmentGuides,
   }));
 
   const [isEditing, setIsEditing] = React.useState(false);
@@ -141,18 +153,98 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
 
       if (dx !== 0 || dy !== 0) {
         if (selectedNoteIds.length > 1 && isSelected) {
-          // 그룹 이동: UI만 업데이트하고 개별 저장은 하지 않음 (BoardShell에서 일괄 처리)
+          // 그룹 이동: 스냅 없이 단순 이동 (복잡도 문제로 그룹 스냅은 제외)
           moveNotes(selectedNoteIds, dx, dy);
         } else {
-          // 단일 이동: UI 업데이트 및 디바운스 저장
-          moveNote(id, x + dx, y + dy);
-          debouncedSave({ x: x + dx, y: y + dy });
+          // 단일 이동: 스냅 및 바운딩 적용
+          let newX = x + dx;
+          let newY = y + dy;
+
+          // 1. 바운딩 제거 (무한 스크롤 허용)
+          // newX = Math.max(0, newX);
+          // newY = Math.max(0, newY);
+
+          let snappedX = newX;
+          let snappedY = newY;
+          const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
+
+          // 스냅 로직은 Alt 키가 눌렸을 때만 동작
+          if (e.altKey) {
+            const notes = useBoardStore.getState().notes;
+            const NOTE_WIDTH = 200;
+            const NOTE_HEIGHT = 140;
+
+            let minDistX = SNAP_THRESHOLD;
+            let foundSnapX = false;
+
+            let minDistY = SNAP_THRESHOLD;
+            let foundSnapY = false;
+
+            notes.forEach((other) => {
+              if (other.id === id) return;
+
+              // X축 비교 대상: [Left, Right] (Center 제거)
+              const otherXs = [other.x, other.x + NOTE_WIDTH];
+              const myXs = [newX, newX + NOTE_WIDTH];
+
+              // Y축 비교 대상: [Top, Bottom] (Center 제거)
+              const otherYs = [other.y, other.y + NOTE_HEIGHT];
+              const myYs = [newY, newY + NOTE_HEIGHT];
+
+              for (const ox of otherXs) {
+                for (let i = 0; i < myXs.length; i++) {
+                  const dist = Math.abs(myXs[i] - ox);
+                  if (dist < minDistX) {
+                    minDistX = dist;
+                    // 스냅 적용: 현재 나의 기준점(myXs[i])이 ox가 되도록 newX 조정
+                    // newX = ox - (myXs[i] - newX)
+                    snappedX = ox - (myXs[i] - newX);
+                    foundSnapX = true;
+                    guides.push({ type: 'vertical', x: ox });
+                  }
+                }
+              }
+
+              // Y축 검사
+              for (const oy of otherYs) {
+                for (let i = 0; i < myYs.length; i++) {
+                  const dist = Math.abs(myYs[i] - oy);
+                  if (dist < minDistY) {
+                    minDistY = dist;
+                    snappedY = oy - (myYs[i] - newY);
+                    foundSnapY = true;
+                    guides.push({ type: 'horizontal', y: oy });
+                  }
+                }
+              }
+            });
+
+            // 3. 그리드 스냅 (스마트 스냅이 없을 때만)
+            if (!foundSnapX) {
+              if (Math.abs(newX % GRID_SIZE) < SNAP_THRESHOLD) {
+                snappedX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+              }
+            }
+            if (!foundSnapY) {
+              if (Math.abs(newY % GRID_SIZE) < SNAP_THRESHOLD) {
+                snappedY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+              }
+            }
+          }
+
+          // 가이드라인 업데이트 (중복 제거 필요 시 로직 추가 가능)
+          setAlignmentGuides(guides);
+
+          // 최종 위치 적용
+          moveNote(id, snappedX, snappedY);
+          debouncedSave({ x: snappedX, y: snappedY });
         }
+
         // 포인터 위치 갱신
         lastPointerRef.current = { x: e.clientX, y: e.clientY };
       }
     },
-    [isEditing, zoom, selectedNoteIds, isSelected, moveNotes, moveNote, id, x, y, debouncedSave]
+    [isEditing, zoom, selectedNoteIds, isSelected, moveNotes, moveNote, id, x, y, debouncedSave, setAlignmentGuides]
   );
 
   const onPointerUp = React.useCallback(
@@ -161,31 +253,42 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
       isDragging.current = false;
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
 
+      // 가이드라인 숨김
+      setAlignmentGuides([]);
+
       if (selectedNoteIds.length > 1 && isSelected) {
         // 그룹 이동 종료: 일괄 저장 수행
-        // 현재 스토어의 최신 상태에서 선택된 노트들의 위치를 가져옴
+        debouncedSave.cancel(); // 중복 저장 방지
         const currentNotes = useBoardStore.getState().notes;
         const updates = currentNotes
           .filter((n) => selectedNoteIds.includes(n.id))
           .map((n) => ({
             id: n.id,
-            changes: { x: n.x, y: n.y },
+            changes: { x: n.x, y: n.y, sectionId: n.sectionId },
           }));
 
-        // updateNotes 액션 호출
         updateNotes(updates);
       } else {
         // 단일 선택: 개별 저장
-        saveChanges({ x, y });
+        debouncedSave.cancel(); // 중복 저장 방지
+
+        // Store에서 최신 상태(sectionId 포함)를 가져와서 저장
+        const currentNote = useBoardStore.getState().notes.find(n => n.id === id);
+        if (currentNote) {
+          saveChanges({ x, y, sectionId: currentNote.sectionId });
+        } else {
+          saveChanges({ x, y });
+        }
       }
     },
-    [saveChanges, x, y, selectedNoteIds, isSelected, updateNotes]
+    [saveChanges, x, y, selectedNoteIds, isSelected, updateNotes, setAlignmentGuides]
   );
 
   const onPointerCancel = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     isDragging.current = false;
     (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-  }, []);
+    setAlignmentGuides([]);
+  }, [setAlignmentGuides]);
 
   const changeColor = React.useCallback(
     (newColor: string) => {
@@ -226,10 +329,9 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F' }: Props) {
         borderWidth: 2,
         borderColor: isSelected ? '#3B82F6' : 'transparent',
         opacity: isTempNote ? 0.7 : 1,
-        zIndex: isSelected ? 10 : 1,
+        zIndex: isSelected ? 9999 : zIndex,
       }}
     >
-      {/* 팔레트 UI */}
       {isPaletteOpen && (
         <div style={{ position: 'absolute', top: 36, left: 6, display: 'flex', gap: 4, background: 'white', padding: '4px', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 20 }}>
           {COLOR_PALETTE.map((c) => (

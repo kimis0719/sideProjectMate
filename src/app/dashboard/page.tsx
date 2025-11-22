@@ -77,10 +77,10 @@ export default function DashboardHome() {
                                 </h2>
                                 <div className="flex items-center justify-between mt-4">
                                     <span className={`px-2 py-1 text-xs rounded-full ${project.status === 'recruiting'
-                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                                         }`}>
-                                        {project.status === 'recruiting' ? '진행중' : '완료'}
+                                        {project.status === 'recruiting' ? '02' : '03'}
                                     </span>
                                     <span className="text-sm text-gray-500 dark:text-gray-400">
                                         멤버 {project.members?.length || 0}명
