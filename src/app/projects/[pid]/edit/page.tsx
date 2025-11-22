@@ -52,22 +52,36 @@ export default function EditProjectPage() {
 
   const [formData, setFormData] = useState({
     title: '',
-    category: '개발',
+    category: '',
     content: '',
     members: [{ role: '프론트엔드', current: 0, max: 1 }],
     deadline: '',
     selectedTags: new Set<string>(),
   });
-  
+
   const [images, setImages] = useState<{ id: string; url: string; file?: File }[]>([]);
   const [techStacks, setTechStacks] = useState<ITechStack[]>([]);
+  const [categories, setCategories] = useState<{ code: string; label: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
-  
+
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const activeImage = images.find(img => img.id === activeId);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/common-codes?group=CATEGORY');
+        const data = await res.json();
+        if (data.success) {
+          setCategories(data.data);
+        }
+      } catch (e) { console.error('카테고리 로딩 실패', e); }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     if (!pid || sessionStatus === 'loading') return;
@@ -178,7 +192,7 @@ export default function EditProjectPage() {
     try {
       const newFilesToUpload = images.filter(img => img.file);
       const existingImageUrls = images.filter(img => !img.file).map(img => img.url);
-      
+
       const uploadedImageUrls = [];
       if (newFilesToUpload.length > 0) {
         const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -238,7 +252,10 @@ export default function EditProjectPage() {
           <div>
             <label htmlFor="category" className="block text-sm font-bold mb-1">카테고리</label>
             <select id="category" name="category" value={formData.category} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg">
-              <option>개발</option> <option>디자인</option> <option>게임</option> <option>데이터</option> <option>AI</option> <option>기획</option> <option>마케팅</option>
+              {categories.map((cat) => (
+                <option key={cat.code} value={cat.code}>{cat.label}</option>
+              ))}
+              {categories.length === 0 && <option value="DEVELOPMENT">개발</option>}
             </select>
           </div>
           <div>

@@ -15,9 +15,11 @@ interface NotificationState {
   unreadCount: number;
   fetchNotifications: () => Promise<void>;
   setNotifications: (notifications: Notification[]) => void;
+  deleteNotification: (id: string) => Promise<void>;
+  deleteAllNotifications: () => Promise<void>;
 }
 
-export const useNotificationStore = create<NotificationState>((set) => ({
+export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
   unreadCount: 0,
   setNotifications: (notifications) => {
@@ -38,6 +40,36 @@ export const useNotificationStore = create<NotificationState>((set) => ({
       }
     } catch (error) {
       console.error('알림을 불러오는데 실패했습니다.', error);
+    }
+  },
+  deleteNotification: async (id: string) => {
+    try {
+      const res = await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        const currentNotifications = get().notifications;
+        const updatedNotifications = currentNotifications.filter(n => n._id !== id);
+        set({
+          notifications: updatedNotifications,
+          unreadCount: updatedNotifications.filter(n => !n.read).length,
+        });
+      }
+    } catch (error) {
+      console.error('알림 삭제 실패', error);
+    }
+  },
+  deleteAllNotifications: async () => {
+    try {
+      const res = await fetch('/api/notifications', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        set({
+          notifications: [],
+          unreadCount: 0,
+        });
+      }
+    } catch (error) {
+      console.error('알림 전체 삭제 실패', error);
     }
   },
 }));
