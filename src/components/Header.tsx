@@ -68,7 +68,7 @@ export default function Header() {
   const mainCategories = [
     { label: '기술서', path: '/tech' },
     { label: '프로젝트', path: '/projects' },
-    { label: '칸반보드', path: '/kanban' },
+    { label: '대쉬보드', path: '/dashboard' },
   ];
   const subCategories = ['추천', '최신', '인기', '마감임박'];
 
@@ -144,8 +144,8 @@ export default function Header() {
                   key={category}
                   onClick={() => setActiveCategory(category)}
                   className={`text-sm font-semibold whitespace-nowrap transition-colors ${activeCategory === category
-                      ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                    ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
                     }`}
                 >
                   {category}

@@ -43,6 +43,12 @@ export async function GET(request: NextRequest) {
       query.author = authorId;
     }
 
+    const memberId = searchParams.get('memberId');
+    if (memberId) {
+      const memberProjects = await ProjectMember.find({ userId: memberId, status: 'active' }).distinct('projectId');
+      query._id = { $in: memberProjects };
+    }
+
     let sortOptions: any = { createdAt: -1 };
     if (sortBy === 'deadline') {
       sortOptions = { deadline: 1 };
