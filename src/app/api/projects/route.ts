@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       images: images && images.length > 0 ? images : ['🚀'],
       tags,
       content,
-      status: 'recruiting',
+      status: '01', // 01: 모집중
     });
 
     // 작성자를 프로젝트 멤버로 자동 등록

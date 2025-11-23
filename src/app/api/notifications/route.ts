@@ -35,3 +35,26 @@ export async function GET(request: Request) {
     }
 }
 
+export async function DELETE(request: Request) {
+    headers();
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user?._id) {
+            return NextResponse.json({ success: false, message: '인증이 필요합니다.' }, { status: 401 });
+        }
+
+        await dbConnect();
+
+        // 현재 사용자의 모든 알림 삭제
+        await Notification.deleteMany({ recipient: session.user._id });
+
+        return NextResponse.json({ success: true, message: '모든 알림이 삭제되었습니다.' });
+
+    } catch (error: any) {
+        console.error('[NOTIFICATIONS DELETE ERROR]', error);
+        return NextResponse.json(
+            { success: false, message: '알림 삭제 중 오류가 발생했습니다.', error: error.message },
+            { status: 500 }
+        );
+    }
+}
