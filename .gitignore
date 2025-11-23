@@ -28,4 +28,4 @@ yarn-error.log*
 
 # Environment variables
 .env
-.vscode/launch.json
+.vscode
