@@ -40,3 +40,30 @@ export async function PATCH(req: NextRequest) {
         );
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    try {
+        await dbConnect();
+        const body = await req.json();
+        const { ids } = body;
+
+        if (!Array.isArray(ids)) {
+            return NextResponse.json(
+                { error: 'IDs must be an array' },
+                { status: 400 }
+            );
+        }
+
+        if (ids.length > 0) {
+            await NoteModel.deleteMany({ _id: { $in: ids } });
+        }
+
+        return NextResponse.json({ success: true, count: ids.length });
+    } catch (error) {
+        console.error('Batch delete failed:', error);
+        return NextResponse.json(
+            { error: 'Internal Server Error' },
+            { status: 500 }
+        );
+    }
+}

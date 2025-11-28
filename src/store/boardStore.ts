@@ -23,14 +23,14 @@ type BoardState = {
   openPaletteNoteId: string | null;
   spawnIndex: number;
   nextColorIndex: number;
-
   initBoard: (pid: number) => Promise<void>;
-  addNote: () => Promise<void>;
+  addNote: (containerWidth?: number, containerHeight?: number) => Promise<void>;
   moveNote: (id: string, x: number, y: number) => void;
   moveNotes: (ids: string[], dx: number, dy: number) => void;
   updateNote: (id: string, patch: Partial<Omit<Note, 'id'>>) => void;
   updateNotes: (updates: { id: string; changes: Partial<Omit<Note, 'id'>> }[]) => Promise<void>;
   removeNote: (id: string) => Promise<void>;
+  removeNotes: (ids: string[]) => Promise<void>;
   selectNote: (id: string | null, multi?: boolean) => void;
   selectNotes: (ids: string[]) => void;
   setOpenPaletteNoteId: (id: string | null) => void;
@@ -99,12 +99,17 @@ export const useBoardStore = create<BoardState>()(
         }
       },
 
-      addNote: async () => {
-        const { spawnIndex, nextColorIndex, notes, boardId, sections } = get();
+      addNote: async (containerWidth?: number, containerHeight?: number) => {
+        const { spawnIndex, nextColorIndex, notes, boardId, sections, pan, zoom } = get();
         if (!boardId) return;
 
-        const x = SEED_POS.x + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
-        const y = SEED_POS.y + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+        let x = SEED_POS.x + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+        let y = SEED_POS.y + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+
+        if (containerWidth && containerHeight) {
+          x = (pan.x) / zoom + (containerWidth / 2 - SEED_POS.x) + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+          y = (pan.y) / zoom + (containerHeight / 2 - SEED_POS.y) + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+        }
 
         const NOTE_W = 200;
         const NOTE_H = 140;
@@ -166,6 +171,26 @@ export const useBoardStore = create<BoardState>()(
         try {
           const response = await fetch(`/api/kanban/notes/${id}`, { method: 'DELETE' });
           if (!response.ok) throw new Error('Failed to delete note');
+        } catch (error) {
+          console.error(error);
+          set({ notes: originalNotes });
+        }
+      },
+
+      removeNotes: async (ids: string[]) => {
+        const originalNotes = get().notes;
+        set((state) => ({
+          notes: state.notes.filter((n) => !ids.includes(n.id)),
+          selectedNoteIds: state.selectedNoteIds.filter((sid) => !ids.includes(sid)),
+        }));
+
+        try {
+          const response = await fetch('/api/kanban/notes/batch', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids }),
+          });
+          if (!response.ok) throw new Error('Failed to batch delete notes');
         } catch (error) {
           console.error(error);
           set({ notes: originalNotes });
@@ -315,7 +340,7 @@ export const useBoardStore = create<BoardState>()(
 
         // 2. 하위 노트 이동 (sectionId가 일치하는 노트들)
         const newNotes = state.notes.map((n) => {
-          if (n.sectionId === id) {
+          if (n.sectionId?.toString() === id) {
             return { ...n, x: n.x + dx, y: n.y + dy };
           }
           return n;
