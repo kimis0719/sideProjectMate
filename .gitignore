@@ -29,3 +29,4 @@ yarn-error.log*
 # Environment variables
 .env
 .vscode
+.idea

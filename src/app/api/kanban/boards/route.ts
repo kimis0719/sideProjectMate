@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Board from '@/lib/models/kanban/BoardModel';
+import Project from '@/lib/models/Project';
 
 /**
  * 프로젝트 ID(pid)에 해당하는 보드를 조회하는 API (GET)
@@ -26,21 +27,19 @@ export async function GET(request: Request) {
     let board = await Board.findOne({ pid: projectId });
 
     // 2. 보드를 찾지 못하면, 공용 보드(pid: 0)를 찾거나 생성합니다.
+    // [11-26 변경] 2. 보드를 찾지 못하면, 해당 pid 를 가지는 프로젝트를 찾고,
+    // 해당 프로젝트의 정보로 새로운 보드를 생성한다.
     if (!board) {
-      board = await Board.findOneAndUpdate(
-        { pid: 0 },
-        {
-          $setOnInsert: {
-            pid: 0,
-            name: '공용 보드',
-            ownerId: 'system', // 시스템 소유로 지정
-          },
-        },
-        {
-          upsert: true, // 없으면 새로 생성
-          new: true, // 생성되거나 찾아진 문서를 반환
-        }
-      );
+      const project = await Project.findOne({ pid: projectId });
+      if (!project) {
+        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+      }
+
+      board = await Board.create({
+        pid: projectId,
+        name: project.title,
+        ownerId: project.author,
+      });
     }
 
     return NextResponse.json(board);

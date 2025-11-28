@@ -62,12 +62,16 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
   // 현재 보드의 ID를 결정합니다. pid가 유효하면 해당 pid를, 그렇지 않으면 임시 ID를 사용합니다.
   const boardPid = pid || TEMP_PUBLIC_PID;
 
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
   // 컴포넌트 마운트 시 또는 boardPid가 변경될 때 서버에서 보드와 노트 데이터를 불러옵니다.
   React.useEffect(() => {
-    initBoard(boardPid);
-  }, [boardPid, initBoard]);
-
-  const containerRef = React.useRef<HTMLDivElement>(null);
+    initBoard(boardPid).then(() => {
+      if (containerRef.current) {
+        fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      }
+    });
+  }, [boardPid, initBoard, fitToContent]);
 
   // 키보드 이벤트를 처리하는 useEffect 훅
   React.useEffect(() => {
@@ -79,11 +83,16 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedNoteIds.length > 0) {
-          selectedNoteIds.forEach((id) => {
-            if (!id.startsWith('temp-')) {
-              removeNote(id);
-            }
-          });
+          // Temp 노트와 실제 노트를 구분
+          const realNoteIds = selectedNoteIds.filter(id => !id.startsWith('temp-'));
+
+          if (realNoteIds.length > 0) {
+            // Batch Delete Action 호출
+            useBoardStore.getState().removeNotes(realNoteIds);
+          }
+
+          // Temp 노트는 로컬에서만 삭제 (이미 removeNotes에서 처리되지만 명시적으로)
+          // removeNotes는 로컬 상태도 업데이트하므로 별도 처리 불필요
         }
       }
 
@@ -319,7 +328,11 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              addNote();
+              if (containerRef.current) {
+                addNote(containerRef.current.clientWidth, containerRef.current.clientHeight);
+              } else {
+                addNote();
+              }
             }}
             className="px-3 py-1.5 rounded bg-gray-900 text-white text-sm hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
