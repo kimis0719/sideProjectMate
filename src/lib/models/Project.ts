@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import './TechStack';
+import './ProjectMember';
 import { IUser } from './User';
 
 export interface IProject extends Document {
