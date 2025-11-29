@@ -73,6 +73,8 @@ export default function Header() {
     ];
     const subCategories = ['추천', '최신', '인기', '마감임박'];
 
+    const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/');
+
     return (
         <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
             <div className="container mx-auto px-4">
@@ -81,7 +83,14 @@ export default function Header() {
                         <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white">SPM</Link>
                         <nav className="hidden md:flex items-center gap-6">
                             {mainCategories.map((category) => (
-                                <Link key={category.label} href={category.path} className="text-base font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900">
+                                <Link
+                                    key={category.label}
+                                    href={category.path}
+                                    className={`text-base font-medium transition-colors ${isActive(category.path)
+                                        ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
+                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                                        }`}
+                                >
                                     {category.label}
                                 </Link>
                             ))}
@@ -151,7 +160,7 @@ export default function Header() {
                                 </div>
 
                                 <Link href="/profile" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900">마이페이지</Link>
-                                <button onClick={() => signOut()} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900">로그아웃</button>
+                                <button onClick={() => signOut({ callbackUrl: '/' })} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900">로그아웃</button>
                             </>
                         ) : (
                             <>

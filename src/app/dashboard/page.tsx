@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { ICommonCode } from '@/lib/models/CommonCode';
 
 interface Project {
     _id: string;
@@ -20,6 +21,23 @@ export default function DashboardHome() {
     const router = useRouter();
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [categoryCodes, setCategoryCodes] = useState<ICommonCode[]>([]);
+    const [statusCodes, setStatusCodes] = useState<ICommonCode[]>([]);
+    const fetchCommonCodes = async () => {
+        try {
+            const response = await fetch('/api/commonCodes');
+            const data = await response.json();
+            if (data.success) {
+                setCategoryCodes(data.data.categoryCodes);
+                setStatusCodes(data.data.statusCodes);
+            }
+        } catch (error) {
+            console.error('Failed to fetch common codes:', error);
+        }
+    };
+    useEffect(() => {
+        fetchCommonCodes();
+    }, []);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -41,7 +59,26 @@ export default function DashboardHome() {
                     setIsLoading(false);
                 }
             };
+
+            const fetchCommonCodes = async () => {
+                try {
+                    const [categoryRes, statusRes] = await Promise.all([
+                        fetch('/api/common-codes?group=CATEGORY'),
+                        fetch('/api/common-codes?group=STATUS')
+                    ]);
+
+                    const categoryData = await categoryRes.json();
+                    const statusData = await statusRes.json();
+
+                    if (categoryData.success) setCategoryCodes(categoryData.data);
+                    if (statusData.success) setStatusCodes(statusData.data);
+                } catch (error) {
+                    console.error('Failed to fetch common codes:', error);
+                }
+            };
+
             fetchMyProjects();
+            fetchCommonCodes();
         }
     }, [status, session, router]);
 
@@ -68,21 +105,24 @@ export default function DashboardHome() {
                                     <div className="flex items-center justify-center h-full text-4xl">🚀</div>
                                 )}
                                 <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded backdrop-blur-sm">
-                                    {project.category}
+                                    {categoryCodes.find(c => c.code === project.category)?.label || project.category}
                                 </div>
                             </div>
                             <div className="p-6">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                     {project.title}
                                 </h2>
-                                <div className="flex items-center justify-between mt-4">
-                                    <span className={`px-2 py-1 text-xs rounded-full ${project.status === 'recruiting'
-                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                                        }`}>
-                                        {project.status === 'recruiting' ? '02' : '03'}
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold rounded">
+                                        {categoryCodes.find(c => c.code === project.category)?.label || project.category}
                                     </span>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    <span className={`px-2.5 py-1 text-xs font-semibold rounded ${project.status === '01'
+                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                        }`}>
+                                        {statusCodes.find(c => c.code === project.status)?.label || project.status}
+                                    </span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
                                         멤버 {project.members?.length || 0}명
                                     </span>
                                 </div>

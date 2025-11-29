@@ -134,7 +134,7 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({ lang: 'ko' }),
       });
-      
+
       if (!response.ok) {
         throw new Error('네트워크 응답이 정상이 아닙니다');
       }
@@ -186,8 +186,8 @@ export default function RegisterPage() {
 
     try {
       // 닉네임이 비어있다면 랜덤 생성하여 전송
-      const nNameToSend = formData.nName && formData.nName.trim() 
-        ? formData.nName.trim() 
+      const nNameToSend = formData.nName && formData.nName.trim()
+        ? formData.nName.trim()
         : await generateRandomNickname();
 
       const response = await fetch('/api/auth/register', {
@@ -206,11 +206,11 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (data.success) {
-          // 닉네임이 자동 생성되었을 경우 폼에도 반영해 사용자에게 보여줌
-          if (!formData.nName || !formData.nName.trim()) {
-            setFormData((prev) => ({ ...prev, nName: nNameToSend }));
-          }
-          setSuccess('회원가입이 성공적으로 완료되었습니다. 로그인 페이지로 이동합니다...');
+        // 닉네임이 자동 생성되었을 경우 폼에도 반영해 사용자에게 보여줌
+        if (!formData.nName || !formData.nName.trim()) {
+          setFormData((prev) => ({ ...prev, nName: nNameToSend }));
+        }
+        setSuccess('회원가입이 성공적으로 완료되었습니다. 로그인 페이지로 이동합니다...');
         setTimeout(() => {
           router.push('/login');
         }, 2000);
@@ -225,27 +225,27 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             회원가입
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             이미 계정이 있으신가요?{' '}
-            <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <a href="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
               로그인
             </a>
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded">
               {error}
             </div>
           )}
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+            <div className="bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-200 px-4 py-3 rounded">
               {success}
             </div>
           )}
@@ -261,15 +261,14 @@ export default function RegisterPage() {
                 autoComplete="email"
                 required
                 aria-invalid={!isEmailValid && !!formData.authorEmail}
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm ${
-                  !isEmailValid && formData.authorEmail ? 'border-red-500 focus:border-red-500' : 'border-gray-300'
-                }`}
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm ${!isEmailValid && formData.authorEmail ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700'
+                  }`}
                 placeholder="이메일"
                 value={formData.authorEmail}
                 onChange={handleChange}
               />
               {emailError && (
-                <p className="mt-1 text-sm text-red-600" role="alert">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
                   {emailError}
                 </p>
               )}
@@ -283,13 +282,13 @@ export default function RegisterPage() {
                 name="nName"
                 type="text"
                 autoComplete="name"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="닉네임 (선택)"
                 maxLength={32}
                 value={formData.nName}
                 onChange={handleChange}
               />
-              <div className="mt-1 flex items-center justify-between text-sm text-gray-500">
+              <div className="mt-1 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                 <span>{formData.nName.length}/32</span>
                 {!formData.nName && (
                   <span className="italic">입력하지 않으면 랜덤 닉네임이 생성됩니다.</span>
@@ -305,13 +304,13 @@ export default function RegisterPage() {
                 name="mblNo"
                 type="tel"
                 autoComplete="tel"
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="휴대폰 번호 (선택)"
                 value={formData.mblNo}
                 onChange={handleChange}
               />
               {phoneError && (
-                <p className="mt-1 text-sm text-red-600" role="alert">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
                   {phoneError}
                 </p>
               )}
@@ -327,15 +326,14 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 required
                 aria-invalid={!isPasswordValid && !!formData.password}
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm ${
-                  !isPasswordValid && formData.password ? 'border-red-500 focus:border-red-500' : 'border-gray-300'
-                }`}
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm ${!isPasswordValid && formData.password ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-700'
+                  }`}
                 placeholder="비밀번호 (최소 8자, 4종 중 3종 포함 권장)"
                 value={formData.password}
                 onChange={handleChange}
               />
               {passwordError && (
-                <p className="mt-1 text-sm text-red-600" role="alert">
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
                   {passwordError}
                 </p>
               )}
@@ -343,19 +341,18 @@ export default function RegisterPage() {
               {passwordStrength && (
                 <div className="mt-2">
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-700">비밀번호 강도:</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">비밀번호 강도:</span>
                     <span
-                      className={`text-sm font-semibold ${
-                        passwordStrength === '위험' ? 'text-red-600' : passwordStrength === '보통' ? 'text-yellow-600' : 'text-green-600'
-                      }`}
+                      className={`text-sm font-semibold ${passwordStrength === '위험' ? 'text-red-600 dark:text-red-400' : passwordStrength === '보통' ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'
+                        }`}
                     >
                       {passwordStrength}
                     </span>
                   </div>
                   <div className="mt-1 flex space-x-1">
                     <span className={`h-1 flex-1 rounded ${passwordStrength === '위험' ? 'bg-red-600' : passwordStrength === '보통' ? 'bg-yellow-400' : 'bg-green-500'} ${passwordStrength === '보통' ? 'opacity-80' : ''}`} />
-                    <span className={`h-1 flex-1 rounded ${passwordStrength === '보통' ? (passwordStrength === '보통' ? 'bg-yellow-400' : 'bg-gray-200') : passwordStrength === '안전' ? 'bg-green-500' : 'bg-gray-200'}`} />
-                    <span className={`h-1 flex-1 rounded ${passwordStrength === '안전' ? 'bg-green-500' : 'bg-gray-200'}`} />
+                    <span className={`h-1 flex-1 rounded ${passwordStrength === '보통' ? (passwordStrength === '보통' ? 'bg-yellow-400' : 'bg-gray-200 dark:bg-gray-600') : passwordStrength === '안전' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'}`} />
+                    <span className={`h-1 flex-1 rounded ${passwordStrength === '안전' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'}`} />
                   </div>
                 </div>
               )}
@@ -370,7 +367,7 @@ export default function RegisterPage() {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white dark:bg-gray-800 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="비밀번호 확인"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -382,7 +379,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading || !isEmailValid || !isPasswordValid}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
               {isLoading ? '회원가입 중...' : '회원가입'}
             </button>
