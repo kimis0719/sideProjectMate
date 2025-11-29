@@ -67,7 +67,7 @@ export default function Header() {
     };
 
     const mainCategories = [
-        { label: '기술서', path: '/tech' },
+        { label: '프로필', path: '/profile' },
         { label: '프로젝트', path: '/projects' },
         { label: '대쉬보드', path: '/dashboard' },
     ];
@@ -159,7 +159,7 @@ export default function Header() {
                                     )}
                                 </div>
 
-                                <Link href="/profile" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900">마이페이지</Link>
+                                <Link href="/mypage" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900">마이페이지</Link>
                                 <button onClick={() => signOut({ callbackUrl: '/' })} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900">로그아웃</button>
                             </>
                         ) : (
