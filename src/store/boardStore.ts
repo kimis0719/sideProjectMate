@@ -3,6 +3,7 @@ import { devtools } from 'zustand/middleware';
 import type { INote } from '@/lib/models/kanban/NoteModel';
 import type { IBoard } from '@/lib/models/kanban/BoardModel';
 import type { ISection } from '@/lib/models/kanban/SectionModel';
+import { socketClient } from '@/lib/socket';
 
 export type Note = Omit<INote, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
 export type Board = Omit<IBoard, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
@@ -24,6 +25,7 @@ type BoardState = {
   spawnIndex: number;
   nextColorIndex: number;
   initBoard: (pid: number) => Promise<void>;
+  initSocket: () => void;
   addNote: (containerWidth?: number, containerHeight?: number) => Promise<void>;
   moveNote: (id: string, x: number, y: number) => void;
   moveNotes: (ids: string[], dx: number, dy: number) => void;
@@ -93,10 +95,62 @@ export const useBoardStore = create<BoardState>()(
           }
 
           set({ notes, sections });
+          get().initSocket();
         } catch (error) {
           console.error(error);
           set({ notes: [], sections: [], boardId: null });
         }
+      },
+
+      initSocket: () => {
+        const { boardId } = get();
+        if (!boardId) return;
+
+        const socket = socketClient.connect();
+
+        socket.emit('join-board', boardId.toString());
+
+        socket.off('note-updated');
+        socket.on('note-updated', (updatedNote: Note) => {
+          set((state) => ({
+            notes: state.notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)),
+          }));
+        });
+
+        socket.off('note-created');
+        socket.on('note-created', (newNote: Note) => {
+          set((state) => ({
+            notes: [...state.notes, newNote],
+          }));
+        });
+
+        socket.off('note-deleted');
+        socket.on('note-deleted', (noteId: string) => {
+          set((state) => ({
+            notes: state.notes.filter((n) => n.id !== noteId),
+          }));
+        });
+
+        socket.off('section-updated');
+        socket.on('section-updated', (updatedSection: Section) => {
+          set((state) => ({
+            sections: state.sections.map((s) => (s.id === updatedSection.id ? updatedSection : s)),
+          }));
+        });
+
+        socket.off('section-created');
+        socket.on('section-created', (newSection: Section) => {
+          set((state) => ({
+            sections: [...state.sections, newSection],
+          }));
+        });
+
+        socket.off('section-deleted');
+        socket.on('section-deleted', (sectionId: string) => {
+          set((state) => ({
+            sections: state.sections.filter((s) => s.id !== sectionId),
+          }));
+        });
       },
 
       addNote: async (containerWidth?: number, containerHeight?: number) => {
@@ -155,6 +209,10 @@ export const useBoardStore = create<BoardState>()(
             notes: state.notes.map((n) => (n.id === optimisticNote.id ? savedNote : n)),
             selectedNoteIds: [savedNote.id],
           }));
+
+          const socket = socketClient.connect();
+          socket.emit('create-note', { boardId, note: savedNote });
+
         } catch (error) {
           console.error(error);
           set({ notes });
@@ -162,6 +220,7 @@ export const useBoardStore = create<BoardState>()(
       },
 
       removeNote: async (id) => {
+        const { boardId } = get();
         const originalNotes = get().notes;
         set((state) => ({
           notes: state.notes.filter((n) => n.id !== id),
@@ -171,6 +230,11 @@ export const useBoardStore = create<BoardState>()(
         try {
           const response = await fetch(`/api/kanban/notes/${id}`, { method: 'DELETE' });
           if (!response.ok) throw new Error('Failed to delete note');
+
+          if (boardId) {
+            const socket = socketClient.connect();
+            socket.emit('delete-note', { boardId, noteId: id });
+          }
         } catch (error) {
           console.error(error);
           set({ notes: originalNotes });
@@ -178,6 +242,7 @@ export const useBoardStore = create<BoardState>()(
       },
 
       removeNotes: async (ids: string[]) => {
+        const { boardId } = get();
         const originalNotes = get().notes;
         set((state) => ({
           notes: state.notes.filter((n) => !ids.includes(n.id)),
@@ -191,6 +256,13 @@ export const useBoardStore = create<BoardState>()(
             body: JSON.stringify({ ids }),
           });
           if (!response.ok) throw new Error('Failed to batch delete notes');
+
+          if (boardId) {
+            const socket = socketClient.connect();
+            ids.forEach(id => {
+              socket.emit('delete-note', { boardId, noteId: id });
+            });
+          }
         } catch (error) {
           console.error(error);
           set({ notes: originalNotes });
@@ -198,7 +270,7 @@ export const useBoardStore = create<BoardState>()(
       },
 
       moveNote: (id, x, y) => set((state) => {
-        // 섹션 포함 여부 확인
+        const { boardId } = get();
         const NOTE_W = 200;
         const NOTE_H = 140;
         const centerX = x + NOTE_W / 2;
@@ -212,30 +284,83 @@ export const useBoardStore = create<BoardState>()(
             centerY <= s.y + s.height
         );
 
-        const newSectionId = containingSection ? containingSection.id : null;
+        const targetNote = state.notes.find((n) => n.id === id);
+        if (!targetNote) return state;
+
+        const updatedNote = { ...targetNote, x, y, sectionId: containingSection ? containingSection.id : null };
+
+        if (boardId) {
+          const socket = socketClient.connect();
+          socket.emit('update-note', { boardId, note: updatedNote });
+        }
 
         return {
-          notes: state.notes.map((n) => (n.id === id ? { ...n, x, y, sectionId: newSectionId as any } : n)),
+          notes: state.notes.map((n) => (n.id === id ? updatedNote : n)),
         };
       }),
 
-      moveNotes: (ids, dx, dy) => set((state) => ({
-        notes: state.notes.map((n) =>
-          ids.includes(n.id) ? { ...n, x: n.x + dx, y: n.y + dy } : n
-        ),
-      })),
+      moveNotes: (ids, dx, dy) => set((state) => {
+        const { boardId } = get();
 
-      updateNote: (id, patch) => set((state) => ({
-        notes: state.notes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
-      })),
+        // 1. 변경될 노트들의 정보를 미리 계산 (위치 업데이트)
+        const updatedNotes = state.notes
+          .filter((n) => ids.includes(n.id))
+          .map((n) => ({
+            ...n,
+            x: n.x + dx,
+            y: n.y + dy,
+            // (옵션) 다건 이동 시에도 섹션 위치 재계산이 필요하다면 여기에 로직 추가
+            // sectionId: ... (moveNote의 section 찾기 로직 참고)
+          }));
+
+        // 2. 소켓으로 '변경된 노트 목록' 전송 (Batch)
+        if (boardId && updatedNotes.length > 0) {
+          const socket = socketClient.connect();
+          // TODO :: 'update-notes' (복수형) 이벤트를 새로 정의하여 배열을 보냅니다.
+          // socket.emit('update-notes', { boardId, notes: updatedNotes });
+          updatedNotes.forEach(updatedNote => {
+            socket.emit('update-note', { boardId, note: updatedNote });
+          })
+        }
+
+        return {
+          notes: state.notes.map((n) =>
+            ids.includes(n.id) ? { ...n, x: n.x + dx, y: n.y + dy } : n
+          )
+        }
+      }),
+
+      updateNote: (id, patch) => {
+        const { boardId } = get();
+        set((state) => {
+          const targetNote = state.notes.find((n) => n.id === id);
+          if (!targetNote) return state;
+          const updatedNote = { ...targetNote, ...patch };
+
+          if (boardId) {
+            const socket = socketClient.connect();
+            socket.emit('update-note', { boardId, note: updatedNote });
+          }
+
+          return {
+            notes: state.notes.map((n) => (n.id === id ? updatedNote : n)),
+          };
+        });
+      },
 
       updateNotes: async (updates) => {
+        const { boardId } = get();
         set((state) => {
           const newNotes = [...state.notes];
           updates.forEach(({ id, changes }) => {
             const idx = newNotes.findIndex((n) => n.id === id);
             if (idx !== -1) {
               newNotes[idx] = { ...newNotes[idx], ...changes };
+
+              if (boardId) {
+                const socket = socketClient.connect();
+                socket.emit('update-note', { boardId, note: newNotes[idx] });
+              }
             }
           });
           return { notes: newNotes };
@@ -253,18 +378,18 @@ export const useBoardStore = create<BoardState>()(
         }
       },
 
-      selectNote: (id, multi = false) => set((state) => {
-        if (id === null) return { selectedNoteIds: [] };
-        if (multi) {
-          const isSelected = state.selectedNoteIds.includes(id);
-          return {
-            selectedNoteIds: isSelected
-              ? state.selectedNoteIds.filter((sid) => sid !== id)
-              : [...state.selectedNoteIds, id],
-          };
-        }
-        return { selectedNoteIds: [id] };
-      }),
+      selectNote: (id, multi) =>
+        set((state) => {
+          if (!id) return { selectedNoteIds: [] };
+          if (multi) {
+            return {
+              selectedNoteIds: state.selectedNoteIds.includes(id)
+                ? state.selectedNoteIds.filter((sid) => sid !== id)
+                : [...state.selectedNoteIds, id],
+            };
+          }
+          return { selectedNoteIds: [id] };
+        }),
 
       selectNotes: (ids) => set({ selectedNoteIds: ids }),
 
@@ -273,15 +398,21 @@ export const useBoardStore = create<BoardState>()(
       setPan: (x, y) => set({ pan: { x, y } }),
 
       fitToContent: (containerWidth, containerHeight) => {
-        const { notes } = get();
-        const { sections } = get();
-        if (notes.length === 0 || sections.length === 0) return;
-
-        const PADDING = 50;
-        const NOTE_WIDTH = 200;
-        const NOTE_HEIGHT = 140;
+        const { notes, sections } = get();
+        if (notes.length === 0 && sections.length === 0) {
+          set({ zoom: 1, pan: { x: 0, y: 0 } });
+          return;
+        }
 
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+        notes.forEach((n) => {
+          minX = Math.min(minX, n.x);
+          minY = Math.min(minY, n.y);
+          maxX = Math.max(maxX, n.x + 200);
+          maxY = Math.max(maxY, n.y + 140);
+        });
+
         sections.forEach((s) => {
           minX = Math.min(minX, s.x);
           minY = Math.min(minY, s.y);
@@ -289,25 +420,20 @@ export const useBoardStore = create<BoardState>()(
           maxY = Math.max(maxY, s.y + s.height);
         });
 
-        notes.forEach((n) => {
-          minX = Math.min(minX, n.x);
-          minY = Math.min(minY, n.y);
-          maxX = Math.max(maxX, n.x + NOTE_WIDTH);
-          maxY = Math.max(maxY, n.y + NOTE_HEIGHT);
-        });
+        const PADDING = 100;
+        const contentW = maxX - minX + PADDING * 2;
+        const contentH = maxY - minY + PADDING * 2;
 
-        const contentWidth = maxX - minX + PADDING * 2;
-        const contentHeight = maxY - minY + PADDING * 2;
+        const scaleX = containerWidth / contentW;
+        const scaleY = containerHeight / contentH;
+        let newZoom = Math.min(scaleX, scaleY);
+        newZoom = Math.min(Math.max(newZoom, 0.1), 1.5);
 
-        const scaleX = containerWidth / contentWidth;
-        const scaleY = containerHeight / contentHeight;
-        const newZoom = Math.min(scaleX, scaleY, 1);
+        const contentCenterX = (minX + maxX) / 2;
+        const contentCenterY = (minY + maxY) / 2;
 
-        const centerX = (minX + maxX) / 2;
-        const centerY = (minY + maxY) / 2;
-
-        const newPanX = containerWidth / 2 - centerX * newZoom;
-        const newPanY = containerHeight / 2 - centerY * newZoom;
+        const newPanX = -contentCenterX * newZoom + containerWidth / 2;
+        const newPanY = -contentCenterY * newZoom + containerHeight / 2;
 
         set({ zoom: newZoom, pan: { x: newPanX, y: newPanY } });
       },
@@ -315,39 +441,77 @@ export const useBoardStore = create<BoardState>()(
       alignmentGuides: [],
       setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
 
-      // --- Section Actions ---
-      addSection: (section) => set((state) => ({
-        sections: [...state.sections, section],
-      })),
+      addSection: (section) => {
+        const { boardId } = get();
+        set((state) => ({ sections: [...state.sections, section] }));
 
-      updateSection: (id, patch) => set((state) => ({
-        sections: state.sections.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-      })),
+        if (boardId) {
+          const socket = socketClient.connect();
+          socket.emit('create-section', { boardId, section });
+        }
+      },
 
-      removeSection: (id) => set((state) => ({
-        sections: state.sections.filter((s) => s.id !== id),
-      })),
+      updateSection: (id, patch) => {
+        const { boardId } = get();
+        set((state) => {
+          const targetSection = state.sections.find(s => s.id === id);
+          if (!targetSection) return state;
+          const updatedSection = { ...targetSection, ...patch };
 
-      moveSection: (id, x, y) => set((state) => {
-        const section = state.sections.find((s) => s.id === id);
-        if (!section) return state;
-
-        const dx = x - section.x;
-        const dy = y - section.y;
-
-        // 1. 섹션 이동
-        const newSections = state.sections.map((s) => (s.id === id ? { ...s, x, y } : s));
-
-        // 2. 하위 노트 이동 (sectionId가 일치하는 노트들)
-        const newNotes = state.notes.map((n) => {
-          if (n.sectionId?.toString() === id) {
-            return { ...n, x: n.x + dx, y: n.y + dy };
+          if (boardId) {
+            const socket = socketClient.connect();
+            socket.emit('update-section', { boardId, section: updatedSection });
           }
-          return n;
-        });
 
-        return { sections: newSections, notes: newNotes };
-      }),
+          return {
+            sections: state.sections.map((s) => (s.id === id ? updatedSection : s)),
+          };
+        });
+      },
+
+      removeSection: (id) => {
+        const { boardId } = get();
+        set((state) => ({ sections: state.sections.filter((s) => s.id !== id) }));
+
+        if (boardId) {
+          const socket = socketClient.connect();
+          socket.emit('delete-section', { boardId, sectionId: id });
+        }
+      },
+
+      moveSection: (id, x, y) => {
+        const { boardId } = get();
+        set((state) => {
+          const section = state.sections.find((s) => s.id === id);
+          if (!section) return state;
+
+          const dx = x - section.x;
+          const dy = y - section.y;
+
+          // 1. 섹션 이동
+          const newSections = state.sections.map((s) => (s.id === id ? { ...s, x, y } : s));
+
+          // 2. 하위 노트 이동 (sectionId가 일치하는 노트들)
+          const newNotes = state.notes.map((n) => {
+            if (n.sectionId?.toString() === id) {
+              return { ...n, x: n.x + dx, y: n.y + dy };
+            }
+            return n;
+          });
+
+          if (boardId) {
+            const socket = socketClient.connect();
+            newSections.forEach(section => {
+              socket.emit('update-section', { boardId, section });
+            })
+            newNotes.forEach(note => {
+              socket.emit('update-note', { boardId, note });
+            })
+          }
+
+          return { sections: newSections, notes: newNotes };
+        });
+      },
     })
   )
 );
