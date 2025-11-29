@@ -1,148 +1,71 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
-
-interface MyApplication {
-  _id: string;
-  projectId: {
-    title: string;
-    pid: number;
-  };
-  role: string;
-  status: 'pending' | 'accepted' | 'rejected';
-}
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import StatusDashboard from '@/components/profile/StatusDashboard';
+import SkillSection from '@/components/profile/SkillSection';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
-
-  const fetchMyApplications = useCallback(async () => {
-    try {
-      const response = await fetch('/api/applications');
-      const data = await response.json();
-      if (data.success) {
-        setMyApplications(data.data);
-      } else {
-        console.error(data.message);
-      }
-    } catch (error) {
-      console.error('지원 내역을 불러오는 중 오류 발생', error);
-    }
-  }, []);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
+    } else if (status === 'authenticated') {
+      setIsLoading(false);
     }
-    if (status === 'authenticated') {
-      fetchMyApplications();
-    }
-  }, [status, router, fetchMyApplications]);
+  }, [status, router]);
 
-  const handleCancelApplication = async (appId: string) => {
-    if (confirm('정말 지원을 취소하시겠습니까?')) {
-      try {
-        const response = await fetch(`/api/applications/${appId}`, { method: 'DELETE' });
-        const data = await response.json();
-        if (data.success) {
-          alert('지원서가 삭제되었습니다.');
-          fetchMyApplications(); // 목록 새로고침
-        } else {
-          throw new Error(data.message);
-        }
-      } catch (err: any) {
-        alert(err.message);
-      }
+  if (status === 'loading' || isLoading) {
+    return <div className="p-8 text-center">로딩 중...</div>;
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  // 임시 사용자 데이터 (추후 DB 연동)
+  const userData = {
+    nName: session.user?.name || '사용자',
+    email: session.user?.email || '',
+    position: 'Frontend Developer',
+    career: '3년차',
+    status: '구직중',
+    introduction: '안녕하세요! React와 Next.js를 좋아하는 개발자입니다. 사이드 프로젝트를 찾고 있어요.',
+    socialLinks: {
+      github: 'https://github.com',
+      blog: 'https://velog.io',
     }
   };
 
-  if (status === 'loading' || !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
-  }
-
-  const user = session.user;
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">내 정보</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">기본 정보</h2>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-600">이메일</label>
-                <p className="text-gray-900">{user.email}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-600">닉네임</label>
-                <p className="text-gray-900">{user.name || '설정되지 않음'}</p>
-              </div>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">활동 정보</h2>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-600">사용자 고유 ID</label>
-                <p className="text-gray-900 text-xs">{user._id}</p>
-              </div>
-              <div className="mt-6">
-                <button
-                  onClick={() => router.push(`/projects?authorId=${user._id}`)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
-                >
-                  내 프로젝트 보기
-                </button>
-              </div>
-            </div>
-          </div>
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      {/* Split-Header Section */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Left: Profile Header (2/3 width on desktop) */}
+        <div className="md:col-span-2">
+          <ProfileHeader user={userData} />
         </div>
-      </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">내 지원 현황</h2>
-        <div className="space-y-4">
-          {myApplications.length > 0 ? (
-            myApplications.map(app => (
-              <div key={app._id} className="p-4 border rounded-lg flex justify-between items-center">
-                <div>
-                  {app.projectId ? (
-                    <Link href={`/projects/${app.projectId.pid}`} className="font-semibold text-blue-600 hover:underline">
-                      {app.projectId.title}
-                    </Link>
-                  ) : (
-                    <span className="font-semibold text-gray-400">삭제된 프로젝트</span>
-                  )}
-                  <p className="text-sm text-gray-600">지원 역할: {app.role}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${app.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                      app.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    {app.status}
-                  </span>
-                  {app.status === 'pending' && (
-                    <button onClick={() => handleCancelApplication(app._id)} className="text-sm text-red-500 hover:underline">
-                      지원 취소
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500">아직 지원한 프로젝트가 없습니다.</p>
-          )}
+        {/* Right: Status Dashboard (1/3 width on desktop) */}
+        <div className="md:col-span-1">
+          <StatusDashboard status={userData.status} />
         </div>
-      </div>
+      </section>
+
+      {/* Skill Section */}
+      <section>
+        <SkillSection />
+      </section>
+
+      {/* 추후 Availability 섹션 추가 예정 */}
+      <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 min-h-[200px] flex items-center justify-center text-gray-400">
+        가용성 섹션 준비 중...
+      </section>
     </div>
   );
 }

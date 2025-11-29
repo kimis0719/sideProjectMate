@@ -9,6 +9,17 @@ export interface IUser extends Document {
   memberType: string;
   delYn: boolean;
   uid: number;
+  // 프로필 확장 필드
+  position?: string;
+  career?: string;
+  status?: string;
+  introduction?: string;
+  socialLinks?: {
+    github?: string;
+    blog?: string;
+    linkedin?: string;
+    other?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -47,6 +58,17 @@ const UserSchema: Schema = new Schema(
       type: Number,
       required: true,
       unique: true,
+    },
+    // 프로필 확장 필드 스키마
+    position: { type: String, default: '' },
+    career: { type: String, default: '' }, // 예: 'Junior', 'Senior', '3년차' 등
+    status: { type: String, default: '구직중' }, // 예: '구직중', '재직중', '팀빌딩중'
+    introduction: { type: String, default: '' },
+    socialLinks: {
+      github: { type: String, default: '' },
+      blog: { type: String, default: '' },
+      linkedin: { type: String, default: '' },
+      other: { type: String, default: '' },
     },
   },
   {
