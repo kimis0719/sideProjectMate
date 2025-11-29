@@ -42,7 +42,7 @@ export async function PATCH(
         const updatedTask = await Task.findByIdAndUpdate(
             taskId,
             updates,
-            { new: true, runValidators: true }
+            { new: true }
         ).populate('assignee', 'nName email');
 
         // 작업이 존재하지 않는 경우
