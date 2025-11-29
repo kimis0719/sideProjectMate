@@ -115,16 +115,19 @@ export default function ProfilePage() {
             myApplications.map(app => (
               <div key={app._id} className="p-4 border rounded-lg flex justify-between items-center">
                 <div>
-                  <Link href={`/projects/${app.projectId.pid}`} className="font-semibold text-blue-600 hover:underline">
-                    {app.projectId.title}
-                  </Link>
+                  {app.projectId ? (
+                    <Link href={`/projects/${app.projectId.pid}`} className="font-semibold text-blue-600 hover:underline">
+                      {app.projectId.title}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-gray-400">삭제된 프로젝트</span>
+                  )}
                   <p className="text-sm text-gray-600">지원 역할: {app.role}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                    app.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                    app.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${app.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                      app.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
                     {app.status}
                   </span>
                   {app.status === 'pending' && (
