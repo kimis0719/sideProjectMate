@@ -4,6 +4,7 @@ import React from 'react';
 import { useBoardStore } from '@/store/boardStore';
 import NoteItem from '@/components/board/NoteItem';
 import SectionItem from '@/components/board/SectionItem';
+import Minimap from '@/components/board/Minimap';
 
 /**
  * 임시로 사용할 공용 보드의 프로젝트 ID.
@@ -117,7 +118,9 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         e.preventDefault();
         const ZOOM_SENSITIVITY = 0.001;
         const currentZoom = useBoardStore.getState().zoom;
-        const newZoom = currentZoom - e.deltaY * ZOOM_SENSITIVITY;
+        let newZoom = currentZoom - e.deltaY * ZOOM_SENSITIVITY;
+        if (newZoom <= 0.1) newZoom = 0.1;
+        if (newZoom >= 1.5) newZoom = 1.5;
         setZoom(newZoom);
       }
     };
@@ -478,6 +481,48 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             return null;
           })}
         </svg>
+
+        {/* 미니맵 */}
+        <div className="absolute bottom-4 right-4 z-50">
+          <Minimap
+            notes={notes}
+            sections={sections}
+            pan={pan}
+            zoom={zoom}
+            containerWidth={containerRef.current?.clientWidth || 0}
+            containerHeight={containerRef.current?.clientHeight || 0}
+            setPan={setPan}
+          />
+        </div>
+
+        {/* 줌 컨트롤 */}
+        <div className="absolute bottom-4 left-4 flex gap-2">
+          <button
+            className="bg-white p-2 rounded shadow hover:bg-gray-50 text-gray-700"
+            onClick={() => setZoom(Math.max(0.1, zoom - 0.1))}
+          >
+            -
+          </button>
+          <span className="bg-white p-2 rounded shadow min-w-[60px] text-center text-gray-700">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            className="bg-white p-2 rounded shadow hover:bg-gray-50 text-gray-700"
+            onClick={() => setZoom(Math.min(2, zoom + 0.1))}
+          >
+            +
+          </button>
+          <button
+            className="bg-white p-2 rounded shadow hover:bg-gray-50 ml-2 text-gray-700"
+            onClick={() => {
+              if (containerRef.current) {
+                fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
+              }
+            }}
+          >
+            Fit
+          </button>
+        </div>
       </main>
     </div>
   );

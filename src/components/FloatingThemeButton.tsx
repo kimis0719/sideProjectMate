@@ -12,7 +12,7 @@ export default function FloatingThemeButton() {
   return (
     <button
       onClick={toggleTheme}
-      className="fixed bottom-8 right-8 z-50 p-4 bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-200 dark:border-gray-700"
+      className="fixed bottom-24 left-8 z-50 p-4 bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-200 dark:border-gray-700"
       aria-label="다크모드 토글"
     >
       {theme === 'dark' ? (
