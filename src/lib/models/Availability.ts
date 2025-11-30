@@ -15,6 +15,7 @@ export interface IAvailability extends Document {
         }>;
     }>;
     preference: number; // 0(완전 비동기) ~ 100(완전 동기)
+    personalityTags: string[]; // 성향 태그 (예: 'analyst', 'doer')
     createdAt: Date;
     updatedAt: Date;
 }
@@ -48,6 +49,10 @@ const AvailabilitySchema: Schema = new Schema(
             min: 0,
             max: 100,
             default: 50, // 기본값: 중간
+        },
+        personalityTags: {
+            type: [String],
+            default: [],
         },
     },
     {
