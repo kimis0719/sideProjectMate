@@ -61,6 +61,9 @@ export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
     // 2. Calculate Tech Tiers
     const languageScores: Record<string, { score: number; color: string }> = {};
     const topicScores: Record<string, number> = {};
+    const displayNameMap: Record<string, string> = {};
+
+    const normalizeKey = (key: string) => key.toLowerCase().replace(/[\.\-_]/g, '');
 
     contribution.commitContributionsByRepository.forEach((repoContrib) => {
         const lang = repoContrib.repository.primaryLanguage;
@@ -95,11 +98,18 @@ export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
 
         // Topic (Environment) Score
         topics.forEach((node) => {
-            const topicName = node.topic.name.toLowerCase();
-            if (!topicScores[topicName]) {
-                topicScores[topicName] = 0;
+            const rawName = node.topic.name;
+            const normKey = normalizeKey(rawName);
+
+            if (!topicScores[normKey]) {
+                topicScores[normKey] = 0;
             }
-            topicScores[topicName] += score;
+            topicScores[normKey] += score;
+
+            // Preserve display name (prefer longer/capitalized ones if possible, but topics are usually lowercase)
+            if (!displayNameMap[normKey]) {
+                displayNameMap[normKey] = rawName;
+            }
         });
 
         // Dependency Analysis (package.json)
@@ -157,9 +167,12 @@ export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
                     }
 
                     if (matchedEnv) {
-                        const envKey = matchedEnv.toLowerCase(); // Use lowercase key for aggregation
-                        if (!topicScores[envKey]) topicScores[envKey] = 0;
-                        topicScores[envKey] += score;
+                        const normKey = normalizeKey(matchedEnv); // Use normalized key
+                        if (!topicScores[normKey]) topicScores[normKey] = 0;
+                        topicScores[normKey] += score;
+
+                        // Update display name (Library Mapping usually has better formatting than topics)
+                        displayNameMap[normKey] = matchedEnv;
                     }
                 });
             } catch (e) {
@@ -180,12 +193,9 @@ export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
     // Filter meaningful frameworks/tools (whitelist approach could be better, but let's take top ones)
     // For now, take top 10 topics that are not just generic words
     const envTiers = Object.entries(topicScores)
-        .map(([topicKey, score]) => {
-            // Try to find display name from mapping, otherwise capitalize
-            // Reverse lookup or better storage needed if we want exact display name preservation
-            // Simple fix: capitalize
+        .map(([key, score]) => {
             return {
-                topic: topicKey,
+                topic: displayNameMap[key] || key, // Use stored display name
                 score: Math.round(score),
                 grade: calculateGrade(score),
             };
