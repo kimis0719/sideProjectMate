@@ -62,6 +62,13 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
     const [conflicts, setConflicts] = useState<ScheduleConflict[]>([]);
     const [suggestions, setSuggestions] = useState<AdjustmentSuggestion[]>([]);
 
+    // 프로젝트 지원자 목록 상태
+    const [applicants, setApplicants] = useState<Array<{ _id: string; nName: string; email?: string; status: 'pending'|'accepted'|'rejected'; role?: string }>>([]);
+    const [loadingApplicants, setLoadingApplicants] = useState(false);
+    // 프로젝트 담당자(작성자)
+    const [projectOwner, setProjectOwner] = useState<{ _id: string; nName: string } | null>(null);
+    const [loadingOwner, setLoadingOwner] = useState(false);
+
     // task prop이 변경되면 폼 데이터 초기화
     useEffect(() => {
         if (task) {
@@ -113,6 +120,49 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
             });
         }
     }, [task, session]);
+
+    // 프로젝트 지원자 목록 불러오기
+    useEffect(() => {
+        const fetchApplicants = async () => {
+            try {
+                setLoadingApplicants(true);
+                const res = await fetch(`/api/applications/by-project/${projectId}`);
+                const json = await res.json();
+                if (json.success && Array.isArray(json.data)) {
+                    const list = json.data.map((item: any) => ({
+                        _id: item.applicant?._id || '',
+                        nName: item.applicant?.nName || item.applicant?.email || '지원자',
+                        email: item.applicant?.email,
+                        status: item.status,
+                        role: item.role,
+                    }));
+                    setApplicants(list);
+                }
+            } catch (e) {
+                // 실패 시 무시
+            } finally {
+                setLoadingApplicants(false);
+            }
+        };
+        const fetchOwner = async () => {
+            try {
+                setLoadingOwner(true);
+                const res = await fetch(`/api/projects/${projectId}`);
+                const json = await res.json();
+                if (json.success && json.data?.author?._id) {
+                    setProjectOwner({ _id: json.data.author._id, nName: json.data.author.nName || '작성자' });
+                }
+            } catch (e) {
+                // 실패 시 무시
+            } finally {
+                setLoadingOwner(false);
+            }
+        };
+        if (projectId) {
+            fetchApplicants();
+            fetchOwner();
+        }
+    }, [projectId]);
 
     // 입력 필드 변경 핸들러
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -288,12 +338,39 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                     >
                         <option value="">담당자 선택</option>
-                        {projectMembers.map((member) => (
-                            <option key={member._id} value={member._id}>
-                                {member.nName || member.email}
-                            </option>
-                        ))}
+                        {/* 프로젝트 담당자(작성자) */}
+                        {projectOwner && (
+                            <optgroup label="프로젝트 담당자">
+                                <option key={`owner-${projectOwner._id}`} value={projectOwner._id}>
+                                    {projectOwner.nName} (작성자)
+                                </option>
+                            </optgroup>
+                        )}
+                        {/* 프로젝트 멤버 */}
+                        <optgroup label="프로젝트 멤버">
+                            {projectMembers.map((member) => (
+                                <option key={`member-${member._id}`} value={member._id}>
+                                    {member.nName || member.email}
+                                </option>
+                            ))}
+                        </optgroup>
+                        {/* 지원자 목록 */}
+                        {applicants.length > 0 && (
+                            <optgroup label="프로젝트 지원자">
+                                {applicants.map((app) => (
+                                    <option key={`applicant-${app._id}`} value={app._id}>
+                                        {app.nName} {app.status === 'accepted' ? '(수락)' : app.status === 'pending' ? '(대기)' : '(거절)'}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        )}
                     </select>
+                    {loadingApplicants && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">지원자 목록 불러오는 중...</p>
+                    )}
+                    {loadingOwner && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">프로젝트 담당자 확인 중...</p>
+                    )}
                 </div>
 
                 {/* 시작일 / 종료일 */}
