@@ -7,6 +7,9 @@ import User from '@/lib/models/User';
 import Project from '@/lib/models/Project';
 import { headers } from 'next/headers';
 
+// 모델 등록을 보장하기 위해 임시 변수 할당 (Tree-shaking 방지)
+const _models = { User, Project };
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {

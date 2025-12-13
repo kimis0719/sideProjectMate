@@ -17,6 +17,16 @@ export async function GET(request: Request) {
 
         const availability = await Availability.findOne({ userId: session.user._id });
 
+        if (availability) {
+            console.log(`[API] GET /availability found: ${availability.schedule?.length || 0} days`);
+            // 상세 데이터 로깅 (첫 번째 요일만 샘플로)
+            if (availability.schedule?.length > 0) {
+                console.log('[API] Sample Day:', JSON.stringify(availability.schedule[0]));
+            }
+        } else {
+            console.log('[API] GET /availability: No data found');
+        }
+
         return NextResponse.json({
             success: true,
             data: availability || { schedule: [], preference: 50, personalityTags: [] },
@@ -40,13 +50,18 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { schedule, preference, personalityTags } = body;
 
+        // 데이터 크기 확인용 로그 (전체 출력 대신 요약)
+        console.log(`[API] Saving Availability: ${schedule?.length || 0} days, Preference: ${preference}`);
+
         const availability = await Availability.findOneAndUpdate(
             { userId: session.user._id },
             {
-                userId: session.user._id,
-                schedule,
-                preference,
-                personalityTags,
+                $set: {
+                    userId: session.user._id,
+                    schedule,
+                    preference,
+                    personalityTags,
+                }
             },
             { new: true, upsert: true }
         );

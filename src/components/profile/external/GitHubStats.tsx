@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { GitHubStats } from '@/lib/github/utils';
+import { getIconSlug } from '@/lib/iconUtils';
 
 interface GitHubStatsProps {
     githubUrl?: string; // e.g., https://github.com/username
@@ -107,9 +108,8 @@ export default function GitHubStatsSection({ githubUrl }: GitHubStatsProps) {
                                 type: 'Lang'
                             }));
                             const envs = (stats.envTiers || []).map(t => ({
-                                name: t.topic, // Topic name is already lowercase/raw, can capitalize if needed 
+                                name: t.topic, // Topic name is already lowercase/raw
                                 ...t,
-                                color: '#4aa02c', // Default color for Env (e.g. Node green) or random
                                 type: 'Env'
                             }));
 
@@ -122,29 +122,52 @@ export default function GitHubStatsSection({ githubUrl }: GitHubStatsProps) {
                                 return <div className="text-gray-400 text-sm italic">기여한 리포지토리가 없습니다.</div>;
                             }
 
-                            return topSkills.map((tier) => (
-                                <div key={tier.name} className="flex items-center justify-between bg-white p-3 rounded-lg border hover:shadow-md transition-shadow">
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tier.color }}></span>
-                                        <span className="font-medium text-gray-800">
-                                            {tier.name}
-                                            {tier.type === 'Env' && <span className="ml-1 text-[10px] text-gray-400 border border-gray-200 rounded px-1">Env</span>}
-                                        </span>
+                            return topSkills.map((tier) => {
+                                const iconSlug = getIconSlug(tier.name);
+                                const iconUrl = `https://skillicons.dev/icons?i=${iconSlug}`;
+
+                                return (
+                                    <div key={tier.name} className="flex items-center justify-between bg-white p-3 rounded-lg border hover:shadow-md transition-shadow">
+                                        <div className="flex items-center gap-3">
+                                            {/* 아이콘 */}
+                                            <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center p-0.5">
+                                                <img
+                                                    src={iconUrl}
+                                                    alt={tier.name}
+                                                    className="w-full h-full object-contain"
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.display = 'none';
+                                                    }}
+                                                />
+                                            </div>
+
+                                            {/* 이름 & 타입 */}
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-gray-800 text-sm">
+                                                    {tier.name}
+                                                </span>
+                                                {tier.type === 'Env' && (
+                                                    <span className="text-[10px] text-gray-400">Environment</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 등급 점수 */}
+                                        <div className="flex flex-col items-end">
+                                            <span className={`
+                                                px-2 py-0.5 rounded text-xs font-bold w-6 text-center
+                                                ${tier.grade.startsWith('A') ? 'bg-purple-100 text-purple-700' : ''}
+                                                ${tier.grade.startsWith('B') ? 'bg-blue-100 text-blue-700' : ''}
+                                                ${tier.grade.startsWith('C') ? 'bg-green-100 text-green-700' : ''}
+                                                ${tier.grade.startsWith('D') ? 'bg-yellow-100 text-yellow-700' : ''}
+                                                ${['E', 'F'].includes(tier.grade) ? 'bg-gray-100 text-gray-600' : ''}
+                                            `}>
+                                                {tier.grade}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`
-                                            px-2 py-0.5 rounded text-sm font-bold w-8 text-center
-                                            ${tier.grade.startsWith('A') ? 'bg-purple-100 text-purple-700' : ''}
-                                            ${tier.grade.startsWith('B') ? 'bg-blue-100 text-blue-700' : ''}
-                                            ${tier.grade.startsWith('C') ? 'bg-green-100 text-green-700' : ''}
-                                            ${tier.grade.startsWith('D') ? 'bg-yellow-100 text-yellow-700' : ''}
-                                            ${['E', 'F'].includes(tier.grade) ? 'bg-gray-100 text-gray-600' : ''}
-                                        `}>
-                                            {tier.grade}
-                                        </span>
-                                    </div>
-                                </div>
-                            ));
+                                );
+                            });
                         })()}
                     </div>
                 </div>
