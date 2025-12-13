@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import StatusDashboard from '@/components/profile/StatusDashboard';
+import GitHubStats from '@/components/profile/external/GitHubStats';
+import BlogPostCard from '@/components/profile/external/BlogPostCard';
 import SkillSection from '@/components/profile/SkillSection';
 import AvailabilityScheduler from '@/components/profile/AvailabilityScheduler';
 import CommunicationStyleSlider from '@/components/profile/CommunicationStyleSlider';
@@ -46,7 +48,7 @@ export default function ProfilePage() {
         career: '3년차',
         status: '구직중',
         socialLinks: {
-          github: 'https://github.com',
+          github: 'https://github.com/kimis0719',
           blog: 'https://velog.io',
         },
         introduction: '안녕하세요! 저는 열정적인 프론트엔드 개발자입니다. 🚀',
@@ -132,6 +134,23 @@ export default function ProfilePage() {
       <section>
         <SkillSection />
       </section>
+
+      {/* Phase 3: GitHub Stats & Blog */}
+      {(userData?.socialLinks?.github || userData?.socialLinks?.blog) && (
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {userData?.socialLinks?.github && (
+            <div className="lg:col-span-2">
+              <GitHubStats githubUrl={userData.socialLinks.github} />
+            </div>
+          )}
+          {userData?.socialLinks?.blog && (
+            <div className="lg:col-span-1">
+              <BlogPostCard blogUrl={userData.socialLinks.blog} />
+            </div>
+          )}
+        </section>
+      )}
+
 
       {/* Phase 2: Availability & Style */}
       <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
