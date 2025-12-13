@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
         // 요청 본문에서 작업 정보 추출
         const body = await request.json();
-        const { pid, title, description, assignee, startDate, endDate, status, progress, dependencies } = body;
+        const { pid, title, description, assignee, startDate, endDate, status, progress, dependencies, phase, milestone } = body;
 
         // 필수 필드 검증
         if (!pid || !title || !assignee || !startDate || !endDate) {
@@ -88,6 +88,8 @@ export async function POST(request: NextRequest) {
             status: status || 'todo',
             progress: progress || 0,
             dependencies: dependencies || [],
+            phase: phase || '기본',
+            milestone: milestone || false,
         });
 
         // 생성된 작업을 populate하여 담당자 정보와 함께 반환

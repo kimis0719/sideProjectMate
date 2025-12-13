@@ -1,6 +1,7 @@
 'use client';
 
 import { Task } from '@/store/wbsStore';
+import { checkAllScheduleConflicts, calculateConflictSeverity } from '@/lib/utils/wbs/scheduleConflict';
 
 /**
  * TaskList 컴포넌트 Props 타입
@@ -23,6 +24,32 @@ interface TaskListProps {
  * - 수정/삭제 버튼
  */
 export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEdit, onTaskDelete }: TaskListProps) {
+    // 전체 작업의 충돌 검사
+    const allConflicts = checkAllScheduleConflicts(
+        tasks.map(task => ({
+            id: task.id,
+            title: task.title,
+            startDate: new Date(task.startDate),
+            endDate: new Date(task.endDate),
+            assignee: {
+                _id: task.assignee._id,
+                nName: task.assignee.nName,
+            },
+        }))
+    );
+
+    // 특정 작업이 충돌이 있는지 확인
+    const hasConflict = (taskId: string): boolean => {
+        for (const conflicts of Array.from(allConflicts.values())) {
+            for (const conflict of conflicts) {
+                if (conflict.conflictingTasks.some((t: { id: string }) => t.id === taskId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
     // 상태별 배지 색상 반환
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -66,6 +93,9 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                 작업명
                             </th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                단계/그룹
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 담당자
                             </th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -73,6 +103,9 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                             </th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 종료일
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                소요기간
                             </th>
                             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 진행률
@@ -88,7 +121,7 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {tasks.length === 0 ? (
                             <tr>
-                                <td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colSpan={9} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                     작업이 없습니다. 새 작업을 추가해보세요!
                                 </td>
                             </tr>
@@ -104,14 +137,39 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                 >
                                     {/* 작업명 */}
                                     <td className="px-4 py-3">
-                                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                            {task.title}
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                                {task.title}
+                                            </div>
+                                            {hasConflict(task.id) && (
+                                                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" title="일정 충돌">
+                                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                    </svg>
+                                                    충돌
+                                                </span>
+                                            )}
+                                            {task.milestone && (
+                                                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M10 2l2.5 7.5H20l-6 4.5 2.5 7.5L10 17l-6.5 4.5L6 14 0 9.5h7.5z"/>
+                                                    </svg>
+                                                    마일스톤
+                                                </span>
+                                            )}
                                         </div>
                                         {task.description && (
                                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xs">
                                                 {task.description}
                                             </div>
                                         )}
+                                    </td>
+
+                                    {/* 단계/그룹명 */}
+                                    <td className="px-4 py-3">
+                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                                            {task.phase || '기본'}
+                                        </span>
                                     </td>
 
                                     {/* 담당자 */}
@@ -132,6 +190,13 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                     <td className="px-4 py-3">
                                         <div className="text-sm text-gray-700 dark:text-gray-300">
                                             {formatDate(task.endDate)}
+                                        </div>
+                                    </td>
+
+                                    {/* 소요기간 */}
+                                    <td className="px-4 py-3">
+                                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                                            {Math.ceil((new Date(task.endDate).getTime() - new Date(task.startDate).getTime()) / (1000 * 60 * 60 * 24))}일
                                         </div>
                                     </td>
 
