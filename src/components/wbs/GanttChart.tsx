@@ -259,6 +259,90 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
     return () => clearTimeout(drawTimer);
   }, [ganttTasks, tasks]);
 
+  // 작업명 텍스트 색상 및 위치 조정
+  useEffect(() => {
+    const ganttContainer = wrapperRef.current;
+    if (!ganttContainer || ganttTasks.length === 0) return;
+
+    const adjustTextStyling = () => {
+      const svg = ganttContainer.querySelector('svg');
+      if (!svg) return;
+
+      const taskGroups = svg.querySelectorAll('g[data-id]');
+      
+      taskGroups.forEach((group, index) => {
+        const dataId = group.getAttribute('data-id');
+        
+        // 더미 작업 제외
+        if (dataId === 'ghost-start' || dataId === 'ghost-end') return;
+        
+        const rect = group.querySelector('rect.bar');
+        const text = group.querySelector('text');
+        
+        if (!rect || !text) return;
+        
+        try {
+          const x = parseFloat(rect.getAttribute('x') || '0');
+          const y = parseFloat(rect.getAttribute('y') || '0');
+          const width = parseFloat(rect.getAttribute('width') || '0');
+          const height = parseFloat(rect.getAttribute('height') || '0');
+          
+          // 첫 3개 작업의 디버그 로그
+          if (index < 3) {
+            console.log(`[${index}] Task ${dataId}:`, {
+              rect: { x, y, width, height },
+              before: {
+                x: text.getAttribute('x'),
+                y: text.getAttribute('y'),
+                textContent: text.textContent,
+              }
+            });
+          }
+          
+          // 새로운 text 요소 생성 (라이브러리 간섭 제거)
+          const newText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          const textContent = text.textContent || '';
+          
+          const centerX = x + width / 2;
+          const centerY = y + height / 2;
+          
+          newText.setAttribute('x', String(centerX));
+          newText.setAttribute('y', String(centerY));
+          newText.setAttribute('text-anchor', 'middle');
+          newText.setAttribute('dominant-baseline', 'central');
+          newText.setAttribute('fill', '#000000');
+          newText.setAttribute('font-weight', '500');
+          newText.setAttribute('font-size', '12px');
+          newText.setAttribute('pointer-events', 'none');
+          newText.textContent = textContent;
+          
+          // 기존 text 요소 제거하고 새 요소 추가
+          text.replaceWith(newText);
+          
+          if (index < 3) {
+            console.log(`[${index}] Task ${dataId} after:`, {
+              newX: newText.getAttribute('x'),
+              newY: newText.getAttribute('y'),
+            });
+          }
+        } catch (e) {
+          console.error('Error adjusting text styling:', e);
+        }
+      });
+    };
+
+    // 초기 조정
+    const timer = setTimeout(adjustTextStyling, 150);
+    
+    // 주기적으로 조정 (드래그 등으로 리렌더링될 때)
+    const interval = setInterval(adjustTextStyling, 800);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [ganttTasks]);
+
   // 다크모드 변경 감지 시 다시 그리기
   useEffect(() => {
     const ganttContainer = wrapperRef.current;
@@ -285,10 +369,23 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
       const svg = ganttContainer.querySelector('svg');
       if (!svg) return;
 
-      const texts = Array.from(ganttContainer.querySelectorAll('svg > text'));
       const allTexts = Array.from(ganttContainer.querySelectorAll('text'));
 
+      // 헤더 텍스트와 작업 텍스트를 구분
+      // 작업 텍스트는 g[data-id] 안에 있음
       const headerTexts = allTexts.filter(text => {
+        // g[data-id] 안의 텍스트는 제외 (작업 텍스트)
+        const parent = text.parentElement;
+        if (parent?.getAttribute('data-id')) {
+          return false;
+        }
+        
+        // svg 직계 자식이 아니면 제외 (중첩된 그룹 내 텍스트 제외)
+        if (parent?.tagName !== 'svg') {
+          return false;
+        }
+        
+        // 헤더 텍스트만 처리
         const y = text.getAttribute('y');
         return y && parseFloat(y) < 120;
       });
@@ -417,9 +514,35 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
         .gantt-chart-wrapper .gantt-task-react-header {
           height: 120px !important;
         }
-        .dark .gantt-chart-wrapper text {
-          fill: #e5e7eb !important;
+        
+        /* 모든 작업 텍스트를 검은색으로 설정 */
+        .gantt-chart-wrapper svg text {
+          fill: #000000 !important;
+          font-weight: 500 !important;
+          text-anchor: middle !important;
+          dominant-baseline: central !important;
         }
+        
+        /* 작업 바 내부 텍스트 - 위치 강제 설정 */
+        .gantt-chart-wrapper g[data-id] text {
+          text-anchor: middle !important;
+          dominant-baseline: central !important;
+          fill: #000000 !important;
+          font-weight: 500 !important;
+          font-size: 12px !important;
+          pointer-events: none !important;
+          x: auto !important;
+          y: auto !important;
+        }
+        
+        /* tspan 초기화 */
+        .gantt-chart-wrapper g[data-id] text tspan {
+          x: auto !important;
+          y: auto !important;
+          dx: 0 !important;
+          dy: 0 !important;
+        }
+        
         .dark .gantt-chart-wrapper line {
           stroke: #374151 !important;
         }
