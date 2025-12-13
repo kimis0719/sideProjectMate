@@ -34,13 +34,39 @@ type Props = {
   text: string;
   color?: string;
   zIndex?: number;
+  width?: number;
+  height?: number;
+  creatorId?: string;
+  updaterId?: string;
+  assigneeId?: string;
+  dueDate?: Date;
 };
 
 const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
 const SNAP_THRESHOLD = 3; // 스냅 거리 (픽셀) - 5px -> 3px로 축소
 const GRID_SIZE = 10; // 그리드 크기 (픽셀)
 
-export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1, width = 200, height = 140 }: Props & { width?: number; height?: number }) {
+// Helper to get nickname from ID
+const getMemberName = (id: string | undefined, members: any[]) => {
+  if (!id) return '';
+  const member = members.find((m) => m._id === id);
+  return member ? member.nName : 'Unknown';
+};
+
+export default function NoteItem({
+  id,
+  x,
+  y,
+  text,
+  color = '#FFFB8F',
+  zIndex = 1,
+  width = 200,
+  height = 140,
+  creatorId,
+  updaterId,
+  assigneeId,
+  dueDate,
+}: Props) {
   const {
     moveNote,
     moveNotes,
@@ -53,6 +79,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
     setOpenPaletteNoteId,
     zoom,
     setAlignmentGuides,
+    members,
   } = useBoardStore((s) => ({
     moveNote: s.moveNote,
     moveNotes: s.moveNotes,
@@ -65,10 +92,13 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
     setOpenPaletteNoteId: s.setOpenPaletteNoteId,
     zoom: s.zoom,
     setAlignmentGuides: s.setAlignmentGuides,
+    members: s.members,
   }));
 
   const [isEditing, setIsEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(text);
+  const [showAssigneePicker, setShowAssigneePicker] = React.useState(false);
+
   const isDragging = React.useRef(false);
   const isResizing = React.useRef(false); // 리사이즈 중인지 여부
   const lastPointerRef = React.useRef({ x: 0, y: 0 });
@@ -97,12 +127,15 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
   const debouncedSave = React.useMemo(() => debounce(saveChanges, 500), [saveChanges]);
   // --------------------
 
-  const beginEdit = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    setDraft(text);
-    setIsEditing(true);
-    selectNote(id);
-  }, [text, id, selectNote]);
+  const beginEdit = React.useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      setDraft(text);
+      setIsEditing(true);
+      selectNote(id);
+    },
+    [text, id, selectNote]
+  );
 
   const saveEdit = React.useCallback(() => {
     updateNote(id, { text: draft });
@@ -122,6 +155,22 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
     }
   }, [text, isEditing, isSelected, saveEdit]);
 
+  // Assignee Handlers
+  const handleAssigneeClick = (memberId: string) => {
+    updateNote(id, { assigneeId: memberId });
+    saveChanges({ assigneeId: memberId });
+    setShowAssigneePicker(false);
+  };
+
+  const creatorName = React.useMemo(
+    () => getMemberName(creatorId, members),
+    [creatorId, members]
+  );
+  const assigneeName = React.useMemo(
+    () => getMemberName(assigneeId, members),
+    [assigneeId, members]
+  );
+
   // --- Resize Handle (Start) ---
   const onResizePointerDown = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -131,6 +180,35 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
     (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
   }, []);
   // -----------------------------
+
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize logic with useEffect
+  React.useLayoutEffect(() => {
+    if (isEditing && textareaRef.current) {
+      // 1. Reset height to auto to correctly measure scrollHeight (shrink if needed)
+      textareaRef.current.style.height = 'auto';
+      const contentHeight = textareaRef.current.scrollHeight;
+
+      // 2. Set textarea height to fit content
+      textareaRef.current.style.height = `${contentHeight}px`;
+
+      // 3. Calculate required Note height (Top 40 + Bottom 30 + Content)
+      // Note: We maintain a minimum height of 140 (default) or whatever fits the content
+      const listHeaderHeight = 40;
+      const listFooterHeight = 30;
+      const newNoteHeight = Math.max(140, contentHeight + listHeaderHeight + listFooterHeight);
+
+      // 4. Update Note height if significant change
+      if (Math.abs(newNoteHeight - height) > 2) {
+        updateNote(id, { height: newNoteHeight });
+        debouncedSave({ height: newNoteHeight });
+      }
+    }
+    // height change triggers re-render, but we don't want to re-run layout effect on height change 
+    // (cause infinite loop), only on content change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, isEditing]);
 
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -310,9 +388,45 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
     setOpenPaletteNoteId(isPaletteOpen ? null : id);
   };
 
+  // --- Keyboard Accessibility ---
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (isEditing) return; // 편집 중이면 무시
+
+    const STEP = e.shiftKey ? 50 : 10;
+    let dx = 0;
+    let dy = 0;
+
+    switch (e.key) {
+      case 'ArrowUp': dy = -STEP; break;
+      case 'ArrowDown': dy = STEP; break;
+      case 'ArrowLeft': dx = -STEP; break;
+      case 'ArrowRight': dx = STEP; break;
+      case 'Enter':
+        e.preventDefault();
+        setIsEditing(true); // 엔터로 편집 진입
+        return;
+      case 'Delete':
+      case 'Backspace':
+        e.preventDefault();
+        removeNote(id);
+        return;
+      default: return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation(); // 부모(ShortcutHandler)로 전파 방지 (중복 실행 방지)
+
+    const newX = x + dx;
+    const newY = y + dy;
+    moveNote(id, newX, newY);
+    debouncedSave({ x: newX, y: newY });
+  }, [isEditing, x, y, id, moveNote, debouncedSave, setIsEditing, removeNote]);
+
   return (
     <div
       role="note"
+      tabIndex={0} // Focusable
+      onKeyDown={handleKeyDown}
       aria-grabbed={isDragging.current}
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={beginEdit}
@@ -429,6 +543,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
 
       {isEditing && (
         <textarea
+          ref={textareaRef}
           autoFocus
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -445,8 +560,11 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
           aria-label="노트 텍스트 편집"
           style={{
             position: 'absolute',
-            inset: 8,
+            left: 8,
+            right: 8,
             top: 40,
+            // inset: 8, // Removed to avoid 'bottom' constraint interfering with auto-resize
+            // bottom is undefined, allowing height to be controlled solely by content
             resize: 'none',
             outline: '2px solid rgba(59,130,246,0.5)',
             borderRadius: 8,
@@ -456,9 +574,111 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
             lineHeight: 1.4,
             color: '#111827',
             background: 'rgba(255,255,255,0.95)',
+            overflow: 'hidden',
           }}
         />
       )}
+
+      {/* Note Footer (Properties) */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 4,
+          left: 8,
+          right: 20, /* Resize handle space */
+          height: 24,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 12,
+          color: '#4B5563',
+          pointerEvents: 'auto', // Allow interaction
+          zIndex: 20, // Ensure it's above other elements
+        }}
+        onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
+      >
+        {/* Creator Display */}
+        {creatorId && (
+          <span style={{ fontSize: 10, color: '#9CA3AF', marginRight: 4, flexShrink: 0 }}>
+            By {creatorName}
+          </span>
+        )}
+
+        {/* Assignee Badge / Picker Trigger */}
+        <div style={{ position: 'relative' }}>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAssigneePicker(!showAssigneePicker);
+            }}
+            className="hover:bg-black/5 px-2 py-0.5 rounded transition-colors cursor-pointer flex items-center gap-1"
+            title="담당자 변경"
+          >
+            {assigneeId ? (
+              <span style={{ fontWeight: 600, color: '#1F2937' }}>@{assigneeName}</span>
+            ) : (
+              <span>+ Assignee</span>
+            )}
+          </div>
+
+          {/* Assignee Picker Popover */}
+          {showAssigneePicker && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '100%',
+                left: 0,
+                backgroundColor: 'white',
+                borderRadius: 8,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                padding: 4,
+                minWidth: 140,
+                zIndex: 30,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                maxHeight: 200,
+                overflowY: 'auto',
+              }}
+            >
+              {members.length > 0 ? (
+                members.map((member) => (
+                  <div
+                    key={member._id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAssigneeClick(member._id);
+                    }}
+                    className="px-2 py-1.5 hover:bg-gray-100 rounded cursor-pointer text-sm transition-colors"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    {/* Simple Avatar Placeholder */}
+                    <div
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: '50%',
+                        background: '#E5E7EB',
+                        fontSize: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#6B7280',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {member.nName[0]}
+                    </div>
+                    <span className="truncate">{member.nName}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="px-2 py-1 text-xs text-gray-500">멤버 없음</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* 리사이즈 핸들 */}
       <div

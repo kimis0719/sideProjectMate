@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Note from '@/lib/models/kanban/NoteModel';
 import mongoose from 'mongoose';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 /**
  * 특정 보드의 모든 노트를 조회하는 API (GET)
@@ -34,21 +36,33 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     await dbConnect();
+
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { text, x, y, color, width, height, boardId } = body;
+    const { text, x, y, color, width, height, boardId, sectionId, tags, dueDate, assigneeId } = body;
 
     if (!boardId || !text || x === undefined || y === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const newNote = new Note({
-      text,
-      x,
-      y,
+      text: text || '새 노트',
+      x: x || 0,
+      y: y || 0,
+      color: color || '#FFFB8F',
       width: width || 200,
       height: height || 140,
-      color,
+      tags: tags || [],
+      dueDate: dueDate || null,
+      assigneeId: assigneeId || null,
+      creatorId: session.user._id, // 생성자 ID 저장
+      updaterId: session.user._id, // 초기 수정자도 생성자와 동일
       boardId,
+      sectionId: sectionId || null,
     });
 
     const savedNote = await newNote.save();
