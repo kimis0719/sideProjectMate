@@ -53,7 +53,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/react-slick": "^0.23.13",
     "eslint": "8.56.0",
-    "eslint-config-next": "^16.0.10",
+    "eslint-config-next": "14.2.33",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2"
   },
