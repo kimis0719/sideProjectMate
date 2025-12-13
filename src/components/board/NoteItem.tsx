@@ -40,19 +40,19 @@ const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#
 const SNAP_THRESHOLD = 3; // 스냅 거리 (픽셀) - 5px -> 3px로 축소
 const GRID_SIZE = 10; // 그리드 크기 (픽셀)
 
-export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1 }: Props) {
+export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1, width = 200, height = 140 }: Props & { width?: number; height?: number }) {
   const {
     moveNote,
-    moveNotes, // 다중 이동 액션
+    moveNotes,
     updateNote,
-    updateNotes, // 일괄 수정 액션
+    updateNotes,
     removeNote,
-    selectedNoteIds, // 다중 선택 상태
+    selectedNoteIds,
     selectNote,
     openPaletteNoteId,
     setOpenPaletteNoteId,
-    zoom, // zoom 상태 가져오기
-    setAlignmentGuides, // 가이드라인 설정 액션
+    zoom,
+    setAlignmentGuides,
   } = useBoardStore((s) => ({
     moveNote: s.moveNote,
     moveNotes: s.moveNotes,
@@ -70,17 +70,17 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
   const [isEditing, setIsEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(text);
   const isDragging = React.useRef(false);
+  const isResizing = React.useRef(false); // 리사이즈 중인지 여부
   const lastPointerRef = React.useRef({ x: 0, y: 0 });
 
   // 이 노트가 선택되었는지 여부 확인
   const isSelected = selectedNoteIds.includes(id);
   const isPaletteOpen = openPaletteNoteId === id;
-  const isTempNote = id.startsWith('temp-'); // 임시 노트 여부 확인
+  const isTempNote = id.startsWith('temp-');
 
   // --- 서버 저장 로직 ---
   const saveChanges = React.useCallback(
     (patch: Partial<Omit<Note, 'id'>>) => {
-      // 임시 노트(아직 서버에 생성되지 않음)는 저장하지 않음
       if (isTempNote) return;
 
       fetch(`/api/kanban/notes/${id}`, {
@@ -89,13 +89,11 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
         body: JSON.stringify(patch),
       }).catch((error) => {
         console.error('Failed to save note changes:', error);
-        // TODO: 저장 실패 시 사용자에게 알림 (예: 토스트 메시지)
       });
     },
     [id, isTempNote]
   );
 
-  // 500ms 디바운싱 적용된 저장 함수
   const debouncedSave = React.useMemo(() => debounce(saveChanges, 500), [saveChanges]);
   // --------------------
 
@@ -107,9 +105,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
   }, [text, id, selectNote]);
 
   const saveEdit = React.useCallback(() => {
-    // UI 즉시 업데이트
     updateNote(id, { text: draft });
-    // 서버에 변경사항 저장
     saveChanges({ text: draft });
     setIsEditing(false);
   }, [draft, id, updateNote, saveChanges]);
@@ -126,6 +122,16 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
     }
   }, [text, isEditing, isSelected, saveEdit]);
 
+  // --- Resize Handle (Start) ---
+  const onResizePointerDown = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    isResizing.current = true;
+    lastPointerRef.current = { x: e.clientX, y: e.clientY };
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+  }, []);
+  // -----------------------------
+
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
@@ -138,7 +144,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
       }
 
       isDragging.current = true;
-      lastPointerRef.current = { x: e.clientX, y: e.clientY }; // 시작 포인터 위치 저장
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     },
     [isEditing, id, selectNote, isSelected]
@@ -146,119 +152,124 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
 
   const onPointerMove = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!isDragging.current || isEditing) return;
+      if ((!isDragging.current && !isResizing.current) || isEditing) return;
 
       const dx = (e.clientX - lastPointerRef.current.x) / zoom;
       const dy = (e.clientY - lastPointerRef.current.y) / zoom;
 
-      if (dx !== 0 || dy !== 0) {
-        if (selectedNoteIds.length > 1 && isSelected) {
-          // 그룹 이동: 스냅 없이 단순 이동 (복잡도 문제로 그룹 스냅은 제외)
-          moveNotes(selectedNoteIds, dx, dy);
-        } else {
-          // 단일 이동: 스냅 및 바운딩 적용
-          let newX = x + dx;
-          let newY = y + dy;
+      // 1. 리사이즈 로직
+      if (isResizing.current) {
+        if (dx !== 0 || dy !== 0) {
+          const MAX_WIDTH = 600;
+          const MAX_HEIGHT = 600;
+          const newWidth = Math.min(Math.max(100, width + dx), MAX_WIDTH);
+          const newHeight = Math.min(Math.max(100, height + dy), MAX_HEIGHT);
 
-          // 1. 바운딩 제거 (무한 스크롤 허용)
-          // newX = Math.max(0, newX);
-          // newY = Math.max(0, newY);
-
-          let snappedX = newX;
-          let snappedY = newY;
-          const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
-
-          // 스냅 로직은 Alt 키가 눌렸을 때만 동작
-          if (e.altKey) {
-            const notes = useBoardStore.getState().notes;
-            const NOTE_WIDTH = 200;
-            const NOTE_HEIGHT = 140;
-
-            let minDistX = SNAP_THRESHOLD;
-            let foundSnapX = false;
-
-            let minDistY = SNAP_THRESHOLD;
-            let foundSnapY = false;
-
-            notes.forEach((other) => {
-              if (other.id === id) return;
-
-              // X축 비교 대상: [Left, Right] (Center 제거)
-              const otherXs = [other.x, other.x + NOTE_WIDTH];
-              const myXs = [newX, newX + NOTE_WIDTH];
-
-              // Y축 비교 대상: [Top, Bottom] (Center 제거)
-              const otherYs = [other.y, other.y + NOTE_HEIGHT];
-              const myYs = [newY, newY + NOTE_HEIGHT];
-
-              for (const ox of otherXs) {
-                for (let i = 0; i < myXs.length; i++) {
-                  const dist = Math.abs(myXs[i] - ox);
-                  if (dist < minDistX) {
-                    minDistX = dist;
-                    // 스냅 적용: 현재 나의 기준점(myXs[i])이 ox가 되도록 newX 조정
-                    // newX = ox - (myXs[i] - newX)
-                    snappedX = ox - (myXs[i] - newX);
-                    foundSnapX = true;
-                    guides.push({ type: 'vertical', x: ox });
-                  }
-                }
-              }
-
-              // Y축 검사
-              for (const oy of otherYs) {
-                for (let i = 0; i < myYs.length; i++) {
-                  const dist = Math.abs(myYs[i] - oy);
-                  if (dist < minDistY) {
-                    minDistY = dist;
-                    snappedY = oy - (myYs[i] - newY);
-                    foundSnapY = true;
-                    guides.push({ type: 'horizontal', y: oy });
-                  }
-                }
-              }
-            });
-
-            // 3. 그리드 스냅 (스마트 스냅이 없을 때만)
-            if (!foundSnapX) {
-              if (Math.abs(newX % GRID_SIZE) < SNAP_THRESHOLD) {
-                snappedX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
-              }
-            }
-            if (!foundSnapY) {
-              if (Math.abs(newY % GRID_SIZE) < SNAP_THRESHOLD) {
-                snappedY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
-              }
-            }
-          }
-
-          // 가이드라인 업데이트 (중복 제거 필요 시 로직 추가 가능)
-          setAlignmentGuides(guides);
-
-          // 최종 위치 적용
-          moveNote(id, snappedX, snappedY);
-          debouncedSave({ x: snappedX, y: snappedY });
+          updateNote(id, { width: newWidth, height: newHeight });
+          // debouncedSave 제거: 드래그 중에는 로컬 상태만 업데이트하여 불필요한 API 호출 방지
         }
-
-        // 포인터 위치 갱신
-        lastPointerRef.current = { x: e.clientX, y: e.clientY };
       }
+      // 2. 드래그(이동) 로직
+      else if (isDragging.current) {
+        if (dx !== 0 || dy !== 0) {
+          if (selectedNoteIds.length > 1 && isSelected) {
+            moveNotes(selectedNoteIds, dx, dy);
+          } else {
+            let newX = x + dx;
+            let newY = y + dy;
+            let snappedX = newX;
+            let snappedY = newY;
+            const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
+
+            if (e.altKey) {
+              const notes = useBoardStore.getState().notes;
+              const NOTE_WIDTH = width;
+              const NOTE_HEIGHT = height;
+
+              let minDistX = SNAP_THRESHOLD;
+              let foundSnapX = false;
+              let minDistY = SNAP_THRESHOLD;
+              let foundSnapY = false;
+
+              notes.forEach((other) => {
+                if (other.id === id) return;
+                const otherW = other.width || 200;
+                const otherH = other.height || 140;
+
+                const otherXs = [other.x, other.x + otherW];
+                const myXs = [newX, newX + NOTE_WIDTH];
+
+                const otherYs = [other.y, other.y + otherH];
+                const myYs = [newY, newY + NOTE_HEIGHT];
+
+                for (const ox of otherXs) {
+                  for (let i = 0; i < myXs.length; i++) {
+                    const dist = Math.abs(myXs[i] - ox);
+                    if (dist < minDistX) {
+                      minDistX = dist;
+                      snappedX = ox - (myXs[i] - newX);
+                      foundSnapX = true;
+                      guides.push({ type: 'vertical', x: ox });
+                    }
+                  }
+                }
+
+                for (const oy of otherYs) {
+                  for (let i = 0; i < myYs.length; i++) {
+                    const dist = Math.abs(myYs[i] - oy);
+                    if (dist < minDistY) {
+                      minDistY = dist;
+                      snappedY = oy - (myYs[i] - newY);
+                      foundSnapY = true;
+                      guides.push({ type: 'horizontal', y: oy });
+                    }
+                  }
+                }
+              });
+
+              if (!foundSnapX) {
+                if (Math.abs(newX % GRID_SIZE) < SNAP_THRESHOLD) {
+                  snappedX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+                }
+              }
+              if (!foundSnapY) {
+                if (Math.abs(newY % GRID_SIZE) < SNAP_THRESHOLD) {
+                  snappedY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+                }
+              }
+            }
+
+            setAlignmentGuides(guides);
+            moveNote(id, snappedX, snappedY);
+            debouncedSave({ x: snappedX, y: snappedY });
+          }
+        }
+      }
+
+      lastPointerRef.current = { x: e.clientX, y: e.clientY };
     },
-    [isEditing, zoom, selectedNoteIds, isSelected, moveNotes, moveNote, id, x, y, debouncedSave, setAlignmentGuides]
+    [isEditing, isDragging, isResizing, zoom, width, height, id, updateNote, debouncedSave, selectedNoteIds, isSelected, moveNotes, setAlignmentGuides, moveNote, x, y]
   );
 
   const onPointerUp = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
+      // 리사이즈 종료 처리
+      if (isResizing.current) {
+        isResizing.current = false;
+        (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+        debouncedSave.cancel();
+        saveChanges({ width, height });
+        return;
+      }
+
+      // 드래그 종료 처리
       if (!isDragging.current) return;
       isDragging.current = false;
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-
-      // 가이드라인 숨김
       setAlignmentGuides([]);
 
       if (selectedNoteIds.length > 1 && isSelected) {
-        // 그룹 이동 종료: 일괄 저장 수행
-        debouncedSave.cancel(); // 중복 저장 방지
+        debouncedSave.cancel();
         const currentNotes = useBoardStore.getState().notes;
         const updates = currentNotes
           .filter((n) => selectedNoteIds.includes(n.id))
@@ -266,13 +277,9 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
             id: n.id,
             changes: { x: n.x, y: n.y, sectionId: n.sectionId },
           }));
-
         updateNotes(updates);
       } else {
-        // 단일 선택: 개별 저장
-        debouncedSave.cancel(); // 중복 저장 방지
-
-        // Store에서 최신 상태(sectionId 포함)를 가져와서 저장
+        debouncedSave.cancel();
         const currentNote = useBoardStore.getState().notes.find(n => n.id === id);
         if (currentNote) {
           saveChanges({ x, y, sectionId: currentNote.sectionId });
@@ -281,11 +288,12 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
         }
       }
     },
-    [saveChanges, x, y, selectedNoteIds, isSelected, updateNotes, setAlignmentGuides]
+    [saveChanges, width, height, selectedNoteIds, isSelected, updateNotes, setAlignmentGuides, debouncedSave, x, y, id]
   );
 
   const onPointerCancel = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     isDragging.current = false;
+    isResizing.current = false;
     (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
     setAlignmentGuides([]);
   }, [setAlignmentGuides]);
@@ -316,8 +324,8 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
       style={{
         position: 'absolute',
         transform: `translate3d(${x}px, ${y}px, 0)`,
-        width: 200,
-        height: 140,
+        width: width,
+        height: height,
         background: color,
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         borderRadius: 10,
@@ -412,6 +420,7 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
             whiteSpace: 'pre-wrap',
             height: '100%',
             paddingTop: 24,
+            overflow: 'hidden', // 내용이 넘칠 경우 숨김
           }}
         >
           {text}
@@ -450,6 +459,33 @@ export default function NoteItem({ id, x, y, text, color = '#FFFB8F', zIndex = 1
           }}
         />
       )}
+
+      {/* 리사이즈 핸들 */}
+      <div
+        onPointerDown={onResizePointerDown}
+        // onPointerMove / Up은 부모 요소에서 처리함
+        style={{
+          position: 'absolute',
+          right: 0,
+          bottom: 0,
+          width: 20,
+          height: 20,
+          cursor: 'nwse-resize',
+          zIndex: 10,
+          background: 'transparent',
+        }}
+      >
+        {/* 시각적 핸들 아이콘 (우측 하단 코너 표시) */}
+        <div style={{
+          position: 'absolute',
+          right: 4,
+          bottom: 4,
+          width: 8,
+          height: 8,
+          borderRight: '2px solid rgba(0,0,0,0.3)',
+          borderBottom: '2px solid rgba(0,0,0,0.3)',
+        }} />
+      </div>
     </div>
   );
 }

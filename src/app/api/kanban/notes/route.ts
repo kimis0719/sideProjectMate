@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   try {
     await dbConnect();
     const body = await request.json();
-    const { text, x, y, color, boardId } = body;
+    const { text, x, y, color, width, height, boardId } = body;
 
     if (!boardId || !text || x === undefined || y === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -45,6 +45,8 @@ export async function POST(request: Request) {
       text,
       x,
       y,
+      width: width || 200,
+      height: height || 140,
       color,
       boardId,
     });

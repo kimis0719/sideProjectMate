@@ -5,6 +5,8 @@ export interface INote extends Document {
   x: number;
   y: number;
   color: string;
+  width: number;
+  height: number;
   boardId: mongoose.Types.ObjectId;
   sectionId?: mongoose.Types.ObjectId;
 }
@@ -27,6 +29,14 @@ const NoteSchema: Schema = new Schema(
     color: {
       type: String,
       default: '#FFFB8F',
+    },
+    width: {
+      type: Number,
+      default: 200,
+    },
+    height: {
+      type: Number,
+      default: 140,
     },
     boardId: {
       type: Schema.Types.ObjectId,
