@@ -411,6 +411,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                   text={note.text}
                   color={note.color}
                   zIndex={zIndex}
+                  width={note.width}
+                  height={note.height}
                 />
               );
             })

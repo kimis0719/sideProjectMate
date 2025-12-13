@@ -5,9 +5,35 @@ import type { IBoard } from '@/lib/models/kanban/BoardModel';
 import type { ISection } from '@/lib/models/kanban/SectionModel';
 import { socketClient } from '@/lib/socket';
 
-export type Note = Omit<INote, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
-export type Board = Omit<IBoard, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
-export type Section = Omit<ISection, '_id' | 'createdAt' | 'updatedAt'> & { id: string };
+export type Note = {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  width: number; // width 추가
+  height: number; // height 추가
+  color: string;
+  boardId: string;
+  sectionId?: string | null;
+};
+
+export type Board = {
+  id: string;
+  title: string;
+  owner: string;
+};
+
+export type Section = {
+  id: string;
+  title: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  boardId: string;
+  color?: string;
+  zIndex?: number;
+};
 
 const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
 const SEED_POS = { x: 120, y: 120 };
@@ -182,6 +208,8 @@ export const useBoardStore = create<BoardState>()(
           id: `temp-${crypto.randomUUID()}`,
           x,
           y,
+          width: NOTE_W,
+          height: NOTE_H,
           text: '새 노트',
           color: COLOR_PALETTE[nextColorIndex % COLOR_PALETTE.length],
           boardId: boardId as any,
@@ -271,8 +299,11 @@ export const useBoardStore = create<BoardState>()(
 
       moveNote: (id, x, y) => set((state) => {
         const { boardId } = get();
-        const NOTE_W = 200;
-        const NOTE_H = 140;
+        const targetNote = state.notes.find((n) => n.id === id);
+        if (!targetNote) return state;
+
+        const NOTE_W = targetNote.width || 200;
+        const NOTE_H = targetNote.height || 140;
         const centerX = x + NOTE_W / 2;
         const centerY = y + NOTE_H / 2;
 
@@ -283,9 +314,6 @@ export const useBoardStore = create<BoardState>()(
             centerY >= s.y &&
             centerY <= s.y + s.height
         );
-
-        const targetNote = state.notes.find((n) => n.id === id);
-        if (!targetNote) return state;
 
         const updatedNote = { ...targetNote, x, y, sectionId: containingSection ? containingSection.id : null };
 
@@ -438,7 +466,7 @@ export const useBoardStore = create<BoardState>()(
         set({ zoom: newZoom, pan: { x: newPanX, y: newPanY } });
       },
 
-      alignmentGuides: [],
+      // alignmentGuides: [],
       setAlignmentGuides: (guides) => set({ alignmentGuides: guides }),
 
       addSection: (section) => {

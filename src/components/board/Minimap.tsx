@@ -40,10 +40,12 @@ export default function Minimap({
 
         // 노트 범위
         notes.forEach((n) => {
+            const nW = n.width || 200;
+            const nH = n.height || 140;
             minX = Math.min(minX, n.x);
             minY = Math.min(minY, n.y);
-            maxX = Math.max(maxX, n.x + 200); // Note Width
-            maxY = Math.max(maxY, n.y + 140); // Note Height
+            maxX = Math.max(maxX, n.x + nW); // Note Width
+            maxY = Math.max(maxY, n.y + nH); // Note Height
         });
 
         // 섹션 범위
@@ -107,18 +109,21 @@ export default function Minimap({
         // 섹션 그리기
         sections.forEach((s) => {
             const pos = toMini(s.x, s.y);
-            ctx.fillStyle = s.color + '40'; // 투명도 추가
+            const sectionColor = s.color || '#9CA3AF'; // Default color
+            ctx.fillStyle = sectionColor + '40'; // 투명도 추가
             ctx.fillRect(pos.x, pos.y, s.width * scale, s.height * scale);
-            ctx.strokeStyle = s.color;
+            ctx.strokeStyle = sectionColor;
             ctx.lineWidth = 1;
             ctx.strokeRect(pos.x, pos.y, s.width * scale, s.height * scale);
         });
 
         // 노트 그리기
         notes.forEach((n) => {
+            const nW = n.width || 200;
+            const nH = n.height || 140;
             const pos = toMini(n.x, n.y);
             ctx.fillStyle = n.color;
-            ctx.fillRect(pos.x, pos.y, 200 * scale, 140 * scale);
+            ctx.fillRect(pos.x, pos.y, nW * scale, nH * scale);
         });
 
         // 뷰포트 프레임 그리기
