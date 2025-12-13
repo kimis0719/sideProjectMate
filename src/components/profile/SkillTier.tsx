@@ -22,16 +22,16 @@ export default function SkillTier({ tierName, skills }: SkillTierProps) {
         return (
             <div className="mb-6">
                 <h3 className={`text-base font-bold mb-3 px-2 py-0.5 inline-flex items-center rounded-md ${tierName === 'Pro'
-                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                        : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                    : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                     }`}>
                     <span className="mr-1.5 text-sm">{tierName === 'Pro' ? '🏆' : '⚡'}</span>
                     {tierName} Level
                 </h3>
 
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                <div className="flex flex-wrap justify-center gap-2">
                     {skills.map((skill) => (
-                        <div key={skill.name} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors duration-200 flex items-center justify-between group shadow-sm hover:shadow-md">
+                        <div key={skill.name} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors duration-200 flex items-center justify-between group shadow-sm hover:shadow-md min-w-[80px]">
                             <span className="font-semibold text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                                 {skill.name}
                             </span>
@@ -50,12 +50,12 @@ export default function SkillTier({ tierName, skills }: SkillTierProps) {
 
     // 하위 티어 (Intermediate, Beginner) - 태그형 클라우드 레이아웃
     return (
-        <div className="mb-4">
+        <div className="mb-4 text-center">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider px-1">
                 {tierName} Level
             </h3>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap justify-center gap-1.5">
                 {skills.map((skill) => (
                     <div key={skill.name} className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                         <span>{skill.name}</span>

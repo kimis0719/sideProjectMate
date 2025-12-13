@@ -1,51 +1,144 @@
 'use client';
 
-import SkillTier from './SkillTier';
+import React, { useEffect, useState } from 'react';
+import { getIconSlug, getSkillCategory, CATEGORY_ORDER, SkillCategory } from '@/lib/iconUtils';
 
-// 임시 데이터 (추후 DB 연동)
-const mockSkills = [
-    { name: 'React', level: 'Pro', score: 95, active: true },
-    { name: 'Next.js', level: 'Pro', score: 92, active: true },
-    { name: 'TypeScript', level: 'Advanced', score: 85, active: true },
-    { name: 'Node.js', level: 'Advanced', score: 78, active: false },
-    { name: 'TailwindCSS', level: 'Advanced', score: 88, active: true },
-    { name: 'MongoDB', level: 'Intermediate', score: 65, active: false },
-    { name: 'PostgreSQL', level: 'Intermediate', score: 60, active: false },
-    { name: 'Docker', level: 'Beginner', score: 45, active: false },
-    { name: 'AWS', level: 'Beginner', score: 40, active: false },
-    { name: 'Figma', level: 'Beginner', score: 30, active: true },
-];
+interface Skill {
+    name: string;
+    score: number;
+    active: boolean;
+    category: SkillCategory;
+}
 
-export default function SkillSection() {
-    // 레벨별로 데이터 분류
-    const proSkills = mockSkills.filter(s => s.level === 'Pro');
-    const advancedSkills = mockSkills.filter(s => s.level === 'Advanced');
-    const intermediateSkills = mockSkills.filter(s => s.level === 'Intermediate');
-    const beginnerSkills = mockSkills.filter(s => s.level === 'Beginner');
+interface SkillSectionProps {
+    githubUsername?: string;
+}
+
+export default function SkillSection({ githubUsername }: SkillSectionProps) {
+    const [skills, setSkills] = useState<Skill[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!githubUsername) return;
+
+        const fetchSkills = async () => {
+            setLoading(true);
+            try {
+                const res = await fetch(`/api/users/github-stats?username=${githubUsername}`);
+                if (!res.ok) throw new Error('Failed to fetch stats');
+                const data = await res.json();
+
+                // 단순 리스트로 변환 (티어 로직 제거) 및 카테고리 분류
+                const techSkills = (data.techTiers || []).map((tier: any) => ({
+                    name: tier.language,
+                    score: tier.score,
+                    active: true, // GitHub에서 가져온 건 활동 중인 것으로 간주
+                    category: getSkillCategory(tier.language)
+                }));
+
+                const envSkills = (data.envTiers || []).map((tier: any) => ({
+                    name: tier.topic, // 이미 정규화된 이름
+                    score: tier.score,
+                    active: true,
+                    category: getSkillCategory(tier.topic)
+                }));
+
+                // 점수순 정렬
+                const allSkills = [...techSkills, ...envSkills].sort((a, b) => b.score - a.score);
+                setSkills(allSkills);
+            } catch (error) {
+                console.error('Skill fetching error:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSkills();
+    }, [githubUsername]);
+
+    if (!githubUsername || skills.length === 0) {
+        if (loading) return <div className="p-6 text-center text-gray-400">기술 스택 분석 중... 🔄</div>;
+        return null;
+    }
+
+    // 카테고리별로 그룹화
+    const groupedSkills = skills.reduce((acc, skill) => {
+        if (!acc[skill.category]) acc[skill.category] = [];
+        acc[skill.category].push(skill);
+        return acc;
+    }, {} as Record<SkillCategory, Skill[]>);
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-full">
+            <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <span>🛠️</span> 기술 스택
                 </h2>
-                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 px-3 py-1.5 rounded-full">
+
+                {/* Green Light Legend (Header로 이동) */}
+                <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 px-2 py-1 rounded-full">
                     <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span>Recent Activity (6mo)</span>
+                    <span>Recent Activity</span>
                 </div>
             </div>
 
-            <div className="space-y-2">
-                <SkillTier tierName="Pro" skills={proSkills} />
-                <SkillTier tierName="Advanced" skills={advancedSkills} />
+            <div className="space-y-8">
+                {CATEGORY_ORDER.map((category) => {
+                    const categorySkills = groupedSkills[category];
+                    if (!categorySkills || categorySkills.length === 0) return null;
 
-                <div className="pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <SkillTier tierName="Intermediate" skills={intermediateSkills} />
-                    <SkillTier tierName="Beginner" skills={beginnerSkills} />
-                </div>
+                    return (
+                        <div key={category}>
+                            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider px-1 border-b border-gray-100 dark:border-gray-600 pb-1 inline-block">
+                                {category}
+                            </h3>
+                            <div className="flex flex-wrap gap-3">
+                                {categorySkills.map((skill) => {
+                                    const iconSlug = getIconSlug(skill.name);
+                                    const iconUrl = `https://skillicons.dev/icons?i=${iconSlug}`;
+
+                                    return (
+                                        <div key={skill.name} className="relative group flex items-center gap-2 bg-gray-50 dark:bg-gray-700/30 px-3 py-2 rounded-xl border border-gray-100 dark:border-gray-600/50 hover:border-indigo-100 dark:hover:border-indigo-500/30 hover:shadow-sm transition-all duration-200">
+                                            {/* 스킬 아이콘 */}
+                                            <div className="relative w-6 h-6 flex-shrink-0">
+                                                <img
+                                                    src={iconUrl}
+                                                    alt={skill.name}
+                                                    className="w-full h-full object-contain"
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.display = 'none';
+                                                    }}
+                                                />
+                                                {/* 초록불 (Active Indicator) - 아이콘 우측 상단 */}
+                                                {skill.active && (
+                                                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 pointer-events-none">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500 border-2 border-white dark:border-gray-800"></span>
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* 스킬 이름 */}
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                                                {skill.name}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* 기술 추가 버튼 (맨 아래로 이동) */}
+            <div className="mt-8 pt-4 border-t border-gray-100 dark:border-gray-700 text-center">
+                <button className="text-sm text-gray-400 hover:text-blue-500 flex items-center justify-center gap-1 w-full py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors dashed-border">
+                    <span>+ 기술 직접 추가하기</span>
+                </button>
             </div>
         </div>
     );

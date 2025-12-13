@@ -5,25 +5,28 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import StatusDashboard from '@/components/profile/StatusDashboard';
+import GitHubStats from '@/components/profile/external/GitHubStats';
+import BlogPostCard from '@/components/profile/external/BlogPostCard';
 import SkillSection from '@/components/profile/SkillSection';
 import AvailabilityScheduler from '@/components/profile/AvailabilityScheduler';
 import CommunicationStyleSlider from '@/components/profile/CommunicationStyleSlider';
 import BlockEditor from '@/components/editor/BlockEditor';
+import SolvedAcCard from '@/components/profile/external/SolvedAcCard';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Availability & Style State
+  // 가용성 및 스타일 상태 관리
   const [schedule, setSchedule] = useState<any[]>([]);
   const [preference, setPreference] = useState<number>(50);
   const [personalityTags, setPersonalityTags] = useState<string[]>([]);
 
-  // Introduction State
+  // 자기소개 상태 관리
   const [introduction, setIntroduction] = useState<string>('');
 
-  // User Data State (merged)
+  // 사용자 데이터 상태 (병합됨)
   const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
@@ -37,8 +40,8 @@ export default function ProfilePage() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      // 1. Fetch User Basic Info (mock for now, or from API)
-      // In a real app, you might fetch this from /api/users/me
+      // 1. 사용자 기본 정보 가져오기 (현재는 모의 데이터, 추후 API 연동)
+      // 실제 앱에서는 /api/users/me 에서 호출
       const basicInfo = {
         nName: session?.user?.name || '사용자',
         email: session?.user?.email || '',
@@ -46,17 +49,19 @@ export default function ProfilePage() {
         career: '3년차',
         status: '구직중',
         socialLinks: {
-          github: 'https://github.com',
-          blog: 'https://velog.io',
+          github: 'https://github.com/kimis0719',
+          blog: 'https://velog.io/@hansanghun',
+          solvedAc: 'koosaga', // 테스트용 모의 핸들
         },
         introduction: '안녕하세요! 저는 열정적인 프론트엔드 개발자입니다. 🚀',
       };
       setUserData(basicInfo);
 
-      // 2. Fetch Availability
+      // 2. 가용성 정보 가져오기
       const availRes = await fetch('/api/users/me/availability');
       if (availRes.ok) {
         const { data } = await availRes.json();
+        console.log('[ProfilePage] Fetched Availability:', data);
         if (data) {
           setSchedule(data.schedule || []);
           setPreference(data.preference ?? 50);
@@ -64,9 +69,9 @@ export default function ProfilePage() {
         }
       }
 
-      // 3. Fetch Introduction (assuming it's in user profile or separate)
-      // For now, we'll use the one from basic info or empty
-      setIntroduction(basicInfo.introduction || ''); // If API provided it
+      // 3. 자기소개 가져오기 (사용자 프로필이나 별도 API에 있다고 가정)
+      // 현재는 기본 정보에 있는 것을 사용하거나 비워둠
+      setIntroduction(basicInfo.introduction || ''); // API가 제공한다면 사용
 
       setIsLoading(false);
     } catch (error) {
@@ -77,6 +82,7 @@ export default function ProfilePage() {
 
   const handleSaveAvailability = async () => {
     try {
+      console.log('Sending Availability Data:', { schedule, preference, personalityTags }); // Debug Log
       const res = await fetch('/api/users/me/availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,7 +105,7 @@ export default function ProfilePage() {
   };
 
   const handleSaveIntroduction = async () => {
-    // TODO: Implement API for saving introduction
+    // TODO: 자기소개 저장 API 구현 필요
     // await fetch('/api/users/me/introduction', ...);
     console.log('Saving introduction:', introduction);
     alert('자기소개가 저장되었습니다! (임시) 📝');
@@ -115,25 +121,52 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Split-Header Section */}
+      {/* 분할 헤더 섹션 (Split-Header Section) */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left: Profile Header (2/3 width on desktop) */}
+        {/* 왼쪽: 프로필 헤더 (데스크탑 기준 2/3 너비) */}
         <div className="md:col-span-2">
           <ProfileHeader user={userData} />
         </div>
 
-        {/* Right: Status Dashboard (1/3 width on desktop) */}
+        {/* 오른쪽: 상태 대시보드 (데스크탑 기준 1/3 너비) */}
         <div className="md:col-span-1">
           <StatusDashboard status={userData?.status} />
         </div>
       </section>
 
-      {/* Skill Section */}
-      <section>
-        <SkillSection />
+      {/* 3단계: GitHub 통계, 기술 스택, 블로그, Solved.ac (7:3 레이아웃) */}
+      <section className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+        {/* Row 1 Left: GitHub Stats (70%) */}
+        <div className="lg:col-span-7">
+          {userData?.socialLinks?.github && (
+            <GitHubStats githubUrl={userData.socialLinks.github} />
+          )}
+        </div>
+
+        {/* Row 1 Right: Skill Section (30%) */}
+        <div className="lg:col-span-3">
+          <SkillSection
+            githubUsername={userData?.socialLinks?.github?.split('/').pop()}
+          />
+        </div>
+
+        {/* Row 2 Left: Blog Posts (70%) */}
+        <div className="lg:col-span-7">
+          {userData?.socialLinks?.blog && (
+            <BlogPostCard blogUrl={userData.socialLinks.blog} />
+          )}
+        </div>
+
+        {/* Row 2 Right: Solved.ac (30%) */}
+        <div className="lg:col-span-3">
+          {userData?.socialLinks?.solvedAc && (
+            <SolvedAcCard handle={userData.socialLinks.solvedAc} />
+          )}
+        </div>
       </section>
 
-      {/* Phase 2: Availability & Style */}
+
+      {/* Phase 2: 가용성 및 스타일 */}
       <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-800">📅 가용성 및 협업 성향</h2>
@@ -146,7 +179,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left: Weekly Schedule */}
+          {/* 왼쪽: 주간 스케줄러 */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-gray-700">주간 가능한 시간</h3>
             <div className="border rounded-xl p-4 bg-gray-50">
@@ -160,7 +193,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Right: Communication Style */}
+          {/* 오른쪽: 커뮤니케이션 스타일 */}
           <div>
             <CommunicationStyleSlider
               preference={preference}
@@ -172,7 +205,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {/* Phase 2: Self Introduction (Block Editor) */}
+      {/* Phase 2: 자기소개 (블록 에디터) */}
       <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-800">📝 자기소개</h2>
