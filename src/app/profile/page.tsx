@@ -49,7 +49,7 @@ export default function ProfilePage() {
         status: '구직중',
         socialLinks: {
           github: 'https://github.com/kimis0719',
-          blog: 'https://velog.io',
+          blog: 'https://velog.io/@hansanghun',
         },
         introduction: '안녕하세요! 저는 열정적인 프론트엔드 개발자입니다. 🚀',
       };
@@ -132,7 +132,9 @@ export default function ProfilePage() {
 
       {/* Skill Section */}
       <section>
-        <SkillSection />
+        <SkillSection
+          githubUsername={userData?.socialLinks?.github?.split('/').pop()}
+        />
       </section>
 
       {/* Phase 3: GitHub Stats & Blog */}

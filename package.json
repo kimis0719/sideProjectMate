@@ -37,7 +37,7 @@
     "postcss": "8.4.31",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-schedule-selector": "^3.0.0",
+    "react-schedule-selector": "^2.0.0",
     "react-slick": "^0.30.2",
     "rss-parser": "^3.13.0",
     "slick-carousel": "^1.8.1",
@@ -53,7 +53,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/react-slick": "^0.23.13",
     "eslint": "8.56.0",
-    "eslint-config-next": "14.2.33",
+    "eslint-config-next": "^16.0.10",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2"
   },

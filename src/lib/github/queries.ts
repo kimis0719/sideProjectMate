@@ -30,6 +30,18 @@ export const GET_USER_STATS = gql`
               name
               color
             }
+            repositoryTopics(first: 10) {
+              nodes {
+                topic {
+                  name
+                }
+              }
+            }
+            object(expression: "HEAD:package.json") {
+              ... on Blob {
+                text
+              }
+            }
           }
         }
       }

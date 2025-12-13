@@ -27,6 +27,16 @@ export interface GitHubUserResponse {
                         name: string;
                         color: string;
                     } | null;
+                    repositoryTopics: {
+                        nodes: {
+                            topic: {
+                                name: string;
+                            };
+                        }[];
+                    };
+                    object: {
+                        text?: string;
+                    } | null;
                 };
             }[];
         };

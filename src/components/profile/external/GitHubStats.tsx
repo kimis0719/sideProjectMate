@@ -99,30 +99,53 @@ export default function GitHubStatsSection({ githubUrl }: GitHubStatsProps) {
                 <div>
                     <div className="text-sm text-gray-500 font-semibold mb-3 uppercase tracking-wider">Top Skills (Contribution Based)</div>
                     <div className="space-y-3">
-                        {stats.techTiers.slice(0, 5).map((tier) => (
-                            <div key={tier.language} className="flex items-center justify-between bg-white p-3 rounded-lg border hover:shadow-md transition-shadow">
-                                <div className="flex items-center gap-3">
-                                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tier.color }}></span>
-                                    <span className="font-medium text-gray-800">{tier.language}</span>
+                        {(() => {
+                            // Merge Languages and Environments
+                            const langs = stats.techTiers.map(t => ({
+                                name: t.language,
+                                ...t,
+                                type: 'Lang'
+                            }));
+                            const envs = (stats.envTiers || []).map(t => ({
+                                name: t.topic, // Topic name is already lowercase/raw, can capitalize if needed 
+                                ...t,
+                                color: '#4aa02c', // Default color for Env (e.g. Node green) or random
+                                type: 'Env'
+                            }));
+
+                            // Sort by score and take Top 5
+                            const topSkills = [...langs, ...envs]
+                                .sort((a, b) => b.score - a.score)
+                                .slice(0, 5);
+
+                            if (topSkills.length === 0) {
+                                return <div className="text-gray-400 text-sm italic">기여한 리포지토리가 없습니다.</div>;
+                            }
+
+                            return topSkills.map((tier) => (
+                                <div key={tier.name} className="flex items-center justify-between bg-white p-3 rounded-lg border hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tier.color }}></span>
+                                        <span className="font-medium text-gray-800">
+                                            {tier.name}
+                                            {tier.type === 'Env' && <span className="ml-1 text-[10px] text-gray-400 border border-gray-200 rounded px-1">Env</span>}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`
+                                            px-2 py-0.5 rounded text-sm font-bold w-8 text-center
+                                            ${tier.grade.startsWith('A') ? 'bg-purple-100 text-purple-700' : ''}
+                                            ${tier.grade.startsWith('B') ? 'bg-blue-100 text-blue-700' : ''}
+                                            ${tier.grade.startsWith('C') ? 'bg-green-100 text-green-700' : ''}
+                                            ${tier.grade.startsWith('D') ? 'bg-yellow-100 text-yellow-700' : ''}
+                                            ${['E', 'F'].includes(tier.grade) ? 'bg-gray-100 text-gray-600' : ''}
+                                        `}>
+                                            {tier.grade}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    {/* Grade Badge */}
-                                    <span className={`
-                     px-2 py-0.5 rounded text-sm font-bold w-8 text-center
-                     ${tier.grade.startsWith('A') ? 'bg-purple-100 text-purple-700' : ''}
-                     ${tier.grade.startsWith('B') ? 'bg-blue-100 text-blue-700' : ''}
-                     ${tier.grade.startsWith('C') ? 'bg-green-100 text-green-700' : ''}
-                     ${tier.grade.startsWith('D') ? 'bg-yellow-100 text-yellow-700' : ''}
-                     ${['E', 'F'].includes(tier.grade) ? 'bg-gray-100 text-gray-600' : ''}
-                   `}>
-                                        {tier.grade}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                        {stats.techTiers.length === 0 && (
-                            <div className="text-gray-400 text-sm italic">기여한 리포지토리가 없습니다.</div>
-                        )}
+                            ));
+                        })()}
                     </div>
                 </div>
             </div>

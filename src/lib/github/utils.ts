@@ -11,6 +11,11 @@ export interface GitHubStats {
         color: string;
         score: number;
     }[];
+    envTiers: {
+        topic: string;
+        grade: string;
+        score: number;
+    }[];
     activity: {
         totalCommits: number;
         totalPRs: number;
@@ -24,63 +29,174 @@ export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
     const user = data.user;
     const contribution = user.contributionsCollection;
 
-    // 1. Calculate Activity Score (Dev Level)
+    // 1. 활동 점수 (Activity Score) 계산
+    // 개발자의 전반적인 활동량을 측정합니다.
     const totalCommits = contribution.totalCommitContributions;
     const totalPRs = contribution.totalPullRequestContributions;
     const totalReviews = contribution.totalPullRequestReviewContributions;
     const totalIssues = contribution.totalIssueContributions;
 
-    // Recent PR analysis (additions)
+    // PR 분석: 최근 기여한 코드 라인 수 (Auto-generated 파일 등의 왜곡 방지를 위해 사용)
     const recentPRLines = user.pullRequests.nodes.reduce((acc, pr) => acc + pr.additions, 0);
 
-    // Score Formula
-    // Base: Commits(10), PRs(50), Reviews(100), Issues(20)
-    // Quality: PR Lines * 0.1 (100 lines = 10 pts = 1 commit equivalent)
+    // 🧮 활동 점수 공식 (Score Formula)
+    // - Commit: 10점 (가장 기본적인 기여)
+    // - PR: 50점 (코드 리뷰를 거치는 의미 있는 기여)
+    // - Review: 100점 (타인의 코드를 검증하는 높은 수준의 기여)
+    // - Issue: 20점 (문제 정의 및 소통)
     const baseScore =
         (totalCommits * 10) +
         (totalPRs * 50) +
         (totalReviews * 100) +
         (totalIssues * 20);
 
-    const qualityScore = Math.min(recentPRLines * 0.1, 10000); // Cap quality score to prevent distortion by massive auto-generated files
+    // 품질 점수 (Quality Score)
+    // 무지성 커밋을 방지하기 위해 PR의 코드 라인 수 반영 (최대 10,000점 제한)
+    // Line * 0.1점 (100줄 = 10점 = 1커밋과 동등)
+    const qualityScore = Math.min(recentPRLines * 0.1, 10000);
 
     const totalScore = baseScore + qualityScore;
     const level = calculateLevel(totalScore);
 
     // 2. Calculate Tech Tiers
     const languageScores: Record<string, { score: number; color: string }> = {};
+    const topicScores: Record<string, number> = {};
 
     contribution.commitContributionsByRepository.forEach((repoContrib) => {
         const lang = repoContrib.repository.primaryLanguage;
-        if (!lang) return;
+        const topics = repoContrib.repository.repositoryTopics.nodes;
 
+        // Debug Log
+        if (topics.length > 0) {
+            // console.log(`Repo: ${repoContrib.repository.name}, Topics:`, topics.map(t => t.topic.name));
+        }
+
+        // 2. 기술 스택 & 환경 점수 계산 (Tech & Env Score)
         const commits = repoContrib.contributions.totalCount;
         const stars = repoContrib.repository.stargazerCount;
 
-        // Weight: Commits * (1 + Stars/10) -> High stars give huge boost
-        // e.g. 10 commits to 1000 star repo = 10 * 101 = 1010 pts
-        // e.g. 10 commits to 0 star repo = 10 * 1 = 10 pts
-        const weight = 1 + (Math.log10(stars + 1)); // Log scale for stars to be less aggressive: 0->1, 10->2, 100->3, 1000->4
-        const score = commits * weight; // actually let's use the log scale. 0 stars = x1, 100 stars = x3. Reasonable.
+        // ⚖️ 리포지토리 가중치 (Weight)
+        // 스타가 많은 유명 프로젝트에 기여할수록 더 높은 점수를 부여합니다.
+        // 공식: 1 + log10(Stars + 1)
+        // - Star 0개: 가중치 1 (1배)
+        // - Star 10개: 가중치 2 (2배)
+        // - Star 100개: 가중치 3 (3배)
+        // - Star 1,000개: 가중치 4 (4배)
+        const weight = 1 + (Math.log10(stars + 1));
+        const score = commits * weight;
 
-        if (!languageScores[lang.name]) {
-            languageScores[lang.name] = { score: 0, color: lang.color };
+        // Language Score
+        if (lang) {
+            if (!languageScores[lang.name]) {
+                languageScores[lang.name] = { score: 0, color: lang.color };
+            }
+            languageScores[lang.name].score += score;
         }
-        languageScores[lang.name].score += score;
+
+        // Topic (Environment) Score
+        topics.forEach((node) => {
+            const topicName = node.topic.name.toLowerCase();
+            if (!topicScores[topicName]) {
+                topicScores[topicName] = 0;
+            }
+            topicScores[topicName] += score;
+        });
+
+        // Dependency Analysis (package.json)
+        const packageJsonText = repoContrib.repository.object?.text;
+        if (packageJsonText) {
+            try {
+                const pkg = JSON.parse(packageJsonText);
+                const dependencies = { ...pkg.dependencies, ...pkg.devDependencies };
+
+                // Library Mapping
+                const libMapping: Record<string, string> = {
+                    'react': 'React',
+                    'vue': 'Vue.js',
+                    'next': 'Next.js',
+                    'nuxt': 'Nuxt.js',
+                    'svelte': 'Svelte',
+                    'angular': 'Angular',
+                    'tailwindcss': 'TailwindCSS',
+                    'styled-components': 'Styled Components',
+                    'express': 'Express.js',
+                    'nestjs': 'NestJS',
+                    'django': 'Django',
+                    'flask': 'Flask',
+                    'spring-boot': 'Spring Boot',
+                    'laravel': 'Laravel',
+                    'flutter': 'Flutter',
+                    'react-native': 'React Native',
+                    'docker': 'Docker',
+                    'kubernetes': 'Kubernetes',
+                    'tensorflow': 'TensorFlow',
+                    'pytorch': 'PyTorch',
+                    'pandas': 'Pandas',
+                    'three': 'Three.js',
+                    'mongoose': 'Mongoose',
+                    'prisma': 'Prisma',
+                    'supabase': 'Supabase',
+                    'firebase': 'Firebase',
+                    'socket.io': 'Socket.io',
+                    'redux': 'Redux',
+                    'mobx': 'MobX',
+                    'zustand': 'Zustand',
+                    'graphql': 'GraphQL',
+                    'apollo-client': 'Apollo',
+                };
+
+                Object.keys(dependencies).forEach(dep => {
+                    // Exact match or scoped match (e.g. @nestjs/core)
+                    let matchedEnv = libMapping[dep];
+
+                    // Handle scoped packages (simple heuristic)
+                    if (!matchedEnv) {
+                        if (dep.includes('nestjs')) matchedEnv = 'NestJS';
+                        else if (dep.includes('angular')) matchedEnv = 'Angular';
+                        else if (dep.includes('emotion')) matchedEnv = 'Emotion';
+                    }
+
+                    if (matchedEnv) {
+                        const envKey = matchedEnv.toLowerCase(); // Use lowercase key for aggregation
+                        if (!topicScores[envKey]) topicScores[envKey] = 0;
+                        topicScores[envKey] += score;
+                    }
+                });
+            } catch (e) {
+                // Ignore parse errors (invalid json in repo)
+            }
+        }
     });
 
     const techTiers = Object.entries(languageScores)
         .map(([lang, { score, color }]) => ({
             language: lang,
-            score,
+            score: Math.round(score),
             color,
             grade: calculateGrade(score),
         }))
         .sort((a, b) => b.score - a.score);
 
+    // Filter meaningful frameworks/tools (whitelist approach could be better, but let's take top ones)
+    // For now, take top 10 topics that are not just generic words
+    const envTiers = Object.entries(topicScores)
+        .map(([topicKey, score]) => {
+            // Try to find display name from mapping, otherwise capitalize
+            // Reverse lookup or better storage needed if we want exact display name preservation
+            // Simple fix: capitalize
+            return {
+                topic: topicKey,
+                score: Math.round(score),
+                grade: calculateGrade(score),
+            };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10); // Top 10 environments
+
     return {
         level,
         techTiers,
+        envTiers,
         activity: {
             totalCommits,
             totalPRs,
@@ -91,36 +207,43 @@ export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
     };
 }
 
+// 📊 개발자 레벨 계산 로직
 function calculateLevel(score: number): { value: number; label: string } {
-    // Simple sqrt curve or tiered? 
-    // Lv 1: 0
-    // Lv 10: 1000
-    // Lv 20: 5000
-    // Lv 50: 50000
-    // Let's use sqrt: Lv = sqrt(score / 20)
+    // 점수 산정 방식: 제곱근 곡선 사용
+    // 단순 선형 비례가 아니라, 레벨이 오를수록 더 많은 점수가 필요하도록 설정함.
+    // 공식: Level = sqrt(Total Score / 15)
+
+    // 예시 점수별 레벨:
+    // - 0점 -> Lv.0
+    // - 1,500점 -> Lv.10
+    // - 6,000점 -> Lv.20
+    // - 37,500점 -> Lv.50
     const lv = Math.floor(Math.sqrt(score / 15));
+
     let label = 'Novice';
-    if (lv >= 50) label = 'Grandmaster';
-    else if (lv >= 40) label = 'Code Architect';
-    else if (lv >= 30) label = 'Senior Contributor';
-    else if (lv >= 20) label = 'Active Developer';
-    else if (lv >= 10) label = 'Junior Developer';
+    if (lv >= 50) label = 'Grandmaster';       // 상위 1% (엄청난 기여도)
+    else if (lv >= 40) label = 'Code Architect'; // 숙련된 아키텍트 수준
+    else if (lv >= 30) label = 'Senior Contributor'; // 시니어 레벨
+    else if (lv >= 20) label = 'Active Developer';   // 꾸준한 활동가
+    else if (lv >= 10) label = 'Junior Developer';   // 성장하는 주니어
 
     return { value: Math.max(1, lv), label };
 }
 
+// 🏆 기술 스택 등급(Tier) 계산 로직
 function calculateGrade(score: number): string {
-    // Score depends on commits * star_weight.
-    // 100 commits on personal projects = 100 pts.
-    // 30 commits on major project (1k stars, x4) = 120 pts.
+    // 점수는 (커밋 수 * 리포지토리 가중치)로 계산됨.
+    // 리포지토리 가중치 = 1 + log10(스타 수 + 1)
+    // 예: 스타 0개 리포지토리에 100커밋 = 100점
+    // 예: 스타 1000개(Star Weight=4) 리포지토리에 25커밋 = 100점
 
-    if (score >= 2000) return 'A+'; // ~2000 commits or ~500 commits on huge projects
-    if (score >= 1000) return 'A';
-    if (score >= 500) return 'B+';
-    if (score >= 200) return 'B';
-    if (score >= 100) return 'C+';
-    if (score >= 50) return 'C';
-    if (score >= 20) return 'D';
-    if (score >= 5) return 'E';
-    return 'F';
+    if (score >= 2000) return 'A+'; // 상위 5% (해당 기술의 마스터)
+    if (score >= 1000) return 'A';  // 매우 능숙함
+    if (score >= 500) return 'B+';  // 실무 레벨 상급
+    if (score >= 200) return 'B';   // 실무 레벨 중급
+    if (score >= 100) return 'C+';  // 기초가 탄탄함
+    if (score >= 50) return 'C';    // 기본적인 사용 가능
+    if (score >= 20) return 'D';    // 입문 단계
+    if (score >= 5) return 'E';     // 찍먹 단계
+    return 'F';                     // 경험 없음
 }
