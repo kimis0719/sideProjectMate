@@ -208,27 +208,6 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* 기간 조절 버튼 */}
-                    <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-                        <button
-                            onClick={() => setDateRangeMonths(Math.max(3, dateRangeMonths - 3))}
-                            className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                            title="표시 기간 축소"
-                        >
-                            -
-                        </button>
-                        <span className="px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[3rem] text-center">
-                            {dateRangeMonths}개월
-                        </span>
-                        <button
-                            onClick={() => setDateRangeMonths(Math.min(36, dateRangeMonths + 3))}
-                            className="px-2 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                            title="표시 기간 확대"
-                        >
-                            +
-                        </button>
-                    </div>
-
                     {/* 뷰 모드 선택 */}
                     <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                         <button
