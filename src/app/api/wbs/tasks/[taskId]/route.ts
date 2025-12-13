@@ -93,9 +93,10 @@ export async function DELETE(
         }
 
         // 이 작업을 선행 작업으로 참조하는 다른 작업들의 dependencies에서 제거
+        // dependencies는 { taskId, type } 객체 배열이므로 필터링 필요
         await Task.updateMany(
-            { dependencies: taskId },
-            { $pull: { dependencies: taskId } }
+            { 'dependencies.taskId': taskId },
+            { $pull: { dependencies: { taskId: taskId } } }
         );
 
         return NextResponse.json(

@@ -1,6 +1,22 @@
 import mongoose, { Schema, models, model, Document } from 'mongoose';
 
 /**
+ * 의존관계 타입
+ * - FS (Finish-to-Start): 선행 작업이 끝나야 현재 작업 시작
+ * - SS (Start-to-Start): 선행 작업 시작과 동시에 현재 작업 시작 가능
+ * - FF (Finish-to-Finish): 선행 작업과 현재 작업이 동시에 끝나야 함
+ */
+export type DependencyType = 'FS' | 'SS' | 'FF';
+
+/**
+ * 의존관계 정보
+ */
+export interface IDependency {
+  taskId: mongoose.Types.ObjectId;  // 선행 작업 ID
+  type: DependencyType;              // 의존관계 타입
+}
+
+/**
  * WBS Task 인터페이스
  * 프로젝트의 작업(Task)을 정의하는 타입입니다.
  */
@@ -13,7 +29,9 @@ export interface ITask extends Document {
   endDate: Date;                        // 작업 종료일
   status: 'todo' | 'in-progress' | 'done';  // 진행 상태
   progress: number;                     // 진행률 (0-100%)
-  dependencies: mongoose.Types.ObjectId[];  // 선행 작업 ID 배열 (간트차트 의존성 표시용)
+  dependencies: IDependency[];          // 선행 작업 및 의존관계 타입
+  phase: string;                        // 단계/그룹명 (예: 기획, 개발, 테스트)
+  milestone: boolean;                   // 마일스톤 여부 (phase의 주요 완료 시점 표시)
   createdAt: Date;                      // 생성일시
   updatedAt: Date;                      // 수정일시
 }
@@ -82,9 +100,32 @@ const TaskSchema: Schema = new Schema(
     // 선행 작업 - 이 작업이 시작되기 전에 완료되어야 할 작업들의 ID 배열
     // 간트차트에서 화살표로 의존성을 표시할 때 사용
     dependencies: {
-      type: [Schema.Types.ObjectId],
-      ref: 'Task',
+      type: [{
+        taskId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Task',
+          required: true,
+        },
+        type: {
+          type: String,
+          enum: ['FS', 'SS', 'FF'],
+          default: 'FS',
+        },
+      }],
       default: [],
+    },
+    // 단계/그룹명 - 작업을 그룹화하는 단계 (예: "기획", "개발", "테스트", "배포")
+    phase: {
+      type: String,
+      default: '기본',
+      trim: true,
+      maxlength: 100,
+    },
+    // 마일스톤 여부 - phase의 주요 완료 시점을 표시하는 작업
+    // 간트차트에서 다이아몬드 모양으로 표시
+    milestone: {
+      type: Boolean,
+      default: false,
     },
   },
   { 
