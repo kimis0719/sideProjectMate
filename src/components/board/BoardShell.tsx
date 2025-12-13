@@ -5,6 +5,7 @@ import { useBoardStore } from '@/store/boardStore';
 import NoteItem from '@/components/board/NoteItem';
 import SectionItem from '@/components/board/SectionItem';
 import Minimap from '@/components/board/Minimap';
+import ShortcutHandler from '@/components/board/ShortcutHandler';
 
 /**
  * 임시로 사용할 공용 보드의 프로젝트 ID.
@@ -353,6 +354,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         </div>
       </header>
 
+      <ShortcutHandler />
+
       <main
         ref={containerRef}
         className="relative flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 select-none"
@@ -411,6 +414,12 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                   text={note.text}
                   color={note.color}
                   zIndex={zIndex}
+                  width={note.width}
+                  height={note.height}
+                  creatorId={note.creatorId}
+                  updaterId={note.updaterId}
+                  assigneeId={note.assigneeId}
+                  dueDate={note.dueDate}
                 />
               );
             })

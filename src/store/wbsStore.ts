@@ -40,7 +40,23 @@ type WbsState = {
  */
 const transformDoc = (doc: any): Task => {
     const { _id, createdAt, updatedAt, ...rest } = JSON.parse(JSON.stringify(doc));
-    return { id: _id, ...rest };
+    
+    // dependencies 배열의 taskId를 문자열로 변환
+    const transformedDependencies = rest.dependencies?.map((dep: any) => {
+        if (typeof dep === 'string') {
+            return { taskId: dep, type: 'FS' };
+        }
+        return {
+            taskId: typeof dep.taskId === 'string' ? dep.taskId : dep.taskId?.toString() || dep.taskId,
+            type: dep.type || 'FS',
+        };
+    }) || [];
+
+    return { 
+        id: _id, 
+        ...rest,
+        dependencies: transformedDependencies,
+    };
 };
 
 /**

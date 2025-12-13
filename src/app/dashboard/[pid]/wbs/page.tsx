@@ -7,6 +7,9 @@ import TaskForm from '@/components/wbs/TaskForm';
 import TaskList from '@/components/wbs/TaskList';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { checkAllScheduleConflicts } from '@/lib/utils/wbs/scheduleConflict';
+import DependencySettingModal from '@/components/wbs/DependencySettingModal';
+import type { DependencyType } from '@/lib/models/wbs/TaskModel';
 
 /**
  * WBS (Work Breakdown Structure) 페이지
@@ -45,6 +48,8 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
     const [showTaskForm, setShowTaskForm] = useState(false);      // 작업 폼 표시 여부
     const [editingTask, setEditingTask] = useState<Task | null>(null);  // 수정 중인 작업
     const [projectMembers, setProjectMembers] = useState<any[]>([]);    // 프로젝트 멤버 목록
+    const [showDependencyModal, setShowDependencyModal] = useState(false);  // 의존관계 설정 모달 표시 여부
+    const [dateRangeMonths, setDateRangeMonths] = useState(12);  // 표시 기간 (개월 수)
 
     // 인증 확인
     useEffect(() => {
@@ -158,8 +163,23 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
     };
 
     // 간트차트에서 작업 클릭
-    const handleTaskClick = (task: Task) => {
+    const handleGanttTaskClick = (task: Task) => {
         selectTask(task.id);
+        setShowDependencyModal(true);
+    };
+
+    // 의존관계 저장 핸들러
+    const handleSaveDependency = async (
+        taskId: string,
+        dependencies: Array<{ taskId: string; type: DependencyType }>
+    ) => {
+        try {
+            // dependencies를 서버 쪽으로 전달되는 단순 객체 배열로 변환
+            await updateTask(taskId, { dependencies: dependencies as any });
+        } catch (error) {
+            console.error('의존관계 저장 실패:', error);
+            throw error;
+        }
     };
 
     // 간트차트에서 날짜 변경 (드래그)
@@ -230,6 +250,59 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                 </div>
             </div>
 
+            {/* 일정 충돌 통계 대시보드 */}
+            {(() => {
+                const allConflicts = checkAllScheduleConflicts(
+                    tasks.map(task => ({
+                        id: task.id,
+                        title: task.title,
+                        startDate: new Date(task.startDate),
+                        endDate: new Date(task.endDate),
+                        assignee: {
+                            _id: task.assignee._id,
+                            nName: task.assignee.nName,
+                        },
+                    }))
+                );
+
+                const totalConflicts = Array.from(allConflicts.values()).reduce(
+                    (sum, conflicts) => sum + conflicts.length,
+                    0
+                );
+
+                const affectedAssignees = allConflicts.size;
+
+                if (totalConflicts > 0) {
+                    return (
+                        <div className="px-6 py-3 bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="text-sm font-medium text-orange-900 dark:text-orange-200">
+                                        일정 충돌 감지:
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-4 text-sm text-orange-800 dark:text-orange-300">
+                                    <span>
+                                        총 <strong className="font-semibold">{totalConflicts}건</strong>의 충돌
+                                    </span>
+                                    <span className="text-orange-400 dark:text-orange-600">|</span>
+                                    <span>
+                                        <strong className="font-semibold">{affectedAssignees}명</strong>의 작업자 영향
+                                    </span>
+                                    <span className="text-orange-600 dark:text-orange-400 ml-2">
+                                        → 작업 목록에서 확인하세요
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+                return null;
+            })()}
+
             {/* 메인 컨텐츠 */}
             <div className="flex-1 overflow-auto p-6 space-y-6">
                 {/* 작업 폼 (모달 형태) */}
@@ -239,6 +312,7 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                             task={editingTask}
                             projectId={projectId}
                             projectMembers={projectMembers}
+                            existingTasks={tasks}
                             onSubmit={handleTaskSubmit}
                             onCancel={handleTaskCancel}
                         />
@@ -251,8 +325,9 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                     <GanttChart
                         tasks={tasks}
                         viewMode={viewMode === 'day' ? 'Day' : viewMode === 'week' ? 'Week' : 'Month'}
-                        onTaskClick={handleTaskClick}
+                        onTaskClick={handleGanttTaskClick}
                         onDateChange={handleDateChange}
+                        dateRangeMonths={dateRangeMonths}
                     />
                 </div>
 
@@ -268,6 +343,15 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                     />
                 </div>
             </div>
+
+            {/* 의존관계 설정 모달 */}
+            <DependencySettingModal
+                isOpen={showDependencyModal}
+                selectedTask={selectedTaskId ? tasks.find(t => t.id === selectedTaskId) || null : null}
+                allTasks={tasks}
+                onClose={() => setShowDependencyModal(false)}
+                onSaveDependency={handleSaveDependency}
+            />
         </div>
     );
 }

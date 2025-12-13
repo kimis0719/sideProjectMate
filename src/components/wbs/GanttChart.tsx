@@ -4,18 +4,36 @@ import { useEffect, useState, useRef } from 'react';
 import { Gantt, Task as GanttTask, ViewMode } from 'gantt-task-react';
 import "gantt-task-react/dist/index.css";
 import { Task } from '@/store/wbsStore';
+import { drawDependencyLines, getTaskPositions, highlightDependencies, clearHighlightDependencies, debugDependencyInfo } from '@/lib/utils/wbs/drawDependencies';
 
 interface GanttChartProps {
   tasks: Task[];
   viewMode: 'Day' | 'Week' | 'Month';
   onTaskClick?: (task: Task) => void;
   onDateChange?: (task: Task, start: Date, end: Date) => void;
+  dateRangeMonths?: number;  // 표시할 기간 (개월 수)
 }
 
-export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange }: GanttChartProps) {
+/**
+ * GanttChart 컴포넌트
+ * 
+ * 주요 기능:
+ * - 작업을 간트차트 형태로 시각화
+ * - milestone 속성이 true인 작업은 다이아몬드 모양으로 표시
+ * - phase를 통해 작업 그룹화 (같은 phase의 작업들이 함께 표시)
+ * - 드래그로 작업 날짜 변경 가능
+ */
+export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange, dateRangeMonths = 12 }: GanttChartProps) {
   const [ganttTasks, setGanttTasks] = useState<GanttTask[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState<number>(0);
+  
+  // 드래그 추적
+  const dragStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const isDraggingRef = useRef(false);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const DRAG_THRESHOLD = 5; // 5px 이상 드래그되면 드래그로 간주
+  const CLICK_DELAY = 300; // 300ms (단순 클릭 판단 대기 시간)
 
   useEffect(() => {
     if (tasks.length === 0) {
@@ -28,25 +46,31 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange 
       end: new Date(task.endDate),
       name: task.title,
       id: task.id,
-      type: 'task',
+      type: task.milestone ? 'milestone' : 'task',
       progress: task.progress,
       isDisabled: false,
       styles: {
-        progressColor: task.status === 'done' ? '#10b981' : '#3b82f6',
-        progressSelectedColor: task.status === 'done' ? '#059669' : '#2563eb',
-        backgroundColor: task.status === 'done' ? '#d1fae5' : '#dbeafe',
-        backgroundSelectedColor: task.status === 'done' ? '#a7f3d0' : '#bfdbfe',
+        progressColor: task.status === 'done' ? '#10b981' : task.milestone ? '#eab308' : '#3b82f6',
+        progressSelectedColor: task.status === 'done' ? '#059669' : task.milestone ? '#ca8a04' : '#2563eb',
+        backgroundColor: task.status === 'done' ? '#d1fae5' : task.milestone ? '#fef3c7' : '#dbeafe',
+        backgroundSelectedColor: task.status === 'done' ? '#a7f3d0' : task.milestone ? '#fde68a' : '#bfdbfe',
       },
       project: task.pid.toString(),
-      dependencies: task.dependencies?.map(dep => dep.toString()),
+      // dependencies를 문자열 배열로 변환
+      dependencies: task.dependencies?.map(dep => {
+        if (typeof dep === 'string') return dep;
+        if (typeof dep === 'object' && dep.taskId) return dep.taskId.toString();
+        return '';
+      }).filter(Boolean) as string[],
     }));
 
-    // 1년 범위 강제 확장을 위한 투명 더미 작업 추가
+    // 기간별 범위 강제 확장을 위한 투명 더미 작업 추가
+    // 시작일: 현재 월의 1일
     const today = new Date();
-    const startBoundary = new Date(today);
-    startBoundary.setMonth(today.getMonth() - 6);
-    const endBoundary = new Date(today);
-    endBoundary.setMonth(today.getMonth() + 6);
+    const startBoundary = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    // 종료일: 현재 월 기준 dateRangeMonths개월 후 말일
+    const endBoundary = new Date(today.getFullYear(), today.getMonth() + dateRangeMonths, 0);
 
     // 범위 시작 더미
     newGanttTasks.push({
@@ -104,7 +128,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange 
     // 최소 너비 보장 (화면보다 작으면 100% 사용)
     setChartWidth(Math.max(estimatedWidth + 200, 1200)); // 여유분 추가
 
-  }, [tasks, viewMode]);
+  }, [tasks, viewMode, dateRangeMonths]);
 
   const handleTaskChange = (task: GanttTask) => {
     const originalTask = tasks.find((t) => t.id === task.id);
@@ -114,12 +138,31 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange 
   };
 
   const handleSelect = (task: GanttTask, isSelected: boolean) => {
-    if (isSelected && onTaskClick) {
-      const originalTask = tasks.find((t) => t.id === task.id);
-      if (originalTask) {
-        onTaskClick(originalTask);
-      }
+    // 클릭이 선택된 경우만 처리
+    if (!isSelected) return;
+
+    // 이미 대기중인 타이머가 있으면 취소
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
     }
+
+    // 드래그가 이미 발생된 경우 처리 무시
+    if (isDraggingRef.current) {
+      return;
+    }
+
+    // 300ms 대기 후, 드래그가 아닌 단순 클릭만 실행
+    clickTimeoutRef.current = setTimeout(() => {
+      // 300ms 동안 드래그가 발생하지 않았으면 클릭 이벤트 발생
+      if (!isDraggingRef.current && onTaskClick) {
+        const originalTask = tasks.find((t) => t.id === task.id);
+        if (originalTask) {
+          onTaskClick(originalTask);
+        }
+      }
+      clickTimeoutRef.current = null;
+    }, CLICK_DELAY);
   };
 
   const getGanttViewMode = (mode: 'Day' | 'Week' | 'Month'): ViewMode => {
@@ -131,6 +174,192 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange 
     }
   };
 
+  // 클릭과 드래그 구분 로직
+  useEffect(() => {
+    const ganttContainer = wrapperRef.current;
+    if (!ganttContainer) return;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      dragStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+      isDraggingRef.current = false;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragStartRef.current) return;
+
+      const deltaX = Math.abs(e.clientX - dragStartRef.current.x);
+      const deltaY = Math.abs(e.clientY - dragStartRef.current.y);
+
+      // 5px 이상 드래그되면, 드래그 개시
+      if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+        isDraggingRef.current = true;
+
+        // 드래그 중에 대기되지 않은 타이머 취소
+        if (clickTimeoutRef.current) {
+          clearTimeout(clickTimeoutRef.current);
+          clickTimeoutRef.current = null;
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      dragStartRef.current = null;
+      // 초기화 시점 (0.3초 대기로 단순 클릭 판단)
+      isDraggingRef.current = false;
+    };
+
+    ganttContainer.addEventListener('mousedown', handleMouseDown);
+    ganttContainer.addEventListener('mousemove', handleMouseMove);
+    ganttContainer.addEventListener('mouseup', handleMouseUp);
+    ganttContainer.addEventListener('mouseleave', handleMouseUp);
+
+    return () => {
+      ganttContainer.removeEventListener('mousedown', handleMouseDown);
+      ganttContainer.removeEventListener('mousemove', handleMouseMove);
+      ganttContainer.removeEventListener('mouseup', handleMouseUp);
+      ganttContainer.removeEventListener('mouseleave', handleMouseUp);
+      
+      // 정리 시간에 대기된 타이머 취소
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, [onTaskClick, tasks]);
+
+  // 중복 동작 방지 useEffect
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // 의존관계 연결선 그리기
+  useEffect(() => {
+    const ganttContainer = wrapperRef.current;
+    if (!ganttContainer || ganttTasks.length === 0) return;
+
+    // 약간의 지연을 주어 DOM이 완전히 렌더링되도록
+    const drawTimer = setTimeout(() => {
+      // 작업 맵 생성
+      const taskMap = new Map(tasks.map((task) => [task.id, task]));
+      
+      // 작업 위치 정보 추출
+      const positions = getTaskPositions(ganttContainer);
+      
+      // 디버그 정보 출력
+      debugDependencyInfo(ganttContainer, taskMap, positions);
+      
+      // 의존관계 연결선 그리기
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      drawDependencyLines(ganttContainer, taskMap, positions, isDarkMode);
+    }, 500);
+
+    return () => clearTimeout(drawTimer);
+  }, [ganttTasks, tasks]);
+
+  // 작업명 텍스트 색상 및 위치 조정
+  useEffect(() => {
+    const ganttContainer = wrapperRef.current;
+    if (!ganttContainer || ganttTasks.length === 0) return;
+
+    const adjustTextStyling = () => {
+      const svg = ganttContainer.querySelector('svg');
+      if (!svg) return;
+
+      const taskGroups = svg.querySelectorAll('g[data-id]');
+      
+      taskGroups.forEach((group, index) => {
+        const dataId = group.getAttribute('data-id');
+        
+        // 더미 작업 제외
+        if (dataId === 'ghost-start' || dataId === 'ghost-end') return;
+        
+        const rect = group.querySelector('rect.bar');
+        const text = group.querySelector('text');
+        
+        if (!rect || !text) return;
+        
+        try {
+          const x = parseFloat(rect.getAttribute('x') || '0');
+          const y = parseFloat(rect.getAttribute('y') || '0');
+          const width = parseFloat(rect.getAttribute('width') || '0');
+          const height = parseFloat(rect.getAttribute('height') || '0');
+          
+          // 첫 3개 작업의 디버그 로그
+          if (index < 3) {
+            console.log(`[${index}] Task ${dataId}:`, {
+              rect: { x, y, width, height },
+              before: {
+                x: text.getAttribute('x'),
+                y: text.getAttribute('y'),
+                textContent: text.textContent,
+              }
+            });
+          }
+          
+          // 새로운 text 요소 생성 (라이브러리 간섭 제거)
+          const newText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          const textContent = text.textContent || '';
+          
+          const centerX = x + width / 2;
+          const centerY = y + height / 2;
+          
+          newText.setAttribute('x', String(centerX));
+          newText.setAttribute('y', String(centerY));
+          newText.setAttribute('text-anchor', 'middle');
+          newText.setAttribute('dominant-baseline', 'central');
+          newText.setAttribute('fill', '#000000');
+          newText.setAttribute('font-weight', '500');
+          newText.setAttribute('font-size', '12px');
+          newText.setAttribute('pointer-events', 'none');
+          newText.textContent = textContent;
+          
+          // 기존 text 요소 제거하고 새 요소 추가
+          text.replaceWith(newText);
+          
+          if (index < 3) {
+            console.log(`[${index}] Task ${dataId} after:`, {
+              newX: newText.getAttribute('x'),
+              newY: newText.getAttribute('y'),
+            });
+          }
+        } catch (e) {
+          console.error('Error adjusting text styling:', e);
+        }
+      });
+    };
+
+    // 초기 조정
+    const timer = setTimeout(adjustTextStyling, 150);
+    
+    // 주기적으로 조정 (드래그 등으로 리렌더링될 때)
+    const interval = setInterval(adjustTextStyling, 800);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [ganttTasks]);
+
+  // 다크모드 변경 감지 시 다시 그리기
+  useEffect(() => {
+    const ganttContainer = wrapperRef.current;
+    if (!ganttContainer || ganttTasks.length === 0) return;
+
+    const observer = new MutationObserver(() => {
+      const taskMap = new Map(tasks.map((task) => [task.id, task]));
+      const positions = getTaskPositions(ganttContainer);
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      drawDependencyLines(ganttContainer, taskMap, positions, isDarkMode);
+    });
+
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, [ganttTasks, tasks]);
+
   // 3단 헤더 구현을 위한 DOM 조작
   useEffect(() => {
     const formatHeader = () => {
@@ -140,10 +369,23 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange 
       const svg = ganttContainer.querySelector('svg');
       if (!svg) return;
 
-      const texts = Array.from(ganttContainer.querySelectorAll('svg > text'));
       const allTexts = Array.from(ganttContainer.querySelectorAll('text'));
 
+      // 헤더 텍스트와 작업 텍스트를 구분
+      // 작업 텍스트는 g[data-id] 안에 있음
       const headerTexts = allTexts.filter(text => {
+        // g[data-id] 안의 텍스트는 제외 (작업 텍스트)
+        const parent = text.parentElement;
+        if (parent?.getAttribute('data-id')) {
+          return false;
+        }
+        
+        // svg 직계 자식이 아니면 제외 (중첩된 그룹 내 텍스트 제외)
+        if (parent?.tagName !== 'svg') {
+          return false;
+        }
+        
+        // 헤더 텍스트만 처리
         const y = text.getAttribute('y');
         return y && parseFloat(y) < 120;
       });
@@ -243,7 +485,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange 
 
   return (
     <div className="gantt-chart-wrapper h-[600px] overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      <div ref={wrapperRef} style={{ width: chartWidth > 0 ? `${chartWidth}px` : '100%', height: '100%' }}>
+      <div ref={wrapperRef} style={{ width: chartWidth > 0 ? `${chartWidth}px` : '100%', height: '100%', position: 'relative' }}>
         {ganttTasks.length > 0 ? (
           <Gantt
             tasks={ganttTasks}
@@ -272,9 +514,35 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange 
         .gantt-chart-wrapper .gantt-task-react-header {
           height: 120px !important;
         }
-        .dark .gantt-chart-wrapper text {
-          fill: #e5e7eb !important;
+        
+        /* 모든 작업 텍스트를 검은색으로 설정 */
+        .gantt-chart-wrapper svg text {
+          fill: #000000 !important;
+          font-weight: 500 !important;
+          text-anchor: middle !important;
+          dominant-baseline: central !important;
         }
+        
+        /* 작업 바 내부 텍스트 - 위치 강제 설정 */
+        .gantt-chart-wrapper g[data-id] text {
+          text-anchor: middle !important;
+          dominant-baseline: central !important;
+          fill: #000000 !important;
+          font-weight: 500 !important;
+          font-size: 12px !important;
+          pointer-events: none !important;
+          x: auto !important;
+          y: auto !important;
+        }
+        
+        /* tspan 초기화 */
+        .gantt-chart-wrapper g[data-id] text tspan {
+          x: auto !important;
+          y: auto !important;
+          dx: 0 !important;
+          dy: 0 !important;
+        }
+        
         .dark .gantt-chart-wrapper line {
           stroke: #374151 !important;
         }

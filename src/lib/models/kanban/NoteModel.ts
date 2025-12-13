@@ -5,6 +5,13 @@ export interface INote extends Document {
   x: number;
   y: number;
   color: string;
+  width: number;
+  height: number;
+  tags: string[];
+  dueDate?: Date;
+  assigneeId?: string;
+  creatorId: mongoose.Types.ObjectId;
+  updaterId?: mongoose.Types.ObjectId;
   boardId: mongoose.Types.ObjectId;
   sectionId?: mongoose.Types.ObjectId;
 }
@@ -28,6 +35,26 @@ const NoteSchema: Schema = new Schema(
       type: String,
       default: '#FFFB8F',
     },
+    width: {
+      type: Number,
+      default: 200,
+    },
+    height: {
+      type: Number,
+      default: 140,
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
+    dueDate: {
+      type: Date,
+    },
+    assigneeId: {
+      type: String,
+    },
+    creatorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    updaterId: { type: Schema.Types.ObjectId, ref: 'User' },
     boardId: {
       type: Schema.Types.ObjectId,
       ref: 'Board', // Board 모델 참조
