@@ -15,6 +15,11 @@ export type Note = {
   color: string;
   boardId: string;
   sectionId?: string | null;
+  tags: string[];
+  dueDate?: Date;
+  assigneeId?: string;
+  creatorId?: string; // Optional initially as legacy notes might not have it, but new ones will
+  updaterId?: string;
 };
 
 export type Board = {
@@ -50,27 +55,33 @@ type BoardState = {
   openPaletteNoteId: string | null;
   spawnIndex: number;
   nextColorIndex: number;
+  members: Array<{ _id: string; nName: string; email: string; position?: string; role: string }>; // 프로젝트 멤버 리스트
+  alignmentGuides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[];
+
+  // Actions
   initBoard: (pid: number) => Promise<void>;
+  fetchMembers: (boardId: string) => Promise<void>;
   initSocket: () => void;
   addNote: (containerWidth?: number, containerHeight?: number) => Promise<void>;
   moveNote: (id: string, x: number, y: number) => void;
   moveNotes: (ids: string[], dx: number, dy: number) => void;
-  updateNote: (id: string, patch: Partial<Omit<Note, 'id'>>) => void;
-  updateNotes: (updates: { id: string; changes: Partial<Omit<Note, 'id'>> }[]) => Promise<void>;
+  updateNote: (id: string, patch: Partial<Note>) => void;
+  updateNotes: (updates: { id: string; changes: Partial<Note> }[]) => void;
   removeNote: (id: string) => Promise<void>;
   removeNotes: (ids: string[]) => Promise<void>;
   selectNote: (id: string | null, multi?: boolean) => void;
   selectNotes: (ids: string[]) => void;
   setOpenPaletteNoteId: (id: string | null) => void;
+  duplicateNote: (id: string) => void;
+  duplicateNotes: (ids: string[]) => void;
   setZoom: (z: number) => void;
   setPan: (x: number, y: number) => void;
-  fitToContent: (containerWidth: number, containerHeight: number) => void;
-  alignmentGuides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[];
+  fitToContent: (containerWidth: number, containerHeight?: number) => void;
   setAlignmentGuides: (guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[]) => void;
 
   // Section Actions
   addSection: (section: Section) => void;
-  updateSection: (id: string, patch: Partial<Omit<Section, 'id'>>) => void;
+  updateSection: (id: string, patch: Partial<Section>) => void;
   removeSection: (id: string) => void;
   moveSection: (id: string, x: number, y: number) => void;
 };
@@ -83,11 +94,13 @@ const transformDoc = (doc: any) => {
 export const useBoardStore = create<BoardState>()(
   devtools(
     (set, get) => ({
-      boardId: null,
       notes: [],
       sections: [],
-      zoom: 1,
+      members: [],
+      boardId: null,
+      scale: 1,
       pan: { x: 0, y: 0 },
+      zoom: 1,
       selectedNoteIds: [],
       openPaletteNoteId: null,
       spawnIndex: 0,
@@ -95,36 +108,62 @@ export const useBoardStore = create<BoardState>()(
       alignmentGuides: [],
 
       initBoard: async (pid) => {
-        set({ notes: [], sections: [], boardId: null, selectedNoteIds: [] });
+        set({ notes: [], sections: [], boardId: null, selectedNoteIds: [], members: [] });
         try {
+          // 1. Board ID 조회 (by PID)
           const boardRes = await fetch(`/api/kanban/boards?pid=${pid}`);
           if (!boardRes.ok) throw new Error('Failed to fetch board');
           const boardDoc = await boardRes.json();
           const board = transformDoc(boardDoc);
           set({ boardId: board.id });
 
-          const [notesRes, sectionsRes] = await Promise.all([
-            fetch(`/api/kanban/notes?boardId=${board.id}`),
-            fetch(`/api/kanban/sections?boardId=${board.id}`),
-          ]);
+          // 2. 노트 조회
+          const notesRes = await fetch(`/api/kanban/notes?boardId=${board.id}`);
+          if (notesRes.ok) {
+            const notes = await notesRes.json();
+            const parsedNotes = notes.map((n: any) => ({
+              ...n,
+              id: n._id,
+              tags: n.tags || [],
+              dueDate: n.dueDate ? new Date(n.dueDate) : undefined,
+              assigneeId: n.assigneeId || undefined,
+              creatorId: n.creatorId,
+              updaterId: n.updaterId
+            }));
+            set({ notes: parsedNotes });
+          }
 
-          if (!notesRes.ok) throw new Error('Failed to fetch notes');
-          const noteDocs = await notesRes.json();
-          const notes = noteDocs.map(transformDoc);
-
-          let sections: Section[] = [];
+          // 3. 섹션 조회
+          const sectionsRes = await fetch(`/api/kanban/sections?boardId=${board.id}`);
           if (sectionsRes.ok) {
             const sectionDocs = await sectionsRes.json();
             if (sectionDocs.success) {
-              sections = sectionDocs.data.map(transformDoc);
+              const sections = sectionDocs.data.map(transformDoc);
+              set({ sections });
             }
           }
 
-          set({ notes, sections });
+          // 4. 소켓 및 멤버 초기화
           get().initSocket();
+          get().fetchMembers(board.id);
+
         } catch (error) {
           console.error(error);
           set({ notes: [], sections: [], boardId: null });
+        }
+      },
+
+      fetchMembers: async (boardId) => {
+        try {
+          const res = await fetch(`/api/kanban/boards/${boardId}/members`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              set({ members: data.members });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch members:', error);
         }
       },
 
@@ -133,48 +172,56 @@ export const useBoardStore = create<BoardState>()(
         if (!boardId) return;
 
         const socket = socketClient.connect();
+        socket.emit('join-board', boardId);
 
-        socket.emit('join-board', boardId.toString());
-
-        socket.off('note-updated');
-        socket.on('note-updated', (updatedNote: Note) => {
-          set((state) => ({
-            notes: state.notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)),
-          }));
+        // ... (socket listeners)
+        socket.off('note-created');
+        socket.on('note-created', (note: any) => {
+          // 본인이 생성한 건 이미 optimistic update로 들어와있었을 수 있음 (temp ID)
+          // 하지만 다른 사람이 생성한 건 새로 받아야 함.
+          // 간단히: ID 중복 체크 후 추가
+          const { notes } = get();
+          if (!notes.find((n) => n.id === note._id)) {
+            set((state) => ({
+              notes: [...state.notes, transformDoc(note)]
+            }));
+          }
         });
 
-        socket.off('note-created');
-        socket.on('note-created', (newNote: Note) => {
+        socket.off('note-updated');
+        socket.on('note-updated', (note: any) => {
           set((state) => ({
-            notes: [...state.notes, newNote],
+            notes: state.notes.map((n) => n.id === note._id ? { ...n, ...transformDoc(note) } : n)
           }));
         });
 
         socket.off('note-deleted');
         socket.on('note-deleted', (noteId: string) => {
           set((state) => ({
-            notes: state.notes.filter((n) => n.id !== noteId),
+            notes: state.notes.filter((n) => n.id !== noteId)
           }));
+        });
+
+        // Sections Sockets
+        socket.off('section-created');
+        socket.on('section-created', (section: any) => {
+          const { sections } = get();
+          if (!sections.find(s => s.id === section._id)) {
+            set(state => ({ sections: [...state.sections, { ...section, id: section._id }] }));
+          }
         });
 
         socket.off('section-updated');
-        socket.on('section-updated', (updatedSection: Section) => {
-          set((state) => ({
-            sections: state.sections.map((s) => (s.id === updatedSection.id ? updatedSection : s)),
-          }));
-        });
-
-        socket.off('section-created');
-        socket.on('section-created', (newSection: Section) => {
-          set((state) => ({
-            sections: [...state.sections, newSection],
+        socket.on('section-updated', (section: any) => {
+          set(state => ({
+            sections: state.sections.map(s => s.id === section._id ? { ...s, ...section, id: section._id } : s)
           }));
         });
 
         socket.off('section-deleted');
         socket.on('section-deleted', (sectionId: string) => {
-          set((state) => ({
-            sections: state.sections.filter((s) => s.id !== sectionId),
+          set(state => ({
+            sections: state.sections.filter(s => s.id !== sectionId)
           }));
         });
       },
@@ -214,6 +261,7 @@ export const useBoardStore = create<BoardState>()(
           color: COLOR_PALETTE[nextColorIndex % COLOR_PALETTE.length],
           boardId: boardId as any,
           sectionId: containingSection ? (containingSection.id as any) : null,
+          tags: [],
         };
 
         set((state) => ({
@@ -269,7 +317,7 @@ export const useBoardStore = create<BoardState>()(
         }
       },
 
-      removeNotes: async (ids: string[]) => {
+      removeNotes: async (ids) => {
         const { boardId } = get();
         const originalNotes = get().notes;
         set((state) => ({
@@ -278,10 +326,10 @@ export const useBoardStore = create<BoardState>()(
         }));
 
         try {
-          const response = await fetch('/api/kanban/notes/batch', {
-            method: 'DELETE',
+          const response = await fetch('/api/kanban/notes/batch-delete', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids }),
+            body: JSON.stringify({ noteIds: ids, boardId }),
           });
           if (!response.ok) throw new Error('Failed to batch delete notes');
 
@@ -295,6 +343,68 @@ export const useBoardStore = create<BoardState>()(
           console.error(error);
           set({ notes: originalNotes });
         }
+      },
+
+      duplicateNote: (id) => {
+        const { notes, boardId } = get();
+        const targetNote = notes.find((n) => n.id === id);
+        if (targetNote) {
+          const newId = `temp-${crypto.randomUUID()}`;
+          // 오프셋 적용하여 위치 설정
+          const newNote: Note = {
+            ...targetNote,
+            id: newId,
+            x: targetNote.x + 20,
+            y: targetNote.y + 20,
+            boardId,
+            tags: [...targetNote.tags],
+            dueDate: targetNote.dueDate,
+            assigneeId: targetNote.assigneeId
+          };
+
+          // 1. Optimistic Update
+          set((state) => ({
+            notes: [...state.notes, newNote],
+            selectedNoteIds: [newId]
+          }));
+
+          // 2. Server Sync
+          fetch('/api/kanban/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: newNote.text,
+              x: newNote.x,
+              y: newNote.y,
+              color: newNote.color,
+              width: newNote.width,
+              height: newNote.height,
+              boardId: newNote.boardId,
+              sectionId: newNote.sectionId,
+              tags: newNote.tags,
+              dueDate: newNote.dueDate,
+              assigneeId: newNote.assigneeId,
+            }),
+          })
+            .then(res => res.json())
+            .then(savedNote => {
+              if (savedNote && !savedNote.error) {
+                set(state => ({
+                  notes: state.notes.map(n => n.id === newId ? { ...savedNote, id: savedNote._id } : n),
+                  selectedNoteIds: [savedNote._id]
+                }));
+              }
+            })
+            .catch(console.error);
+        }
+      },
+
+      duplicateNotes: (ids) => {
+        // 로직상 복잡하므로 여기서는 빈 함수로 두거나, 위에서 구현한 내용 채워넣음.
+        // 간소화를 위해 addNote 반복 호출로 대체하거나 추후 구현.
+        // 일단 단축키 핸들러 연동을 위해 선언은 필수.
+        const { duplicateNote } = get();
+        ids.forEach(id => duplicateNote(id));
       },
 
       moveNote: (id, x, y) => set((state) => {
