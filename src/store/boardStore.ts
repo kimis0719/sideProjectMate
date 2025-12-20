@@ -57,6 +57,8 @@ type BoardState = {
   nextColorIndex: number;
   members: Array<{ _id: string; nName: string; email: string; position?: string; role: string }>; // 프로젝트 멤버 리스트
   alignmentGuides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[];
+  lockedNotes: Record<string, { userId: string; socketId: string }>; // noteId -> lock info
+  lockedSections: Record<string, { userId: string; socketId: string }>; // sectionId -> lock info
 
   // Actions
   initBoard: (pid: number) => Promise<void>;
@@ -79,6 +81,13 @@ type BoardState = {
   fitToContent: (containerWidth: number, containerHeight?: number) => void;
   setAlignmentGuides: (guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[]) => void;
 
+  // Locking Actions
+  lockNote: (noteId: string, userId: string) => void;
+  unlockNote: (noteId: string) => void;
+  lockSection: (sectionId: string, userId: string) => void;
+  unlockSection: (sectionId: string) => void;
+  setNoteLock: (noteId: string, info: { userId: string; socketId: string } | null) => void;
+
   // Section Actions
   addSection: (section: Section) => void;
   updateSection: (id: string, patch: Partial<Section>) => void;
@@ -88,7 +97,7 @@ type BoardState = {
 
 const transformDoc = (doc: any) => {
   const { _id, ...rest } = JSON.parse(JSON.stringify(doc));
-  return { id: _id, ...rest };
+  return { id: _id || doc.id, ...rest }; // _id가 없으면 id 사용 (소켓 데이터 호환)
 };
 
 export const useBoardStore = create<BoardState>()(
@@ -106,6 +115,8 @@ export const useBoardStore = create<BoardState>()(
       spawnIndex: 0,
       nextColorIndex: 0,
       alignmentGuides: [],
+      lockedNotes: {},
+      lockedSections: {},
 
       initBoard: async (pid) => {
         set({ notes: [], sections: [], boardId: null, selectedNoteIds: [], members: [] });
@@ -202,19 +213,54 @@ export const useBoardStore = create<BoardState>()(
           }));
         });
 
+        // Locking Sockets
+        socket.off('note-locked');
+        socket.on('note-locked', (data: { id: string; userId: string; socketId: string }) => {
+          set(state => ({
+            lockedNotes: { ...state.lockedNotes, [data.id]: { userId: data.userId, socketId: data.socketId } }
+          }));
+        });
+
+        socket.off('note-unlocked');
+        socket.on('note-unlocked', (data: { id: string }) => {
+          set(state => {
+            const newLocked = { ...state.lockedNotes };
+            delete newLocked[data.id];
+            return { lockedNotes: newLocked };
+          });
+        });
+
+        socket.off('section-locked');
+        socket.on('section-locked', (data: { id: string; userId: string; socketId: string }) => {
+          set(state => ({
+            lockedSections: { ...state.lockedSections, [data.id]: { userId: data.userId, socketId: data.socketId } }
+          }));
+        });
+
+        socket.off('section-unlocked');
+        socket.on('section-unlocked', (data: { id: string }) => {
+          set(state => {
+            const newLocked = { ...state.lockedSections };
+            delete newLocked[data.id];
+            return { lockedSections: newLocked };
+          });
+        });
         // Sections Sockets
         socket.off('section-created');
         socket.on('section-created', (section: any) => {
           const { sections } = get();
-          if (!sections.find(s => s.id === section._id)) {
-            set(state => ({ sections: [...state.sections, { ...section, id: section._id }] }));
+          // 섹션 ID 정규화하여 중복 확인
+          const newSection = transformDoc(section);
+          if (!sections.find(s => s.id === newSection.id)) {
+            set(state => ({ sections: [...state.sections, newSection] }));
           }
         });
 
         socket.off('section-updated');
         socket.on('section-updated', (section: any) => {
+          const updatedSection = transformDoc(section);
           set(state => ({
-            sections: state.sections.map(s => s.id === section._id ? { ...s, ...section, id: section._id } : s)
+            sections: state.sections.map(s => s.id === updatedSection.id ? { ...s, ...updatedSection } : s)
           }));
         });
 
@@ -234,8 +280,18 @@ export const useBoardStore = create<BoardState>()(
         let y = SEED_POS.y + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
 
         if (containerWidth && containerHeight) {
-          x = (pan.x) / zoom + (containerWidth / 2 - SEED_POS.x) + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
-          y = (pan.y) / zoom + (containerHeight / 2 - SEED_POS.y) + (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+          // 화면 중앙 좌표를 'World 좌표'로 변환
+          // pan은 'World -> Screen' 이동량이므로, Screen -> World 변환 시 빼줘야 함.
+          // 공식: WorldX = (ScreenX - panX) / zoom
+          const centerX = containerWidth / 2;
+          const centerY = containerHeight / 2;
+
+          x = (centerX - pan.x) / zoom - (OFFSET_STEP * 2); // 약간의 오프셋
+          y = (centerY - pan.y) / zoom - (OFFSET_STEP * 2);
+
+          // 스폰 오프셋 추가
+          x += (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
+          y += (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
         }
 
         const NOTE_W = 200;
@@ -650,6 +706,50 @@ export const useBoardStore = create<BoardState>()(
           return { sections: newSections, notes: newNotes };
         });
       },
+
+      lockNote: (noteId, userId) => {
+        const { boardId } = get();
+        if (boardId) {
+          const socket = socketClient.connect();
+          socket.emit('request-lock', { boardId, id: noteId, type: 'note', userId });
+        }
+      },
+
+      unlockNote: (noteId) => {
+        const { boardId } = get();
+        if (boardId) {
+          const socket = socketClient.connect();
+          socket.emit('release-lock', { boardId, id: noteId, type: 'note' });
+        }
+      },
+
+      lockSection: (sectionId, userId) => {
+        const { boardId } = get();
+        if (boardId) {
+          const socket = socketClient.connect();
+          socket.emit('request-lock', { boardId, id: sectionId, type: 'section', userId });
+        }
+      },
+
+      unlockSection: (sectionId) => {
+        const { boardId } = get();
+        if (boardId) {
+          const socket = socketClient.connect();
+          socket.emit('release-lock', { boardId, id: sectionId, type: 'section' });
+        }
+      },
+
+      setNoteLock: (noteId, info) => {
+        set(state => {
+          const newLocked = { ...state.lockedNotes };
+          if (info) {
+            newLocked[noteId] = info;
+          } else {
+            delete newLocked[noteId];
+          }
+          return { lockedNotes: newLocked };
+        });
+      }
     })
   )
 );

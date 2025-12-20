@@ -1,7 +1,20 @@
 'use client';
 
 import React from 'react';
+
 import { useBoardStore, Note } from '@/store/boardStore';
+import { socketClient } from '@/lib/socket';
+import { useSession } from 'next-auth/react';
+
+// Color Gen Helper
+const stringToColor = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+  return '#' + '00000'.substring(0, 6 - c.length) + c;
+};
 
 // --- Debounce Helper ---
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,6 +93,9 @@ export default function NoteItem({
     zoom,
     setAlignmentGuides,
     members,
+    lockedNotes,
+    lockNote,
+    unlockNote,
   } = useBoardStore((s) => ({
     moveNote: s.moveNote,
     moveNotes: s.moveNotes,
@@ -93,7 +109,14 @@ export default function NoteItem({
     zoom: s.zoom,
     setAlignmentGuides: s.setAlignmentGuides,
     members: s.members,
+    lockedNotes: s.lockedNotes,
+    lockNote: s.lockNote,
+    unlockNote: s.unlockNote,
   }));
+
+  const { data: session } = useSession();
+  const myUserId = session?.user?.id || 'anonymous';
+  const myUserName = session?.user?.name || 'Me';
 
   const [isEditing, setIsEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(text);
@@ -107,6 +130,16 @@ export default function NoteItem({
   const isSelected = selectedNoteIds.includes(id);
   const isPaletteOpen = openPaletteNoteId === id;
   const isTempNote = id.startsWith('temp-');
+
+  // Lock Status
+  const lockInfo = lockedNotes && lockedNotes[id];
+  const isLockedByOther = !!(lockInfo && lockInfo.socketId !== socketClient.socket?.id);
+  // const lockedByUser = isLockedByOther ? members.find(m => m._id === lockInfo.userId) : null;
+  // NOTE: members might not be fully populated or userId might match differently. 
+  // Fallback to simpler display if member not found.
+  const lockedByUser = isLockedByOther ? members.find(m => m._id === lockInfo.userId) : null;
+  const lockedByName = lockedByUser ? lockedByUser.nName : (lockInfo?.userId || 'Unknown');
+  const lockedColor = lockInfo ? stringToColor(lockInfo.userId) : '#EF4444';
 
   // --- 서버 저장 로직 ---
   const saveChanges = React.useCallback(
@@ -130,23 +163,32 @@ export default function NoteItem({
   const beginEdit = React.useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.stopPropagation();
+      if (isLockedByOther) return; // 잠겨있으면 편집 불가
+
       setDraft(text);
       setIsEditing(true);
       selectNote(id);
+
+      // Lock Request
+      if (myUserId !== 'anonymous') {
+        lockNote(id, myUserId);
+      }
     },
-    [text, id, selectNote]
+    [text, id, selectNote, isLockedByOther, lockNote, myUserId]
   );
 
   const saveEdit = React.useCallback(() => {
     updateNote(id, { text: draft });
     saveChanges({ text: draft });
     setIsEditing(false);
-  }, [draft, id, updateNote, saveChanges]);
+    unlockNote(id); // Release Lock
+  }, [draft, id, updateNote, saveChanges, unlockNote]);
 
   const cancelEdit = React.useCallback(() => {
     setDraft(text);
     setIsEditing(false);
-  }, [text]);
+    unlockNote(id); // Release Lock
+  }, [text, id, unlockNote]);
 
   React.useEffect(() => {
     if (!isEditing) setDraft(text);
@@ -199,8 +241,9 @@ export default function NoteItem({
       const listFooterHeight = 30;
       const newNoteHeight = Math.max(140, contentHeight + listHeaderHeight + listFooterHeight);
 
-      // 4. Update Note height if significant change
-      if (Math.abs(newNoteHeight - height) > 2) {
+      // 4. Update Note height if significantly LARGER (do not shrink below current manual size)
+      // 편집 중에는 내용이 많아지면 늘어나야 하지만, 내용이 적다고 해서 갑자기 줄어들면 안됨 (사용자가 수동으로 늘려놨을 수도 있음)
+      if (newNoteHeight > height && Math.abs(newNoteHeight - height) > 2) {
         updateNote(id, { height: newNoteHeight });
         debouncedSave({ height: newNoteHeight });
       }
@@ -214,6 +257,7 @@ export default function NoteItem({
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
       if (isEditing) return;
+      if (isLockedByOther) return;
 
       if (e.shiftKey) {
         selectNote(id, true);
@@ -225,7 +269,7 @@ export default function NoteItem({
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     },
-    [isEditing, id, selectNote, isSelected]
+    [isEditing, id, selectNote, isSelected, isLockedByOther]
   );
 
   const onPointerMove = React.useCallback(
@@ -448,12 +492,32 @@ export default function NoteItem({
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
-        borderWidth: 2,
-        borderColor: isSelected ? '#3B82F6' : 'transparent',
+        borderWidth: isLockedByOther ? 3 : 2, // 강조
+        borderColor: isLockedByOther ? lockedColor : (isSelected ? '#3B82F6' : 'transparent'),
         opacity: isTempNote ? 0.7 : 1,
         zIndex: isSelected ? 9999 : zIndex,
+        pointerEvents: isLockedByOther ? 'none' : 'auto',
       }}
     >
+      {/* Lock Indicator */}
+      {isLockedByOther && (
+        <div style={{
+          position: 'absolute',
+          top: -26, // 조금 더 위로
+          left: -2,
+          background: lockedColor,
+          color: 'white', // 텍스트 컬러는 밝기 계산 필요하지만 일단 white
+          fontSize: 12,
+          fontWeight: 'bold',
+          padding: '2px 8px',
+          borderRadius: '4px 4px 4px 0',
+          zIndex: 100,
+          whiteSpace: 'nowrap',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+        }}>
+          {lockedByName}
+        </div>
+      )}
       {isPaletteOpen && (
         <div style={{ position: 'absolute', top: 36, left: 6, display: 'flex', gap: 4, background: 'white', padding: '4px', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 20 }}>
           {COLOR_PALETTE.map((c) => (

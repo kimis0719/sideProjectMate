@@ -14,17 +14,63 @@ export default function DashboardLayout({
     const pathname = usePathname();
     const { pid } = params;
 
+    // Helper to check active link
     const isActive = (path: string) => pathname === path;
 
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
+    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+    // Close sidebar when path changes (mobile)
+    React.useEffect(() => {
+        setIsSidebarOpen(false);
+    }, [pathname]);
+
     return (
-        <div className="flex h-[calc(100vh-64px)]"> {/* Header height assumed 64px */}
+        <div className="flex h-[calc(100vh-64px)] relative"> {/* Header height assumed 64px */}
+
+            {/* Mobile Toggle Button */}
+            <button
+                className="md:hidden absolute top-4 left-4 z-50 p-2 bg-background border border-border rounded-md shadow-sm"
+                onClick={toggleSidebar}
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {isSidebarOpen ? (
+                        <path d="M18 6L6 18M6 6l12 12" /> // X icon
+                    ) : (
+                        <path d="M4 6h16M4 12h16M4 18h16" /> // Menu icon
+                    )}
+                </svg>
+            </button>
+
+            {/* Mobile Sidebar Overlay */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
             {/* 사이드바 */}
-            <aside className="w-64 bg-muted/20 border-r border-border flex flex-col">
-                <div className="p-6 border-b border-border">
-                    <h2 className="text-lg font-bold text-foreground">프로젝트 {pid}</h2>
-                    <p className="text-sm text-muted-foreground">대쉬보드</p>
+            <aside
+                className={`
+                    fixed md:static inset-y-0 left-0 z-50 w-64 bg-background border-r border-border flex flex-col transition-transform duration-300 ease-in-out
+                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+                `}
+            >
+                <div className="p-6 border-b border-border flex justify-between items-center">
+                    <div>
+                        <h2 className="text-lg font-bold text-foreground">프로젝트 {pid}</h2>
+                        <p className="text-sm text-muted-foreground">대쉬보드</p>
+                    </div>
+                    {/* Mobile Close Button (Inside Sidebar) */}
+                    <button className="md:hidden" onClick={() => setIsSidebarOpen(false)}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M15 19l-7-7 7-7" /> {/* Left Chevron */}
+                        </svg>
+                    </button>
                 </div>
-                <nav className="flex-1 p-4 space-y-2">
+                <nav className="flex-1 p-4 space-y-2 bg-muted/20">
                     <Link
                         href={`/dashboard/${pid}`}
                         className={`block px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(`/dashboard/${pid}`)
@@ -56,7 +102,7 @@ export default function DashboardLayout({
             </aside>
 
             {/* 메인 컨텐츠 */}
-            <main className="flex-1 relative overflow-hidden bg-background">
+            <main className="flex-1 relative overflow-hidden bg-background w-full">
                 {children}
             </main>
         </div>
