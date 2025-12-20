@@ -2,6 +2,18 @@
 
 import React from 'react';
 import { useBoardStore, Section } from '@/store/boardStore';
+import { socketClient } from '@/lib/socket';
+import { useSession } from 'next-auth/react';
+
+// Color Gen Helper
+const stringToColor = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - c.length) + c;
+};
 
 // --- Debounce Helper ---
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,6 +53,10 @@ export default function SectionItem({ section }: Props) {
         notes, // 섹션 내 노트 찾기용
         updateNotes, // 섹션 이동 종료 시 노트 위치 저장용
         selectNotes, // 섹션 선택 시 노트 선택용
+        lockedSections,
+        lockSection,
+        unlockSection,
+        members,
     } = useBoardStore((s) => ({
         moveSection: s.moveSection,
         updateSection: s.updateSection,
@@ -50,7 +66,17 @@ export default function SectionItem({ section }: Props) {
         notes: s.notes,
         updateNotes: s.updateNotes,
         selectNotes: s.selectNotes,
+        lockedSections: s.lockedSections,
+        lockSection: s.lockSection,
+        unlockSection: s.unlockSection,
+        members: s.members,
     }));
+
+    const { data: session } = useSession();
+    const myUserId = session?.user?.id || 'anonymous';
+
+    // NOTE: variables 'lockInfo' etc were erroneously declared here. Removing them.
+
 
     const [isEditingTitle, setIsEditingTitle] = React.useState(false);
     const [titleDraft, setTitleDraft] = React.useState(section.title);
@@ -58,6 +84,13 @@ export default function SectionItem({ section }: Props) {
     const hasMoved = React.useRef(false);
     const isResizing = React.useRef(false);
     const lastPointerRef = React.useRef({ x: 0, y: 0 });
+
+    const lockInfo = lockedSections && lockedSections[section.id];
+    const isLockedByOther = !!(lockInfo && lockInfo.socketId !== socketClient.socket?.id);
+    const lockedByUser = isLockedByOther ? members.find(m => m._id === lockInfo.userId) : null;
+    const lockedByName = lockedByUser ? lockedByUser.nName : (lockInfo?.userId || 'Unknown');
+    const lockedColor = lockInfo ? stringToColor(lockInfo.userId) : '#EF4444';
+
 
     // --- 서버 저장 로직 ---
     const saveChanges = React.useCallback(
@@ -78,19 +111,27 @@ export default function SectionItem({ section }: Props) {
     // --- Title Edit ---
     const startEditTitle = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (isLockedByOther) return;
+
         setIsEditingTitle(true);
+        if (myUserId !== 'anonymous') {
+            lockSection(section.id, myUserId);
+        }
     };
 
     const saveTitle = () => {
         updateSection(section.id, { title: titleDraft });
         saveChanges({ title: titleDraft });
         setIsEditingTitle(false);
+        unlockSection(section.id);
     };
 
     // --- Dragging (Move) ---
     const onPointerDownHeader = (e: React.PointerEvent<HTMLDivElement>) => {
         e.stopPropagation();
         if (isEditingTitle) return;
+        if (isLockedByOther) return;
+
 
         isDragging.current = true;
         hasMoved.current = false;
@@ -191,6 +232,8 @@ export default function SectionItem({ section }: Props) {
     // --- Resizing ---
     const onPointerDownResize = (e: React.PointerEvent<HTMLDivElement>) => {
         e.stopPropagation();
+        if (isLockedByOther) return;
+
         isResizing.current = true;
         lastPointerRef.current = { x: e.clientX, y: e.clientY };
         (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
@@ -294,11 +337,33 @@ export default function SectionItem({ section }: Props) {
                 transform: `translate3d(${section.x}px, ${section.y}px, 0)`,
                 width: section.width,
                 height: section.height,
-                zIndex: section.zIndex || 0, // 기본 0 (노트는 1 이상이어야 함)
+                zIndex: section.zIndex || 0,
                 display: 'flex',
                 flexDirection: 'column',
+                border: isLockedByOther ? `3px solid ${lockedColor}` : 'none',
+                borderRadius: isLockedByOther ? 8 : 0,
             }}
         >
+            {/* Lock Indicator */}
+            {isLockedByOther && (
+                <div style={{
+                    position: 'absolute',
+                    top: -24,
+                    left: 0,
+                    background: lockedColor,
+                    color: 'white',
+                    fontSize: 12,
+                    fontWeight: 'bold',
+                    padding: '2px 8px',
+                    borderRadius: '4px 4px 4px 0',
+                    zIndex: 100,
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                    {lockedByName}
+                </div>
+            )}
+
             {/* Header (Drag Handle) */}
             <div
                 onPointerDown={onPointerDownHeader}
@@ -314,7 +379,7 @@ export default function SectionItem({ section }: Props) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '0 12px',
-                    cursor: 'grab',
+                    cursor: isLockedByOther ? 'not-allowed' : 'grab',
                     userSelect: 'none',
                     touchAction: 'none',
                 }}
@@ -346,7 +411,7 @@ export default function SectionItem({ section }: Props) {
                     onDoubleClick={(e) => e.stopPropagation()}
                     onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete();
+                        if (!isLockedByOther) handleDelete();
                     }}
                     style={{
                         background: 'transparent',
@@ -354,6 +419,8 @@ export default function SectionItem({ section }: Props) {
                         cursor: 'pointer',
                         fontSize: 18,
                         color: '#6B7280',
+                        opacity: isLockedByOther ? 0.5 : 1,
+                        pointerEvents: isLockedByOther ? 'none' : 'auto',
                     }}
                 >
                     ×
@@ -369,7 +436,7 @@ export default function SectionItem({ section }: Props) {
                     borderTop: 'none',
                     borderBottomLeftRadius: 8,
                     borderBottomRightRadius: 8,
-                    pointerEvents: 'none', // 내부 클릭 통과 (노트 선택 가능하게)
+                    pointerEvents: 'none',
                 }}
             />
 
@@ -384,11 +451,13 @@ export default function SectionItem({ section }: Props) {
                     right: 0,
                     width: 20,
                     height: 20,
-                    cursor: 'nwse-resize',
+                    cursor: isLockedByOther ? 'default' : 'nwse-resize',
                     touchAction: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    opacity: isLockedByOther ? 0 : 1,
+                    pointerEvents: isLockedByOther ? 'none' : 'auto',
                 }}
             >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
