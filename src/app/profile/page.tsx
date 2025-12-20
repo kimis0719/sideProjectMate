@@ -12,6 +12,8 @@ import AvailabilityScheduler from '@/components/profile/AvailabilityScheduler';
 import CommunicationStyleSlider from '@/components/profile/CommunicationStyleSlider';
 import BlockEditor from '@/components/editor/BlockEditor';
 import SolvedAcCard from '@/components/profile/external/SolvedAcCard';
+import PortfolioCard from '@/components/profile/portfolio/PortfolioCard';
+import LinkInput from '@/components/profile/portfolio/LinkInput';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -28,6 +30,9 @@ export default function ProfilePage() {
 
   // 사용자 데이터 상태 (병합됨)
   const [userData, setUserData] = useState<any>(null);
+
+  // 포트폴리오 상태: 배열로 관리
+  const [portfolioLinks, setPortfolioLinks] = useState<string[]>([]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -72,6 +77,14 @@ export default function ProfilePage() {
       // 3. 자기소개 가져오기 (사용자 프로필이나 별도 API에 있다고 가정)
       // 현재는 기본 정보에 있는 것을 사용하거나 비워둠
       setIntroduction(basicInfo.introduction || ''); // API가 제공한다면 사용
+
+      // 4. 포트폴리오 링크 초기값 (Mock Data)
+      // 추후 API로 연동: const pfRes = await fetch('/api/users/me/portfolio');
+      setPortfolioLinks([
+        'https://velog.io/@hansanghun',
+        'https://github.com/facebook/react',
+        'https://www.youtube.com/watch?v=k1C8u4j03hU' // Next.js Conf
+      ]);
 
       setIsLoading(false);
     } catch (error) {
@@ -161,6 +174,42 @@ export default function ProfilePage() {
         <div className="lg:col-span-3">
           {userData?.socialLinks?.solvedAc && (
             <SolvedAcCard handle={userData.socialLinks.solvedAc} />
+          )}
+        </div>
+      </section>
+
+      {/* Phase 4: 포트폴리오 (오픈 그래프 미리보기) */}
+      <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          📂 포트폴리오
+        </h2>
+        <div className="mb-6">
+          <LinkInput
+            onAdd={(url) => {
+              // 중복 체크 후 추가
+              if (!portfolioLinks.includes(url)) {
+                setPortfolioLinks([...portfolioLinks, url]);
+              } else {
+                alert('이미 추가된 링크입니다.');
+              }
+            }}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {portfolioLinks.map((url, idx) => (
+            <PortfolioCard
+              key={`${url}-${idx}`}
+              url={url}
+              onDelete={() => {
+                // 선택된 링크 삭제
+                setPortfolioLinks(portfolioLinks.filter(l => l !== url));
+              }}
+            />
+          ))}
+          {portfolioLinks.length === 0 && (
+            <div className="col-span-full py-8 text-center text-gray-400 text-sm bg-gray-50 rounded-lg border border-dashed border-gray-200">
+              등록된 포트폴리오가 없습니다. 링크를 추가해보세요!
+            </div>
           )}
         </div>
       </section>
