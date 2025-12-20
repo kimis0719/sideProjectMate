@@ -17,16 +17,6 @@ export async function GET(request: Request) {
 
         const availability = await Availability.findOne({ userId: session.user._id });
 
-        if (availability) {
-            console.log(`[API] GET /availability found: ${availability.schedule?.length || 0} days`);
-            // 상세 데이터 로깅 (첫 번째 요일만 샘플로)
-            if (availability.schedule?.length > 0) {
-                console.log('[API] Sample Day:', JSON.stringify(availability.schedule[0]));
-            }
-        } else {
-            console.log('[API] GET /availability: No data found');
-        }
-
         return NextResponse.json({
             success: true,
             data: availability || { schedule: [], preference: 50, personalityTags: [] },
