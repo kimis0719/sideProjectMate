@@ -5,6 +5,8 @@ import React from 'react';
 import { useBoardStore, Note } from '@/store/boardStore';
 import { socketClient } from '@/lib/socket';
 import { useSession } from 'next-auth/react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Color Gen Helper
 const stringToColor = (str: string) => {
@@ -595,13 +597,47 @@ export default function NoteItem({
             fontSize: 14,
             lineHeight: 1.4,
             color: '#111827',
-            whiteSpace: 'pre-wrap',
             height: '100%',
             paddingTop: 24,
-            overflow: 'hidden', // 내용이 넘칠 경우 숨김
+            overflow: 'hidden',
           }}
+          className="markdown-body" // Optional: if you use a global markdown stylesheet
         >
-          {text}
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              // 커스텀 스타일링 for Note
+              h1: ({ children }: any) => <h1 style={{ fontSize: '1.2em', fontWeight: 'bold', margin: '0.5em 0', borderBottom: '1px solid #ddd' }}>{children}</h1>,
+              h2: ({ children }: any) => <h2 style={{ fontSize: '1.1em', fontWeight: 'bold', margin: '0.4em 0' }}>{children}</h2>,
+              h3: ({ children }: any) => <h3 style={{ fontSize: '1em', fontWeight: 'bold', margin: '0.3em 0' }}>{children}</h3>,
+              ul: ({ children }: any) => <ul style={{ listStyleType: 'disc', paddingLeft: '1.2em', margin: '0.5em 0' }}>{children}</ul>,
+              ol: ({ children }: any) => <ol style={{ listStyleType: 'decimal', paddingLeft: '1.2em', margin: '0.5em 0' }}>{children}</ol>,
+              li: ({ children }: any) => <li style={{ marginBottom: '0.2em' }}>{children}</li>,
+              p: ({ children }: any) => <p style={{ margin: '0.5em 0', whiteSpace: 'pre-wrap' }}>{children}</p>,
+              blockquote: ({ children }: any) => <blockquote style={{ borderLeft: '4px solid #ccc', paddingLeft: '8px', color: '#666', margin: '0.5em 0' }}>{children}</blockquote>,
+              code: ({ children, className }: any) => {
+                const isInline = !String(children).includes('\n');
+                return (
+                  <code style={{
+                    background: 'rgba(0,0,0,0.05)',
+                    padding: '2px 4px',
+                    borderRadius: 4,
+                    fontFamily: 'monospace',
+                    display: isInline ? 'inline' : 'block',
+                    whiteSpace: 'pre-wrap'
+                  }}>
+                    {children}
+                  </code>
+                );
+              },
+              table: ({ children }: any) => <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0', fontSize: '0.9em' }}>{children}</table>,
+              th: ({ children }: any) => <th style={{ border: '1px solid #ddd', padding: '4px', background: 'rgba(0,0,0,0.02)' }}>{children}</th>,
+              td: ({ children }: any) => <td style={{ border: '1px solid #ddd', padding: '4px' }}>{children}</td>,
+              a: ({ href, children }: any) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'underline' }} onClick={(e) => e.stopPropagation()}>{children}</a>
+            }}
+          >
+            {text}
+          </ReactMarkdown>
         </div>
       )}
 
