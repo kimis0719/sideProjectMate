@@ -192,7 +192,8 @@ export const useBoardStore = create<BoardState>()(
           // 하지만 다른 사람이 생성한 건 새로 받아야 함.
           // 간단히: ID 중복 체크 후 추가
           const { notes } = get();
-          if (!notes.find((n) => n.id === note._id)) {
+          // Fix: check both id and _id to match consistently
+          if (!notes.find((n) => n.id === (note.id || note._id))) {
             set((state) => ({
               notes: [...state.notes, transformDoc(note)]
             }));
@@ -202,7 +203,8 @@ export const useBoardStore = create<BoardState>()(
         socket.off('note-updated');
         socket.on('note-updated', (note: any) => {
           set((state) => ({
-            notes: state.notes.map((n) => n.id === note._id ? { ...n, ...transformDoc(note) } : n)
+            // Fix: check both id and _id
+            notes: state.notes.map((n) => n.id === (note.id || note._id) ? { ...n, ...transformDoc(note) } : n)
           }));
         });
 
