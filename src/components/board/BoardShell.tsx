@@ -6,6 +6,8 @@ import NoteItem from '@/components/board/NoteItem';
 import SectionItem from '@/components/board/SectionItem';
 import Minimap from '@/components/board/Minimap';
 import ShortcutHandler from '@/components/board/ShortcutHandler';
+import ZoomController from '@/components/board/ZoomController';
+import ShortcutModal from '@/components/board/ShortcutModal';
 
 /**
  * 임시로 사용할 공용 보드의 프로젝트 ID.
@@ -142,6 +144,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     currentX: number;
     currentY: number;
   } | null>(null);
+
+  const [isShortcutModalOpen, setIsShortcutModalOpen] = React.useState(false);
 
   const handleBackgroundClick = () => {
     selectNote(null);
@@ -308,27 +312,38 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)]">
-      <header className="flex items-center justify-between p-4 border-b border-border bg-background z-10">
-        <div className="text-sm text-foreground">
-          {pid ? `Project Board: ${pid}` : `Public Board (Temp)`}
+      <header className="flex items-center justify-between p-4 border-b border-border bg-background z-10 h-16 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="text-lg font-semibold text-foreground tracking-tight">
+            {pid ? `Project Board` : `Public Board`}
+            {pid && <span className="text-xs text-muted-foreground ml-2 font-normal">#{pid}</span>}
+          </div>
         </div>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span className="text-xs text-gray-500 mr-2">
-            (Alt + Wheel to Zoom, Drag BG to Pan, Shift+Drag to Select)
-          </span>
-          <span>Zoom: {Math.round(zoom * 100)}%</span>
-          <span>Notes: {notesCount}</span>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-secondary/50 px-3 py-1.5 rounded-full border border-secondary">
+            <span className="text-xs font-medium text-secondary-foreground">
+              Notes
+            </span>
+            <span className="ml-2 text-xs font-bold bg-background px-1.5 py-0.5 rounded-full text-foreground shadow-sm">
+              {notesCount}
+            </span>
+          </div>
+
+          <div className="h-6 w-px bg-border mx-1"></div>
+
           <button
-            onClick={() => {
-              if (containerRef.current) {
-                fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
-              }
-            }}
-            className="px-2 py-1 rounded bg-secondary text-secondary-foreground text-xs hover:bg-secondary/80"
-            title="Fit to Content (Shift + 1)"
+            onClick={() => setIsShortcutModalOpen(true)}
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors"
+            title="Shortcuts (?)"
           >
-            Fit
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
           </button>
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -338,7 +353,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                 addNote();
               }
             }}
-            className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90"
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 shadow-sm transition-colors"
           >
             + 노트 추가
           </button>
@@ -347,7 +362,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
               e.stopPropagation();
               handleAddSection();
             }}
-            className="px-3 py-1.5 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-500"
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-sm transition-colors"
           >
             + 섹션 추가
           </button>
@@ -355,6 +370,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
       </header>
 
       <ShortcutHandler />
+      <ShortcutModal isOpen={isShortcutModalOpen} onClose={() => setIsShortcutModalOpen(false)} />
 
       <main
         ref={containerRef}
@@ -504,33 +520,15 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           />
         </div>
 
-        {/* 줌 컨트롤 */}
-        <div className="absolute bottom-4 left-4 flex gap-2">
-          <button
-            className="bg-white p-2 rounded shadow hover:bg-gray-50 text-gray-700"
-            onClick={() => setZoom(Math.max(0.1, zoom - 0.1))}
-          >
-            -
-          </button>
-          <span className="bg-white p-2 rounded shadow min-w-[60px] text-center text-gray-700">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            className="bg-white p-2 rounded shadow hover:bg-gray-50 text-gray-700"
-            onClick={() => setZoom(Math.min(2, zoom + 0.1))}
-          >
-            +
-          </button>
-          <button
-            className="bg-white p-2 rounded shadow hover:bg-gray-50 ml-2 text-gray-700"
-            onClick={() => {
+        {/* 줌 컨트롤 (통합형) */}
+        <div className="absolute bottom-6 left-6 z-50">
+          <ZoomController
+            onFit={() => {
               if (containerRef.current) {
                 fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
               }
             }}
-          >
-            Fit
-          </button>
+          />
         </div>
       </main>
     </div>
