@@ -52,8 +52,9 @@ export default function SectionItem({ section }: Props) {
         moveNotes, // 섹션 이동 시 노트도 함께 이동시키기 위해 필요 (Store에서 처리하지만, 여기서 호출)
         notes, // 섹션 내 노트 찾기용
         updateNotes, // 섹션 이동 종료 시 노트 위치 저장용
-        selectNotes, // 섹션 선택 시 노트 선택용
+        selectNotes,
         lockedSections,
+        lockedNotes, // Added lockedNotes
         lockSection,
         unlockSection,
         members,
@@ -67,6 +68,7 @@ export default function SectionItem({ section }: Props) {
         updateNotes: s.updateNotes,
         selectNotes: s.selectNotes,
         lockedSections: s.lockedSections,
+        lockedNotes: s.lockedNotes, // Map state
         lockSection: s.lockSection,
         unlockSection: s.unlockSection,
         members: s.members,
@@ -304,6 +306,26 @@ export default function SectionItem({ section }: Props) {
 
     // --- Delete ---
     const handleDelete = async () => {
+        // 1. 잠금 확인 (노트가 다른 사람에 의해 수정 중인지)
+        const childNoteIds = notes
+            .filter((n) => n.sectionId === section.id)
+            .map((n) => n.id);
+
+        if (lockedSections && lockedSections[section.id] && lockedSections[section.id].socketId !== socketClient.socket?.id) {
+            alert('다른 사용자가 이 섹션을 편집 중입니다.');
+            return;
+        }
+
+        const lockedChildNotes = childNoteIds.filter(id => {
+            const lock = lockedNotes && lockedNotes[id];
+            return lock && lock.socketId !== socketClient.socket?.id;
+        });
+
+        if (lockedChildNotes.length > 0) {
+            alert(`섹션 내에 다른 사용자가 편집 중인 노트가 ${lockedChildNotes.length}개 있습니다.\n삭제할 수 없습니다.`);
+            return;
+        }
+
         if (confirm('섹션을 삭제하시겠습니까?\n\n[확인]: 섹션과 내부 노트 모두 삭제\n[취소]: 섹션만 삭제하고 노트는 유지')) {
             // 모두 삭제 (deleteNotes=true)
             removeSection(section.id); // Store update
@@ -312,20 +334,15 @@ export default function SectionItem({ section }: Props) {
             // 섹션만 삭제 (deleteNotes=false)
             removeSection(section.id); // Store update
             await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });
-            // Store에서 하위 노트들의 sectionId를 null로 업데이트 해야 함 (새로고침 없이 반영되려면)
-            // 하지만 removeSection 액션은 섹션만 지움.
-            // Store에 'orphanizeNotes(sectionId)' 액션이 없으므로, 
-            // 여기서는 간단히 페이지 새로고침을 유도하거나, 
-            // Store에 해당 로직을 추가해야 완벽함.
-            // 일단은 Store의 notes 상태를 업데이트하는 로직을 추가하는게 좋음.
-            // updateNotes를 사용하여 sectionId를 null로 변경
+
+            // Store 업데이트: 하위 노트들의 sectionId 해제
             const childNotes = notes.filter(n => n.sectionId === section.id);
             if (childNotes.length > 0) {
                 const updates = childNotes.map(n => ({
                     id: n.id,
                     changes: { sectionId: null as any }
                 }));
-                updateNotes(updates); // 로컬 스토어 업데이트 (서버는 이미 DELETE 요청으로 처리됨)
+                updateNotes(updates);
             }
         }
     };
