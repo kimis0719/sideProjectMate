@@ -49,11 +49,11 @@ const getTierName = (tier: number) => {
 };
 
 const CardContainer = styled.div`
-    background: white;
+    background: var(--card);
     border-radius: 1rem;
     padding: 1.5rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -64,7 +64,7 @@ const Header = styled.div`
     align-items: center;
     gap: 0.5rem;
     font-weight: 700;
-    color: #374151;
+    color: var(--foreground);
     font-size: 1.125rem;
 `;
 
@@ -80,7 +80,7 @@ const StatGrid = styled.div`
 `;
 
 const StatItem = styled.div`
-    background: #f9fafb;
+    background: var(--muted);
     padding: 0.75rem;
     border-radius: 0.5rem;
     text-align: center;
@@ -88,13 +88,13 @@ const StatItem = styled.div`
 
 const StatLabel = styled.div`
     font-size: 0.75rem;
-    color: #6b7280;
+    color: var(--muted-foreground);
     margin-bottom: 0.25rem;
 `;
 
 const StatValue = styled.div`
     font-weight: 700;
-    color: #111827;
+    color: var(--foreground);
 `;
 
 const TierBadge = styled.div<{ $color: string }>`

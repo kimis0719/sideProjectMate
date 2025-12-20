@@ -58,7 +58,7 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
             case 'in-progress':
                 return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
             default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+                return 'bg-muted text-muted-foreground';
         }
     };
 
@@ -84,44 +84,44 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                    <thead className="bg-muted border-b border-border">
                         <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 작업명
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 단계/그룹
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 담당자
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 시작일
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 종료일
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 소요기간
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 진행률
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 상태
                             </th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 작업
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="divide-y divide-border">
                         {tasks.length === 0 ? (
                             <tr>
-                                <td colSpan={9} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                                     작업이 없습니다. 새 작업을 추가해보세요!
                                 </td>
                             </tr>
@@ -131,14 +131,14 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                     key={task.id}
                                     onClick={() => onTaskSelect(task.id)}
                                     className={`cursor-pointer transition-colors ${selectedTaskId === task.id
-                                            ? 'bg-blue-50 dark:bg-blue-900/20'
-                                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                        ? 'bg-primary/10'
+                                        : 'hover:bg-muted/50'
                                         }`}
                                 >
                                     {/* 작업명 */}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                            <div className="text-sm font-medium text-foreground">
                                                 {task.title}
                                             </div>
                                             {hasConflict(task.id) && (
@@ -152,14 +152,14 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                             {task.milestone && (
                                                 <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
                                                     <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M10 2l2.5 7.5H20l-6 4.5 2.5 7.5L10 17l-6.5 4.5L6 14 0 9.5h7.5z"/>
+                                                        <path d="M10 2l2.5 7.5H20l-6 4.5 2.5 7.5L10 17l-6.5 4.5L6 14 0 9.5h7.5z" />
                                                     </svg>
                                                     마일스톤
                                                 </span>
                                             )}
                                         </div>
                                         {task.description && (
-                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xs">
+                                            <div className="text-xs text-muted-foreground mt-1 truncate max-w-xs">
                                                 {task.description}
                                             </div>
                                         )}
@@ -174,28 +174,28 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
 
                                     {/* 담당자 */}
                                     <td className="px-4 py-3">
-                                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                                        <div className="text-sm text-foreground">
                                             {task.assignee?.nName || '미정'}
                                         </div>
                                     </td>
 
                                     {/* 시작일 */}
                                     <td className="px-4 py-3">
-                                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                                        <div className="text-sm text-foreground">
                                             {formatDate(task.startDate)}
                                         </div>
                                     </td>
 
                                     {/* 종료일 */}
                                     <td className="px-4 py-3">
-                                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                                        <div className="text-sm text-foreground">
                                             {formatDate(task.endDate)}
                                         </div>
                                     </td>
 
                                     {/* 소요기간 */}
                                     <td className="px-4 py-3">
-                                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                                        <div className="text-sm text-foreground">
                                             {Math.ceil((new Date(task.endDate).getTime() - new Date(task.startDate).getTime()) / (1000 * 60 * 60 * 24))}일
                                         </div>
                                     </td>
@@ -203,13 +203,13 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                     {/* 진행률 */}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
-                                            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2 max-w-[80px]">
+                                            <div className="flex-1 bg-muted rounded-full h-2 max-w-[80px]">
                                                 <div
-                                                    className="bg-blue-600 h-2 rounded-full transition-all"
+                                                    className="bg-primary h-2 rounded-full transition-all"
                                                     style={{ width: `${task.progress}%` }}
                                                 ></div>
                                             </div>
-                                            <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[35px]">
+                                            <span className="text-xs text-muted-foreground min-w-[35px]">
                                                 {task.progress}%
                                             </span>
                                         </div>

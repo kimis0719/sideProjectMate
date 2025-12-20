@@ -15,14 +15,14 @@ export default function StatusDashboard({ status = '구직중' }: StatusDashboar
             case '팀빌딩중':
                 return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800';
             default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700';
+                return 'bg-muted text-foreground border-border';
         }
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-full flex flex-col justify-between">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border h-full flex flex-col justify-between">
             <div>
-                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
                     Current Status
                 </h3>
                 <div className={`inline-flex items-center px-4 py-2 rounded-xl border ${getStatusStyle(status)}`}>
@@ -36,13 +36,13 @@ export default function StatusDashboard({ status = '구직중' }: StatusDashboar
 
             <div className="mt-6">
                 <div className="flex justify-between items-end mb-2">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">프로필 완성도</span>
+                    <span className="text-sm font-medium text-muted-foreground">프로필 완성도</span>
                     <span className="text-lg font-bold text-blue-600 dark:text-blue-400">45%</span>
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
                     <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style={{ width: '45%' }}></div>
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                     기술 스택과 시간표를 입력하여 완성도를 높여보세요!
                 </p>
             </div>

@@ -31,8 +31,8 @@ export default function SkillTier({ tierName, skills }: SkillTierProps) {
 
                 <div className="flex flex-wrap justify-center gap-2">
                     {skills.map((skill) => (
-                        <div key={skill.name} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-2 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors duration-200 flex items-center justify-between group shadow-sm hover:shadow-md min-w-[80px]">
-                            <span className="font-semibold text-sm text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                        <div key={skill.name} className="bg-card border border-border rounded-lg p-2 hover:border-indigo-500 transition-colors duration-200 flex items-center justify-between group shadow-sm hover:shadow-md min-w-[80px]">
+                            <span className="font-semibold text-sm text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                                 {skill.name}
                             </span>
                             {skill.active && (
@@ -51,13 +51,13 @@ export default function SkillTier({ tierName, skills }: SkillTierProps) {
     // 하위 티어 (Intermediate, Beginner) - 태그형 클라우드 레이아웃
     return (
         <div className="mb-4 text-center">
-            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider px-1">
+            <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider px-1">
                 {tierName} Level
             </h3>
 
             <div className="flex flex-wrap justify-center gap-1.5">
                 {skills.map((skill) => (
-                    <div key={skill.name} className="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <div key={skill.name} className="inline-flex items-center px-2.5 py-1 rounded-md bg-muted/50 border border-border text-xs text-foreground hover:bg-muted transition-colors">
                         <span>{skill.name}</span>
                         {skill.active && (
                             <span className="ml-1.5 w-1.5 h-1.5 rounded-full bg-green-500" title="Recent Activity"></span>

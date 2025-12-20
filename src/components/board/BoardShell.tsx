@@ -308,11 +308,11 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)]">
-      <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 z-10">
-        <div className="text-sm text-gray-600 dark:text-gray-300">
+      <header className="flex items-center justify-between p-4 border-b border-border bg-background z-10">
+        <div className="text-sm text-foreground">
           {pid ? `Project Board: ${pid}` : `Public Board (Temp)`}
         </div>
-        <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span className="text-xs text-gray-500 mr-2">
             (Alt + Wheel to Zoom, Drag BG to Pan, Shift+Drag to Select)
           </span>
@@ -324,7 +324,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                 fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
               }
             }}
-            className="px-2 py-1 rounded bg-gray-200 text-gray-700 text-xs hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+            className="px-2 py-1 rounded bg-secondary text-secondary-foreground text-xs hover:bg-secondary/80"
             title="Fit to Content (Shift + 1)"
           >
             Fit
@@ -338,7 +338,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                 addNote();
               }
             }}
-            className="px-3 py-1.5 rounded bg-gray-900 text-white text-sm hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600"
+            className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90"
           >
             + 노트 추가
           </button>
@@ -358,7 +358,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
       <main
         ref={containerRef}
-        className="relative flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 select-none"
+        className="relative flex-1 overflow-hidden bg-background select-none"
         aria-label="화이트보드"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -378,7 +378,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           }}
         >
           <div
-            className="absolute inset-[-10000px] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] dark:bg-[radial-gradient(#374151_1px,transparent_1px)] pointer-events-none"
+            className="absolute inset-[-10000px] bg-[radial-gradient(var(--border)_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"
             style={{ opacity: 0.5 }}
           />
 
@@ -390,7 +390,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           {/* Notes */}
           {notes.length === 0 && sections.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-gray-400 dark:text-gray-500 text-sm bg-white/80 dark:bg-gray-800/80 px-4 py-2 rounded-full backdrop-blur-sm shadow-sm">
+              <div className="text-muted-foreground text-sm bg-card/80 px-4 py-2 rounded-full backdrop-blur-sm shadow-sm border border-border">
                 노트나 섹션을 추가해보세요!
               </div>
             </div>

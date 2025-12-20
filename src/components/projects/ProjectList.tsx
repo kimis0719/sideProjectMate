@@ -118,35 +118,35 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
         return '작성자';
     };
 
-    if (isLoading) return <div className="text-center py-20 text-gray-900 dark:text-white">프로젝트를 불러오는 중... 🚀</div>;
-    if (error) return <div className="text-center py-20 text-red-500 dark:text-red-400">오류: {error}</div>;
+    if (isLoading) return <div className="text-center py-20 text-foreground">프로젝트를 불러오는 중... 🚀</div>;
+    if (error) return <div className="text-center py-20 text-destructive">오류: {error}</div>;
 
     return (
-        <div className="bg-white dark:bg-gray-900">
-            <section className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-background">
+            <section className="bg-muted/30 border-b border-border">
                 <div className="container mx-auto px-4 py-6">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                         <div className="w-full md:w-96">
                             <div className="relative">
                                 {/* 검색어 입력 필드: 타이핑은 로컬 상태에 저장되고, 엔터키를 누르면 실제 검색 실행 */}
-                                <input type="text" name="search" placeholder="제목 또는 내용으로 검색 (Enter)" className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400" value={searchInput} onChange={handleSearchInputChange} onKeyDown={handleSearchKeyDown} />
-                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                <input type="text" name="search" placeholder="제목 또는 내용으로 검색 (Enter)" className="w-full px-4 py-3 pl-12 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary" value={searchInput} onChange={handleSearchInputChange} onKeyDown={handleSearchKeyDown} />
+                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                             </div>
                         </div>
                         <div className="flex gap-3 overflow-x-auto pb-2 md:pb-0">
-                            <select name="category" value={category} onChange={handleFilterChange} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400">
+                            <select name="category" value={category} onChange={handleFilterChange} className="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary">
                                 <option value="all">전체 카테고리</option>
                                 {categoryCodes.map((code) => (
                                     <option key={code._id as string} value={code.code}>{code.label}</option>
                                 ))}
                             </select>
-                            <select name="status" value={status} onChange={handleFilterChange} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400">
+                            <select name="status" value={status} onChange={handleFilterChange} className="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary">
                                 <option value="all">전체 상태</option>
                                 {statusCodes.map((code) => (
                                     <option key={code._id as string} value={code.code}>{code.label}</option>
                                 ))}
                             </select>
-                            <select name="sortBy" value={sortBy} onChange={handleFilterChange} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400">
+                            <select name="sortBy" value={sortBy} onChange={handleFilterChange} className="px-4 py-2 border border-input rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary">
                                 <option value="latest">최신순</option> <option value="deadline">마감임박순</option>
                             </select>
                         </div>
@@ -156,10 +156,10 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
             <section className="container mx-auto px-4 py-12">
                 <div className="flex justify-between items-center mb-8">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">전체 프로젝트</h2>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">총 {totalProjects}개의 프로젝트가 있습니다.</p>
+                        <h2 className="text-2xl font-bold text-foreground">전체 프로젝트</h2>
+                        <p className="text-muted-foreground mt-1">총 {totalProjects}개의 프로젝트가 있습니다.</p>
                     </div>
-                    <Link href="/projects/new" className="bg-gray-900 dark:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors">+ 새 프로젝트 만들기</Link>
+                    <Link href="/projects/new" className="bg-primary text-primary-foreground font-bold py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors">+ 새 프로젝트 만들기</Link>
                 </div>
 
                 {projects.length > 0 ? (
@@ -170,28 +170,28 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
                             const totalCurrent = membersArray.reduce((sum, member) => sum + (member.current || 0), 0);
 
                             return (
-                                <Link key={project.pid} href={`/projects/${project.pid}`} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer">
-                                    <div className="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                                <Link key={project.pid} href={`/projects/${project.pid}`} className="bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer border border-border">
+                                    <div className="aspect-video bg-muted flex items-center justify-center">
                                         {project.images && project.images.length > 0 ? <img src={project.images[0]} alt={project.title} className="w-full h-full object-cover" /> : <span className="text-6xl">🚀</span>}
                                     </div>
                                     <div className="p-5">
                                         <div className="flex items-center gap-2 mb-3">
-                                            <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold rounded">
+                                            <span className="px-2.5 py-1 bg-muted text-muted-foreground text-xs font-semibold rounded">
                                                 {categoryCodes.find(c => c.code === project.category)?.label || project.category}
                                             </span>
                                             <span className={`px-2.5 py-1 text-xs font-semibold rounded ${project.status === '01'
-                                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                                                : 'bg-muted text-muted-foreground'
                                                 }`}>
                                                 {statusCodes.find(c => c.code === project.status)?.label || project.status}
                                             </span>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{totalCurrent}/{totalMax}명</span>
+                                            <span className="text-xs text-muted-foreground ml-auto">{totalCurrent}/{totalMax}명</span>
                                         </div>
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">{project.title}</h3>
+                                        <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">{project.title}</h3>
                                         <div className="flex flex-wrap gap-1.5 mb-3">
-                                            {Array.isArray(project.tags) && project.tags.map((tag) => <span key={tag._id} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded">#{tag.name}</span>)}
+                                            {Array.isArray(project.tags) && project.tags.map((tag) => <span key={tag._id} className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded">#{tag.name}</span>)}
                                         </div>
-                                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                        <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border">
                                             <span>{getAuthorName(project.author)}</span>
                                             <span>{new Date(project.createdAt).toLocaleString('ko-KR')}</span>
                                         </div>
@@ -201,7 +201,7 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
                         })}
                     </div>
                 ) : (
-                    <div className="text-center py-20"><p className="text-gray-500 dark:text-gray-400">찾으시는 조건의 프로젝트가 없습니다. 🥲</p></div>
+                    <div className="text-center py-20"><p className="text-muted-foreground">찾으시는 조건의 프로젝트가 없습니다. 🥲</p></div>
                 )
                 }
 
@@ -226,7 +226,7 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
  */
 export default function ProjectList(props: ProjectListProps) {
     return (
-        <Suspense fallback={<div className="text-center py-20 text-gray-900 dark:text-white">페이지를 불러오는 중...</div>}>
+        <Suspense fallback={<div className="text-center py-20 text-foreground">페이지를 불러오는 중...</div>}>
             <ProjectListContent {...props} />
         </Suspense>
     );

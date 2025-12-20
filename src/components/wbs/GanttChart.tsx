@@ -27,7 +27,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
   const [ganttTasks, setGanttTasks] = useState<GanttTask[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState<number>(0);
-  
+
   // 드래그 추적
   const dragStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const isDraggingRef = useRef(false);
@@ -68,7 +68,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
     // 시작일: 현재 월의 1일
     const today = new Date();
     const startBoundary = new Date(today.getFullYear(), today.getMonth(), 1);
-    
+
     // 종료일: 현재 월 기준 dateRangeMonths개월 후 말일
     const endBoundary = new Date(today.getFullYear(), today.getMonth() + dateRangeMonths, 0);
 
@@ -218,7 +218,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
       ganttContainer.removeEventListener('mousemove', handleMouseMove);
       ganttContainer.removeEventListener('mouseup', handleMouseUp);
       ganttContainer.removeEventListener('mouseleave', handleMouseUp);
-      
+
       // 정리 시간에 대기된 타이머 취소
       if (clickTimeoutRef.current) {
         clearTimeout(clickTimeoutRef.current);
@@ -244,13 +244,13 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
     const drawTimer = setTimeout(() => {
       // 작업 맵 생성
       const taskMap = new Map(tasks.map((task) => [task.id, task]));
-      
+
       // 작업 위치 정보 추출
       const positions = getTaskPositions(ganttContainer);
-      
+
       // 디버그 정보 출력
       debugDependencyInfo(ganttContainer, taskMap, positions);
-      
+
       // 의존관계 연결선 그리기
       const isDarkMode = document.documentElement.classList.contains('dark');
       drawDependencyLines(ganttContainer, taskMap, positions, isDarkMode);
@@ -269,24 +269,24 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
       if (!svg) return;
 
       const taskGroups = svg.querySelectorAll('g[data-id]');
-      
+
       taskGroups.forEach((group, index) => {
         const dataId = group.getAttribute('data-id');
-        
+
         // 더미 작업 제외
         if (dataId === 'ghost-start' || dataId === 'ghost-end') return;
-        
+
         const rect = group.querySelector('rect.bar');
         const text = group.querySelector('text');
-        
+
         if (!rect || !text) return;
-        
+
         try {
           const x = parseFloat(rect.getAttribute('x') || '0');
           const y = parseFloat(rect.getAttribute('y') || '0');
           const width = parseFloat(rect.getAttribute('width') || '0');
           const height = parseFloat(rect.getAttribute('height') || '0');
-          
+
           // 첫 3개 작업의 디버그 로그
           if (index < 3) {
             console.log(`[${index}] Task ${dataId}:`, {
@@ -298,27 +298,28 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
               }
             });
           }
-          
+
           // 새로운 text 요소 생성 (라이브러리 간섭 제거)
           const newText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
           const textContent = text.textContent || '';
-          
+
           const centerX = x + width / 2;
           const centerY = y + height / 2;
-          
+
           newText.setAttribute('x', String(centerX));
           newText.setAttribute('y', String(centerY));
           newText.setAttribute('text-anchor', 'middle');
           newText.setAttribute('dominant-baseline', 'central');
-          newText.setAttribute('fill', '#000000');
+          newText.setAttribute('fill', 'currentColor');
+          newText.classList.add('text-foreground');
           newText.setAttribute('font-weight', '500');
           newText.setAttribute('font-size', '12px');
           newText.setAttribute('pointer-events', 'none');
           newText.textContent = textContent;
-          
+
           // 기존 text 요소 제거하고 새 요소 추가
           text.replaceWith(newText);
-          
+
           if (index < 3) {
             console.log(`[${index}] Task ${dataId} after:`, {
               newX: newText.getAttribute('x'),
@@ -333,7 +334,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
 
     // 초기 조정
     const timer = setTimeout(adjustTextStyling, 150);
-    
+
     // 주기적으로 조정 (드래그 등으로 리렌더링될 때)
     const interval = setInterval(adjustTextStyling, 800);
 
@@ -379,12 +380,12 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
         if (parent?.getAttribute('data-id')) {
           return false;
         }
-        
+
         // svg 직계 자식이 아니면 제외 (중첩된 그룹 내 텍스트 제외)
         if (parent?.tagName !== 'svg') {
           return false;
         }
-        
+
         // 헤더 텍스트만 처리
         const y = text.getAttribute('y');
         return y && parseFloat(y) < 120;
@@ -484,7 +485,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
   }, [ganttTasks, viewMode]);
 
   return (
-    <div className="gantt-chart-wrapper h-[600px] overflow-x-auto overflow-y-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+    <div className="gantt-chart-wrapper h-[600px] overflow-x-auto overflow-y-hidden rounded-lg border border-border bg-card">
       <div ref={wrapperRef} style={{ width: chartWidth > 0 ? `${chartWidth}px` : '100%', height: '100%', position: 'relative' }}>
         {ganttTasks.length > 0 ? (
           <Gantt
@@ -504,7 +505,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
             rowHeight={40}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+          <div className="flex items-center justify-center h-full text-muted-foreground">
             <p>작업이 없습니다. 새 작업을 추가해보세요!</p>
           </div>
         )}
@@ -517,7 +518,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
         
         /* 모든 작업 텍스트를 검은색으로 설정 */
         .gantt-chart-wrapper svg text {
-          fill: #000000 !important;
+          fill: currentColor !important;
           font-weight: 500 !important;
           text-anchor: middle !important;
           dominant-baseline: central !important;
@@ -527,7 +528,7 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
         .gantt-chart-wrapper g[data-id] text {
           text-anchor: middle !important;
           dominant-baseline: central !important;
-          fill: #000000 !important;
+          fill: currentColor !important;
           font-weight: 500 !important;
           font-size: 12px !important;
           pointer-events: none !important;
@@ -545,6 +546,14 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
         
         .dark .gantt-chart-wrapper line {
           stroke: #374151 !important;
+        }
+        
+        /* 텍스트 색상 - 다크모드 대응 */
+        .gantt-chart-wrapper text {
+            fill: #111827; /* gray-900 */
+        }
+        .dark .gantt-chart-wrapper text {
+            fill: #f3f4f6 !important; /* gray-100 */
         }
       `}</style>
     </div>

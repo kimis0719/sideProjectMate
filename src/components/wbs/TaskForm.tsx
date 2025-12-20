@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import { Task } from '@/store/wbsStore';
 import { useSession } from 'next-auth/react';
-import { 
-    checkScheduleConflict, 
-    generateAdjustmentSuggestions, 
-    type ScheduleConflict, 
+import {
+    checkScheduleConflict,
+    generateAdjustmentSuggestions,
+    type ScheduleConflict,
     type AdjustmentSuggestion,
     type ConflictTask
 } from '@/lib/utils/wbs/scheduleConflict';
-import { 
+import {
     validateDependencyConstraint,
     getDependencyTypeDescription,
     type TaskDependency
@@ -63,7 +63,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
     const [suggestions, setSuggestions] = useState<AdjustmentSuggestion[]>([]);
 
     // 프로젝트 지원자 목록 상태
-    const [applicants, setApplicants] = useState<Array<{ _id: string; nName: string; email?: string; status: 'pending'|'accepted'|'rejected'; role?: string }>>([]);
+    const [applicants, setApplicants] = useState<Array<{ _id: string; nName: string; email?: string; status: 'pending' | 'accepted' | 'rejected'; role?: string }>>([]);
     const [loadingApplicants, setLoadingApplicants] = useState(false);
     // 프로젝트 담당자(작성자)
     const [projectOwner, setProjectOwner] = useState<{ _id: string; nName: string } | null>(null);
@@ -286,15 +286,15 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+            <h2 className="text-xl font-bold text-foreground mb-4">
                 {task ? '작업 수정' : '새 작업 추가'}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* 작업명 */}
                 <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="title" className="block text-sm font-medium text-foreground mb-1">
                         작업명 <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -303,7 +303,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
                         placeholder="예: 로그인 기능 구현"
                         maxLength={200}
                     />
@@ -311,7 +311,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
 
                 {/* 작업 설명 */}
                 <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="description" className="block text-sm font-medium text-foreground mb-1">
                         작업 설명
                     </label>
                     <textarea
@@ -320,14 +320,14 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                         value={formData.description}
                         onChange={handleChange}
                         rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
                         placeholder="작업에 대한 상세 설명을 입력하세요"
                     />
                 </div>
 
                 {/* 담당자 */}
                 <div>
-                    <label htmlFor="assignee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="assignee" className="block text-sm font-medium text-foreground mb-1">
                         담당자 <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -335,7 +335,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                         name="assignee"
                         value={formData.assignee}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
                     >
                         <option value="">담당자 선택</option>
                         {/* 프로젝트 담당자(작성자) */}
@@ -347,7 +347,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                             </optgroup>
                         )}
                         {/* 프로젝트 멤버 */}
-                        <optgroup label="프로젝트 멤버">
+                        <optgroup label="프로젝트 멤버" className="text-foreground bg-background">
                             {projectMembers.map((member) => (
                                 <option key={`member-${member._id}`} value={member._id}>
                                     {member.nName || member.email}
@@ -366,17 +366,17 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                         )}
                     </select>
                     {loadingApplicants && (
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">지원자 목록 불러오는 중...</p>
+                        <p className="mt-1 text-xs text-muted-foreground">지원자 목록 불러오는 중...</p>
                     )}
                     {loadingOwner && (
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">프로젝트 담당자 확인 중...</p>
+                        <p className="mt-1 text-xs text-muted-foreground">프로젝트 담당자 확인 중...</p>
                     )}
                 </div>
 
                 {/* 시작일 / 종료일 */}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label htmlFor="startDate" className="block text-sm font-medium text-foreground mb-1">
                             시작일 <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -385,11 +385,11 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                             name="startDate"
                             value={formData.startDate}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
                         />
                     </div>
                     <div>
-                        <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label htmlFor="endDate" className="block text-sm font-medium text-foreground mb-1">
                             종료일 <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -398,14 +398,14 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                             name="endDate"
                             value={formData.endDate}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
                         />
                     </div>
                 </div>
 
                 {/* 단계/그룹명 */}
                 <div>
-                    <label htmlFor="phase" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="phase" className="block text-sm font-medium text-foreground mb-1">
                         단계/그룹명
                     </label>
                     <input
@@ -414,17 +414,17 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                         name="phase"
                         value={formData.phase}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
                         placeholder="예: 기획, 개발, 테스트, 배포"
                         maxLength={100}
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                         작업을 그룹화하는 단계를 지정하세요. 같은 단계의 작업들이 함께 표시됩니다.
                     </p>
                 </div>
 
                 {/* 마일스톤 체크박스 */}
-                <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
                     <input
                         type="checkbox"
                         id="milestone"
@@ -434,29 +434,29 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                     />
                     <label htmlFor="milestone" className="flex-1 text-sm">
-                        <span className="font-medium text-gray-900 dark:text-white">마일스톤으로 표시</span>
-                        <span className="block text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                        <span className="font-medium text-foreground">마일스톤으로 표시</span>
+                        <span className="block text-xs text-muted-foreground mt-0.5">
                             이 작업을 해당 단계의 주요 완료 시점으로 표시합니다. 간트차트에서 다이아몬드 모양으로 표시됩니다.
                         </span>
                     </label>
                 </div>
 
                 {/* 선행 작업 의존관계 설정 */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                <div className="border border-border rounded-lg p-4">
+                    <label className="block text-sm font-medium text-foreground mb-3">
                         선행 작업 (Dependencies)
                     </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    <p className="text-xs text-muted-foreground mb-3">
                         이 작업이 시작되기 위해 필요한 선행 작업을 설정하세요.
                     </p>
-                    
+
                     {/* 의존관계 목록 */}
                     <div className="space-y-2 mb-3">
                         {formData.dependencies.map((dep, idx) => {
                             const depTask = existingTasks.find(t => t.id === dep.taskId);
                             return (
-                                <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                                    <span className="flex-1 text-sm text-gray-900 dark:text-white">
+                                <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded">
+                                    <span className="flex-1 text-sm text-foreground">
                                         {depTask?.title || '알 수 없는 작업'}
                                     </span>
                                     <select
@@ -466,7 +466,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                                             newDeps[idx].type = e.target.value as DependencyType;
                                             setFormData(prev => ({ ...prev, dependencies: newDeps }));
                                         }}
-                                        className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-800 dark:text-white"
+                                        className="text-xs px-2 py-1 border border-input rounded bg-card text-foreground"
                                     >
                                         <option value="FS">FS (완료 후 시작)</option>
                                         <option value="SS">SS (동시 시작)</option>
@@ -494,7 +494,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                     {/* 선행 작업 추가 */}
                     <div className="flex gap-2">
                         <select
-                            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                            className="flex-1 px-3 py-2 text-sm border border-input rounded-lg bg-card text-foreground"
                             onChange={(e) => {
                                 if (e.target.value && !formData.dependencies.find(d => d.taskId === e.target.value)) {
                                     setFormData(prev => ({
@@ -518,7 +518,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                     </div>
 
                     {/* 의존관계 타입 설명 */}
-                    <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-900 rounded text-xs text-gray-600 dark:text-gray-400">
+                    <div className="mt-3 p-2 bg-muted rounded text-xs text-muted-foreground">
                         <div className="space-y-1">
                             <div><strong>FS (Finish-to-Start):</strong> 선행 작업 완료 후 현재 작업 시작</div>
                             <div><strong>SS (Start-to-Start):</strong> 선행 작업과 동시에 시작 가능</div>
@@ -529,7 +529,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
 
                 {/* 진행 상태 */}
                 <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="status" className="block text-sm font-medium text-foreground mb-1">
                         진행 상태
                     </label>
                     <select
@@ -537,7 +537,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                         name="status"
                         value={formData.status}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary bg-background text-foreground"
                     >
                         <option value="todo">대기</option>
                         <option value="in-progress">진행 중</option>
@@ -547,7 +547,7 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
 
                 {/* 진행률 */}
                 <div>
-                    <label htmlFor="progress" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="progress" className="block text-sm font-medium text-foreground mb-1">
                         진행률: {formData.progress}%
                     </label>
                     <input
@@ -642,14 +642,14 @@ export default function TaskForm({ task, projectId, projectMembers, existingTask
                 <div className="flex gap-3 pt-4">
                     <button
                         type="submit"
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
                     >
                         {task ? '수정' : '추가'}
                     </button>
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                        className="flex-1 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors font-medium"
                     >
                         취소
                     </button>

@@ -15,18 +15,18 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-20">
+    <footer className="bg-accent border-t border-border mt-20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* 좌측: 전체 메뉴 */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">전체 메뉴</h3>
+            <h3 className="text-lg font-bold text-foreground mb-6">전체 메뉴</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {menuItems.map((item, index) => (
                 <Link
                   key={index}
                   href={item.href}
-                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {item.title}
                 </Link>
@@ -36,8 +36,8 @@ export default function Footer() {
 
           {/* 우측: 회사 정보 */}
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">회사 정보</h3>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <h3 className="text-lg font-bold text-foreground mb-6">회사 정보</h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
               <p>
                 <span className="font-semibold">회사명:</span> (주)사이드프로젝트메이트
               </p>
@@ -61,16 +61,16 @@ export default function Footer() {
         </div>
 
         {/* 하단 저작권 */}
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-12 pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               © 2025 Side Project Mate. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <Link href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 이용약관
               </Link>
-              <Link href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              <Link href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 개인정보처리방침
               </Link>
             </div>

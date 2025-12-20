@@ -238,20 +238,20 @@ export default function EditProjectPage() {
   if (!isOwner) return <div className="text-center py-20 text-red-500">이 프로젝트를 수정할 권한이 없습니다.</div>;
 
   return (
-    <div className="bg-white dark:bg-gray-900 min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold">프로젝트 수정하기</h1>
-          <p className="text-gray-600 mt-2">프로젝트 정보를 업데이트하세요.</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">프로젝트 수정하기</h1>
+          <p className="text-muted-foreground mt-2">프로젝트 정보를 업데이트하세요.</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
-            <label htmlFor="title" className="block text-sm font-bold mb-1">프로젝트 제목</label>
-            <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} required className="w-full px-3 py-2 border rounded-lg" />
+            <label htmlFor="title" className="block text-sm font-bold mb-1 text-foreground">프로젝트 제목</label>
+            <input type="text" id="title" name="title" value={formData.title} onChange={handleChange} required className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground" />
           </div>
           <div>
-            <label htmlFor="category" className="block text-sm font-bold mb-1">카테고리</label>
-            <select id="category" name="category" value={formData.category} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg">
+            <label htmlFor="category" className="block text-sm font-bold mb-1 text-foreground">카테고리</label>
+            <select id="category" name="category" value={formData.category} onChange={handleChange} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground">
               {categories.map((cat) => (
                 <option key={cat.code} value={cat.code}>{cat.label}</option>
               ))}
@@ -259,35 +259,35 @@ export default function EditProjectPage() {
             </select>
           </div>
           <div>
-            <label htmlFor="content" className="block text-sm font-bold mb-1">상세 설명</label>
-            <textarea id="content" name="content" rows={10} value={formData.content} onChange={handleChange} required className="w-full px-3 py-2 border rounded-lg"></textarea>
+            <label htmlFor="content" className="block text-sm font-bold mb-1 text-foreground">상세 설명</label>
+            <textarea id="content" name="content" rows={10} value={formData.content} onChange={handleChange} required className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"></textarea>
           </div>
           <div>
-            <label className="block text-sm font-bold mb-2">모집 인원</label>
+            <label className="block text-sm font-bold mb-2 text-foreground">모집 인원</label>
             <div className="space-y-4">
               {formData.members.map((member, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <input type="text" name="role" value={member.role} onChange={(e) => handleMemberChange(index, e)} placeholder="역할" className="w-full px-3 py-2 border rounded-lg" />
-                  <input type="number" name="max" value={member.max} onChange={(e) => handleMemberChange(index, e)} min="1" className="w-24 px-3 py-2 border rounded-lg" />
+                  <input type="text" name="role" value={member.role} onChange={(e) => handleMemberChange(index, e)} placeholder="역할" className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground" />
+                  <input type="number" name="max" value={member.max} onChange={(e) => handleMemberChange(index, e)} min="1" className="w-24 px-3 py-2 border border-input rounded-lg bg-background text-foreground" />
                   <button type="button" onClick={() => removeMemberRole(index)} className="text-red-500">삭제</button>
                 </div>
               ))}
-              <button type="button" onClick={addMemberRole} className="text-sm text-gray-600">+ 역할 추가</button>
+              <button type="button" onClick={addMemberRole} className="text-sm text-muted-foreground hover:text-foreground">+ 역할 추가</button>
             </div>
           </div>
           <div>
-            <label htmlFor="deadline" className="block text-sm font-bold mb-1">모집 마감일</label>
-            <input type="date" id="deadline" name="deadline" value={formData.deadline} onChange={handleChange} className="w-full px-3 py-2 border rounded-lg" />
+            <label htmlFor="deadline" className="block text-sm font-bold mb-1 text-foreground">모집 마감일</label>
+            <input type="date" id="deadline" name="deadline" value={formData.deadline} onChange={handleChange} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground" />
           </div>
           <div>
-            <label className="block text-sm font-bold mb-2">기술 스택</label>
+            <label className="block text-sm font-bold mb-2 text-foreground">기술 스택</label>
             <div className="space-y-4">
               {Object.entries(groupedTechStacks).map(([category, stacks]) => (
                 <div key={category}>
                   <h4 className="font-semibold capitalize mb-2">{category}</h4>
                   <div className="flex flex-wrap gap-2">
                     {stacks.map(stack => (
-                      <label key={String(stack._id)} className={`cursor-pointer px-3 py-1.5 border rounded-full text-sm ${formData.selectedTags.has(String(stack._id)) ? 'bg-gray-800 text-white' : 'bg-white'}`}>
+                      <label key={String(stack._id)} className={`cursor-pointer px-3 py-1.5 border rounded-full text-sm ${formData.selectedTags.has(String(stack._id)) ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border text-foreground'}`}>
                         <input type="checkbox" checked={formData.selectedTags.has(String(stack._id))} onChange={() => handleTagChange(String(stack._id))} className="sr-only" />
                         {stack.name}
                       </label>
@@ -298,7 +298,7 @@ export default function EditProjectPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-bold mb-2">프로젝트 이미지 (드래그해서 순서 변경)</label>
+            <label className="block text-sm font-bold mb-2 text-foreground">프로젝트 이미지 (드래그해서 순서 변경)</label>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
               <SortableContext items={images.map(img => img.id)} strategy={rectSortingStrategy}>
                 <div className="flex flex-wrap gap-4 mb-4">
@@ -312,9 +312,9 @@ export default function EditProjectPage() {
               </DragOverlay>
             </DndContext>
             <div className="flex items-center justify-center w-full mt-4">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer bg-muted/20 hover:bg-muted/40">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <p className="text-sm text-gray-500"><span className="font-semibold">클릭하여 이미지 추가</span></p>
+                  <p className="text-sm text-muted-foreground"><span className="font-semibold">클릭하여 이미지 추가</span></p>
                 </div>
                 <input type="file" multiple className="hidden" onChange={handleNewImageChange} accept="image/*" />
               </label>
@@ -322,7 +322,7 @@ export default function EditProjectPage() {
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <div className="text-right">
-            <button type="submit" disabled={isLoading} className="bg-gray-900 text-white font-bold py-3 px-6 rounded-lg">
+            <button type="submit" disabled={isLoading} className="bg-primary text-primary-foreground font-bold py-3 px-6 rounded-lg hover:bg-primary/90">
               {isLoading ? '수정 중...' : '수정 완료'}
             </button>
           </div>

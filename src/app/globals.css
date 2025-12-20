@@ -3,6 +3,91 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* 
+      Semantic Colors (시맨틱 컬러) 정의
+      Tailwind Config와 연결되어 사용됩니다.
+    */
+    --background: #ffffff;
+    --foreground: #111827;
+    /* gray-900 */
+
+    --card: #ffffff;
+    --card-foreground: #111827;
+
+    --popover: #ffffff;
+    --popover-foreground: #111827;
+
+    --primary: #1f2937;
+    /* gray-800 */
+    --primary-foreground: #ffffff;
+
+    --secondary: #ffffff;
+    --secondary-foreground: #374151;
+    /* gray-700 */
+
+    --muted: #f3f4f6;
+    /* gray-100 */
+    --muted-foreground: #6b7280;
+    /* gray-500 */
+
+    --accent: #f9fafb;
+    /* gray-50 */
+    --accent-foreground: #111827;
+
+    --destructive: #ef4444;
+    /* red-500 */
+    --destructive-foreground: #ffffff;
+
+    --border: rgba(164, 164, 164, 0.814);
+    /* Modern Subtle Gray */
+    --input: rgba(164, 164, 164, 0.814);
+    --ring: #111827;
+    /* gray-900 */
+  }
+
+  .dark {
+    --background: #111827;
+    /* gray-900 */
+    --foreground: #f3f4f6;
+    /* gray-100 */
+
+    --card: #1f2937;
+    /* gray-800 */
+    --card-foreground: #f3f4f6;
+
+    --popover: #1f2937;
+    --popover-foreground: #f3f4f6;
+
+    --primary: #374151;
+    /* gray-700 */
+    --primary-foreground: #ffffff;
+
+    --secondary: #1f2937;
+    /* gray-800 */
+    --secondary-foreground: #d1d5db;
+    /* gray-300 */
+
+    --muted: #374151;
+    /* gray-700 */
+    --muted-foreground: #9ca3af;
+    /* gray-400 */
+
+    --accent: #1f2937;
+    /* gray-800 */
+    --accent-foreground: #f3f4f6;
+
+    --destructive: #7f1d1d;
+    /* red-900 */
+    --destructive-foreground: #f3f4f6;
+
+    --border: rgba(164, 164, 164, 0.814);
+    /* Modern Subtle White */
+    --input: rgba(164, 164, 164, 0.814);
+    --ring: #d1d5db;
+    /* gray-300 */
+  }
+
   @font-face {
     font-family: 'Pretendard';
     font-weight: 400;
@@ -25,7 +110,7 @@
   }
 
   body {
-    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans;
+    @apply bg-background text-foreground font-sans transition-colors duration-200;
   }
 }
 

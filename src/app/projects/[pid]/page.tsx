@@ -215,9 +215,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     }
   };
 
-  if (isLoading) return <div className="flex justify-center items-center min-h-screen text-gray-900 dark:text-white">로딩 중...</div>;
-  if (error) return <div className="flex justify-center items-center min-h-screen text-red-500 dark:text-red-400">오류: {error}</div>;
-  if (!project) return <div className="flex justify-center items-center min-h-screen text-gray-900 dark:text-white">프로젝트를 찾을 수 없습니다.</div>;
+  if (isLoading) return <div className="flex justify-center items-center min-h-screen text-foreground">로딩 중...</div>;
+  if (error) return <div className="flex justify-center items-center min-h-screen text-destructive">오류: {error}</div>;
+  if (!project) return <div className="flex justify-center items-center min-h-screen text-foreground">프로젝트를 찾을 수 없습니다.</div>;
 
   // 버튼 텍스트 및 상태 결정
   let buttonText = '프로젝트 참여하기';
@@ -239,7 +239,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 py-8 md:py-12">
         {isOwner && (
           <div className="flex justify-end gap-2 mb-4">
@@ -256,9 +256,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         )}
         <div className="mb-8 md:mb-12">
           {/* 카테고리 라벨 표시 (예: 개발) */}
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{categoryLabel}</p>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">{project.title}</h1>
-          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground mb-2">{categoryLabel}</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{project.title}</h1>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center">
               <span>작성자: {getAuthorName(project.author)}</span>
               <span className="mx-2">|</span>
@@ -280,39 +280,39 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           <div className="lg:col-span-2">
             <div className="prose dark:prose-invert max-w-none">
-              {project.images && project.images.length > 0 ? <ProjectImageSlider images={project.images} title={project.title} /> : <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg mb-8 flex items-center justify-center text-8xl">🚀</div>}
-              <p className="text-lg leading-relaxed whitespace-pre-wrap text-gray-900 dark:text-gray-100">{project.content}</p>
+              {project.images && project.images.length > 0 ? <ProjectImageSlider images={project.images} title={project.title} /> : <div className="aspect-video bg-muted rounded-lg mb-8 flex items-center justify-center text-8xl">🚀</div>}
+              <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">{project.content}</p>
             </div>
           </div>
           <div className="lg:col-span-1">
-            <div className="sticky top-24 bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+            <div className="sticky top-24 bg-card rounded-lg p-6 border border-border">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">프로젝트 요약</h3>
-                <button onClick={handleLike} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"><svg className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-500'}`} fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg></button>
+                <h3 className="text-lg font-bold text-foreground">프로젝트 요약</h3>
+                <button onClick={handleLike} className="p-2 rounded-full hover:bg-muted transition-colors"><svg className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-muted-foreground'}`} fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg></button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">모집 현황</p>
+                  <p className="text-sm font-semibold text-muted-foreground">모집 현황</p>
                   <ul className="space-y-1 mt-1">
-                    {Array.isArray(project.members) && project.members.map((member, index) => (<li key={index} className="flex justify-between text-gray-800 dark:text-gray-200"><span>{member.role}</span><span className="font-semibold">{member.current} / {member.max}</span></li>))}
+                    {Array.isArray(project.members) && project.members.map((member, index) => (<li key={index} className="flex justify-between text-foreground"><span>{member.role}</span><span className="font-semibold">{member.current} / {member.max}</span></li>))}
                   </ul>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">상태</p>
+                  <p className="text-sm font-semibold text-muted-foreground">상태</p>
                   {/* 동적으로 가져온 상태 라벨 표시 */}
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === '01' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>{statusLabel || project.status}</span>
+                  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === '01' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-muted text-muted-foreground'}`}>{statusLabel || project.status}</span>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">기술 스택</p>
-                  <div className="flex flex-wrap gap-2">{project.tags.map(tag => (<span key={tag._id} className="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm rounded-full">{tag.name}</span>))}</div>
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">기술 스택</p>
+                  <div className="flex flex-wrap gap-2">{project.tags.map(tag => (<span key={tag._id} className="px-3 py-1 bg-card border border-border text-foreground text-sm rounded-full">{tag.name}</span>))}</div>
                 </div>
               </div>
               <button
                 onClick={handleOpenApplyModal}
                 disabled={isButtonDisabled}
                 className={`mt-8 w-full font-bold py-3 rounded-lg transition-colors ${isButtonDisabled
-                  ? 'bg-gray-400 cursor-not-allowed text-white'
-                  : 'bg-gray-900 text-white hover:bg-gray-800'
+                  ? 'bg-muted cursor-not-allowed text-muted-foreground'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
                   }`}
               >
                 {buttonText}
@@ -323,19 +323,19 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       </div >
       {isApplyModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">프로젝트 지원하기</h2>
+          <div className="bg-card rounded-lg p-8 w-full max-w-md border border-border">
+            <h2 className="text-2xl font-bold mb-6 text-foreground">프로젝트 지원하기</h2>
             <form onSubmit={handleApplySubmit}>
               <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">지원 역할</label>
-                <select id="role" value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)} className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">지원 역할</label>
+                <select id="role" value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground">
                   <option value="" disabled>역할을 선택하세요</option>
                   {project.members.filter(m => m.current < m.max).map(member => (<option key={member.role} value={member.role}>{member.role} ({member.current}/{member.max})</option>))}
                 </select>
               </div>
               <div className="mb-6">
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">지원 메시지</label>
-                <textarea id="message" rows={5} value={applyMessage} onChange={(e) => setApplyMessage(e.target.value)} placeholder="자신을 어필하는 간단한 메시지를 남겨주세요." required className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1">지원 메시지</label>
+                <textarea id="message" rows={5} value={applyMessage} onChange={(e) => setApplyMessage(e.target.value)} placeholder="자신을 어필하는 간단한 메시지를 남겨주세요." required className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground" />
               </div>
               <div className="flex justify-end gap-4">
                 <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">취소</button>
