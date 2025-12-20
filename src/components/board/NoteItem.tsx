@@ -18,6 +18,30 @@ const stringToColor = (str: string) => {
   return '#' + '00000'.substring(0, 6 - c.length) + c;
 };
 
+// --- Markdown Preprocessor ---
+// 마크다운 문법을 느슨하게 허용하기 위한 전처리 함수
+const preprocessMarkdown = (text: string) => {
+  if (!text) return '';
+  let processed = text;
+
+  // 1. Header Correction: "#Title" -> "# Title"
+  // 라인 시작(또는 줄바꿈 후)에 #이(1~6개) 오고, 공백 없이 문자가 올 경우 공백 추가
+  processed = processed.replace(/(^|\n)(#{1,6})([^ \n#])/g, '$1$2 $3');
+
+  // 2. Bold Correction: "** Bold **" -> "**Bold**"
+  // ** 와 텍스트 사이에 공백이 있어도 볼드 처리되도록 수정
+  // (단, 중간에 *이 포함되지 않는 경우에 한함)
+  processed = processed.replace(/\*\*\s+([^\*]+?)\s+\*\*/g, '**$1**');
+
+  // 3. Leading Space Preservation
+  // 라인 맨 앞의 공백이 Markdown에서 무시되거나 이상하게 줄바꿈 처리되는 것 방지
+  // 공백을 &nbsp;로 변환하여 시각적으로 유지
+  processed = processed.replace(/^ +/gm, (match) => '&nbsp;'.repeat(match.length));
+
+  return processed;
+};
+// -----------------------------
+
 // --- Debounce Helper ---
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
@@ -126,6 +150,7 @@ export default function NoteItem({
 
   const isDragging = React.useRef(false);
   const isResizing = React.useRef(false); // 리사이즈 중인지 여부
+  const hasMoved = React.useRef(false); // 드래그로 인해 실제로 이동했는지 여부
   const lastPointerRef = React.useRef({ x: 0, y: 0 });
 
   // 이 노트가 선택되었는지 여부 확인
@@ -180,11 +205,14 @@ export default function NoteItem({
   );
 
   const saveEdit = React.useCallback(() => {
-    updateNote(id, { text: draft });
-    saveChanges({ text: draft });
+    // 변경사항이 있을 때만 저장
+    if (draft !== text) {
+      updateNote(id, { text: draft });
+      saveChanges({ text: draft });
+    }
     setIsEditing(false);
     unlockNote(id); // Release Lock
-  }, [draft, id, updateNote, saveChanges, unlockNote]);
+  }, [draft, text, id, updateNote, saveChanges, unlockNote]);
 
   const cancelEdit = React.useCallback(() => {
     setDraft(text);
@@ -268,6 +296,7 @@ export default function NoteItem({
       }
 
       isDragging.current = true;
+      hasMoved.current = false; // Reset move flag
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     },
@@ -296,6 +325,8 @@ export default function NoteItem({
       // 2. 드래그(이동) 로직
       else if (isDragging.current) {
         if (dx !== 0 || dy !== 0) {
+          hasMoved.current = true; // Mark as moved
+
           if (selectedNoteIds.length > 1 && isSelected) {
             moveNotes(selectedNoteIds, dx, dy);
           } else {
@@ -391,6 +422,12 @@ export default function NoteItem({
       isDragging.current = false;
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
       setAlignmentGuides([]);
+
+      // 실제로 이동하지 않았다면 저장 로직 건너뜀
+      if (!hasMoved.current) {
+        debouncedSave.cancel();
+        return;
+      }
 
       if (selectedNoteIds.length > 1 && isSelected) {
         debouncedSave.cancel();
@@ -600,6 +637,8 @@ export default function NoteItem({
             height: '100%',
             paddingTop: 24,
             overflow: 'hidden',
+            pointerEvents: 'none', // 텍스트 영역이 클릭 이벤트를 가로채지 않도록 설정 (드래그 지원)
+            whiteSpace: 'pre-wrap', // 공백과 줄바꿈을 있는 그대로 표시
           }}
           className="markdown-body" // Optional: if you use a global markdown stylesheet
         >
@@ -607,13 +646,13 @@ export default function NoteItem({
             remarkPlugins={[remarkGfm]}
             components={{
               // 커스텀 스타일링 for Note
-              h1: ({ children }: any) => <h1 style={{ fontSize: '1.2em', fontWeight: 'bold', margin: '0.5em 0', borderBottom: '1px solid #ddd' }}>{children}</h1>,
-              h2: ({ children }: any) => <h2 style={{ fontSize: '1.1em', fontWeight: 'bold', margin: '0.4em 0' }}>{children}</h2>,
-              h3: ({ children }: any) => <h3 style={{ fontSize: '1em', fontWeight: 'bold', margin: '0.3em 0' }}>{children}</h3>,
-              ul: ({ children }: any) => <ul style={{ listStyleType: 'disc', paddingLeft: '1.2em', margin: '0.5em 0' }}>{children}</ul>,
-              ol: ({ children }: any) => <ol style={{ listStyleType: 'decimal', paddingLeft: '1.2em', margin: '0.5em 0' }}>{children}</ol>,
-              li: ({ children }: any) => <li style={{ marginBottom: '0.2em' }}>{children}</li>,
-              p: ({ children }: any) => <p style={{ margin: '0.5em 0', whiteSpace: 'pre-wrap' }}>{children}</p>,
+              h1: ({ children }: any) => <h1 style={{ fontSize: '1.2em', fontWeight: 'bold', margin: '0 0 4px 0', borderBottom: '1px solid #ddd' }}>{children}</h1>,
+              h2: ({ children }: any) => <h2 style={{ fontSize: '1.1em', fontWeight: 'bold', margin: '4px 0' }}>{children}</h2>,
+              h3: ({ children }: any) => <h3 style={{ fontSize: '1em', fontWeight: 'bold', margin: '4px 0' }}>{children}</h3>,
+              ul: ({ children }: any) => <ul style={{ listStyleType: 'disc', paddingLeft: '1.2em', margin: '0' }}>{children}</ul>,
+              ol: ({ children }: any) => <ol style={{ listStyleType: 'decimal', paddingLeft: '1.2em', margin: '0' }}>{children}</ol>,
+              li: ({ children }: any) => <li style={{ marginBottom: '0' }}>{children}</li>,
+              p: ({ children }: any) => <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{children}</p>,
               blockquote: ({ children }: any) => <blockquote style={{ borderLeft: '4px solid #ccc', paddingLeft: '8px', color: '#666', margin: '0.5em 0' }}>{children}</blockquote>,
               code: ({ children, className }: any) => {
                 const isInline = !String(children).includes('\n');
@@ -633,10 +672,10 @@ export default function NoteItem({
               table: ({ children }: any) => <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0', fontSize: '0.9em' }}>{children}</table>,
               th: ({ children }: any) => <th style={{ border: '1px solid #ddd', padding: '4px', background: 'rgba(0,0,0,0.02)' }}>{children}</th>,
               td: ({ children }: any) => <td style={{ border: '1px solid #ddd', padding: '4px' }}>{children}</td>,
-              a: ({ href, children }: any) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'underline' }} onClick={(e) => e.stopPropagation()}>{children}</a>
+              a: ({ href, children }: any) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'underline', pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>{children}</a>
             }}
           >
-            {text}
+            {preprocessMarkdown(text)}
           </ReactMarkdown>
         </div>
       )}
