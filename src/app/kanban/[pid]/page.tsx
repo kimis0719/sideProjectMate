@@ -23,7 +23,7 @@ export default function KanbanBoardPage({ params }: PageProps) {
   const validPid = !isNaN(projectId) && projectId > 0 ? projectId : undefined;
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-white dark:bg-gray-900">
+    <div className="min-h-[calc(100vh-80px)] bg-background">
       {/* 
         BoardShell 컴포넌트에 유효한 프로젝트 ID(pid)를 전달합니다.
         - validPid가 유효한 숫자일 경우: 해당 프로젝트의 보드를 불러옵니다.

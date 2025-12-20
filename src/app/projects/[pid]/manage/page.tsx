@@ -29,7 +29,7 @@ export default function ManageApplicantsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { fetchNotifications } = useNotificationStore();
 
   const fetchApplications = useCallback(async () => {
@@ -105,21 +105,20 @@ export default function ManageApplicantsPage() {
       ) : (
         <div className="space-y-6">
           {applications.map(app => (
-            <div key={app._id} className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+            <div key={app._id} className="bg-card p-6 rounded-lg shadow-sm border border-border">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-bold text-lg">{app.applicantId.nName} <span className="text-sm font-normal text-gray-500">({app.applicantId.authorEmail})</span></p>
+                  <p className="font-bold text-lg">{app.applicantId.nName} <span className="text-sm font-normal text-muted-foreground">({app.applicantId.authorEmail})</span></p>
                   <p className="text-blue-600 font-semibold">{app.role} 역할 지원</p>
-                  <p className="mt-4 text-gray-700 dark:text-gray-300">{app.message}</p>
+                  <p className="mt-4 text-foreground">{app.message}</p>
                 </div>
                 <div className="text-right">
-                  <p className={`font-bold ${
-                    app.status === 'accepted' ? 'text-green-500' :
-                    app.status === 'rejected' ? 'text-red-500' : 'text-yellow-500'
-                  }`}>
+                  <p className={`font-bold ${app.status === 'accepted' ? 'text-green-500' :
+                      app.status === 'rejected' ? 'text-red-500' : 'text-yellow-500'
+                    }`}>
                     {app.status}
                   </p>
-                  <p className="text-xs text-gray-400">{new Date(app.createdAt).toLocaleString('ko-KR')}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(app.createdAt).toLocaleString('ko-KR')}</p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">

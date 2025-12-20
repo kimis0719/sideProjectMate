@@ -23,20 +23,20 @@ export default function HomeBanner() {
         <section className="relative h-[400px] md:h-[500px] overflow-hidden">
             <div className="flex transition-transform duration-500 ease-in-out h-full" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
                 {banners.map((banner) => (
-                    <div key={banner.id} className={`min-w-full h-full flex items-center justify-center ${banner.bgColor} dark:from-gray-800 dark:to-gray-700`}>
+                    <div key={banner.id} className={`min-w-full h-full flex items-center justify-center ${banner.bgColor} dark:from-background dark:to-background`}>
                         <div className="container mx-auto px-4 text-center">
-                            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 whitespace-pre-line">{banner.title}</h2>
-                            <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8">{banner.description}</p>
-                            <Link href="/projects/new" className="inline-block px-8 py-3 bg-gray-900 dark:bg-gray-700 text-white text-lg font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors">지금 시작하기</Link>
+                            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-foreground mb-4 whitespace-pre-line">{banner.title}</h2>
+                            <p className="text-lg md:text-xl text-gray-700 dark:text-muted-foreground mb-8">{banner.description}</p>
+                            <Link href="/projects/new" className="inline-block px-8 py-3 bg-gray-900 dark:bg-primary text-white dark:text-primary-foreground text-lg font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-primary/90 transition-colors">지금 시작하기</Link>
                         </div>
                     </div>
                 ))}
             </div>
-            <button onClick={handlePrevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 p-3 rounded-full shadow-lg transition-all"><svg className="w-6 h-6 text-gray-800 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
-            <button onClick={handleNextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 p-3 rounded-full shadow-lg transition-all"><svg className="w-6 h-6 text-gray-800 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
+            <button onClick={handlePrevSlide} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-card/80 hover:bg-white dark:hover:bg-card p-3 rounded-full shadow-lg transition-all"><svg className="w-6 h-6 text-gray-800 dark:text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg></button>
+            <button onClick={handleNextSlide} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-card/80 hover:bg-white dark:hover:bg-card p-3 rounded-full shadow-lg transition-all"><svg className="w-6 h-6 text-gray-800 dark:text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
                 {banners.map((_, index) => (
-                    <button key={index} onClick={() => setCurrentSlide(index)} className={`w-2 h-2 rounded-full transition-all ${currentSlide === index ? 'bg-gray-800 dark:bg-white w-8' : 'bg-white/60 dark:bg-gray-400/60'}`} />
+                    <button key={index} onClick={() => setCurrentSlide(index)} className={`w-2 h-2 rounded-full transition-all ${currentSlide === index ? 'bg-gray-800 dark:bg-foreground w-8' : 'bg-white/60 dark:bg-muted-foreground/60'}`} />
                 ))}
             </div>
         </section>

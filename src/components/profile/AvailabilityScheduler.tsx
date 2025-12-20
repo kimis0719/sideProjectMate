@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ScheduleSelector from 'react-schedule-selector';
 import styled from 'styled-components';
 import { startOfWeek, addDays, format, parse, getDay } from 'date-fns';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface TimeRange {
     start: string;
@@ -30,6 +31,7 @@ const Container = styled.div`
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export default function AvailabilityScheduler({ initialSchedule = [], onChange }: AvailabilitySchedulerProps) {
+    const { theme } = useTheme();
     const [schedule, setSchedule] = useState<Date[]>([]);
 
     // startDate를 처음부터 00:00:00으로 정확하게 초기화하여 그리드 불일치 방지
@@ -170,9 +172,9 @@ export default function AvailabilityScheduler({ initialSchedule = [], onChange }
                 dateFormat="ddd" // 요일만 표시
                 startDate={startDate}
                 onChange={handleChange}
-                selectedColor="#3b82f6" // Tailwind blue-500
-                unselectedColor="#f3f4f6" // Tailwind gray-100
-                hoveredColor="#93c5fd" // Tailwind blue-300
+                selectedColor={theme === 'dark' ? '#60a5fa' : '#3b82f6'} // blue-400 : blue-500
+                unselectedColor={theme === 'dark' ? '#1f2937' : '#f3f4f6'} // gray-800 : gray-100
+                hoveredColor={theme === 'dark' ? '#1e40af' : '#93c5fd'} // blue-800 : blue-300
             />
         </Container>
     );

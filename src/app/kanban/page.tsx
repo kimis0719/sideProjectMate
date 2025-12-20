@@ -6,7 +6,7 @@ const BoardShell = dynamic(() => import('@/components/board/BoardShell'), {
 
 export default function KanbanHomePage() {
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-white dark:bg-gray-900">
+    <div className="min-h-[calc(100vh-80px)] bg-background">
       <BoardShell pid={999999999} />
     </div>
   );

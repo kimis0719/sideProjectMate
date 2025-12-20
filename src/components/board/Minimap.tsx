@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Note, Section } from '@/store/boardStore';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface MinimapProps {
     notes: Note[];
@@ -25,6 +26,7 @@ export default function Minimap({
     containerHeight,
     setPan,
 }: MinimapProps) {
+    const { theme } = useTheme();
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     // 1. 전체 콘텐츠의 Bounding Box 계산
@@ -97,7 +99,7 @@ export default function Minimap({
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
         // 배경
-        ctx.fillStyle = '#f3f4f6'; // gray-100
+        ctx.fillStyle = theme === 'dark' ? '#1f2937' : '#f3f4f6'; // gray-800 : gray-100
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
         // 좌표 변환 헬퍼
@@ -140,7 +142,7 @@ export default function Minimap({
         ctx.lineWidth = 2;
         ctx.strokeRect(vpPos.x, vpPos.y, viewportWorldW * scale, viewportWorldH * scale);
 
-    }, [notes, sections, pan, zoom, containerWidth, containerHeight]);
+    }, [notes, sections, pan, zoom, containerWidth, containerHeight, theme]);
 
 
     const isDragging = useRef(false);

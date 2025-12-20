@@ -191,7 +191,7 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
     if (status === 'loading' || isLoading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <div className="text-gray-600 dark:text-gray-400">로딩 중...</div>
+                <div className="text-muted-foreground">로딩 중...</div>
             </div>
         );
     }
@@ -199,22 +199,22 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
     return (
         <div className="flex flex-col h-full overflow-hidden">
             {/* 상단 툴바 */}
-            <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">WBS (Work Breakdown Structure)</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <h1 className="text-2xl font-bold text-foreground">WBS (Work Breakdown Structure)</h1>
+                    <p className="text-sm text-muted-foreground mt-1">
                         프로젝트 {pid}의 일정 관리
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                     {/* 뷰 모드 선택 */}
-                    <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                    <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
                         <button
                             onClick={() => setViewMode('day')}
                             className={`px-3 py-1 text-sm font-medium rounded transition-colors ${viewMode === 'day'
-                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                ? 'bg-card text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             일
@@ -222,8 +222,8 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                         <button
                             onClick={() => setViewMode('week')}
                             className={`px-3 py-1 text-sm font-medium rounded transition-colors ${viewMode === 'week'
-                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                ? 'bg-card text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             주
@@ -231,8 +231,8 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                         <button
                             onClick={() => setViewMode('month')}
                             className={`px-3 py-1 text-sm font-medium rounded transition-colors ${viewMode === 'month'
-                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                ? 'bg-card text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
                                 }`}
                         >
                             월
@@ -242,7 +242,7 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                     {/* 작업 추가 버튼 */}
                     <button
                         onClick={handleAddTask}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium flex items-center gap-2"
                     >
                         <span>+</span>
                         <span>작업 추가</span>
@@ -320,8 +320,8 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                 )}
 
                 {/* 간트차트 */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">간트차트</h2>
+                <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+                    <h2 className="text-lg font-semibold text-foreground mb-4">간트차트</h2>
                     <GanttChart
                         tasks={tasks}
                         viewMode={viewMode === 'day' ? 'Day' : viewMode === 'week' ? 'Week' : 'Month'}
@@ -333,7 +333,7 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
 
                 {/* 작업 목록 테이블 */}
                 <div>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">작업 목록</h2>
+                    <h2 className="text-lg font-semibold text-foreground mb-4">작업 목록</h2>
                     <TaskList
                         tasks={tasks}
                         selectedTaskId={selectedTaskId}

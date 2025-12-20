@@ -91,9 +91,9 @@ export default function MyPage() {
                 <ProfileHeader user={userData} />
             </section>
 
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-100 dark:border-gray-700">
+            <div className="bg-card shadow rounded-lg p-6 border border-border">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">내 지원 현황</h2>
+                    <h2 className="text-xl font-bold text-foreground">내 지원 현황</h2>
                     <button
                         onClick={() => router.push(`/projects?authorId=${user._id}`)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors text-sm"
@@ -105,7 +105,7 @@ export default function MyPage() {
                 <div className="space-y-4">
                     {myApplications.length > 0 ? (
                         myApplications.map(app => (
-                            <div key={app._id} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg flex justify-between items-center bg-white dark:bg-gray-800">
+                            <div key={app._id} className="p-4 border border-border rounded-lg flex justify-between items-center bg-card">
                                 <div>
                                     {app.projectId ? (
                                         <Link href={`/projects/${app.projectId.pid}`} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
@@ -114,12 +114,12 @@ export default function MyPage() {
                                     ) : (
                                         <span className="font-semibold text-gray-400">삭제된 프로젝트</span>
                                     )}
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">지원 역할: {app.role}</p>
+                                    <p className="text-sm text-muted-foreground">지원 역할: {app.role}</p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${app.status === 'accepted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                                            app.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                        app.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                                         }`}>
                                         {app.status === 'pending' ? '대기중' : app.status === 'accepted' ? '수락됨' : '거절됨'}
                                     </span>
@@ -132,7 +132,7 @@ export default function MyPage() {
                             </div>
                         ))
                     ) : (
-                        <p className="text-gray-500 dark:text-gray-400">아직 지원한 프로젝트가 없습니다.</p>
+                        <p className="text-muted-foreground">아직 지원한 프로젝트가 없습니다.</p>
                     )}
                 </div>
             </div>

@@ -167,9 +167,9 @@ export default function ProfilePage() {
 
 
       {/* Phase 2: 가용성 및 스타일 */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <section className="bg-card rounded-2xl p-6 shadow-sm border border-border">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800">📅 가용성 및 협업 성향</h2>
+          <h2 className="text-xl font-bold text-foreground">📅 가용성 및 협업 성향</h2>
           <button
             onClick={handleSaveAvailability}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -181,13 +181,13 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* 왼쪽: 주간 스케줄러 */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-gray-700">주간 가능한 시간</h3>
-            <div className="border rounded-xl p-4 bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4 text-foreground">주간 가능한 시간</h3>
+            <div className="border border-border rounded-xl p-4 bg-muted/30">
               <AvailabilityScheduler
                 initialSchedule={schedule}
                 onChange={setSchedule}
               />
-              <p className="text-xs text-gray-500 mt-2 text-center">
+              <p className="text-xs text-muted-foreground mt-2 text-center">
                 드래그하여 가능한 시간을 선택해주세요.
               </p>
             </div>
@@ -206,9 +206,9 @@ export default function ProfilePage() {
       </section>
 
       {/* Phase 2: 자기소개 (블록 에디터) */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <section className="bg-card rounded-2xl p-6 shadow-sm border border-border">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800">📝 자기소개</h2>
+          <h2 className="text-xl font-bold text-foreground">📝 자기소개</h2>
           <button
             onClick={handleSaveIntroduction}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"

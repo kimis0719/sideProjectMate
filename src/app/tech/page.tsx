@@ -57,7 +57,7 @@ export default function TechPage() {
             </section>
 
             {/* 추후 Skill, Availability 섹션 추가 예정 */}
-            <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 min-h-[200px] flex items-center justify-center text-gray-400">
+            <section className="bg-card rounded-2xl p-6 shadow-sm border border-border min-h-[200px] flex items-center justify-center text-muted-foreground">
                 기술 스택 및 가용성 섹션 준비 중...
             </section>
         </div>

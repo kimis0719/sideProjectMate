@@ -27,7 +27,7 @@ export default async function Home() {
   ]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 min-h-screen">
+    <div className="bg-background min-h-screen">
       {/* 배너 영역 (클라이언트 컴포넌트) */}
       <HomeBanner />
 

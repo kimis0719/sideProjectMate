@@ -88,7 +88,7 @@ export default function DashboardHome() {
 
     return (
         <div className="container mx-auto px-4 py-12">
-            <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">내 프로젝트 대쉬보드</h1>
+            <h1 className="text-3xl font-bold mb-8 text-foreground">내 프로젝트 대쉬보드</h1>
 
             {projects.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -96,9 +96,9 @@ export default function DashboardHome() {
                         <Link
                             key={project._id}
                             href={`/dashboard/${project.pid}`}
-                            className="block bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all border border-gray-200 dark:border-gray-700 overflow-hidden group"
+                            className="block bg-card rounded-xl shadow-sm hover:shadow-md transition-all border border-border overflow-hidden group"
                         >
-                            <div className="aspect-video bg-gray-100 dark:bg-gray-700 relative">
+                            <div className="aspect-video bg-muted relative">
                                 {project.images && project.images.length > 0 ? (
                                     <img src={project.images[0]} alt={project.title} className="w-full h-full object-cover" />
                                 ) : (
@@ -109,20 +109,20 @@ export default function DashboardHome() {
                                 </div>
                             </div>
                             <div className="p-6">
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                <h2 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
                                     {project.title}
                                 </h2>
                                 <div className="flex items-center gap-2 mb-3">
-                                    <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs font-semibold rounded">
+                                    <span className="px-2.5 py-1 bg-muted text-muted-foreground text-xs font-semibold rounded">
                                         {categoryCodes.find(c => c.code === project.category)?.label || project.category}
                                     </span>
                                     <span className={`px-2.5 py-1 text-xs font-semibold rounded ${project.status === '01'
                                         ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                        : 'bg-muted text-muted-foreground'
                                         }`}>
                                         {statusCodes.find(c => c.code === project.status)?.label || project.status}
                                     </span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+                                    <span className="text-xs text-muted-foreground ml-auto">
                                         멤버 {project.members?.length || 0}명
                                     </span>
                                 </div>
@@ -131,11 +131,11 @@ export default function DashboardHome() {
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-20 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">참여 중인 프로젝트가 없습니다.</p>
+                <div className="text-center py-20 bg-muted/30 rounded-xl border border-border">
+                    <p className="text-muted-foreground mb-4">참여 중인 프로젝트가 없습니다.</p>
                     <Link
                         href="/projects"
-                        className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                     >
                         프로젝트 찾아보기
                     </Link>

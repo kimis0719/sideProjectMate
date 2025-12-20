@@ -38,10 +38,10 @@ export default function CommunicationStyleSlider({
     };
 
     return (
-        <div className="space-y-8 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div className="space-y-8 p-4 bg-card rounded-lg shadow-sm border border-border">
             {/* 커뮤니케이션 스타일 슬라이더 */}
             <div>
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">커뮤니케이션 스타일</h3>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">커뮤니케이션 스타일</h3>
                 <div className="relative pt-6 pb-2">
                     <input
                         type="range"
@@ -49,17 +49,17 @@ export default function CommunicationStyleSlider({
                         max="100"
                         value={preference}
                         onChange={(e) => onChangePreference(Number(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                     />
-                    <div className="flex justify-between mt-2 text-sm font-medium text-gray-600">
-                        <span className={preference < 50 ? 'text-blue-600 font-bold' : ''}>
+                    <div className="flex justify-between mt-2 text-sm font-medium text-muted-foreground">
+                        <span className={preference < 50 ? 'text-primary font-bold' : ''}>
                             비동기 (텍스트) 💬
                         </span>
-                        <span className={preference > 50 ? 'text-blue-600 font-bold' : ''}>
+                        <span className={preference > 50 ? 'text-primary font-bold' : ''}>
                             동기 (음성/미팅) 📞
                         </span>
                     </div>
-                    <div className="text-center mt-2 text-xs text-gray-400">
+                    <div className="text-center mt-2 text-xs text-muted-foreground">
                         {preference}% (0: 완전 비동기, 100: 완전 동기)
                     </div>
                 </div>
@@ -67,9 +67,9 @@ export default function CommunicationStyleSlider({
 
             {/* Personality Lingo 태그 */}
             <div>
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                <h3 className="text-lg font-semibold mb-4 text-foreground">
                     협업 성향 (Personality Lingo)
-                    <span className="ml-2 text-xs font-normal text-gray-500">최대 3개 선택</span>
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">최대 3개 선택</span>
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {PERSONALITY_TAGS.map((tag) => (
@@ -77,18 +77,18 @@ export default function CommunicationStyleSlider({
                             key={tag.id}
                             onClick={() => toggleTag(tag.id)}
                             className={`flex items-center p-3 rounded-lg border transition-all duration-200 text-left ${tags.includes(tag.id)
-                                    ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                                ? 'border-primary bg-primary/10 ring-1 ring-primary'
+                                : 'border-border hover:border-primary/50 hover:bg-muted'
                                 }`}
                         >
                             <div className="flex-1">
-                                <div className={`font-bold ${tags.includes(tag.id) ? 'text-blue-700' : 'text-gray-700'}`}>
+                                <div className={`font-bold ${tags.includes(tag.id) ? 'text-primary' : 'text-foreground'}`}>
                                     {tag.label}
                                 </div>
-                                <div className="text-xs text-gray-500 mt-1">{tag.desc}</div>
+                                <div className="text-xs text-muted-foreground mt-1">{tag.desc}</div>
                             </div>
                             {tags.includes(tag.id) && (
-                                <span className="text-blue-500 text-xl">✓</span>
+                                <span className="text-primary text-xl">✓</span>
                             )}
                         </button>
                     ))}

@@ -98,20 +98,20 @@ export default function DependencySettingModal({
 
             {/* 모달 */}
             <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-card rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                     {/* 헤더 */}
-                    <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                    <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-card">
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                            <h2 className="text-xl font-bold text-foreground">
                                 의존관계 설정
                             </h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 작업: <span className="font-semibold">{selectedTask.title}</span>
                             </p>
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            className="text-muted-foreground hover:text-foreground"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -129,12 +129,12 @@ export default function DependencySettingModal({
 
                         {/* 의존관계 리스트 */}
                         <div>
-                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                            <h3 className="text-sm font-medium text-foreground mb-3">
                                 선행 작업 ({dependencies.length})
                             </h3>
 
                             {dependencies.length === 0 ? (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
+                                <p className="text-sm text-muted-foreground py-4 text-center">
                                     선행 작업이 없습니다.
                                 </p>
                             ) : (
@@ -142,12 +142,12 @@ export default function DependencySettingModal({
                                     {dependencies.map((dep, idx) => {
                                         const depTask = allTasks.find(t => t.id === dep.taskId);
                                         return (
-                                            <div key={idx} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                            <div key={idx} className="flex items-center gap-2 p-3 bg-muted rounded-lg">
                                                 <div className="flex-1 min-w-0">
                                                     <select
                                                         value={dep.taskId}
                                                         onChange={(e) => handleTaskChange(idx, e.target.value)}
-                                                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-800 dark:text-white"
+                                                        className="w-full px-3 py-2 text-sm border border-input rounded bg-card text-foreground"
                                                     >
                                                         <option value={dep.taskId}>{depTask?.title || '알 수 없는 작업'}</option>
                                                         {allTasks
@@ -163,7 +163,7 @@ export default function DependencySettingModal({
                                                 <select
                                                     value={dep.type}
                                                     onChange={(e) => handleTypeChange(idx, e.target.value as DependencyType)}
-                                                    className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-800 dark:text-white"
+                                                    className="px-3 py-2 text-sm border border-input rounded bg-card text-foreground"
                                                 >
                                                     <option value="FS">FS</option>
                                                     <option value="SS">SS</option>
@@ -189,7 +189,7 @@ export default function DependencySettingModal({
                         {availableTasks.length > 0 && (
                             <button
                                 onClick={handleAddDependency}
-                                className="w-full px-4 py-2 text-sm border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                                className="w-full px-4 py-2 text-sm border border-dashed border-input rounded-lg text-muted-foreground hover:bg-muted transition-colors"
                             >
                                 + 선행 작업 추가
                             </button>
@@ -215,10 +215,10 @@ export default function DependencySettingModal({
                     </div>
 
                     {/* 푸터 */}
-                    <div className="sticky bottom-0 flex gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <div className="sticky bottom-0 flex gap-3 px-6 py-4 border-t border-border bg-muted/40">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-medium"
+                            className="flex-1 px-4 py-2 border border-input text-foreground rounded-lg hover:bg-muted transition-colors font-medium"
                         >
                             취소
                         </button>

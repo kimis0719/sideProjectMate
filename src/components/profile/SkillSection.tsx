@@ -57,7 +57,7 @@ export default function SkillSection({ githubUsername }: SkillSectionProps) {
     }, [githubUsername]);
 
     if (!githubUsername || skills.length === 0) {
-        if (loading) return <div className="p-6 text-center text-gray-400">기술 스택 분석 중... 🔄</div>;
+        if (loading) return <div className="p-6 text-center text-muted-foreground">기술 스택 분석 중... 🔄</div>;
         return null;
     }
 
@@ -69,14 +69,14 @@ export default function SkillSection({ githubUsername }: SkillSectionProps) {
     }, {} as Record<SkillCategory, Skill[]>);
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-full">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border h-full">
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                     <span>🛠️</span> 기술 스택
                 </h2>
 
                 {/* Green Light Legend (Header로 이동) */}
-                <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 px-2 py-1 rounded-full">
+                <div className="flex items-center gap-2 text-[10px] sm:text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
                     <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -92,7 +92,7 @@ export default function SkillSection({ githubUsername }: SkillSectionProps) {
 
                     return (
                         <div key={category}>
-                            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider px-1 border-b border-gray-100 dark:border-gray-600 pb-1 inline-block">
+                            <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider px-1 border-b border-border pb-1 inline-block">
                                 {category}
                             </h3>
                             <div className="flex flex-wrap gap-3">
@@ -101,7 +101,7 @@ export default function SkillSection({ githubUsername }: SkillSectionProps) {
                                     const iconUrl = `https://skillicons.dev/icons?i=${iconSlug}`;
 
                                     return (
-                                        <div key={skill.name} className="relative group flex items-center gap-2 bg-gray-50 dark:bg-gray-700/30 px-3 py-2 rounded-xl border border-gray-100 dark:border-gray-600/50 hover:border-indigo-100 dark:hover:border-indigo-500/30 hover:shadow-sm transition-all duration-200">
+                                        <div key={skill.name} className="relative group flex items-center gap-2 bg-muted/30 px-3 py-2 rounded-xl border border-border/50 hover:border-indigo-100 dark:hover:border-indigo-500/30 hover:shadow-sm transition-all duration-200">
                                             {/* 스킬 아이콘 */}
                                             <div className="relative w-6 h-6 flex-shrink-0">
                                                 <img
@@ -122,7 +122,7 @@ export default function SkillSection({ githubUsername }: SkillSectionProps) {
                                             </div>
 
                                             {/* 스킬 이름 */}
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                                            <span className="text-sm font-medium text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
                                                 {skill.name}
                                             </span>
                                         </div>
@@ -135,8 +135,8 @@ export default function SkillSection({ githubUsername }: SkillSectionProps) {
             </div>
 
             {/* 기술 추가 버튼 (맨 아래로 이동) */}
-            <div className="mt-8 pt-4 border-t border-gray-100 dark:border-gray-700 text-center">
-                <button className="text-sm text-gray-400 hover:text-blue-500 flex items-center justify-center gap-1 w-full py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors dashed-border">
+            <div className="mt-8 pt-4 border-t border-border text-center">
+                <button className="text-sm text-muted-foreground hover:text-blue-500 flex items-center justify-center gap-1 w-full py-2 hover:bg-muted/50 rounded-lg transition-colors dashed-border">
                     <span>+ 기술 직접 추가하기</span>
                 </button>
             </div>
