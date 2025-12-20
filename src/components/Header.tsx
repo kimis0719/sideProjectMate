@@ -24,6 +24,7 @@ export default function Header() {
     const { notifications, unreadCount, fetchNotifications } = useNotificationStore();
 
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState('추천');
 
     useEffect(() => {
@@ -80,7 +81,21 @@ export default function Header() {
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center gap-8">
-                        <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white">SPM</Link>
+                        <div className="flex items-center gap-3">
+                            <button
+                                className="md:hidden p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    {isMobileMenuOpen ? (
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    ) : (
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    )}
+                                </svg>
+                            </button>
+                            <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-white">SPM</Link>
+                        </div>
                         <nav className="hidden md:flex items-center gap-6">
                             {mainCategories.map((category) => (
                                 <Link
@@ -171,6 +186,30 @@ export default function Header() {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Menu */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden absolute top-16 left-0 w-full border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 z-40 shadow-lg">
+                    <div className="container mx-auto px-4 py-4 space-y-4">
+                        <nav className="flex flex-col gap-4">
+                            {mainCategories.map((category) => (
+                                <Link
+                                    key={category.label}
+                                    href={category.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`text-base font-medium transition-colors ${isActive(category.path)
+                                        ? 'text-gray-900 dark:text-white font-bold'
+                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                                        }`}
+                                >
+                                    {category.label}
+                                </Link>
+                            ))}
+                        </nav>
+                    </div>
+                </div>
+            )}
+
             {pathname === '/projects' && (
                 <div className="bg-gray-50 dark:bg-gray-800">
                     <div className="container mx-auto px-4">
