@@ -9,6 +9,7 @@ interface ProfileHeaderProps {
         position?: string;
         career?: string;
         introduction?: string;
+        avatarUrl?: string;
         socialLinks?: {
             github?: string;
             blog?: string;
@@ -24,8 +25,18 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
             <div className="flex flex-col sm:flex-row items-start gap-6">
                 {/* 아바타 영역 */}
                 <div className="flex-shrink-0">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-md">
-                        {user.nName ? user.nName.substring(0, 1).toUpperCase() : 'U'}
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-md border border-gray-100 dark:border-border">
+                        {user.avatarUrl ? (
+                            <img
+                                src={user.avatarUrl}
+                                alt={user.nName}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
+                                {user.nName ? user.nName.substring(0, 1).toUpperCase() : 'U'}
+                            </div>
+                        )}
                     </div>
                 </div>
 

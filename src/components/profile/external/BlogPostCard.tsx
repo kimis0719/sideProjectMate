@@ -35,7 +35,17 @@ export default function BlogPostCard({ blogUrl }: BlogPostCardProps) {
         }
     }, [blogUrl]);
 
-    if (!blogUrl) return null;
+    if (!blogUrl) {
+        return (
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border h-full flex flex-col items-center justify-center min-h-[300px] text-center">
+                <div className="p-4 bg-muted rounded-full mb-4">
+                    <span className="text-3xl">✍️</span>
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">블로그 연동이 필요합니다</h3>
+                <p className="text-sm text-muted-foreground mb-4">기술 블로그(Velog, Tistory 등)의 RSS 주소를 등록하여 최신 글을 공유해보세요.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border h-full">

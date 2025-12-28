@@ -13,13 +13,28 @@ export interface IUser extends Document {
   position?: string;
   career?: string;
   status?: string;
+  avatarUrl?: string; // 프로필 이미지 URL
   introduction?: string;
   socialLinks?: {
     github?: string;
     blog?: string;
     linkedin?: string;
     other?: string;
+    solvedAc?: string;
   };
+  portfolioLinks?: string[];
+  githubStats?: {
+    followers: number;
+    following: number;
+    totalStars: number;
+    totalCommits: number;
+    totalPRs: number;
+    totalIssues: number;
+    contributions: number;
+    techStack: string[];
+  };
+  techTags?: string[];
+  level?: number;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -63,12 +78,40 @@ const UserSchema: Schema = new Schema(
     position: { type: String, default: '' },
     career: { type: String, default: '' }, // 예: 'Junior', 'Senior', '3년차' 등
     status: { type: String, default: '구직중' }, // 예: '구직중', '재직중', '팀빌딩중'
+    avatarUrl: { type: String, default: '' },
     introduction: { type: String, default: '' },
     socialLinks: {
       github: { type: String, default: '' },
       blog: { type: String, default: '' },
       linkedin: { type: String, default: '' },
       other: { type: String, default: '' },
+      solvedAc: { type: String, default: '' },
+    },
+    // 포트폴리오 링크 배열
+    portfolioLinks: {
+      type: [String],
+      default: [],
+    },
+    // GitHub 통계 정보
+    githubStats: {
+      followers: { type: Number, default: 0 },
+      following: { type: Number, default: 0 },
+      totalStars: { type: Number, default: 0 },
+      totalCommits: { type: Number, default: 0 },
+      totalPRs: { type: Number, default: 0 },
+      totalIssues: { type: Number, default: 0 },
+      contributions: { type: Number, default: 0 },
+      techStack: { type: [String], default: [] },
+    },
+    // 기술 스택 태그
+    techTags: {
+      type: [String],
+      default: [],
+    },
+    // 개발자 레벨 (1~10)
+    level: {
+      type: Number,
+      default: 1,
     },
   },
   {

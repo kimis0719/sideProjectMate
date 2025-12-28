@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import ProfileHeader from '@/components/profile/ProfileHeader';
+import DetailProfileCard from '@/components/profile/DetailProfileCard';
+import ImageEditModal from '@/components/profile/modals/ImageEditModal';
 
 interface MyApplication {
     _id: string;
@@ -44,6 +45,22 @@ export default function MyPage() {
         }
     }, [status, router, fetchMyApplications]);
 
+    // Avatar Edit Logic
+    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+    const handleSaveAvatar = async (url: string) => {
+        const res = await fetch('/api/users/me', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ avatarUrl: url })
+        });
+
+        if (res.ok) {
+            setUserData({ ...userData, avatarUrl: url });
+        } else {
+            alert('이미지 변경 실패');
+        }
+    };
+
     const handleCancelApplication = async (appId: string) => {
         if (confirm('정말 지원을 취소하시겠습니까?')) {
             try {
@@ -71,25 +88,51 @@ export default function MyPage() {
 
     const user = session.user as any;
 
-    // 임시 데이터 (추후 DB 연동)
-    const userData = {
-        nName: user.name || '사용자',
-        email: user.email || '',
-        position: 'Frontend Developer',
-        career: '3년차',
-        introduction: '안녕하세요! 사이드 프로젝트를 찾고 있습니다.',
-        socialLinks: {
-            github: '',
-            blog: ''
+    const [userData, setUserData] = useState<any>(null);
+
+    const fetchUserProfile = useCallback(async () => {
+        try {
+            const res = await fetch('/api/users/me');
+            const data = await res.json();
+            if (data.success) {
+                setUserData(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to load profile:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (status === 'authenticated') {
+            fetchUserProfile();
+        }
+    }, [status, fetchUserProfile]);
 
     return (
         <div className="container mx-auto px-4 py-8 space-y-8">
             {/* Profile Header Section */}
+            {/* Profile Card Section (Detail Preview) */}
             <section>
-                <ProfileHeader user={userData} />
+                <div className="mb-4 flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-foreground">내 프로필 카드</h2>
+                    <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">Preview</span>
+                </div>
+                {userData && (
+                    <DetailProfileCard
+                        user={userData}
+                        onClick={() => router.push(`/profile`)} // go to full profile view
+                        isEditing={true} // 항상 수정 가능 상태로 (아바타 오버레이 노출)
+                        onEditAvatar={() => setIsAvatarModalOpen(true)}
+                    />
+                )}
             </section>
+
+            <ImageEditModal
+                isOpen={isAvatarModalOpen}
+                onClose={() => setIsAvatarModalOpen(false)}
+                onSave={handleSaveAvatar}
+                currentUrl={userData?.avatarUrl}
+            />
 
             <div className="bg-card shadow rounded-lg p-6 border border-border">
                 <div className="flex justify-between items-center mb-6">

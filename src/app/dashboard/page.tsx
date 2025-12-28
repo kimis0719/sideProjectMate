@@ -23,22 +23,6 @@ export default function DashboardHome() {
     const [isLoading, setIsLoading] = useState(true);
     const [categoryCodes, setCategoryCodes] = useState<ICommonCode[]>([]);
     const [statusCodes, setStatusCodes] = useState<ICommonCode[]>([]);
-    const fetchCommonCodes = async () => {
-        try {
-            const response = await fetch('/api/commonCodes');
-            const data = await response.json();
-            if (data.success) {
-                setCategoryCodes(data.data.categoryCodes);
-                setStatusCodes(data.data.statusCodes);
-            }
-        } catch (error) {
-            console.error('Failed to fetch common codes:', error);
-        }
-    };
-    useEffect(() => {
-        fetchCommonCodes();
-    }, []);
-
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.push('/login');

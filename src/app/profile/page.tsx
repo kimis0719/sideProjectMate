@@ -2,277 +2,97 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
-import ProfileHeader from '@/components/profile/ProfileHeader';
-import StatusDashboard from '@/components/profile/StatusDashboard';
-import GitHubStats from '@/components/profile/external/GitHubStats';
-import BlogPostCard from '@/components/profile/external/BlogPostCard';
-import SkillSection from '@/components/profile/SkillSection';
-import AvailabilityScheduler from '@/components/profile/AvailabilityScheduler';
-import CommunicationStyleSlider from '@/components/profile/CommunicationStyleSlider';
-import BlockEditor from '@/components/editor/BlockEditor';
-import SolvedAcCard from '@/components/profile/external/SolvedAcCard';
-import PortfolioCard from '@/components/profile/portfolio/PortfolioCard';
-import LinkInput from '@/components/profile/portfolio/LinkInput';
+import { useEffect, useState } from 'react';
+import ProfileView from '@/components/profile/ProfileView';
+import OnboardingWizard from '@/components/profile/onboarding/OnboardingWizard';
 
+/**
+ * @page ProfilePage (나의 프로필)
+ * @description
+ * 사용자가 자신의 프로필을 보고 수정할 수 있는 페이지입니다.
+ * 
+ * [리팩토링 변경사항]
+ * 기존의 거대한 UI 로직을 `ProfileView` 컴포넌트로 분리했습니다.
+ * 이 페이지는 오직 "데이터 패칭(Fetching)"과 "권한 체크(Auth)"만 담당합니다.
+ * - readOnly={false} 전달하여 수정 가능 모드로 렌더링.
+ */
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-
-  // 가용성 및 스타일 상태 관리
-  const [schedule, setSchedule] = useState<any[]>([]);
-  const [preference, setPreference] = useState<number>(50);
-  const [personalityTags, setPersonalityTags] = useState<string[]>([]);
-
-  // 자기소개 상태 관리
-  const [introduction, setIntroduction] = useState<string>('');
-
-  // 사용자 데이터 상태 (병합됨)
   const [userData, setUserData] = useState<any>(null);
-
-  // 포트폴리오 상태: 배열로 관리
-  const [portfolioLinks, setPortfolioLinks] = useState<string[]>([]);
+  // 온보딩 스킵 여부
+  const [hasSkipped, setHasSkipped] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
     } else if (status === 'authenticated') {
-      fetchData();
+      fetchMyData();
     }
   }, [status, router]);
 
-  const fetchData = async () => {
+  // 내 데이터 가져오기
+  const fetchMyData = async () => {
     try {
       setIsLoading(true);
-      // 1. 사용자 기본 정보 가져오기 (현재는 모의 데이터, 추후 API 연동)
-      // 실제 앱에서는 /api/users/me 에서 호출
-      const basicInfo = {
-        nName: session?.user?.name || '사용자',
-        email: session?.user?.email || '',
-        position: 'Frontend Developer',
-        career: '3년차',
-        status: '구직중',
-        socialLinks: {
-          github: 'https://github.com/kimis0719',
-          blog: 'https://velog.io/@hansanghun',
-          solvedAc: 'koosaga', // 테스트용 모의 핸들
-        },
-        introduction: '안녕하세요! 저는 열정적인 프론트엔드 개발자입니다. 🚀',
-      };
-      setUserData(basicInfo);
 
-      // 2. 가용성 정보 가져오기
-      const availRes = await fetch('/api/users/me/availability');
-      if (availRes.ok) {
-        const { data } = await availRes.json();
-        console.log('[ProfilePage] Fetched Availability:', data);
-        if (data) {
-          setSchedule(data.schedule || []);
-          setPreference(data.preference ?? 50);
-          setPersonalityTags(data.personalityTags || []);
-        }
-      }
+      const res = await fetch('/api/users/me');
+      const data = await res.json();
 
-      // 3. 자기소개 가져오기 (사용자 프로필이나 별도 API에 있다고 가정)
-      // 현재는 기본 정보에 있는 것을 사용하거나 비워둠
-      setIntroduction(basicInfo.introduction || ''); // API가 제공한다면 사용
-
-      // 4. 포트폴리오 링크 초기값 (Mock Data)
-      // 추후 API로 연동: const pfRes = await fetch('/api/users/me/portfolio');
-      setPortfolioLinks([
-        'https://velog.io/@hansanghun',
-        'https://github.com/facebook/react',
-        'https://www.youtube.com/watch?v=k1C8u4j03hU' // Next.js Conf
-      ]);
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch data', error);
-      setIsLoading(false);
-    }
-  };
-
-  const handleSaveAvailability = async () => {
-    try {
-      console.log('Sending Availability Data:', { schedule, preference, personalityTags }); // Debug Log
-      const res = await fetch('/api/users/me/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          schedule,
-          preference,
-          personalityTags,
-        }),
-      });
-
-      if (res.ok) {
-        alert('가용성 및 성향 정보가 저장되었습니다! 💾');
+      if (data.success) {
+        // 세션 이미지(GitHub 프로필 등)를 avatarUrl로 병합
+        const dataWithAvatar = {
+          ...data.data,
+          avatarUrl: data.data.avatarUrl // DB에 저장된 값을 우선 사용
+        };
+        setUserData(dataWithAvatar);
       } else {
-        alert('저장에 실패했습니다. 😢');
+        console.error('Failed to load profile:', data.message);
       }
     } catch (error) {
-      console.error('Save failed', error);
-      alert('오류가 발생했습니다.');
+      console.error('Failed to fetch profile:', error);
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleSaveIntroduction = async () => {
-    // TODO: 자기소개 저장 API 구현 필요
-    // await fetch('/api/users/me/introduction', ...);
-    console.log('Saving introduction:', introduction);
-    alert('자기소개가 저장되었습니다! (임시) 📝');
   };
 
   if (status === 'loading' || isLoading) {
-    return <div className="p-8 text-center">로딩 중...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <div className="text-gray-500">프로필 정보를 불러오는 중...</div>
+      </div>
+    );
   }
 
-  if (!session) {
+  if (!session || !userData) {
     return null;
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* 분할 헤더 섹션 (Split-Header Section) */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* 왼쪽: 프로필 헤더 (데스크탑 기준 2/3 너비) */}
-        <div className="md:col-span-2">
-          <ProfileHeader user={userData} />
-        </div>
-
-        {/* 오른쪽: 상태 대시보드 (데스크탑 기준 1/3 너비) */}
-        <div className="md:col-span-1">
-          <StatusDashboard status={userData?.status} />
-        </div>
-      </section>
-
-      {/* 3단계: GitHub 통계, 기술 스택, 블로그, Solved.ac (7:3 레이아웃) */}
-      <section className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-        {/* Row 1 Left: GitHub Stats (70%) */}
-        <div className="lg:col-span-7">
-          {userData?.socialLinks?.github && (
-            <GitHubStats githubUrl={userData.socialLinks.github} />
-          )}
-        </div>
-
-        {/* Row 1 Right: Skill Section (30%) */}
-        <div className="lg:col-span-3">
-          <SkillSection
-            githubUsername={userData?.socialLinks?.github?.split('/').pop()}
-          />
-        </div>
-
-        {/* Row 2 Left: Blog Posts (70%) */}
-        <div className="lg:col-span-7">
-          {userData?.socialLinks?.blog && (
-            <BlogPostCard blogUrl={userData.socialLinks.blog} />
-          )}
-        </div>
-
-        {/* Row 2 Right: Solved.ac (30%) */}
-        <div className="lg:col-span-3">
-          {userData?.socialLinks?.solvedAc && (
-            <SolvedAcCard handle={userData.socialLinks.solvedAc} />
-          )}
-        </div>
-      </section>
-
-      {/* Phase 4: 포트폴리오 (오픈 그래프 미리보기) */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          📂 포트폴리오
-        </h2>
-        <div className="mb-6">
-          <LinkInput
-            onAdd={(url) => {
-              // 중복 체크 후 추가
-              if (!portfolioLinks.includes(url)) {
-                setPortfolioLinks([...portfolioLinks, url]);
-              } else {
-                alert('이미 추가된 링크입니다.');
-              }
-            }}
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {portfolioLinks.map((url, idx) => (
-            <PortfolioCard
-              key={`${url}-${idx}`}
-              url={url}
-              onDelete={() => {
-                // 선택된 링크 삭제
-                setPortfolioLinks(portfolioLinks.filter(l => l !== url));
-              }}
-            />
-          ))}
-          {portfolioLinks.length === 0 && (
-            <div className="col-span-full py-8 text-center text-gray-400 text-sm bg-gray-50 rounded-lg border border-dashed border-gray-200">
-              등록된 포트폴리오가 없습니다. 링크를 추가해보세요!
-            </div>
-          )}
-        </div>
-      </section>
 
 
-      {/* Phase 2: 가용성 및 스타일 */}
-      <section className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-foreground">📅 가용성 및 협업 성향</h2>
-          <button
-            onClick={handleSaveAvailability}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            저장하기
-          </button>
-        </div>
+  // 필수 정보가 없으면 온보딩 위저드 실행
+  // 조건: 포지션이나 경력이 없고, 스킵하지도 않았을 때
+  const showOnboarding = (!userData.position || !userData.career) && !hasSkipped;
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 왼쪽: 주간 스케줄러 */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 text-foreground">주간 가능한 시간</h3>
-            <div className="border border-border rounded-xl p-4 bg-muted/30">
-              <AvailabilityScheduler
-                initialSchedule={schedule}
-                onChange={setSchedule}
-              />
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                드래그하여 가능한 시간을 선택해주세요.
-              </p>
-            </div>
-          </div>
+  if (showOnboarding) {
+    return (
+      <OnboardingWizard
+        initialData={userData}
+        onComplete={(saved) => {
+          if (saved) {
+            // 저장하고 완료했으면 새로고침하여 데이터 갱신
+            window.location.reload();
+          } else {
+            // '다음에 하기'를 누르면 위저드 닫고 빈 프로필 보여주기
+            setHasSkipped(true);
+          }
+        }}
+      />
+    );
+  }
 
-          {/* 오른쪽: 커뮤니케이션 스타일 */}
-          <div>
-            <CommunicationStyleSlider
-              preference={preference}
-              onChangePreference={setPreference}
-              tags={personalityTags}
-              onChangeTags={setPersonalityTags}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Phase 2: 자기소개 (블록 에디터) */}
-      <section className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-foreground">📝 자기소개</h2>
-          <button
-            onClick={handleSaveIntroduction}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-          >
-            저장하기
-          </button>
-        </div>
-
-        <div className="min-h-[400px]">
-          <BlockEditor
-            content={introduction}
-            onChange={setIntroduction}
-          />
-        </div>
-      </section>
-    </div>
-  );
+  // 핵심: 재사용 컴포넌트 호출 (readOnly = false)
+  return <ProfileView initialUserData={userData} readOnly={false} />;
 }
