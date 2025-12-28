@@ -3,7 +3,8 @@ import Parser from 'rss-parser';
 const parser = new Parser({
   timeout: 5000,
   headers: {
-    'User-Agent': 'SideProjectMate/1.0',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8',
   },
 });
 

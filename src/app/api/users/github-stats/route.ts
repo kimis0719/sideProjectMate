@@ -16,6 +16,11 @@ const EMPTY_STATS: GitHubStats = {
         totalIssues: 0,
         recentPRLines: 0,
     },
+    contributionCalendar: {
+        totalContributions: 0,
+        weeks: []
+    },
+    topRepos: []
 };
 
 export async function GET(req: NextRequest) {

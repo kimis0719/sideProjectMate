@@ -11,6 +11,7 @@ interface SolvedAcData {
     rank: number;
     class: number;
     maxStreak: number;
+    problemStats?: { level: number; solved: number, total: number }[];
 }
 
 interface SolvedAcCardProps {
@@ -56,7 +57,8 @@ const CardContainer = styled.div`
     border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem; /* Increased gap */
+    height: 100%;
 `;
 
 const Header = styled.div`
@@ -109,6 +111,52 @@ const TierBadge = styled.div<{ $color: string }>`
     gap: 0.25rem;
     margin-top: 0.25rem;
     width: fit-content;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+`;
+
+const DistributionContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+`;
+
+const DistributionBar = styled.div`
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    width: 100%;
+    background-color: var(--muted);
+`;
+
+const DistributionSegment = styled.div<{ $color: string; $width: number }>`
+    background-color: ${props => props.$color};
+    width: ${props => props.$width}%;
+    height: 100%;
+`;
+
+const DistributionLegend = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+`;
+
+const LegendItem = styled.div<{ $color: string }>`
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+    color: var(--muted-foreground);
+    
+    &::before {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: ${props => props.$color};
+    }
 `;
 
 export default function SolvedAcCard({ handle }: SolvedAcCardProps) {
@@ -137,7 +185,15 @@ export default function SolvedAcCard({ handle }: SolvedAcCardProps) {
         fetchData();
     }, [handle]);
 
-    if (!handle) return null;
+    if (!handle) {
+        return (
+            <CardContainer style={{ minHeight: '300px', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                <SolvedLogo src="https://static.solved.ac/logo.svg" alt="solved.ac" style={{ width: '48px', height: '48px', marginBottom: '1rem', opacity: 0.5 }} />
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--foreground)' }}>Solved.ac 연동이 필요합니다</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>백준(BOJ) 핸들을 등록하여 알고리즘 문제 해결 능력을 증명하세요.</p>
+            </CardContainer>
+        );
+    }
 
     if (loading) {
         return (
@@ -155,6 +211,30 @@ export default function SolvedAcCard({ handle }: SolvedAcCardProps) {
             </CardContainer>
         );
     }
+
+    // 통계 집계
+    const statsByTierGroup = {
+        Bronze: 0,
+        Silver: 0,
+        Gold: 0,
+        Platinum: 0,
+        Diamond: 0,
+        Ruby: 0
+    };
+
+    if (data.problemStats) {
+        data.problemStats.forEach((stat) => {
+            const level = stat.level;
+            if (level >= 1 && level <= 5) statsByTierGroup.Bronze += stat.solved;
+            else if (level >= 6 && level <= 10) statsByTierGroup.Silver += stat.solved;
+            else if (level >= 11 && level <= 15) statsByTierGroup.Gold += stat.solved;
+            else if (level >= 16 && level <= 20) statsByTierGroup.Platinum += stat.solved;
+            else if (level >= 21 && level <= 25) statsByTierGroup.Diamond += stat.solved;
+            else if (level >= 26 && level <= 30) statsByTierGroup.Ruby += stat.solved;
+        });
+    }
+
+    const totalCalculated = Object.values(statsByTierGroup).reduce((a, b) => a + b, 0);
 
     return (
         <CardContainer>
@@ -190,6 +270,29 @@ export default function SolvedAcCard({ handle }: SolvedAcCardProps) {
                     <StatValue>#{data.rank.toLocaleString()}</StatValue>
                 </StatItem>
             </StatGrid>
+
+            {/* Distribution Chart */}
+            {data.problemStats && totalCalculated > 0 && (
+                <DistributionContainer>
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">Problem Distribution</div>
+                    <DistributionBar>
+                        {statsByTierGroup.Bronze > 0 && <DistributionSegment $color="#ad5600" $width={(statsByTierGroup.Bronze / totalCalculated) * 100} />}
+                        {statsByTierGroup.Silver > 0 && <DistributionSegment $color="#435f7a" $width={(statsByTierGroup.Silver / totalCalculated) * 100} />}
+                        {statsByTierGroup.Gold > 0 && <DistributionSegment $color="#ec9a00" $width={(statsByTierGroup.Gold / totalCalculated) * 100} />}
+                        {statsByTierGroup.Platinum > 0 && <DistributionSegment $color="#27e2a4" $width={(statsByTierGroup.Platinum / totalCalculated) * 100} />}
+                        {statsByTierGroup.Diamond > 0 && <DistributionSegment $color="#00b4fc" $width={(statsByTierGroup.Diamond / totalCalculated) * 100} />}
+                        {statsByTierGroup.Ruby > 0 && <DistributionSegment $color="#ff0062" $width={(statsByTierGroup.Ruby / totalCalculated) * 100} />}
+                    </DistributionBar>
+                    <DistributionLegend>
+                        {statsByTierGroup.Bronze > 0 && <LegendItem $color="#ad5600">Bronze ({statsByTierGroup.Bronze})</LegendItem>}
+                        {statsByTierGroup.Silver > 0 && <LegendItem $color="#435f7a">Silver ({statsByTierGroup.Silver})</LegendItem>}
+                        {statsByTierGroup.Gold > 0 && <LegendItem $color="#ec9a00">Gold ({statsByTierGroup.Gold})</LegendItem>}
+                        {statsByTierGroup.Platinum > 0 && <LegendItem $color="#27e2a4">Platinum ({statsByTierGroup.Platinum})</LegendItem>}
+                        {statsByTierGroup.Diamond > 0 && <LegendItem $color="#00b4fc">Diamond ({statsByTierGroup.Diamond})</LegendItem>}
+                        {statsByTierGroup.Ruby > 0 && <LegendItem $color="#ff0062">Ruby ({statsByTierGroup.Ruby})</LegendItem>}
+                    </DistributionLegend>
+                </DistributionContainer>
+            )}
         </CardContainer>
     );
 }

@@ -23,6 +23,20 @@ export interface GitHubStats {
         totalIssues: number;
         recentPRLines: number;
     };
+    contributionCalendar: {
+        totalContributions: number;
+        weeks: {
+            contributionDays: {
+                contributionCount: number;
+                date: string;
+            }[];
+        }[];
+    };
+    topRepos: {
+        name: string;
+        stars: number;
+        contributions: number;
+    }[];
 }
 
 export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
@@ -64,6 +78,16 @@ export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
     const displayNameMap: Record<string, string> = {};
 
     const normalizeKey = (key: string) => key.toLowerCase().replace(/[\.\-_]/g, '');
+
+    // Contribution by Repo Analysis
+    const repoStats = contribution.commitContributionsByRepository.map((repoContrib) => {
+        return {
+            name: repoContrib.repository.name,
+            stars: repoContrib.repository.stargazerCount,
+            contributions: repoContrib.contributions.totalCount
+        };
+    }).sort((a, b) => b.contributions - a.contributions).slice(0, 3);
+
 
     contribution.commitContributionsByRepository.forEach((repoContrib) => {
         const lang = repoContrib.repository.primaryLanguage;
@@ -214,6 +238,8 @@ export function calculateGitHubStats(data: GitHubUserResponse): GitHubStats {
             totalIssues,
             recentPRLines,
         },
+        contributionCalendar: contribution.contributionCalendar,
+        topRepos: repoStats
     };
 }
 

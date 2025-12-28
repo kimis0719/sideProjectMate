@@ -12,7 +12,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const url = new URL(blogUrl);
+    let targetUrl = blogUrl;
+    if (!targetUrl.startsWith('http')) {
+      targetUrl = `https://${targetUrl}`;
+    }
+    const url = new URL(targetUrl);
     let rssUrl = url.href;
 
     // [1] Velog 처리 (핵심 수정 부분!) 🛠️

@@ -28,16 +28,16 @@ export async function GET(
       { $inc: { views: 1 } },
       { new: true }
     )
-    .populate('author', 'nName')
-    .populate('tags')
-    .populate({
-      path: 'projectMembers',
-      strictPopulate: false, // 오류를 해결하기 위해 이 옵션을 추가
-      populate: {
-        path: 'userId',
-        select: 'nName authorEmail'
-      }
-    });
+      .populate('author', 'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl')
+      .populate('tags')
+      .populate({
+        path: 'projectMembers',
+        strictPopulate: false, // 오류를 해결하기 위해 이 옵션을 추가
+        populate: {
+          path: 'userId',
+          select: 'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl'
+        }
+      });
 
     if (!project) {
       return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });

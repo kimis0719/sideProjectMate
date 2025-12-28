@@ -163,7 +163,7 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
                 </div>
 
                 {projects.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {projects.map((project) => {
                             const membersArray = Array.isArray(project.members) ? project.members : [];
                             const totalMax = membersArray.reduce((sum, member) => sum + (member.max || 0), 0);
@@ -171,8 +171,14 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
 
                             return (
                                 <Link key={project.pid} href={`/projects/${project.pid}`} className="bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer border border-border">
-                                    <div className="aspect-video bg-muted flex items-center justify-center">
-                                        {project.images && project.images.length > 0 ? <img src={project.images[0]} alt={project.title} className="w-full h-full object-cover" /> : <span className="text-6xl">🚀</span>}
+                                    <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                                        {project.images && project.images.length > 0 ? (
+                                            <img src={project.images[0]} alt={project.title} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold">
+                                                {project.title.charAt(0)}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="p-5">
                                         <div className="flex items-center gap-2 mb-3">

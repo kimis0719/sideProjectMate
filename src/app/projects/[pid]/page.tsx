@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { IProject } from '@/lib/models/Project';
 import { useNotificationStore } from '@/lib/store/notificationStore';
+import DetailProfileCard from '@/components/profile/DetailProfileCard';
 
 // 동적 임포트를 사용하여 이미지 슬라이더 컴포넌트를 로드 (SSR 제외)
 const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider'), {
@@ -16,7 +17,17 @@ const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider
 
 // 프로젝트 데이터 타입 확장 (populate된 필드 포함)
 interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
-  author: { _id: string; nName: string } | string;
+  author: {
+    _id: string;
+    nName: string;
+    position?: string;
+    career?: string;
+    level?: number;
+    introduction?: string;
+    techTags?: string[];
+    status?: string;
+    socialLinks?: any;
+  } | string;
   tags: { _id: string; name: string; category: string }[];
   likesCount: number;
   projectMembers?: any[]; // projectMembers 필드 추가
@@ -283,6 +294,21 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               {project.images && project.images.length > 0 ? <ProjectImageSlider images={project.images} title={project.title} /> : <div className="aspect-video bg-muted rounded-lg mb-8 flex items-center justify-center text-8xl">🚀</div>}
               <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">{project.content}</p>
             </div>
+
+            {/* 프로젝트 리더 상세 프로필 */}
+            {project.author && (
+              <div className="mt-12 border-t border-border pt-8">
+                <DetailProfileCard
+                  title="👑 프로젝트 리더"
+                  user={typeof project.author === 'object' ? project.author : { _id: '', nName: '알 수 없음' }}
+                  onClick={() => {
+                    if (typeof project.author === 'object') {
+                      router.push(`/profile/${project.author._id}`);
+                    }
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div className="lg:col-span-1">
             <div className="sticky top-24 bg-card rounded-lg p-6 border border-border">
