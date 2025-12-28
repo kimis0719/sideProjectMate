@@ -93,6 +93,12 @@ type BoardState = {
   updateSection: (id: string, patch: Partial<Section>) => void;
   removeSection: (id: string) => void;
   moveSection: (id: string, x: number, y: number) => void;
+
+  // Mobile/UX Logic
+  isSnapEnabled: boolean;
+  isSelectionMode: boolean; // For mobile multi-select without shift key
+  toggleSnap: () => void;
+  toggleSelectionMode: () => void;
 };
 
 const transformDoc = (doc: any) => {
@@ -117,6 +123,11 @@ export const useBoardStore = create<BoardState>()(
       alignmentGuides: [],
       lockedNotes: {},
       lockedSections: {},
+      isSnapEnabled: false, // Default off (or true depending on preference, user said "Always On" or toggle. Toggle default off is safer)
+      isSelectionMode: false,
+
+      toggleSnap: () => set((state) => ({ isSnapEnabled: !state.isSnapEnabled })),
+      toggleSelectionMode: () => set((state) => ({ isSelectionMode: !state.isSelectionMode })),
 
       initBoard: async (pid) => {
         set({ notes: [], sections: [], boardId: null, selectedNoteIds: [], members: [] });

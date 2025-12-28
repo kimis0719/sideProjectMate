@@ -31,14 +31,15 @@ export default function DashboardLayout({
 
             {/* Mobile Toggle Button */}
             <button
-                className="md:hidden absolute top-4 left-4 z-50 p-2 bg-background border border-border rounded-md shadow-sm"
+                className="md:hidden absolute top-4 left-4 z-30 p-2 bg-background border border-border rounded-md shadow-sm"
                 onClick={toggleSidebar}
             >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     {isSidebarOpen ? (
                         <path d="M18 6L6 18M6 6l12 12" /> // X icon
                     ) : (
-                        <path d="M4 6h16M4 12h16M4 18h16" /> // Menu icon
+                        // Sidebar Icon (Rect with left column)
+                        <path d="M3 3h18v18H3zM9 3v18" />
                     )}
                 </svg>
             </button>

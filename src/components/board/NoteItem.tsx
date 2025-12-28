@@ -122,6 +122,8 @@ export default function NoteItem({
     lockedNotes,
     lockNote,
     unlockNote,
+    isSnapEnabled,
+    isSelectionMode,
   } = useBoardStore((s) => ({
     moveNote: s.moveNote,
     moveNotes: s.moveNotes,
@@ -138,6 +140,8 @@ export default function NoteItem({
     lockedNotes: s.lockedNotes,
     lockNote: s.lockNote,
     unlockNote: s.unlockNote,
+    isSnapEnabled: s.isSnapEnabled,
+    isSelectionMode: s.isSelectionMode,
   }));
 
   const { data: session } = useSession();
@@ -291,6 +295,8 @@ export default function NoteItem({
 
       if (e.shiftKey) {
         selectNote(id, true);
+      } else if (isSelectionMode) { // Mobile Selection Mode
+        selectNote(id, true);
       } else if (!isSelected) {
         selectNote(id, false);
       }
@@ -322,8 +328,22 @@ export default function NoteItem({
           // debouncedSave 제거: 드래그 중에는 로컬 상태만 업데이트하여 불필요한 API 호출 방지
         }
       }
-      // 2. 드래그(이동) 로직
+      // 2. 드래그(이동) 로직 - 선택 모드일 때는 이동 방지 (드래그로 다중 선택 박스 그리기 위해)
       else if (isDragging.current) {
+        if (isSelectionMode) {
+          // 선택 모드에서는 NoteItem 자체의 드래그 이동은 막고, 
+          // 상위 BoardShell의 Selection Box 로직이 동작하도록 해야 함.
+          // 하지만 stopPropagation을 하지 않으면 상위로 이벤트가 전파됨.
+          // 여기서 preventDefault/stopPropagation을 했기 때문에 상위로 안 감.
+          // -> 해결책: 선택 모드일 때 NoteItem에서 포인터 이벤트를 무시하거나(pointer-events-none),
+          // 아니면 여기서 상위로 이벤트를 흘려보내야 함.
+          // 현재 구조상 NoteItem이 이벤트를 캡처하므로 이동 로직이 실행됨.
+
+          // 선택 모드라면 이동 로직을 실행하지 않음.
+          // 다만, 이미 선택된 노트를 탭했을 때 해제하거나 추가하는 로직은 PointerDown에서 처리됨.
+          return;
+        }
+
         if (dx !== 0 || dy !== 0) {
           hasMoved.current = true; // Mark as moved
 
@@ -336,7 +356,7 @@ export default function NoteItem({
             let snappedY = newY;
             const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
 
-            if (e.altKey) {
+            if (e.altKey || isSnapEnabled) {
               const notes = useBoardStore.getState().notes;
               const NOTE_WIDTH = width;
               const NOTE_HEIGHT = height;
@@ -403,7 +423,7 @@ export default function NoteItem({
 
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
     },
-    [isEditing, isDragging, isResizing, zoom, width, height, id, updateNote, debouncedSave, selectedNoteIds, isSelected, moveNotes, setAlignmentGuides, moveNote, x, y]
+    [isEditing, isDragging, isResizing, zoom, width, height, id, updateNote, debouncedSave, selectedNoteIds, isSelected, moveNotes, setAlignmentGuides, moveNote, x, y, isSnapEnabled, isSelectionMode]
   );
 
   const onPointerUp = React.useCallback(
@@ -579,6 +599,36 @@ export default function NoteItem({
         </div>
       )}
 
+      {/* Done Button for Mobile Editing - Top Center */}
+      {isEditing && (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            saveEdit();
+          }}
+          style={{
+            position: 'absolute',
+            top: -36,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            backgroundColor: '#3B82F6',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: 16,
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          완료
+        </button>
+      )}
+
       <button
         type="button"
         aria-label="색상 팔레트 열기"
@@ -714,6 +764,23 @@ export default function NoteItem({
             color: '#111827',
             background: 'rgba(255,255,255,0.95)',
             overflow: 'hidden',
+          }}
+        />
+      )}
+
+      {/* Invisible Resize Handle Overlay for Touch */}
+      {!isEditing && !isLockedByOther && (
+        <div
+          onPointerDown={onResizePointerDown}
+          style={{
+            position: 'absolute',
+            bottom: -10,
+            right: -10,
+            width: 40,
+            height: 40,
+            zIndex: 50,
+            cursor: 'nwse-resize',
+            // background: 'rgba(255,0,0,0.2)' // Debug
           }}
         />
       )}
