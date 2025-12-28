@@ -43,6 +43,10 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     setPan,
     fitToContent,
     alignmentGuides,
+    isSnapEnabled,
+    isSelectionMode,
+    toggleSnap,
+    toggleSelectionMode,
   } = useBoardStore((s) => ({
     notes: s.notes,
     sections: s.sections,
@@ -60,6 +64,10 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     setPan: s.setPan,
     fitToContent: s.fitToContent,
     alignmentGuides: s.alignmentGuides,
+    isSnapEnabled: s.isSnapEnabled,
+    isSelectionMode: s.isSelectionMode,
+    toggleSnap: s.toggleSnap,
+    toggleSelectionMode: s.toggleSelectionMode,
   }));
   const notesCount = notes.length;
 
@@ -158,7 +166,15 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
     e.preventDefault();
 
-    if (e.shiftKey) {
+    if (e.shiftKey && e.pointerType === 'mouse') {
+      setIsSelecting(true);
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (rect) {
+        const startX = e.clientX - rect.left;
+        const startY = e.clientY - rect.top;
+        setSelectionBox({ startX, startY, currentX: startX, currentY: startY });
+      }
+    } else if (isSelectionMode && e.pointerType === 'touch') { // 모바일 선택 모드
       setIsSelecting(true);
       const rect = containerRef.current?.getBoundingClientRect();
       if (rect) {
@@ -310,10 +326,53 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     }
   };
 
+  // --- Mobile Pinch Zoom Logic ---
+  const lastTouchDistance = React.useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      lastTouchDistance.current = distance;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lastTouchDistance.current !== null) {
+      // Prevent browser default zoom
+      // e.preventDefault(); // Note: This might be handled by touch-action: none, but explicit preventDefault is often safer if passive is false.
+      // React's event handler is passive by default for wheel/touch in some versions, but here it's attached via React prop.
+
+      const distance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+
+      const delta = distance - lastTouchDistance.current;
+      const ZOOM_SENSITIVITY = 0.005; // Adjust sensitivity for touch
+
+      const currentZoom = useBoardStore.getState().zoom;
+      let newZoom = currentZoom + delta * ZOOM_SENSITIVITY;
+
+      // Clamp zoom
+      if (newZoom <= 0.1) newZoom = 0.1;
+      if (newZoom >= 1.5) newZoom = 1.5;
+
+      setZoom(newZoom);
+      lastTouchDistance.current = distance;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    lastTouchDistance.current = null;
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-80px)]">
       <header className="flex items-center justify-between p-4 border-b border-border bg-background z-10 h-16 shadow-sm">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 pl-12 sm:pl-0">
           <div className="text-lg font-semibold text-foreground tracking-tight">
             {pid ? `Project Board` : `Public Board`}
             {pid && <span className="text-xs text-muted-foreground ml-2 font-normal">#{pid}</span>}
@@ -355,7 +414,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             }}
             className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 shadow-sm transition-colors"
           >
-            + 노트 추가
+            <span className="hidden sm:inline">+ 노트 추가</span>
+            <span className="sm:hidden">+</span>
           </button>
           <button
             onClick={(e) => {
@@ -364,10 +424,37 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             }}
             className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-sm transition-colors"
           >
-            + 섹션 추가
+            <span className="hidden sm:inline">+ 섹션 추가</span>
+            <span className="sm:hidden">+</span>
           </button>
         </div>
       </header>
+
+      {/* Mobile Controls Toolbar (Bottom Fixed or Top under Header) */}
+      <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-40 flex gap-2 sm:hidden">
+        <button
+          onClick={toggleSnap}
+          className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md border ${isSnapEnabled
+            ? 'bg-blue-100 border-blue-400 text-blue-600 dark:bg-blue-900/50 dark:border-blue-500 dark:text-blue-300'
+            : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'
+            }`}
+          title="자석 모드 (스냅)"
+        >
+          {/* Magnet Icon */}
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 21 3-3H6a3 3 0 1 0 0 -6h3v6a3 3 0 0 0 3 3h6l3 3" /><path d="M15 6V3h-3a3 3 0 1 0 0 6h3v-6a3 3 0 0 0-3-3" /></svg>
+        </button>
+        <button
+          onClick={toggleSelectionMode}
+          className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md border ${isSelectionMode
+              ? 'bg-blue-100 border-blue-400 text-blue-600 dark:bg-blue-900/50 dark:border-blue-500 dark:text-blue-300'
+              : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'
+            }`}
+          title="다중 선택 모드"
+        >
+          {/* Select Icon */}
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h7v7H3z" /><path d="M14 3h7v7h-7z" /><path d="M14 14h7v7h-7z" /><path d="M3 14h7v7H3z" /></svg>
+        </button>
+      </div>
 
       <ShortcutHandler />
       <ShortcutModal isOpen={isShortcutModalOpen} onClose={() => setIsShortcutModalOpen(false)} />
@@ -380,6 +467,9 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         style={{ cursor: isPanning ? 'grabbing' : 'default', touchAction: 'none' }}
       >
         <div
