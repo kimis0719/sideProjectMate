@@ -41,7 +41,14 @@ export async function GET(req: NextRequest) {
             schedule: availability?.schedule || [],
             preference: availability?.preference ?? 50,
             personalityTags: availability?.personalityTags || [],
+
+            // [Fix] 서버 주도 계산: 프로필 완성도
+            profileCompleteness: 0 // Placeholder, logic below will override
         };
+
+        // Calculate completeness
+        const { calculateProfileCompleteness } = await import('@/lib/profileUtils');
+        responseData.profileCompleteness = calculateProfileCompleteness(responseData);
 
         return NextResponse.json({ success: true, data: responseData });
 
@@ -88,13 +95,24 @@ export async function PATCH(req: NextRequest) {
             session.user._id,
             { $set: updateData },
             { new: true, runValidators: true }
-        ).select('-password -__v').lean();
+        ).select('-password -__v').lean() as any;
 
         if (!updatedUser) {
             return NextResponse.json(
                 { success: false, message: 'User not found' },
                 { status: 404 }
             );
+        }
+
+        // GitHub 주소가 변경되었거나 새로 추가된 경우 즉시 통계 업데이트 시도
+        if (socialLinks?.github && updatedUser?.socialLinks?.github) {
+            const { updateUserGithubStats } = await import('@/lib/github/service');
+            // stats 업데이트 완료 대기
+            await updateUserGithubStats(session.user._id, updatedUser.socialLinks.github);
+
+            // Stats가 업데이트되었으므로 DB에서 최신 데이터를 다시 조회해서 반환
+            const finalUser = await User.findById(session.user._id).select('-password -__v').lean();
+            return NextResponse.json({ success: true, data: finalUser });
         }
 
         return NextResponse.json({ success: true, data: updatedUser });

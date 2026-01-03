@@ -16,7 +16,10 @@ interface PublicProfilePageProps {
  * 특정 사용자의 프로필을 조회만 할 수 있는 공개 페이지입니다.
  * - readOnly={true} 모드로 ProfileView를 렌더링합니다.
  */
+import { useSession } from 'next-auth/react';
+
 export default function PublicProfilePage({ params }: PublicProfilePageProps) {
+    const { data: session } = useSession();
     const [userData, setUserData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -61,6 +64,9 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
         );
     }
 
-    // 핵심: readOnly={true} 전달
-    return <ProfileView initialUserData={userData} readOnly={true} />;
+    // [Fix] 내 프로필이면 수정 가능하도록 readOnly 해제
+    // session.user._id는 string일 수도 있고 ObjectId일 수도 있으므로 문자열 비교
+    const isMyProfile = session?.user && (session.user as any)._id === params.id;
+
+    return <ProfileView initialUserData={userData} readOnly={!isMyProfile} />;
 }

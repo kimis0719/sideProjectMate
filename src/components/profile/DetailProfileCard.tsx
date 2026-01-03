@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import DOMPurify from 'dompurify';
 
 interface UserData {
     _id: string;
@@ -129,11 +130,10 @@ export default function DetailProfileCard({ user, onClick, title, isEditing, onE
                         <div className="flex flex-col gap-2 mt-2">
                             {isEditing && onUpdateUser ? (
                                 <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                                    <input
-                                        type="text"
-                                        value={user.position || ''}
-                                        onChange={(e) => onUpdateUser('position', e.target.value)}
+                                    <BufferedInput
+                                        initialValue={user.position || ''}
                                         placeholder="직군 (예: 프론트엔드)"
+                                        onCommit={(value) => onUpdateUser('position', value)}
                                         className="border-b border-gray-300 focus:border-primary focus:outline-none bg-transparent py-1 text-sm w-32"
                                     />
                                     <span className="text-gray-300 self-center">|</span>
@@ -158,9 +158,14 @@ export default function DetailProfileCard({ user, onClick, title, isEditing, onE
                     </div>
 
                     {user.introduction ? (
-                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed bg-gray-50 dark:bg-muted/50 p-3 rounded-lg text-left">
-                            &ldquo;{user.introduction.replace(/<[^>]*>?/gm, '')}&rdquo;
-                        </p>
+                        <div
+                            className="text-sm text-gray-600 dark:text-gray-300 line-clamp-4 leading-relaxed bg-gray-50 dark:bg-muted/50 p-3 rounded-lg text-left prose prose-sm dark:prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{
+                                __html: typeof window !== 'undefined'
+                                    ? DOMPurify.sanitize(user.introduction)
+                                    : user.introduction // SSR Fallback (Caution: Hydration mismatch risk, but acceptable for now)
+                            }}
+                        />
                     ) : (
                         <p className="text-sm text-muted-foreground italic">등록된 자기소개가 없습니다.</p>
                     )}
@@ -192,5 +197,49 @@ export default function DetailProfileCard({ user, onClick, title, isEditing, onE
                 </div>
             </div>
         </div>
+    );
+}
+
+/**
+ * @component BufferedInput
+ * @description
+ * 입력 중에는 로컬 상태만 업데이트하고,
+ * 포커스를 잃거나 엔터를 쳤을 때만 상위 핸들러(API 호출 등)를 실행하는 최적화된 입력 컴포넌트
+ */
+function BufferedInput({ initialValue, onCommit, className, placeholder }: {
+    initialValue: string;
+    onCommit: (val: string) => void;
+    className?: string;
+    placeholder?: string;
+}) {
+    const [value, setValue] = React.useState(initialValue);
+
+    // 상위 prop이 바뀔 때 로컬 상태 동기화
+    React.useEffect(() => {
+        setValue(initialValue);
+    }, [initialValue]);
+
+    const handleBlur = () => {
+        if (value !== initialValue) {
+            onCommit(value);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.currentTarget.blur();
+        }
+    };
+
+    return (
+        <input
+            type="text"
+            className={className}
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+        />
     );
 }

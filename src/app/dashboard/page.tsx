@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ICommonCode } from '@/lib/models/CommonCode';
+import ProjectThumbnail from '@/components/projects/ProjectThumbnail';
 
 interface Project {
     _id: string;
@@ -82,13 +83,13 @@ export default function DashboardHome() {
                             href={`/dashboard/${project.pid}`}
                             className="block bg-card rounded-xl shadow-sm hover:shadow-md transition-all border border-border overflow-hidden group"
                         >
-                            <div className="aspect-video bg-muted relative">
-                                {project.images && project.images.length > 0 ? (
-                                    <img src={project.images[0]} alt={project.title} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-4xl">🚀</div>
-                                )}
-                                <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded backdrop-blur-sm">
+                            <div className="aspect-video bg-muted relative overflow-hidden">
+                                <ProjectThumbnail
+                                    src={project.images && project.images.length > 0 ? project.images[0] : null}
+                                    alt={project.title}
+                                    fallbackText={project.title.charAt(0)}
+                                />
+                                <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded backdrop-blur-sm z-10">
                                     {categoryCodes.find(c => c.code === project.category)?.label || project.category}
                                 </div>
                             </div>

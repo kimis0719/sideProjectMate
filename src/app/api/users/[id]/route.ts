@@ -41,6 +41,7 @@ export async function GET(
         const profileData = {
             _id: user._id,
             nName: user.nName,
+            avatarUrl: user.avatarUrl, // [Fix] 프로필 이미지 추가
             // IUser has 'authorEmail', but frontend expects 'email'. We allow null/undefined handling.
             email: user.authorEmail || '',
             position: user.position || '포지션 미설정',
@@ -62,8 +63,29 @@ export async function GET(
             personalityTags: availability?.personalityTags || [],
 
             // 포트폴리오 (User 모델에 없을 수도 있으므로 방어 코드)
-            portfolioLinks: user.portfolioLinks || []
+            portfolioLinks: user.portfolioLinks || [],
+
+            // [Fix] 기술 스택 및 깃허브 통계 정보 추가
+            techTags: user.techTags || [],
+            githubStats: user.githubStats || {
+                followers: 0,
+                following: 0,
+                totalStars: 0,
+                totalCommits: 0,
+                totalPRs: 0,
+                totalIssues: 0,
+                contributions: 0,
+                techStack: []
+            },
+            level: user.level || 0,
+
+            // [Fix] 서버 주도 계산: 프로필 완성도
+            profileCompleteness: 0
         };
+
+        // Calculate completeness
+        const { calculateProfileCompleteness } = await import('@/lib/profileUtils');
+        profileData.profileCompleteness = calculateProfileCompleteness(profileData);
 
         return NextResponse.json({ success: true, data: profileData });
 

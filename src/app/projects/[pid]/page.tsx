@@ -8,6 +8,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { IProject } from '@/lib/models/Project';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import DetailProfileCard from '@/components/profile/DetailProfileCard';
+import ProjectThumbnail from '@/components/projects/ProjectThumbnail';
 
 // 동적 임포트를 사용하여 이미지 슬라이더 컴포넌트를 로드 (SSR 제외)
 const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider'), {
@@ -291,7 +292,18 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           <div className="lg:col-span-2">
             <div className="prose dark:prose-invert max-w-none">
-              {project.images && project.images.length > 0 ? <ProjectImageSlider images={project.images} title={project.title} /> : <div className="aspect-video bg-muted rounded-lg mb-8 flex items-center justify-center text-8xl">🚀</div>}
+              {project.images && project.images.length > 0 ? (
+                <ProjectImageSlider images={project.images} title={project.title} />
+              ) : (
+                <div className="aspect-video bg-muted rounded-lg mb-8 overflow-hidden">
+                  <ProjectThumbnail
+                    src={null}
+                    alt={project.title}
+                    fallbackText={project.title.charAt(0)}
+                    className="text-8xl"
+                  />
+                </div>
+              )}
               <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">{project.content}</p>
             </div>
 
