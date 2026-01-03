@@ -370,116 +370,88 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
       const svg = ganttContainer.querySelector('svg');
       if (!svg) return;
 
-      const allTexts = Array.from(ganttContainer.querySelectorAll('text'));
-
-      // 헤더 텍스트와 작업 텍스트를 구분
-      // 작업 텍스트는 g[data-id] 안에 있음
-      const headerTexts = allTexts.filter(text => {
-        // g[data-id] 안의 텍스트는 제외 (작업 텍스트)
-        const parent = text.parentElement;
-        if (parent?.getAttribute('data-id')) {
-          return false;
-        }
-
-        // svg 직계 자식이 아니면 제외 (중첩된 그룹 내 텍스트 제외)
-        if (parent?.tagName !== 'svg') {
-          return false;
-        }
-
-        // 헤더 텍스트만 처리
-        const y = text.getAttribute('y');
-        return y && parseFloat(y) < 120;
-      });
-
-      const topTexts = headerTexts.filter(text => {
-        const y = parseFloat(text.getAttribute('y') || '0');
-        return y < 60;
-      });
-
-      const bottomTexts = headerTexts.filter(text => {
-        const y = parseFloat(text.getAttribute('y') || '0');
-        return y >= 60;
-      });
-
-      topTexts.forEach((text: any) => {
-        if (text.classList.contains('formatted-year')) return;
-
-        const content = text.textContent || '';
-        let year = '';
-        let month = '';
-
-        if (content.match(/\d{4}년/)) {
-          year = content.match(/(\d{4}년)/)?.[0] || '';
-          month = content.replace(year, '').trim();
-        } else if (content.match(/\d{4}-\d{2}/)) {
-          const parts = content.split('-');
-          year = parts[0] + '년';
-          month = parts[1] + '월';
-        } else {
-          year = content;
-        }
-
-        if (year) {
-          text.textContent = year;
-          text.setAttribute('y', '30');
-          text.setAttribute('dominant-baseline', 'central');
-          text.classList.add('formatted-year');
-          text.style.fontSize = '14px';
-          text.style.fontWeight = 'bold';
-          text.style.fill = '#1f2937';
-
-          if (month) {
-            const nextSibling = text.nextSibling;
-            if (nextSibling && nextSibling.classList?.contains('formatted-month')) {
-              nextSibling.textContent = month;
+      // calendarTop 그룹의 text 처리
+      const calendarTopGroups = svg.querySelectorAll('g.calendarTop');
+      
+      calendarTopGroups.forEach((group: any) => {
+        const texts = group.querySelectorAll('text');
+        texts.forEach((text: any) => {
+          const content = text.textContent || '';
+          const monthYearMatch = content.match(/(\d+)월,\s*(\d{4})/);
+          
+          if (monthYearMatch) {
+            const month = monthYearMatch[1];
+            const year = monthYearMatch[2];
+            
+            // viewMode에 따라 다른 헤더 표기
+            if (viewMode === 'Day') {
+              // 일 구분: 월 표기
+              text.textContent = month + '월';
+            } else if (viewMode === 'Week') {
+              // 주 구분: 헤더 제거
+              text.textContent = '';
+            } else if (viewMode === 'Month') {
+              // 월 구분: 연도 표기
+              text.textContent = year + '년';
             } else {
-              const monthText = text.cloneNode(true);
-              monthText.textContent = month;
-              monthText.setAttribute('y', '70');
-              monthText.classList.remove('formatted-year');
-              monthText.classList.add('formatted-month');
-              monthText.style.fontSize = '13px';
-              monthText.style.fontWeight = 'normal';
-              monthText.style.fill = '#4b5563';
-              text.parentNode?.insertBefore(monthText, text.nextSibling);
+              text.textContent = '';
             }
           }
+        });
+      });
+
+      // calendar 그룹 찾기 (주/일이 표시되는 곳)
+      const calendarGroup = svg.querySelector('g.calendar');
+      if (!calendarGroup) return;
+
+      const allTexts = Array.from(calendarGroup.querySelectorAll('text'));
+
+      // 하단 헤더 (y >= 90): 주/일 표시 부분 -> 월/일로 변환
+      const weekTexts = allTexts.filter(text => {
+        const y = parseFloat(text.getAttribute('y') || '0');
+        return y >= 90;
+      });
+
+      weekTexts.forEach((text: any) => {
+        const content = text.textContent || '';
+        const weekMatch = content.match(/W(\d+)/i);
+        
+        if (weekMatch) {
+          const weekNumber = parseInt(weekMatch[1]);
+          
+          // 현재 연도 기반 주 계산
+          const today = new Date();
+          const year = today.getFullYear();
+          const jan1 = new Date(year, 0, 1);
+          const jan1Day = jan1.getDay();
+          
+          // 첫 번째 월요일 찾기 (0 = Sunday, 1 = Monday)
+          let firstMonday = new Date(jan1);
+          if (jan1Day === 0) {
+            firstMonday.setDate(2);
+          } else if (jan1Day === 1) {
+            // 그대로
+          } else {
+            firstMonday.setDate(jan1.getDate() + (8 - jan1Day));
+          }
+          
+          // 해당 주의 월요일 계산
+          const targetMonday = new Date(firstMonday);
+          targetMonday.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+          
+          // 날짜 포맷팅 (예: "1월 5일")
+          const month = targetMonday.getMonth() + 1;
+          const date = targetMonday.getDate();
+          const dateStr = `${month}월 ${date}일`;
+          
+          text.textContent = dateStr;
         }
       });
-
-      bottomTexts.forEach((text: any) => {
-        text.setAttribute('y', '105');
-        text.setAttribute('dominant-baseline', 'central');
-        text.style.fill = '#6b7280';
-        text.style.fontSize = '12px';
-      });
-
-      let linesGroup = svg.querySelector('#custom-header-lines');
-      if (!linesGroup) {
-        linesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        linesGroup.id = 'custom-header-lines';
-        svg.insertBefore(linesGroup, svg.firstChild);
-      }
-
-      linesGroup.innerHTML = '';
-
-      const createLine = (y: string) => {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', '0');
-        line.setAttribute('y1', y);
-        line.setAttribute('x2', '100%');
-        line.setAttribute('y2', y);
-        line.setAttribute('stroke', '#e5e7eb');
-        line.setAttribute('stroke-width', '1');
-        return line;
-      };
-
-      linesGroup.appendChild(createLine('40'));
-      linesGroup.appendChild(createLine('80'));
     };
 
-    const timer = setInterval(formatHeader, 500);
-    setTimeout(formatHeader, 100);
+    // 더 자주 업데이트하도록 설정 (100ms)
+    const timer = setInterval(formatHeader, 100);
+    formatHeader(); // 즉시 첫 실행
 
     return () => clearInterval(timer);
   }, [ganttTasks, viewMode]);
@@ -514,6 +486,11 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
       <style jsx global>{`
         .gantt-chart-wrapper .gantt-task-react-header {
           height: 120px !important;
+        }
+        
+        /* 월 구분 선 제거 */
+        .gantt-chart-wrapper g.calendarTop line {
+          display: none !important;
         }
         
         /* 모든 작업 텍스트를 검은색으로 설정 */

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Task } from '@/store/wbsStore';
 import { checkAllScheduleConflicts, calculateConflictSeverity } from '@/lib/utils/wbs/scheduleConflict';
 
@@ -12,6 +13,7 @@ interface TaskListProps {
     onTaskSelect: (taskId: string) => void; // 작업 선택 이벤트
     onTaskEdit: (task: Task) => void;       // 작업 수정 이벤트
     onTaskDelete: (taskId: string) => void; // 작업 삭제 이벤트
+    onTaskUpdate?: (taskId: string, updates: Partial<Task>) => void; // 작업 빠른 업데이트 이벤트
 }
 
 /**
@@ -23,7 +25,7 @@ interface TaskListProps {
  * - 각 행 클릭 시 해당 작업 선택 (간트차트에서 하이라이트)
  * - 수정/삭제 버튼
  */
-export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEdit, onTaskDelete }: TaskListProps) {
+export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEdit, onTaskDelete, onTaskUpdate }: TaskListProps) {
     // 전체 작업의 충돌 검사
     const allConflicts = checkAllScheduleConflicts(
         tasks.map(task => ({
@@ -203,13 +205,20 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                     {/* 진행률 */}
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
-                                            <div className="flex-1 bg-muted rounded-full h-2 max-w-[80px]">
-                                                <div
-                                                    className="bg-primary h-2 rounded-full transition-all"
-                                                    style={{ width: `${task.progress}%` }}
-                                                ></div>
-                                            </div>
-                                            <span className="text-xs text-muted-foreground min-w-[35px]">
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                step="5"
+                                                value={task.progress}
+                                                onChange={(e) => {
+                                                    const newProgress = parseInt(e.target.value);
+                                                    onTaskUpdate?.(task.id, { progress: newProgress });
+                                                }}
+                                                className="flex-1 max-w-[80px] cursor-pointer"
+                                                title={`진행률: ${task.progress}%`}
+                                            />
+                                            <span className="text-xs text-muted-foreground min-w-[35px] font-medium">
                                                 {task.progress}%
                                             </span>
                                         </div>
@@ -217,9 +226,50 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
 
                                     {/* 상태 */}
                                     <td className="px-4 py-3">
-                                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(task.status)}`}>
-                                            {getStatusText(task.status)}
-                                        </span>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onTaskUpdate?.(task.id, { status: 'todo' });
+                                                }}
+                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
+                                                    task.status === 'todo'
+                                                        ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                                }`}
+                                                title="대기"
+                                            >
+                                                대기
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onTaskUpdate?.(task.id, { status: 'in-progress' });
+                                                }}
+                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
+                                                    task.status === 'in-progress'
+                                                        ? 'bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                        : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900'
+                                                }`}
+                                                title="진행 중"
+                                            >
+                                                진행
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onTaskUpdate?.(task.id, { status: 'done', progress: 100 });
+                                                }}
+                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
+                                                    task.status === 'done'
+                                                        ? 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                        : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900'
+                                                }`}
+                                                title="완료"
+                                            >
+                                                완료
+                                            </button>
+                                        </div>
                                     </td>
 
                                     {/* 작업 버튼 */}

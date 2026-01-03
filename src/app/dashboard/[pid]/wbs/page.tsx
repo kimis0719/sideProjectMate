@@ -187,6 +187,15 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
         await updateTaskDates(task.id, start, end);
     };
 
+    // 작업 빠른 업데이트 (진행률, 상태)
+    const handleTaskUpdate = async (taskId: string, updates: Partial<Task>) => {
+        try {
+            await updateTask(taskId, updates);
+        } catch (error) {
+            console.error('작업 업데이트 실패:', error);
+        }
+    };
+
     // 로딩 중
     if (status === 'loading' || isLoading) {
         return (
@@ -340,6 +349,7 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                         onTaskSelect={selectTask}
                         onTaskEdit={handleEditTask}
                         onTaskDelete={handleTaskDelete}
+                        onTaskUpdate={handleTaskUpdate}
                     />
                 </div>
             </div>
