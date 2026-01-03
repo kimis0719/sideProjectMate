@@ -40,7 +40,7 @@ export async function GET(
                 path: 'projectMembers',
                 populate: {
                     path: 'userId', // User 모델 populate
-                    select: 'nName authorEmail position' // 필요한 필드만 선택
+                    select: 'nName authorEmail position avatarUrl' // 필요한 필드만 선택 (avatarUrl 추가)
                 }
             });
 
@@ -56,6 +56,7 @@ export async function GET(
             nName: pm.userId.nName,
             email: pm.userId.authorEmail,
             position: pm.userId.position,
+            avatarUrl: pm.userId.avatarUrl, // 아바타 URL 추가
             role: pm.role // Member role (editor, viewer etc)
         })) || [];
 
