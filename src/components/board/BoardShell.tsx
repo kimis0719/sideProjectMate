@@ -93,7 +93,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         return;
       }
 
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === 'Delete') {
         if (selectedNoteIds.length > 0) {
           // Temp 노트와 실제 노트를 구분
           const realNoteIds = selectedNoteIds.filter(id => !id.startsWith('temp-'));
@@ -446,8 +446,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         <button
           onClick={toggleSelectionMode}
           className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md border ${isSelectionMode
-              ? 'bg-blue-100 border-blue-400 text-blue-600 dark:bg-blue-900/50 dark:border-blue-500 dark:text-blue-300'
-              : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'
+            ? 'bg-blue-100 border-blue-400 text-blue-600 dark:bg-blue-900/50 dark:border-blue-500 dark:text-blue-300'
+            : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'
             }`}
           title="다중 선택 모드"
         >
@@ -526,6 +526,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                   updaterId={note.updaterId}
                   assigneeId={note.assigneeId}
                   dueDate={note.dueDate}
+                  tags={note.tags}
                 />
               );
             })

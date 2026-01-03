@@ -19,25 +19,12 @@ const stringToColor = (str: string) => {
 };
 
 // --- Markdown Preprocessor ---
-// 마크다운 문법을 느슨하게 허용하기 위한 전처리 함수
 const preprocessMarkdown = (text: string) => {
   if (!text) return '';
   let processed = text;
-
-  // 1. Header Correction: "#Title" -> "# Title"
-  // 라인 시작(또는 줄바꿈 후)에 #이(1~6개) 오고, 공백 없이 문자가 올 경우 공백 추가
   processed = processed.replace(/(^|\n)(#{1,6})([^ \n#])/g, '$1$2 $3');
-
-  // 2. Bold Correction: "** Bold **" -> "**Bold**"
-  // ** 와 텍스트 사이에 공백이 있어도 볼드 처리되도록 수정
-  // (단, 중간에 *이 포함되지 않는 경우에 한함)
   processed = processed.replace(/\*\*\s+([^\*]+?)\s+\*\*/g, '**$1**');
-
-  // 3. Leading Space Preservation
-  // 라인 맨 앞의 공백이 Markdown에서 무시되거나 이상하게 줄바꿈 처리되는 것 방지
-  // 공백을 &nbsp;로 변환하여 시각적으로 유지
   processed = processed.replace(/^ +/gm, (match) => '&nbsp;'.repeat(match.length));
-
   return processed;
 };
 // -----------------------------
@@ -79,18 +66,44 @@ type Props = {
   updaterId?: string;
   assigneeId?: string;
   dueDate?: Date;
+  tags: string[];
+};
+
+// D-Day 계산 헬퍼
+const getDDayInfo = (date: Date) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+
+  const diffTime = target.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let label = '';
+  let color = '#6B7280'; // 기본 회색 (미래)
+
+  if (diffDays < 0) {
+    label = `D+${Math.abs(diffDays)}`;
+    color = '#EF4444'; // 빨강 (지남)
+  } else if (diffDays === 0) {
+    label = 'D-Day';
+    color = '#F97316'; // 주황 (오늘)
+  } else {
+    label = `D-${diffDays}`;
+    if (diffDays <= 3) color = '#F59E0B'; // 3일 전 임박 (노랑/주황)
+  }
+
+  return { label, color, diffDays };
+};
+
+const toInputDate = (d?: Date) => {
+  if (!d) return '';
+  return new Date(d).toISOString().split('T')[0];
 };
 
 const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
-const SNAP_THRESHOLD = 3; // 스냅 거리 (픽셀) - 5px -> 3px로 축소
-const GRID_SIZE = 10; // 그리드 크기 (픽셀)
-
-// Helper to get nickname from ID
-const getMemberName = (id: string | undefined, members: any[]) => {
-  if (!id) return '';
-  const member = members.find((m) => m._id === id);
-  return member ? member.nName : 'Unknown';
-};
+const SNAP_THRESHOLD = 3;
+const GRID_SIZE = 10;
 
 export default function NoteItem({
   id,
@@ -105,6 +118,7 @@ export default function NoteItem({
   updaterId,
   assigneeId,
   dueDate,
+  tags = [],
 }: Props) {
   const {
     moveNote,
@@ -146,28 +160,22 @@ export default function NoteItem({
 
   const { data: session } = useSession();
   const myUserId = session?.user?.id || 'anonymous';
-  const myUserName = session?.user?.name || 'Me';
 
   const [isEditing, setIsEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(text);
-  const [showAssigneePicker, setShowAssigneePicker] = React.useState(false);
+  const [tagInput, setTagInput] = React.useState('');
 
   const isDragging = React.useRef(false);
-  const isResizing = React.useRef(false); // 리사이즈 중인지 여부
-  const hasMoved = React.useRef(false); // 드래그로 인해 실제로 이동했는지 여부
+  const isResizing = React.useRef(false);
+  const hasMoved = React.useRef(false);
   const lastPointerRef = React.useRef({ x: 0, y: 0 });
 
-  // 이 노트가 선택되었는지 여부 확인
   const isSelected = selectedNoteIds.includes(id);
   const isPaletteOpen = openPaletteNoteId === id;
   const isTempNote = id.startsWith('temp-');
 
-  // Lock Status
   const lockInfo = lockedNotes && lockedNotes[id];
   const isLockedByOther = !!(lockInfo && lockInfo.socketId !== socketClient.socket?.id);
-  // const lockedByUser = isLockedByOther ? members.find(m => m._id === lockInfo.userId) : null;
-  // NOTE: members might not be fully populated or userId might match differently. 
-  // Fallback to simpler display if member not found.
   const lockedByUser = isLockedByOther ? members.find(m => m._id === lockInfo.userId) : null;
   const lockedByName = lockedByUser ? lockedByUser.nName : (lockInfo?.userId || 'Unknown');
   const lockedColor = lockInfo ? stringToColor(lockInfo.userId) : '#EF4444';
@@ -189,18 +197,16 @@ export default function NoteItem({
   );
 
   const debouncedSave = React.useMemo(() => debounce(saveChanges, 500), [saveChanges]);
-  // --------------------
 
   const beginEdit = React.useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.stopPropagation();
-      if (isLockedByOther) return; // 잠겨있으면 편집 불가
+      if (isLockedByOther) return;
 
       setDraft(text);
       setIsEditing(true);
       selectNote(id);
 
-      // Lock Request
       if (myUserId !== 'anonymous') {
         lockNote(id, myUserId);
       }
@@ -209,19 +215,18 @@ export default function NoteItem({
   );
 
   const saveEdit = React.useCallback(() => {
-    // 변경사항이 있을 때만 저장
     if (draft !== text) {
       updateNote(id, { text: draft });
       saveChanges({ text: draft });
     }
     setIsEditing(false);
-    unlockNote(id); // Release Lock
+    unlockNote(id);
   }, [draft, text, id, updateNote, saveChanges, unlockNote]);
 
   const cancelEdit = React.useCallback(() => {
     setDraft(text);
     setIsEditing(false);
-    unlockNote(id); // Release Lock
+    unlockNote(id);
   }, [text, id, unlockNote]);
 
   React.useEffect(() => {
@@ -231,23 +236,37 @@ export default function NoteItem({
     }
   }, [text, isEditing, isSelected, saveEdit]);
 
-  // Assignee Handlers
-  const handleAssigneeClick = (memberId: string) => {
-    updateNote(id, { assigneeId: memberId });
-    saveChanges({ assigneeId: memberId });
-    setShowAssigneePicker(false);
-  };
 
-  const creatorName = React.useMemo(
-    () => getMemberName(creatorId, members),
-    [creatorId, members]
-  );
-  const assigneeName = React.useMemo(
-    () => getMemberName(assigneeId, members),
-    [assigneeId, members]
-  );
+  const getMemberInfo = React.useCallback((memberId?: string) => {
+    if (!memberId) return null;
+    const member = members.find(m => m._id === memberId);
+    if (!member) return { name: 'Unknown', avatarUrl: null, initial: '?' };
+    return {
+      name: member.nName,
+      avatarUrl: member.avatarUrl,
+      initial: member.nName.charAt(0).toUpperCase()
+    };
+  }, [members]);
 
-  // --- Resize Handle (Start) ---
+  const creatorInfo = getMemberInfo(creatorId);
+  const assigneeInfo = getMemberInfo(assigneeId);
+
+  // --- Mobile Double Tap Logic ---
+  const lastTapRef = React.useRef<number>(0);
+  const handleTouchEnd = React.useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!isLockedByOther && !isSelectionMode) {
+        e.preventDefault();
+        setDraft(text);
+        setIsEditing(true);
+        selectNote(id);
+        if (myUserId !== 'anonymous') lockNote(id, myUserId);
+      }
+    }
+    lastTapRef.current = now;
+  }, [isLockedByOther, text, id, selectNote, myUserId, lockNote, isSelectionMode]);
+
   const onResizePointerDown = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
     e.preventDefault();
@@ -255,37 +274,60 @@ export default function NoteItem({
     lastPointerRef.current = { x: e.clientX, y: e.clientY };
     (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
   }, []);
-  // -----------------------------
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const tagsRef = React.useRef<HTMLDivElement>(null);
 
-  // Auto-resize logic with useEffect
+  // Auto-resize logic with Layout Effect
   React.useLayoutEffect(() => {
+    if (!textareaRef.current && !contentRef.current) return;
+    if (isResizing.current) return;
+
+    let contentHeight = 0;
+
+    // 1. Measure Content Height
     if (isEditing && textareaRef.current) {
-      // 1. Reset height to auto to correctly measure scrollHeight (shrink if needed)
-      textareaRef.current.style.height = 'auto';
-      const contentHeight = textareaRef.current.scrollHeight;
+      // [수정] 0px로 리셋하여 순수 scollHeight 측정 -> 이후 100%로 복구하여 컨테이너 채움
+      textareaRef.current.style.height = '0px';
+      contentHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = '100%'; // 측정 후 복구
+    } else if (!isEditing && contentRef.current) {
+      contentHeight = contentRef.current.offsetHeight;
+    }
 
-      // 2. Set textarea height to fit content
-      textareaRef.current.style.height = `${contentHeight}px`;
+    // 2. Calculate Total Height
+    const PADDING_TOP = 32;
+    const PADDING_BOTTOM = 32;
+    const FOOTER_HEIGHT = 48; // 여유 있게
 
-      // 3. Calculate required Note height (Top 40 + Bottom 30 + Content)
-      // Note: We maintain a minimum height of 140 (default) or whatever fits the content
-      const listHeaderHeight = 40;
-      const listFooterHeight = 30;
-      const newNoteHeight = Math.max(140, contentHeight + listHeaderHeight + listFooterHeight);
+    const tagsH = tagsRef.current ? tagsRef.current.offsetHeight : 0;
+    const tagsMargin = (tags.length > 0 && tagsH > 0) ? 8 : 0;
 
-      // 4. Update Note height if significantly LARGER (do not shrink below current manual size)
-      // 편집 중에는 내용이 많아지면 늘어나야 하지만, 내용이 적다고 해서 갑자기 줄어들면 안됨 (사용자가 수동으로 늘려놨을 수도 있음)
-      if (newNoteHeight > height && Math.abs(newNoteHeight - height) > 2) {
-        updateNote(id, { height: newNoteHeight });
-        debouncedSave({ height: newNoteHeight });
+    const totalCalculatedHeight = PADDING_TOP + tagsH + tagsMargin + contentHeight + PADDING_BOTTOM + FOOTER_HEIGHT;
+
+    // 최소 높이 140px 보장
+    const safeHeight = Math.max(140, totalCalculatedHeight);
+
+    // 3. Update Height
+    // [수정] 임계값 5px로 다시 조정하되, '0px' 측정 방식 덕분에 정확해짐
+    // 더 커질 때만 확장, 작아질 때는 편집 아닐 때도 반영? 
+    // 사용성을 위해 "편집 중에는 텍스트 줄어들면 같이 줄어들게" 허용 (단, 140px 이상)
+    // 떨림 방지를 위해 2px 정도의 buffer
+    if (Math.abs(safeHeight - height) > 2) {
+      if (isEditing) {
+        updateNote(id, { height: safeHeight });
+        // 편집 중 잦은 DB 저장은 부하가 될 수 있으므로, 로컬 updateNote만 하고 DB 저장은 onBlur/Debounce로 위임?
+        // 사용자 경험상 "다른 사람이 볼 때"도 커져야 하므로 debouncedSave 사용
+        debouncedSave({ height: safeHeight });
+      } else if (safeHeight > height) {
+        // 비편집 상태에서는 커질 때만 (콘텐츠 로딩 등)
+        updateNote(id, { height: safeHeight });
       }
     }
-    // height change triggers re-render, but we don't want to re-run layout effect on height change 
-    // (cause infinite loop), only on content change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, isEditing]);
+  }, [draft, isEditing, tags, text]); // height dependencies removed
+
 
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -295,18 +337,18 @@ export default function NoteItem({
 
       if (e.shiftKey) {
         selectNote(id, true);
-      } else if (isSelectionMode) { // Mobile Selection Mode
+      } else if (isSelectionMode) {
         selectNote(id, true);
       } else if (!isSelected) {
         selectNote(id, false);
       }
 
       isDragging.current = true;
-      hasMoved.current = false; // Reset move flag
+      hasMoved.current = false;
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     },
-    [isEditing, id, selectNote, isSelected, isLockedByOther]
+    [isEditing, id, selectNote, isSelected, isLockedByOther, isSelectionMode]
   );
 
   const onPointerMove = React.useCallback(
@@ -320,32 +362,19 @@ export default function NoteItem({
       if (isResizing.current) {
         if (dx !== 0 || dy !== 0) {
           const MAX_WIDTH = 600;
-          const MAX_HEIGHT = 600;
+          const MAX_HEIGHT = 1200;
           const newWidth = Math.min(Math.max(100, width + dx), MAX_WIDTH);
           const newHeight = Math.min(Math.max(100, height + dy), MAX_HEIGHT);
 
           updateNote(id, { width: newWidth, height: newHeight });
-          // debouncedSave 제거: 드래그 중에는 로컬 상태만 업데이트하여 불필요한 API 호출 방지
         }
       }
-      // 2. 드래그(이동) 로직 - 선택 모드일 때는 이동 방지 (드래그로 다중 선택 박스 그리기 위해)
+      // 2. 드래그(이동) 로직
       else if (isDragging.current) {
-        if (isSelectionMode) {
-          // 선택 모드에서는 NoteItem 자체의 드래그 이동은 막고, 
-          // 상위 BoardShell의 Selection Box 로직이 동작하도록 해야 함.
-          // 하지만 stopPropagation을 하지 않으면 상위로 이벤트가 전파됨.
-          // 여기서 preventDefault/stopPropagation을 했기 때문에 상위로 안 감.
-          // -> 해결책: 선택 모드일 때 NoteItem에서 포인터 이벤트를 무시하거나(pointer-events-none),
-          // 아니면 여기서 상위로 이벤트를 흘려보내야 함.
-          // 현재 구조상 NoteItem이 이벤트를 캡처하므로 이동 로직이 실행됨.
-
-          // 선택 모드라면 이동 로직을 실행하지 않음.
-          // 다만, 이미 선택된 노트를 탭했을 때 해제하거나 추가하는 로직은 PointerDown에서 처리됨.
-          return;
-        }
+        if (isSelectionMode) return;
 
         if (dx !== 0 || dy !== 0) {
-          hasMoved.current = true; // Mark as moved
+          hasMoved.current = true;
 
           if (selectedNoteIds.length > 1 && isSelected) {
             moveNotes(selectedNoteIds, dx, dy);
@@ -443,7 +472,6 @@ export default function NoteItem({
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
       setAlignmentGuides([]);
 
-      // 실제로 이동하지 않았다면 저장 로직 건너뜀
       if (!hasMoved.current) {
         debouncedSave.cancel();
         return;
@@ -491,9 +519,8 @@ export default function NoteItem({
     setOpenPaletteNoteId(isPaletteOpen ? null : id);
   };
 
-  // --- Keyboard Accessibility ---
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (isEditing) return; // 편집 중이면 무시
+    if (isEditing) return;
 
     const STEP = e.shiftKey ? 50 : 10;
     let dx = 0;
@@ -506,10 +533,9 @@ export default function NoteItem({
       case 'ArrowRight': dx = STEP; break;
       case 'Enter':
         e.preventDefault();
-        setIsEditing(true); // 엔터로 편집 진입
+        setIsEditing(true);
         return;
       case 'Delete':
-      case 'Backspace':
         e.preventDefault();
         removeNote(id);
         return;
@@ -517,7 +543,7 @@ export default function NoteItem({
     }
 
     e.preventDefault();
-    e.stopPropagation(); // 부모(ShortcutHandler)로 전파 방지 (중복 실행 방지)
+    e.stopPropagation();
 
     const newX = x + dx;
     const newY = y + dy;
@@ -528,8 +554,9 @@ export default function NoteItem({
   return (
     <div
       role="note"
-      tabIndex={0} // Focusable
+      tabIndex={0}
       onKeyDown={handleKeyDown}
+      onTouchEnd={handleTouchEnd}
       aria-grabbed={isDragging.current}
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={beginEdit}
@@ -545,27 +572,29 @@ export default function NoteItem({
         height: height,
         background: color,
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        borderRadius: 10,
-        padding: 10,
+        borderRadius: 12,
+        padding: 0,
         cursor: isEditing ? 'text' : 'grab',
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
-        borderWidth: isLockedByOther ? 3 : 2, // 강조
+        borderWidth: isLockedByOther ? 3 : 2,
         borderColor: isLockedByOther ? lockedColor : (isSelected ? '#3B82F6' : 'transparent'),
         opacity: isTempNote ? 0.7 : 1,
         zIndex: isSelected ? 9999 : zIndex,
         pointerEvents: isLockedByOther ? 'none' : 'auto',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Lock Indicator */}
       {isLockedByOther && (
         <div style={{
           position: 'absolute',
-          top: -26, // 조금 더 위로
+          top: -26,
           left: -2,
           background: lockedColor,
-          color: 'white', // 텍스트 컬러는 밝기 계산 필요하지만 일단 white
+          color: 'white',
           fontSize: 12,
           fontWeight: 'bold',
           padding: '2px 8px',
@@ -577,25 +606,144 @@ export default function NoteItem({
           {lockedByName}
         </div>
       )}
+
+      {/* Settings Popover */}
       {isPaletteOpen && (
-        <div style={{ position: 'absolute', top: 36, left: 6, display: 'flex', gap: 4, background: 'white', padding: '4px', borderRadius: '6px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 20 }}>
-          {COLOR_PALETTE.map((c) => (
-            <button
-              key={c}
-              type="button"
-              aria-label={`색상 ${c}로 변경`}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => changeColor(c)}
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: c,
-                border: c === color ? '2px solid #3B82F6' : '1px solid rgba(0,0,0,0.1)',
-                cursor: 'pointer',
+        <div
+          className="flex flex-col gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-xl z-20 border border-gray-100 dark:border-gray-700"
+          style={{
+            position: 'absolute',
+            top: 40,
+            right: -240,
+            width: 240,
+            cursor: 'default',
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {/* 1. 색상 선택 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">색상</div>
+            <div className="flex gap-2 flex-wrap">
+              {COLOR_PALETTE.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => changeColor(c)}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    background: c,
+                    border: c === color ? '2px solid #3B82F6' : '1px solid rgba(0,0,0,0.1)',
+                    cursor: 'pointer',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 2. 담당자 설정 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">담당자</div>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+              {members.length > 0 ? (
+                members.map((member) => (
+                  <button
+                    key={member._id}
+                    onClick={() => {
+                      updateNote(id, { assigneeId: member._id });
+                      saveChanges({ assigneeId: member._id });
+                    }}
+                    className={`flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors border ${assigneeId === member._id ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800' : 'hover:bg-gray-50 border-transparent dark:hover:bg-gray-700'}`}
+                  >
+                    {member.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={member.avatarUrl} alt={member.nName} className="w-5 h-5 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                        {member.nName[0]}
+                      </div>
+                    )}
+                    <span className={`text-xs ${assigneeId === member._id ? 'font-semibold text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                      {member.nName}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="text-xs text-gray-400">멤버가 없습니다.</div>
+              )}
+            </div>
+          </div>
+
+          {/* 3. 태그 설정 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">태그</div>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {tags.map((tag) => (
+                <span key={tag} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs flex items-center gap-1 text-gray-700 dark:text-gray-200">
+                  #{tag}
+                  <button
+                    onClick={() => {
+                      const newTags = tags.filter(t => t !== tag);
+                      updateNote(id, { tags: newTags });
+                      saveChanges({ tags: newTags });
+                    }}
+                    className="hover:text-red-500 ml-1"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="태그 입력 후 Enter"
+              className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const val = tagInput.trim();
+                  if (val && !tags.includes(val)) {
+                    const newTags = [...tags, val];
+                    updateNote(id, { tags: newTags });
+                    saveChanges({ tags: newTags });
+                    setTagInput('');
+                  }
+                }
               }}
             />
-          ))}
+          </div>
+
+          {/* 4. 마감일 설정 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">마감일</div>
+            <input
+              type="date"
+              className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100"
+              value={dueDate ? toInputDate(dueDate) : ''}
+              onChange={(e) => {
+                const date = e.target.value ? new Date(e.target.value) : undefined;
+                updateNote(id, { dueDate: date });
+                saveChanges({ dueDate: date });
+              }}
+            />
+          </div>
+
+          <hr className="border-gray-100 dark:border-gray-700" />
+
+          {/* 5. 삭제 버튼 */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isTempNote) removeNote(id);
+            }}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+          >
+            <span>🗑️ 노트 삭제</span>
+          </button>
+
         </div>
       )}
 
@@ -629,289 +777,202 @@ export default function NoteItem({
         </button>
       )}
 
+      {/* Settings Button */}
       <button
         type="button"
-        aria-label="색상 팔레트 열기"
-        title="색상 변경"
+        aria-label="설정 메뉴 열기"
         onPointerDown={(e) => e.stopPropagation()}
         onClick={togglePalette}
         style={{
           position: 'absolute',
-          top: 6,
-          right: 36,
-          width: 28,
-          height: 28,
-          color: '#111827',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-        }}
-      >
-        ...
-      </button>
-
-      <button
-        type="button"
-        aria-label="노트 삭제"
-        title="삭제"
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (!isTempNote) removeNote(id);
-        }}
-        style={{
-          position: 'absolute',
-          top: 6,
-          right: 6,
-          width: 28,
-          height: 28,
-          color: '#111827',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          lineHeight: 1,
-          fontSize: 14,
-          cursor: 'pointer',
-        }}
-      >
-        ×
-      </button>
-
-      {!isEditing && (
-        <div
-          style={{
-            fontSize: 14,
-            lineHeight: 1.4,
-            color: '#111827',
-            height: '100%',
-            paddingTop: 24,
-            overflow: 'hidden',
-            pointerEvents: 'none', // 텍스트 영역이 클릭 이벤트를 가로채지 않도록 설정 (드래그 지원)
-            whiteSpace: 'pre-wrap', // 공백과 줄바꿈을 있는 그대로 표시
-          }}
-          className="markdown-body" // Optional: if you use a global markdown stylesheet
-        >
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              // 커스텀 스타일링 for Note
-              h1: ({ children }: any) => <h1 style={{ fontSize: '1.2em', fontWeight: 'bold', margin: '0 0 4px 0', borderBottom: '1px solid #ddd' }}>{children}</h1>,
-              h2: ({ children }: any) => <h2 style={{ fontSize: '1.1em', fontWeight: 'bold', margin: '4px 0' }}>{children}</h2>,
-              h3: ({ children }: any) => <h3 style={{ fontSize: '1em', fontWeight: 'bold', margin: '4px 0' }}>{children}</h3>,
-              ul: ({ children }: any) => <ul style={{ listStyleType: 'disc', paddingLeft: '1.2em', margin: '0' }}>{children}</ul>,
-              ol: ({ children }: any) => <ol style={{ listStyleType: 'decimal', paddingLeft: '1.2em', margin: '0' }}>{children}</ol>,
-              li: ({ children }: any) => <li style={{ marginBottom: '0' }}>{children}</li>,
-              p: ({ children }: any) => <p style={{ margin: '0', whiteSpace: 'pre-wrap' }}>{children}</p>,
-              blockquote: ({ children }: any) => <blockquote style={{ borderLeft: '4px solid #ccc', paddingLeft: '8px', color: '#666', margin: '0.5em 0' }}>{children}</blockquote>,
-              code: ({ children, className }: any) => {
-                const isInline = !String(children).includes('\n');
-                return (
-                  <code style={{
-                    background: 'rgba(0,0,0,0.05)',
-                    padding: '2px 4px',
-                    borderRadius: 4,
-                    fontFamily: 'monospace',
-                    display: isInline ? 'inline' : 'block',
-                    whiteSpace: 'pre-wrap'
-                  }}>
-                    {children}
-                  </code>
-                );
-              },
-              table: ({ children }: any) => <table style={{ width: '100%', borderCollapse: 'collapse', margin: '0.5em 0', fontSize: '0.9em' }}>{children}</table>,
-              th: ({ children }: any) => <th style={{ border: '1px solid #ddd', padding: '4px', background: 'rgba(0,0,0,0.02)' }}>{children}</th>,
-              td: ({ children }: any) => <td style={{ border: '1px solid #ddd', padding: '4px' }}>{children}</td>,
-              a: ({ href, children }: any) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'underline', pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>{children}</a>
-            }}
-          >
-            {preprocessMarkdown(text)}
-          </ReactMarkdown>
-        </div>
-      )}
-
-      {isEditing && (
-        <textarea
-          ref={textareaRef}
-          autoFocus
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={saveEdit}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              e.preventDefault();
-              cancelEdit();
-            } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-              e.preventDefault();
-              saveEdit();
-            }
-          }}
-          aria-label="노트 텍스트 편집"
-          style={{
-            position: 'absolute',
-            left: 8,
-            right: 8,
-            top: 40,
-            // inset: 8, // Removed to avoid 'bottom' constraint interfering with auto-resize
-            // bottom is undefined, allowing height to be controlled solely by content
-            resize: 'none',
-            outline: '2px solid rgba(59,130,246,0.5)',
-            borderRadius: 8,
-            border: '1px solid rgba(0,0,0,0.1)',
-            padding: 8,
-            fontSize: 14,
-            lineHeight: 1.4,
-            color: '#111827',
-            background: 'rgba(255,255,255,0.95)',
-            overflow: 'hidden',
-          }}
-        />
-      )}
-
-      {/* Invisible Resize Handle Overlay for Touch */}
-      {!isEditing && !isLockedByOther && (
-        <div
-          onPointerDown={onResizePointerDown}
-          style={{
-            position: 'absolute',
-            bottom: -10,
-            right: -10,
-            width: 40,
-            height: 40,
-            zIndex: 50,
-            cursor: 'nwse-resize',
-            // background: 'rgba(255,0,0,0.2)' // Debug
-          }}
-        />
-      )}
-
-      {/* Note Footer (Properties) */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 4,
-          left: 8,
-          right: 20, /* Resize handle space */
+          top: 8,
+          right: 8,
+          width: 24,
           height: 24,
+          borderRadius: 4,
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
-          fontSize: 12,
-          color: '#4B5563',
-          pointerEvents: 'auto', // Allow interaction
-          zIndex: 20, // Ensure it's above other elements
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 30,
+          opacity: 0.6,
         }}
-        onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
+        className="hover:bg-black/10 transition-colors"
       >
-        {/* Creator Display */}
-        {creatorId && (
-          <span style={{ fontSize: 10, color: '#9CA3AF', marginRight: 4, flexShrink: 0 }}>
-            By {creatorName}
-          </span>
+        <span style={{ fontSize: 18, lineHeight: 1, color: '#111827' }}>...</span>
+      </button>
+
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col min-h-0 pt-8 pb-8 px-3">
+        {/* Tags Display */}
+        {tags && tags.length > 0 && (
+          <div ref={tagsRef} className="flex flex-wrap gap-1 mb-2">
+            {tags.map(tag => (
+              <span key={tag} style={{
+                fontSize: 10,
+                backgroundColor: 'rgba(0,0,0,0.06)',
+                padding: '2px 6px',
+                borderRadius: 10,
+                color: '#374151',
+                fontWeight: 500
+              }}>
+                #{tag}
+              </span>
+            ))}
+          </div>
         )}
 
-        {/* Assignee Badge / Picker Trigger */}
-        <div style={{ position: 'relative' }}>
+        {/* Markdown Body or Textarea */}
+        {!isEditing ? (
           <div
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowAssigneePicker(!showAssigneePicker);
+            ref={contentRef}
+            style={{
+              flex: 1,
+              fontSize: 14,
+              lineHeight: 1.5,
+              color: '#111827',
+              overflow: 'hidden',
+              pointerEvents: 'none',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
             }}
-            className="hover:bg-black/5 px-2 py-0.5 rounded transition-colors cursor-pointer flex items-center gap-1"
-            title="담당자 변경"
+            className="markdown-body"
           >
-            {assigneeId ? (
-              <span style={{ fontWeight: 600, color: '#1F2937' }}>@{assigneeName}</span>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ children }: any) => <h1 style={{ fontSize: '1.2em', fontWeight: 'bold', margin: '0 0 4px 0', borderBottom: '1px solid #ddd' }}>{children}</h1>,
+                h2: ({ children }: any) => <h2 style={{ fontSize: '1.1em', fontWeight: 'bold', margin: '4px 0' }}>{children}</h2>,
+                p: ({ children }: any) => <p style={{ margin: '0 0 4px 0', whiteSpace: 'pre-wrap' }}>{children}</p>,
+                a: ({ href, children }: any) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'underline', pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>{children}</a>,
+              }}
+            >
+              {preprocessMarkdown(text)}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <textarea
+            ref={textareaRef}
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={saveEdit}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelEdit();
+              } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                saveEdit();
+              }
+            }}
+            aria-label="노트 텍스트 편집"
+            style={{
+              // [수정] 100%로 설정하여 컨테이너 사이즈를 따라가도록 함 (flex:1 대신)
+              width: '100%',
+              height: '100%',
+              resize: 'none',
+              outline: 'none',
+              background: 'transparent',
+              fontSize: 14,
+              lineHeight: 1.5,
+              color: '#111827',
+              overflow: 'hidden',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-all',
+              padding: 0,
+              margin: 0,
+              border: 'none',
+            }}
+          />
+        )}
+      </div>
+
+      {/* Footer */}
+      <div
+        className="h-8 px-3 flex items-center w-full"
+        style={{ marginTop: 'auto', pointerEvents: 'auto' }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center -space-x-1 overflow-hidden p-1">
+          {/* Creator Avatar - Fixed width/height for alignment */}
+          <div className="relative z-0 opacity-80"
+            style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title={`작성자: ${creatorInfo?.name}`}>
+            {creatorInfo?.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={creatorInfo.avatarUrl}
+                alt={creatorInfo.name}
+                className="w-[18px] h-[18px] rounded-full object-cover border border-white dark:border-gray-700"
+              />
             ) : (
-              <span>+ Assignee</span>
+              <div className="w-[18px] h-[18px] rounded-full bg-gray-400 border border-white dark:border-gray-700 flex items-center justify-center text-[8px] text-white">
+                {creatorInfo?.initial}
+              </div>
             )}
           </div>
 
-          {/* Assignee Picker Popover */}
-          {showAssigneePicker && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: 0,
-                backgroundColor: 'white',
-                borderRadius: 8,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                padding: 4,
-                minWidth: 140,
-                zIndex: 30,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-                maxHeight: 200,
-                overflowY: 'auto',
-              }}
-            >
-              {members.length > 0 ? (
-                members.map((member) => (
-                  <div
-                    key={member._id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAssigneeClick(member._id);
-                    }}
-                    className="px-2 py-1.5 hover:bg-gray-100 rounded cursor-pointer text-sm transition-colors"
-                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                  >
-                    {/* Simple Avatar Placeholder */}
-                    <div
-                      style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: '50%',
-                        background: '#E5E7EB',
-                        fontSize: 10,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#6B7280',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {member.nName[0]}
-                    </div>
-                    <span className="truncate">{member.nName}</span>
-                  </div>
-                ))
+          {/* Assignee Avatar */}
+          <div className="relative z-10 ml-0.5"
+            style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title={assigneeId ? `담당자: ${assigneeInfo?.name}` : '담당자 미지정'}>
+            {assigneeId ? (
+              assigneeInfo?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={assigneeInfo.avatarUrl}
+                  alt={assigneeInfo.name}
+                  className="w-6 h-6 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-black/5 dark:border-gray-800"
+                />
               ) : (
-                <div className="px-2 py-1 text-xs text-gray-500">멤버 없음</div>
-              )}
-            </div>
-          )}
+                <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white shadow-sm ring-1 ring-black/5 dark:border-gray-800 flex items-center justify-center text-[10px] text-white font-bold">
+                  {assigneeInfo?.initial}
+                </div>
+              )
+            ) : (
+              <button
+                onClick={togglePalette}
+                className="w-6 h-6 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-400 hover:bg-white transition-all ml-1"
+                title="담당자 할당"
+              >
+                <span className="text-sm shadow-none">+</span>
+              </button>
+            )}
+          </div>
         </div>
+
+        <div className="flex-1"></div>
+
+        {/* Due Date Badge */}
+        {dueDate && (
+          <div className="flex items-center gap-1 bg-white/50 px-2 py-0.5 rounded-full shadow-sm ml-2" title={dueDate.toLocaleDateString()}>
+            <span className="text-xs">🕰️</span>
+            <span
+              className="text-[10px] font-bold"
+              style={{ color: getDDayInfo(dueDate).color }}
+            >
+              {getDDayInfo(dueDate).label}
+            </span>
+          </div>
+        )}
+
       </div>
 
-      {/* 리사이즈 핸들 */}
-      <div
-        onPointerDown={onResizePointerDown}
-        // onPointerMove / Up은 부모 요소에서 처리함
-        style={{
-          position: 'absolute',
-          right: 0,
-          bottom: 0,
-          width: 20,
-          height: 20,
-          cursor: 'nwse-resize',
-          zIndex: 10,
-          background: 'transparent',
-        }}
-      >
-        {/* 시각적 핸들 아이콘 (우측 하단 코너 표시) */}
-        <div style={{
-          position: 'absolute',
-          right: 4,
-          bottom: 4,
-          width: 8,
-          height: 8,
-          borderRight: '2px solid rgba(0,0,0,0.3)',
-          borderBottom: '2px solid rgba(0,0,0,0.3)',
-        }} />
-      </div>
+      {/* Resize Handle */}
+      {isSelected && !isLockedByOther && !isSelectionMode && (
+        <div
+          onPointerDown={onResizePointerDown}
+          style={{
+            position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, cursor: 'nwse-resize', zIndex: 50,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.3 }}>
+            <path d="M22 22L22 2L2 22L22 22Z" />
+          </svg>
+        </div>
+      )}
     </div>
   );
 }

@@ -55,7 +55,7 @@ type BoardState = {
   openPaletteNoteId: string | null;
   spawnIndex: number;
   nextColorIndex: number;
-  members: Array<{ _id: string; nName: string; email: string; position?: string; role: string }>; // 프로젝트 멤버 리스트
+  members: Array<{ _id: string; nName: string; email: string; position?: string; role: string; avatarUrl?: string }>; // 프로젝트 멤버 리스트
   alignmentGuides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[];
   lockedNotes: Record<string, { userId: string; socketId: string }>; // noteId -> lock info
   lockedSections: Record<string, { userId: string; socketId: string }>; // sectionId -> lock info
