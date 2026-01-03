@@ -88,9 +88,9 @@ export default function GitHubStatsSection({ githubUrl }: GitHubStatsProps) {
             </h2>
 
             {/* Top Section: Analysis & Skills */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 {/* Left: Activity Score / Level */}
-                <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border border-indigo-100 dark:border-indigo-500/30">
+                <div className="flex flex-col items-center justify-center p-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border border-indigo-100 dark:border-indigo-500/30">
                     <div className="text-sm text-indigo-600 dark:text-indigo-400 font-semibold mb-2">DEV LEVEL</div>
                     <div className="text-4xl font-extrabold text-indigo-900 dark:text-indigo-300 mb-1">LV. {stats.level.value}</div>
                     <div className="text-lg text-indigo-700 dark:text-indigo-200 font-medium bg-card px-3 py-1 rounded-full shadow-sm mb-4">
@@ -119,8 +119,9 @@ export default function GitHubStatsSection({ githubUrl }: GitHubStatsProps) {
 
                 {/* Right: Top Skills */}
                 <div className="flex flex-col h-full">
-                    <div className="text-sm text-muted-foreground font-semibold mb-3 uppercase tracking-wider">Top Skills via Contribution</div>
-                    <div className="space-y-2 flex-grow overflow-y-auto pr-1 custom-scrollbar" style={{ maxHeight: '250px' }}>
+                    <div className="text-sm text-muted-foreground font-semibold mb-2 uppercase tracking-wider">Top Skills via Contribution</div>
+                    {/* [Fix] Removed fixed height/scroll to prevent internal scrolling */}
+                    <div className="space-y-2 flex-grow pr-1">
                         {(() => {
                             const langs = stats.techTiers.map(t => ({ name: t.language, ...t, type: 'Lang' }));
                             const envs = (stats.envTiers || []).map(t => ({ name: t.topic, ...t, type: 'Env' }));
@@ -161,16 +162,16 @@ export default function GitHubStatsSection({ githubUrl }: GitHubStatsProps) {
             </div>
 
             {/* Bottom Section: Heatmap & Repos (New) */}
-            <div className="pt-6 border-t border-border">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="pt-4 border-t border-border">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* Mini Heatmap */}
                     <div>
-                        <div className="text-sm text-muted-foreground font-semibold mb-3 flex justify-between items-center">
+                        <div className="text-sm text-muted-foreground font-semibold mb-2 flex justify-between items-center">
                             <span>RECENT CONTRIBUTIONS</span>
                             <span className="text-xs font-normal bg-muted px-2 py-0.5 rounded text-foreground">Last 16 Weeks</span>
                         </div>
                         {stats.contributionCalendar?.weeks ? (
-                            <div className="flex gap-1 overflow-hidden" style={{ height: '80px', alignItems: 'flex-end' }}>
+                            <div className="flex gap-1 overflow-hidden h-[60px] items-end">
                                 {stats.contributionCalendar.weeks.slice(-16).map((week, wIdx) => (
                                     <div key={wIdx} className="flex flex-col gap-1">
                                         {week.contributionDays.map((day, dIdx) => {

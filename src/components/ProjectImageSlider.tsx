@@ -1,8 +1,9 @@
 'use client';
 
 import Slider from 'react-slick';
-import "slick-carousel/slick/slick.css"; 
+import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import ProjectThumbnail from './projects/ProjectThumbnail';
 
 interface ProjectImageSliderProps {
   images: string[];
@@ -24,8 +25,13 @@ export default function ProjectImageSlider({ images, title }: ProjectImageSlider
     <div className="mb-8">
       <Slider {...settings}>
         {images.map((image, index) => (
-          <div key={index} className="aspect-video bg-gray-100 rounded-lg">
-            <img src={image} alt={`${title} 이미지 ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
+          <div key={index} className="aspect-video bg-gray-100 rounded-lg relative overflow-hidden group">
+            <ProjectThumbnail
+              src={image}
+              alt={`${title} 이미지 ${index + 1}`}
+              fallbackText={title.charAt(0)}
+              className="rounded-lg"
+            />
           </div>
         ))}
       </Slider>

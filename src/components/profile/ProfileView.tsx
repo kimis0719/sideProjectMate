@@ -94,9 +94,16 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
             });
 
             if (!res.ok) throw new Error('Failed to save social links');
-            // Update global user data for other components
-            const updatedUserData = { ...userData, socialLinks: newLinks };
-            setUserData(updatedUserData);
+
+            const data = await res.json();
+            if (data.success && data.data) {
+                // 서버에서 계산된 최신 데이터(GitHub Stats, Tech Tags 등)로 전체 업데이트
+                setUserData(data.data);
+
+                // 개별 상태도 동기화 (SkillSection 등에 반영)
+                if (data.data.techTags) setTechTags(data.data.techTags);
+            }
+
             alert('소셜 링크가 저장되었습니다! ✅');
         } catch (error) {
             console.error(error);
@@ -240,8 +247,12 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ [field]: value })
             });
+
+            // [UX] 직군/경력 등 중요 정보 저장 시 사용자 피드백 제공 (요청사항)
+            alert('정보가 저장되었습니다! ✅');
         } catch (error) {
             console.error('Failed to save basic info:', error);
+            alert('저장 실패 ❌');
         }
     };
 

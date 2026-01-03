@@ -2,6 +2,7 @@
 
 // StatusDashboard.tsx
 import { useEffect, useState } from 'react';
+import { calculateProfileCompleteness } from '@/lib/profileUtils';
 
 interface StatusDashboardProps {
     status?: string;
@@ -31,35 +32,8 @@ export default function StatusDashboard({ status = '구직중', user, isEditing,
 
     useEffect(() => {
         if (!user) return;
-
-        // Calculate completeness
-        let score = 0;
-        const total = 100;
-
-        // 1. Basic Info (30%)
-        if (user.avatarUrl) score += 15; // Real avatar exists
-        else if (user.avatarUrl) score += 5; // Default avatar (better than nothing logic? Maybe just check existence)
-
-        if (user.position && user.position.length > 0) score += 10;
-        if (user.career && user.career.length > 0) score += 5;
-
-        // 2. Content (40%)
-        if (user.introduction && user.introduction.length > 10) score += 20; // Meaningful intro
-        if (user.techTags && user.techTags.length > 0) score += 20;
-
-        // 3. Activity & Links (30%)
-        const socialCount = [
-            user.socialLinks?.github,
-            user.socialLinks?.blog,
-            user.socialLinks?.solvedAc,
-            ...(user.portfolioLinks || [])
-        ].filter(Boolean).length;
-
-        if (socialCount > 0) score += 15;
-
-        if (user.schedule && user.schedule.length > 0) score += 15;
-
-        setCompleteness(Math.min(score, 100));
+        // [Fix] 클라이언트에서 실시간 계산 (저장 전에도 반영됨) + 서버와 동일 로직 사용 (일관성 보장)
+        setCompleteness(calculateProfileCompleteness(user));
     }, [user]);
 
 
@@ -69,23 +43,33 @@ export default function StatusDashboard({ status = '구직중', user, isEditing,
             {/* Current Status removed as it is now in DetailProfileCard */}
 
             <div className="flex-1">
-                <div className="flex justify-between items-end mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">프로필 완성도</span>
-                    <span className={`text-lg font-bold ${completeness === 100 ? 'text-green-600' : 'text-blue-600 dark:text-blue-400'}`}>
-                        {completeness}%
-                    </span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
-                    <div
-                        className={`h-2.5 rounded-full transition-all duration-1000 ease-out ${completeness === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
-                        style={{ width: `${completeness}%` }}
-                    ></div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                    {completeness < 50 ? '기본 정보를 입력하여 신뢰도를 높여보세요!' :
-                        completeness < 80 ? '기술 스택과 소셜 링크를 추가해보세요.' :
-                            '완벽한 프로필입니다! 🚀'}
-                </p>
+                {/* [Fix] 타인 프로필에서는 완성도 점수 숨김 (요청사항) */}
+                {isEditing ? (
+                    <>
+                        <div className="flex justify-between items-end mb-2">
+                            <span className="text-sm font-medium text-muted-foreground">프로필 완성도</span>
+                            <span className={`text-lg font-bold ${completeness === 100 ? 'text-green-600' : 'text-blue-600 dark:text-blue-400'}`}>
+                                {completeness}%
+                            </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                            <div
+                                className={`h-2.5 rounded-full transition-all duration-1000 ease-out ${completeness === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
+                                style={{ width: `${completeness}%` }}
+                            ></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                            {completeness < 50 ? '기본 정보를 입력하여 신뢰도를 높여보세요!' :
+                                completeness < 80 ? '기술 스택과 소셜 링크를 추가해보세요.' :
+                                    '완벽한 프로필입니다! 🚀'}
+                        </p>
+                    </>
+                ) : (
+                    <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                        {/* 타인 프로필일 때 보여줄 간단한 문구 또는 공란 */}
+                        <p>함께 성장하는 동료입니다 👋</p>
+                    </div>
+                )}
             </div>
 
             {/* Social Links Input Section (Only visible when editing) */}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { IProject } from '@/lib/models/Project';
 import { ICommonCode } from '@/lib/models/CommonCode';
+import ProjectThumbnail from './ProjectThumbnail';
 
 interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
     author: { _id: string; nName: string } | string;
@@ -172,13 +173,11 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
                             return (
                                 <Link key={project.pid} href={`/projects/${project.pid}`} className="bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer border border-border">
                                     <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                                        {project.images && project.images.length > 0 ? (
-                                            <img src={project.images[0]} alt={project.title} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold">
-                                                {project.title.charAt(0)}
-                                            </div>
-                                        )}
+                                        <ProjectThumbnail
+                                            src={project.images && project.images.length > 0 ? project.images[0] : null}
+                                            alt={project.title}
+                                            fallbackText={project.title.charAt(0)}
+                                        />
                                     </div>
                                     <div className="p-5">
                                         <div className="flex items-center gap-2 mb-3">
@@ -230,6 +229,8 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
  * 단순히 ProjectListContent를 Suspense로 감싸는 역할만 수행합니다.
  * 이렇게 해야 빌드 시 useSearchParams 관련 에러를 피할 수 있습니다.
  */
+
+
 export default function ProjectList(props: ProjectListProps) {
     return (
         <Suspense fallback={<div className="text-center py-20 text-foreground">페이지를 불러오는 중...</div>}>
