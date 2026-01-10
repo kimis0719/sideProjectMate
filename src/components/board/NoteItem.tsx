@@ -310,7 +310,13 @@ export default function NoteItem({
       contentHeight = textareaRef.current.scrollHeight;
       textareaRef.current.style.height = '100%';
     } else if (!isEditing && contentRef.current) {
-      contentHeight = contentRef.current.offsetHeight;
+      // [Bug Fix]
+      // 기존 코드: contentHeight = contentRef.current.offsetHeight;
+      // 원인: contentRef는 flex-1 스타일로 인해 부모(NoteItem)의 높이가 커지면 같이 늘어남.
+      //       이로 인해 '부모 높이 증가 -> contentRef 높이 증가 -> 계산된 safeHeight 증가 -> 부모 높이 업데이트'의 무한 루프 발생.
+      // 해결: 늘어나는 컨테이너가 아닌, 실제 내부 텍스트 콘텐츠(Markdown Wrapper)의 높이를 측정하도록 변경.
+      const innerContent = contentRef.current.firstElementChild as HTMLElement;
+      contentHeight = innerContent ? innerContent.offsetHeight : 0;
     }
 
     // 2. Calculate Total Height
