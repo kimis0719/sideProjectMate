@@ -170,6 +170,23 @@ export default function NoteItem({
   const hasMoved = React.useRef(false);
   const lastPointerRef = React.useRef({ x: 0, y: 0 });
 
+  // [Refactoring] Drag/Resize Visual Updates without Store updates
+  const visualRef = React.useRef<HTMLDivElement>(null);
+  const currentVisual = React.useRef({ x, y, width, height });
+
+  // Sync refs when props change (only if not dragging/resizing)
+  React.useEffect(() => {
+    if (!isDragging.current && !isResizing.current) {
+      currentVisual.current = { x, y, width, height };
+      if (visualRef.current) {
+        visualRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        visualRef.current.style.width = `${width}px`;
+        visualRef.current.style.height = `${height}px`;
+      }
+    }
+  }, [x, y, width, height]);
+
+
   const isSelected = selectedNoteIds.includes(id);
   const isPaletteOpen = openPaletteNoteId === id;
   const isTempNote = id.startsWith('temp-');
@@ -282,16 +299,16 @@ export default function NoteItem({
   // Auto-resize logic with Layout Effect
   React.useLayoutEffect(() => {
     if (!textareaRef.current && !contentRef.current) return;
+    // 리사이즈 중에는 자동 높이 조절 안 함
     if (isResizing.current) return;
 
     let contentHeight = 0;
 
     // 1. Measure Content Height
     if (isEditing && textareaRef.current) {
-      // [수정] 0px로 리셋하여 순수 scollHeight 측정 -> 이후 100%로 복구하여 컨테이너 채움
       textareaRef.current.style.height = '0px';
       contentHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = '100%'; // 측정 후 복구
+      textareaRef.current.style.height = '100%';
     } else if (!isEditing && contentRef.current) {
       contentHeight = contentRef.current.offsetHeight;
     }
@@ -299,35 +316,34 @@ export default function NoteItem({
     // 2. Calculate Total Height
     const PADDING_TOP = 32;
     const PADDING_BOTTOM = 32;
-    const FOOTER_HEIGHT = 48; // 여유 있게
+    const FOOTER_HEIGHT = 48;
 
     const tagsH = tagsRef.current ? tagsRef.current.offsetHeight : 0;
     const tagsMargin = (tags.length > 0 && tagsH > 0) ? 8 : 0;
 
     const totalCalculatedHeight = PADDING_TOP + tagsH + tagsMargin + contentHeight + PADDING_BOTTOM + FOOTER_HEIGHT;
 
-    // 최소 높이 140px 보장
     const safeHeight = Math.max(140, totalCalculatedHeight);
 
     // 3. Update Height
-    // [수정] 임계값 5px로 다시 조정하되, '0px' 측정 방식 덕분에 정확해짐
-    // 더 커질 때만 확장, 작아질 때는 편집 아닐 때도 반영? 
-    // 사용성을 위해 "편집 중에는 텍스트 줄어들면 같이 줄어들게" 허용 (단, 140px 이상)
-    // 떨림 방지를 위해 2px 정도의 buffer
     if (Math.abs(safeHeight - height) > 2) {
+      // 로컬 Visual 업데이트
+      // 높이 변경도 Undo 스택에 쌓일 수 있으므로 주의. 
+      // 하지만 여기서 updateNote를 부르면 equality 검사로 인해 무시되도록 설정했음.
+      // 따라서 updateNote 호출은 안전함(높이 변화만 있으면 히스토리 안 쌓임).
       if (isEditing) {
         updateNote(id, { height: safeHeight });
-        // 편집 중 잦은 DB 저장은 부하가 될 수 있으므로, 로컬 updateNote만 하고 DB 저장은 onBlur/Debounce로 위임?
-        // 사용자 경험상 "다른 사람이 볼 때"도 커져야 하므로 debouncedSave 사용
         debouncedSave({ height: safeHeight });
       } else if (safeHeight > height) {
-        // 비편집 상태에서는 커질 때만 (콘텐츠 로딩 등)
         updateNote(id, { height: safeHeight });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, isEditing, tags, text]); // height dependencies removed
+  }, [draft, isEditing, tags, text]);
 
+
+  // Drag Accumulator for Multi-Select
+  const totalDragRef = React.useRef({ x: 0, y: 0 });
 
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -346,9 +362,14 @@ export default function NoteItem({
       isDragging.current = true;
       hasMoved.current = false;
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
+      totalDragRef.current = { x: 0, y: 0 };
+
+      // 현재 상태 캡처 (드래그 시작 좌표)
+      currentVisual.current = { x, y, width, height };
+
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     },
-    [isEditing, id, selectNote, isSelected, isLockedByOther, isSelectionMode]
+    [isEditing, id, selectNote, isSelected, isLockedByOther, isSelectionMode, x, y, width, height]
   );
 
   const onPointerMove = React.useCallback(
@@ -363,10 +384,23 @@ export default function NoteItem({
         if (dx !== 0 || dy !== 0) {
           const MAX_WIDTH = 600;
           const MAX_HEIGHT = 1200;
-          const newWidth = Math.min(Math.max(100, width + dx), MAX_WIDTH);
-          const newHeight = Math.min(Math.max(100, height + dy), MAX_HEIGHT);
 
-          updateNote(id, { width: newWidth, height: newHeight });
+          let newWidth = currentVisual.current.width + dx;
+          let newHeight = currentVisual.current.height + dy;
+
+          newWidth = Math.min(Math.max(100, newWidth), MAX_WIDTH);
+          newHeight = Math.min(Math.max(100, newHeight), MAX_HEIGHT);
+
+          // Direct DOM Manipulation (Undo Stack에 영향 X)
+          if (visualRef.current) {
+            visualRef.current.style.width = `${newWidth}px`;
+            visualRef.current.style.height = `${newHeight}px`;
+          }
+          // Visual Ref 업데이트 (누적 되지 않음. delta는 매번 이전 프레임 대비가 아니라 start 기준이어야 정확한데..
+          // 아, 여기서 dx, dy는 이전 move 이벤트 대비 차이(delta)임.
+          // 따라서 currentVisual을 계속 갱신해줘야 함.
+          currentVisual.current.width = newWidth;
+          currentVisual.current.height = newHeight;
         }
       }
       // 2. 드래그(이동) 로직
@@ -375,84 +409,43 @@ export default function NoteItem({
 
         if (dx !== 0 || dy !== 0) {
           hasMoved.current = true;
+          totalDragRef.current.x += dx;
+          totalDragRef.current.y += dy;
 
+          // 단순 이동 (Visual Update Only)
+          const newX = currentVisual.current.x + dx;
+          const newY = currentVisual.current.y + dy;
+
+          currentVisual.current.x = newX;
+          currentVisual.current.y = newY;
+
+          if (visualRef.current) {
+            visualRef.current.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
+          }
+
+          // 다중 선택된 노트들의 이동 처리 (DOM 조작)
           if (selectedNoteIds.length > 1 && isSelected) {
-            moveNotes(selectedNoteIds, dx, dy);
-          } else {
-            let newX = x + dx;
-            let newY = y + dy;
-            let snappedX = newX;
-            let snappedY = newY;
-            const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
+            selectedNoteIds.forEach(selectedId => {
+              if (selectedId === id) return;
+              const el = document.querySelector(`[data-note-id="${selectedId}"]`) as HTMLElement;
+              if (el) {
+                const transform = el.style.transform || '';
+                const match = transform.match(/translate3d\(([^p]+)px,\s*([^p]+)px,\s*0\)/);
 
-            if (e.altKey || isSnapEnabled) {
-              const notes = useBoardStore.getState().notes;
-              const NOTE_WIDTH = width;
-              const NOTE_HEIGHT = height;
-
-              let minDistX = SNAP_THRESHOLD;
-              let foundSnapX = false;
-              let minDistY = SNAP_THRESHOLD;
-              let foundSnapY = false;
-
-              notes.forEach((other) => {
-                if (other.id === id) return;
-                const otherW = other.width || 200;
-                const otherH = other.height || 140;
-
-                const otherXs = [other.x, other.x + otherW];
-                const myXs = [newX, newX + NOTE_WIDTH];
-
-                const otherYs = [other.y, other.y + otherH];
-                const myYs = [newY, newY + NOTE_HEIGHT];
-
-                for (const ox of otherXs) {
-                  for (let i = 0; i < myXs.length; i++) {
-                    const dist = Math.abs(myXs[i] - ox);
-                    if (dist < minDistX) {
-                      minDistX = dist;
-                      snappedX = ox - (myXs[i] - newX);
-                      foundSnapX = true;
-                      guides.push({ type: 'vertical', x: ox });
-                    }
-                  }
-                }
-
-                for (const oy of otherYs) {
-                  for (let i = 0; i < myYs.length; i++) {
-                    const dist = Math.abs(myYs[i] - oy);
-                    if (dist < minDistY) {
-                      minDistY = dist;
-                      snappedY = oy - (myYs[i] - newY);
-                      foundSnapY = true;
-                      guides.push({ type: 'horizontal', y: oy });
-                    }
-                  }
-                }
-              });
-
-              if (!foundSnapX) {
-                if (Math.abs(newX % GRID_SIZE) < SNAP_THRESHOLD) {
-                  snappedX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+                if (match) {
+                  const currentX = parseFloat(match[1]);
+                  const currentY = parseFloat(match[2]);
+                  el.style.transform = `translate3d(${currentX + dx}px, ${currentY + dy}px, 0)`;
                 }
               }
-              if (!foundSnapY) {
-                if (Math.abs(newY % GRID_SIZE) < SNAP_THRESHOLD) {
-                  snappedY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
-                }
-              }
-            }
-
-            setAlignmentGuides(guides);
-            moveNote(id, snappedX, snappedY);
-            debouncedSave({ x: snappedX, y: snappedY });
+            });
           }
         }
       }
 
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
     },
-    [isEditing, isDragging, isResizing, zoom, width, height, id, updateNote, debouncedSave, selectedNoteIds, isSelected, moveNotes, setAlignmentGuides, moveNote, x, y, isSnapEnabled, isSelectionMode]
+    [isEditing, isDragging, isResizing, zoom, width, height, id, selectedNoteIds, isSelected, isSelectionMode]
   );
 
   const onPointerUp = React.useCallback(
@@ -461,8 +454,14 @@ export default function NoteItem({
       if (isResizing.current) {
         isResizing.current = false;
         (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-        debouncedSave.cancel();
-        saveChanges({ width, height });
+
+        // 최종 크기 저장 (Store Update -> Undo Stack 1회 저장)
+        const finalWidth = currentVisual.current.width;
+        const finalHeight = currentVisual.current.height;
+
+        updateNote(id, { width: finalWidth, height: finalHeight });
+        debouncedSave.cancel(); // 중간 저장 취소
+        saveChanges({ width: finalWidth, height: finalHeight }); // 최종 저장
         return;
       }
 
@@ -473,31 +472,57 @@ export default function NoteItem({
       setAlignmentGuides([]);
 
       if (!hasMoved.current) {
-        debouncedSave.cancel();
+        debouncedSave.cancel(); // 이동 안했으면 저장 안함
         return;
       }
 
       if (selectedNoteIds.length > 1 && isSelected) {
+        // 다중 선택 이동: 누적된 이동 거리(totalDragRef)를 사용하여 Store 및 DB 업데이트
         debouncedSave.cancel();
+
+        const tdx = totalDragRef.current.x;
+        const tdy = totalDragRef.current.y;
+
+        // 1. Store Update (moveNotes Action)
+        moveNotes(selectedNoteIds, tdx, tdy);
+
+        // 2. DB Update (Batch)
+        // Store 업데이트 후, DB에는 '이동 된 좌표'를 보내거나, '이동 전 좌표 + 델타'를 보내야 함.
+        // 여기서는 안전하게 계산된 값을 보냄.
         const currentNotes = useBoardStore.getState().notes;
         const updates = currentNotes
           .filter((n) => selectedNoteIds.includes(n.id))
           .map((n) => ({
             id: n.id,
-            changes: { x: n.x, y: n.y, sectionId: n.sectionId },
+            changes: { x: n.x, y: n.y },
           }));
-        updateNotes(updates);
+
+        fetch('/api/kanban/notes/batch', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates }),
+        }).catch((err) => console.error('Batch move failed:', err));
+
       } else {
-        debouncedSave.cancel();
-        const currentNote = useBoardStore.getState().notes.find(n => n.id === id);
-        if (currentNote) {
-          saveChanges({ x, y, sectionId: currentNote.sectionId });
-        } else {
-          saveChanges({ x, y });
+        // 단일 선택의 경우, Visual만 바뀌어 있으므로 이제 Store Update
+        const finalX = currentVisual.current.x;
+        const finalY = currentVisual.current.y;
+
+        // 스냅 로직 적용
+        let snappedX = finalX;
+        let snappedY = finalY;
+
+        if (isSnapEnabled || e.altKey) {
+          if (Math.abs(snappedX % GRID_SIZE) < SNAP_THRESHOLD) snappedX = Math.round(snappedX / GRID_SIZE) * GRID_SIZE;
+          if (Math.abs(snappedY % GRID_SIZE) < SNAP_THRESHOLD) snappedY = Math.round(snappedY / GRID_SIZE) * GRID_SIZE;
         }
+
+        moveNote(id, snappedX, snappedY); // Store Update (Undo 1회 저장)
+        debouncedSave.cancel();
+        saveChanges({ x: snappedX, y: snappedY }); // DB 저장
       }
     },
-    [saveChanges, width, height, selectedNoteIds, isSelected, updateNotes, setAlignmentGuides, debouncedSave, x, y, id]
+    [saveChanges, id, updateNote, width, height, selectedNoteIds, isSelected, setAlignmentGuides, debouncedSave, isSnapEnabled, moveNote, moveNotes]
   );
 
   const onPointerCancel = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -505,7 +530,13 @@ export default function NoteItem({
     isResizing.current = false;
     (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
     setAlignmentGuides([]);
-  }, [setAlignmentGuides]);
+    // Visual 되돌리기 (원상복구)
+    if (visualRef.current) {
+      visualRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      visualRef.current.style.width = `${width}px`;
+      visualRef.current.style.height = `${height}px`;
+    }
+  }, [setAlignmentGuides, x, y, width, height]);
 
   const changeColor = React.useCallback(
     (newColor: string) => {
@@ -553,7 +584,16 @@ export default function NoteItem({
 
   return (
     <div
+      ref={visualRef} // Attach Ref
       role="note"
+      data-note-id={id} // For DOM manipulation
+      data-section-id={useBoardStore.getState().notes.find(n => n.id === id)?.sectionId || ''} // 섹션 연결용 (props로 받는게 정확하지만 store에서 조회가 안전)
+      // Note: props로 받는게 좋은데, NoteItem은 props로 sectionId를 안받고 있음?
+      // 아, Note 타입 text, color 등등만 받고 sectionId는 안받았었나?
+      // Props 정의 다시 확인: width, height, ... tags. sectionId 없음.
+      // 근데 store에는 있음.
+      // NoteItem은 'Note' 객체를 통째로 안받고 분해해서 받음.
+      // -> useBoardStore에서 조회해서 넣어야함.
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onTouchEnd={handleTouchEnd}
@@ -716,19 +756,22 @@ export default function NoteItem({
             />
           </div>
 
-          {/* 4. 마감일 설정 */}
+          {/* 4. 마감일 설정 (Input Style Change for clickable area) */}
           <div>
             <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">마감일</div>
-            <input
-              type="date"
-              className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100"
-              value={dueDate ? toInputDate(dueDate) : ''}
-              onChange={(e) => {
-                const date = e.target.value ? new Date(e.target.value) : undefined;
-                updateNote(id, { dueDate: date });
-                saveChanges({ dueDate: date });
-              }}
-            />
+            <div className="relative">
+              <input
+                type="date"
+                className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 cursor-pointer"
+                style={{ minHeight: '32px' }} // 높이 확보
+                value={dueDate ? toInputDate(dueDate) : ''}
+                onChange={(e) => {
+                  const date = e.target.value ? new Date(e.target.value) : undefined;
+                  updateNote(id, { dueDate: date });
+                  saveChanges({ dueDate: date });
+                }}
+              />
+            </div>
           </div>
 
           <hr className="border-gray-100 dark:border-gray-700" />
@@ -799,76 +842,30 @@ export default function NoteItem({
         }}
         className="hover:bg-black/10 transition-colors"
       >
-        <span style={{ fontSize: 18, lineHeight: 1, color: '#111827' }}>...</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="5" r="2" fill="currentColor" />
+          <circle cx="12" cy="12" r="2" fill="currentColor" />
+          <circle cx="12" cy="19" r="2" fill="currentColor" />
+        </svg>
       </button>
 
-      {/* Content Area */}
-      <div className="flex-1 flex flex-col min-h-0 pt-8 pb-8 px-3">
-        {/* Tags Display */}
-        {tags && tags.length > 0 && (
-          <div ref={tagsRef} className="flex flex-wrap gap-1 mb-2">
-            {tags.map(tag => (
-              <span key={tag} style={{
-                fontSize: 10,
-                backgroundColor: 'rgba(0,0,0,0.06)',
-                padding: '2px 6px',
-                borderRadius: 10,
-                color: '#374151',
-                fontWeight: 500
-              }}>
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Markdown Body or Textarea */}
-        {!isEditing ? (
-          <div
-            ref={contentRef}
-            style={{
-              flex: 1,
-              fontSize: 14,
-              lineHeight: 1.5,
-              color: '#111827',
-              overflow: 'hidden',
-              pointerEvents: 'none',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-            }}
-            className="markdown-body"
-          >
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                h1: ({ children }: any) => <h1 style={{ fontSize: '1.2em', fontWeight: 'bold', margin: '0 0 4px 0', borderBottom: '1px solid #ddd' }}>{children}</h1>,
-                h2: ({ children }: any) => <h2 style={{ fontSize: '1.1em', fontWeight: 'bold', margin: '4px 0' }}>{children}</h2>,
-                p: ({ children }: any) => <p style={{ margin: '0 0 4px 0', whiteSpace: 'pre-wrap' }}>{children}</p>,
-                a: ({ href, children }: any) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'underline', pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>{children}</a>,
-              }}
-            >
-              {preprocessMarkdown(text)}
-            </ReactMarkdown>
-          </div>
-        ) : (
+      {/* Main Content Area */}
+      <div
+        className="flex-1 flex flex-col pt-8 pb-8 px-4"
+        ref={contentRef}
+        style={{ overflow: 'hidden' }}
+      >
+        {isEditing ? (
           <textarea
             ref={textareaRef}
-            autoFocus
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={saveEdit}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                e.preventDefault();
-                cancelEdit();
-              } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                saveEdit();
-              }
+            defaultValue={text}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              // 높이 자동 조절 트리거 (LayoutEffect가 감지)
+              // (state인 draft가 바뀌므로 effect 실행됨)
             }}
-            aria-label="노트 텍스트 편집"
+            onPointerDown={(e) => e.stopPropagation()}
             style={{
-              // [수정] 100%로 설정하여 컨테이너 사이즈를 따라가도록 함 (flex:1 대신)
               width: '100%',
               height: '100%',
               resize: 'none',
@@ -885,91 +882,77 @@ export default function NoteItem({
               border: 'none',
             }}
           />
+        ) : (
+          <div className="prose prose-sm max-w-none text-gray-900 select-text pointer-events-auto cursor-text text-sm break-all whitespace-pre-wrap leading-relaxed">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {preprocessMarkdown(text)}
+            </ReactMarkdown>
+          </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div
-        className="h-8 px-3 flex items-center w-full"
-        style={{ marginTop: 'auto', pointerEvents: 'auto' }}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center -space-x-1 overflow-hidden p-1">
-          {/* Creator Avatar - Fixed width/height for alignment */}
-          <div className="relative z-0 opacity-80"
-            style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={`작성자: ${creatorInfo?.name}`}>
-            {creatorInfo?.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={creatorInfo.avatarUrl}
-                alt={creatorInfo.name}
-                className="w-[18px] h-[18px] rounded-full object-cover border border-white dark:border-gray-700"
-              />
-            ) : (
-              <div className="w-[18px] h-[18px] rounded-full bg-gray-400 border border-white dark:border-gray-700 flex items-center justify-center text-[8px] text-white">
-                {creatorInfo?.initial}
-              </div>
-            )}
-          </div>
+      {/* Tags Display */}
+      <div ref={tagsRef} className="px-4 flex flex-wrap gap-1">
+        {tags.length > 0 && tags.map((tag) => (
+          <span key={tag} className="px-1.5 py-0.5 bg-black/5 rounded text-[10px] text-gray-600 font-medium">
+            #{tag}
+          </span>
+        ))}
+      </div>
 
-          {/* Assignee Avatar */}
-          <div className="relative z-10 ml-0.5"
-            style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title={assigneeId ? `담당자: ${assigneeInfo?.name}` : '담당자 미지정'}>
-            {assigneeId ? (
-              assigneeInfo?.avatarUrl ? (
+      {/* Footer Info (D-Day, Assignee) */}
+      <div className="h-12 px-4 flex items-center justify-between border-t border-black/5 mt-auto">
+        <div className="flex items-center gap-2">
+          {/* Avatar */}
+          {assigneeId && (
+            <div className="flex items-center" title={`담당자: ${assigneeInfo?.name}`}>
+              {assigneeInfo?.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={assigneeInfo.avatarUrl}
-                  alt={assigneeInfo.name}
-                  className="w-6 h-6 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-black/5 dark:border-gray-800"
-                />
+                <img src={assigneeInfo.avatarUrl} alt={assigneeInfo.name} className="w-6 h-6 rounded-full object-cover border border-white shadow-sm" />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white shadow-sm ring-1 ring-black/5 dark:border-gray-800 flex items-center justify-center text-[10px] text-white font-bold">
+                <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 border border-white shadow-sm">
                   {assigneeInfo?.initial}
                 </div>
-              )
-            ) : (
-              <button
-                onClick={togglePalette}
-                className="w-6 h-6 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-400 hover:bg-white transition-all ml-1"
-                title="담당자 할당"
-              >
-                <span className="text-sm shadow-none">+</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="flex-1"></div>
-
-        {/* Due Date Badge */}
-        {dueDate && (
-          <div className="flex items-center gap-1 bg-white/50 px-2 py-0.5 rounded-full shadow-sm ml-2" title={dueDate.toLocaleDateString()}>
-            <span className="text-xs">🕰️</span>
-            <span
-              className="text-[10px] font-bold"
-              style={{ color: getDDayInfo(dueDate).color }}
+              )}
+            </div>
+          )}
+          {/* D-Day Badge */}
+          {dueDate && (
+            <div
+              className="px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm"
+              style={{
+                borderColor: getDDayInfo(dueDate).color,
+                color: getDDayInfo(dueDate).color,
+                backgroundColor: 'white'
+              }}
             >
               {getDDayInfo(dueDate).label}
-            </span>
-          </div>
-        )}
-
+            </div>
+          )}
+        </div>
+        <div className="text-[10px] text-gray-400">
+          {/* 작성자 정보 등 추가 가능 */}
+        </div>
       </div>
 
-      {/* Resize Handle */}
-      {isSelected && !isLockedByOther && !isSelectionMode && (
+      {/* Resize Handle (Bottom-Right) */}
+      {!isEditing && !isLockedByOther && (
         <div
           onPointerDown={onResizePointerDown}
           style={{
-            position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, cursor: 'nwse-resize', zIndex: 50,
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: 20,
+            height: 20,
+            cursor: 'nwse-resize',
+            zIndex: 50, // More than content
           }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.3 }}>
-            <path d="M22 22L22 2L2 22L22 22Z" />
+          {/* 시각적 핸들 아이콘 (Optional) */}
+          <svg width="100%" height="100%" viewBox="0 0 20 20" fill="none">
+            <path d="M14 14L20 20" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
+            <path d="M10 18L18 10" stroke="rgba(0,0,0,0.1)" strokeWidth="2" />
           </svg>
         </div>
       )}

@@ -38,16 +38,11 @@ app.prepare().then(() => {
         socket.on('join-board', (boardId: string) => {
             socket.join(boardId);
             console.log(`Socket ${socket.id} joined board: ${boardId}`);
-
-            // 현재 잠금 상태 전송 (선택 사항, 클라이언트가 요청하거나 초기화 시 필요할 수 있음)
-            // 간단하게는 구현 안해도 되지만, 완벽성을 위해... 여기서는 생략하고 개별 이벤트로 처리
         });
 
         // 2. 노트 업데이트 (이동, 수정)
         socket.on('update-note', (data) => {
             const { boardId, note } = data;
-            // 잠금 로직: 잠금자가 아니면 업데이트 거부? 
-            // 여기서는 클라이언트에서 막는 것을 우선으로 하고, 서버는 중계 역할에 집중
             socket.to(boardId).emit('note-updated', note);
         });
 
@@ -109,6 +104,13 @@ app.prepare().then(() => {
                 const eventName = type === 'note' ? 'note-unlocked' : 'section-unlocked';
                 io.in(boardId).emit(eventName, { id });
             }
+        });
+
+        // 10. 보드 전체 동기화 (Undo/Redo 시)
+        socket.on('sync-board', (data) => {
+            const { boardId, notes, sections } = data;
+            // 나를 제외한 다른 사람들에게 전파
+            socket.to(boardId).emit('board-synced', { notes, sections });
         });
 
         socket.on('disconnect', () => {
