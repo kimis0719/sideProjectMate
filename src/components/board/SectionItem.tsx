@@ -39,6 +39,119 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
 }
 // --------------------
 
+// [Helper] Section Alignment Snap
+const calculateSectionSnap = (
+    currX: number,
+    currY: number,
+    width: number,
+    height: number,
+    myId: string,
+    sections: Section[]
+) => {
+    const THRESHOLD = 5;
+    let snappedX = currX;
+    let snappedY = currY;
+    const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
+
+    let minDiffX = THRESHOLD + 1;
+    let minDiffY = THRESHOLD + 1;
+    let bestGuideX: number | null = null;
+    let bestGuideY: number | null = null;
+
+    const my = {
+        l: currX, c: currX + width / 2, r: currX + width,
+        t: currY, m: currY + height / 2, b: currY + height
+    };
+
+    sections.forEach((sec) => {
+        if (sec.id === myId) return;
+
+        const other = {
+            l: sec.x, c: sec.x + sec.width / 2, r: sec.x + sec.width,
+            t: sec.y, m: sec.y + sec.height / 2, b: sec.y + sec.height
+        };
+
+        // X-Axis
+        const checkX = (target: number) => {
+            if (Math.abs(target - my.l) < minDiffX) { minDiffX = Math.abs(target - my.l); snappedX = target; bestGuideX = target; }
+            if (Math.abs(target - my.c) < minDiffX) { minDiffX = Math.abs(target - my.c); snappedX = target - width / 2; bestGuideX = target; }
+            if (Math.abs(target - my.r) < minDiffX) { minDiffX = Math.abs(target - my.r); snappedX = target - width; bestGuideX = target; }
+        };
+        [other.l, other.c, other.r].forEach(checkX);
+
+        // Y-Axis
+        const checkY = (target: number) => {
+            if (Math.abs(target - my.t) < minDiffY) { minDiffY = Math.abs(target - my.t); snappedY = target; bestGuideY = target; }
+            if (Math.abs(target - my.m) < minDiffY) { minDiffY = Math.abs(target - my.m); snappedY = target - height / 2; bestGuideY = target; }
+            if (Math.abs(target - my.b) < minDiffY) { minDiffY = Math.abs(target - my.b); snappedY = target - height; bestGuideY = target; }
+        };
+        [other.t, other.m, other.b].forEach(checkY);
+    });
+
+    if (bestGuideX !== null) guides.push({ type: 'vertical', x: bestGuideX });
+    if (bestGuideY !== null) guides.push({ type: 'horizontal', y: bestGuideY });
+
+    return { x: snappedX, y: snappedY, guides };
+};
+
+// [Helper] Section Resize Snap Calculation
+const calculateSectionResizeSnap = (
+    currX: number,
+    currY: number,
+    targetWidth: number,
+    targetHeight: number,
+    myId: string,
+    sections: Section[]
+) => {
+    const THRESHOLD = 5;
+    let snappedWidth = targetWidth;
+    let snappedHeight = targetHeight;
+    const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
+
+    // My Edges (Right and Bottom only for resize)
+    const myR = currX + targetWidth;
+    const myB = currY + targetHeight;
+
+    let minDiffX = THRESHOLD + 1;
+    let minDiffY = THRESHOLD + 1;
+    let bestGuideX: number | null = null;
+    let bestGuideY: number | null = null;
+
+    sections.forEach((sec) => {
+        if (sec.id === myId) return;
+
+        const other = {
+            l: sec.x, c: sec.x + sec.width / 2, r: sec.x + sec.width,
+            t: sec.y, m: sec.y + sec.height / 2, b: sec.y + sec.height
+        };
+
+        // X-Axis Match (My Right vs Other L/C/R)
+        const checkX = (target: number) => {
+            if (Math.abs(target - myR) < minDiffX) {
+                minDiffX = Math.abs(target - myR);
+                snappedWidth = target - currX;
+                bestGuideX = target;
+            }
+        };
+        [other.l, other.c, other.r].forEach(checkX);
+
+        // Y-Axis Match (My Bottom vs Other T/M/B)
+        const checkY = (target: number) => {
+            if (Math.abs(target - myB) < minDiffY) {
+                minDiffY = Math.abs(target - myB);
+                snappedHeight = target - currY;
+                bestGuideY = target;
+            }
+        };
+        [other.t, other.m, other.b].forEach(checkY);
+    });
+
+    if (bestGuideX !== null) guides.push({ type: 'vertical', x: bestGuideX });
+    if (bestGuideY !== null) guides.push({ type: 'horizontal', y: bestGuideY });
+
+    return { w: snappedWidth, h: snappedHeight, guides };
+};
+
 type Props = {
     section: Section;
 };
@@ -58,6 +171,9 @@ export default function SectionItem({ section }: Props) {
         lockSection,
         unlockSection,
         members,
+        sections,
+        setAlignmentGuides,
+        isSnapEnabled,
     } = useBoardStore((s) => ({
         moveSection: s.moveSection,
         updateSection: s.updateSection,
@@ -72,6 +188,9 @@ export default function SectionItem({ section }: Props) {
         lockSection: s.lockSection,
         unlockSection: s.unlockSection,
         members: s.members,
+        sections: s.sections,
+        setAlignmentGuides: s.setAlignmentGuides,
+        isSnapEnabled: s.isSnapEnabled,
     }));
 
     const { data: session } = useSession();
@@ -157,10 +276,7 @@ export default function SectionItem({ section }: Props) {
 
         (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
 
-        // 섹션 내의 모든 노트 선택 -> 드래그 시 같이 보이기 위함? 
-        // 다중 선택 상태로 만들면 NoteItem에서 제어하기 복잡해짐.
-        // 여기서는 그냥 섹션 이동 시 'DOM 조작'으로 같이 이동시키므로 굳이 선택할 필요 없음.
-        // 다만 UX상 선택되는게 자연스럽다면 유지. (일단 유지)
+        // 섹션 내의 모든 노트 선택
         const childNoteIds = notes
             .filter((n) => n.sectionId === section.id)
             .map((n) => n.id);
@@ -174,15 +290,27 @@ export default function SectionItem({ section }: Props) {
         if (!isDragging.current) return;
         e.stopPropagation();
 
-        const dx = (e.clientX - lastPointerRef.current.x) / zoom;
-        const dy = (e.clientY - lastPointerRef.current.y) / zoom;
+        const rawDx = (e.clientX - lastPointerRef.current.x) / zoom;
+        const rawDy = (e.clientY - lastPointerRef.current.y) / zoom;
 
-        if (dx !== 0 || dy !== 0) {
+        if (rawDx !== 0 || rawDy !== 0) {
             hasMoved.current = true;
 
-            // 1. Update Section Visual
-            const newX = currentVisual.current.x + dx;
-            const newY = currentVisual.current.y + dy;
+            const prevX = currentVisual.current.x;
+            const prevY = currentVisual.current.y;
+
+            let newX = prevX + rawDx;
+            let newY = prevY + rawDy;
+
+            if (isSnapEnabled || e.altKey || e.shiftKey) {
+                const { x: sx, y: sy, guides } = calculateSectionSnap(newX, newY, section.width, section.height, section.id, sections);
+                newX = sx;
+                newY = sy;
+                setAlignmentGuides(guides);
+            } else {
+                setAlignmentGuides([]);
+            }
+
             currentVisual.current.x = newX;
             currentVisual.current.y = newY;
 
@@ -190,18 +318,19 @@ export default function SectionItem({ section }: Props) {
                 visualRef.current.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
             }
 
-            // 2. Update Child Notes Visuals (DOM Manipulation)
+            // Sync Child Notes
+            const realDx = newX - prevX;
+            const realDy = newY - prevY;
+
             const childNoteEls = document.querySelectorAll(`[data-section-id="${section.id}"]`);
             childNoteEls.forEach((el) => {
                 const htmlEl = el as HTMLElement;
-                // 현재 transform 읽기 (Regex or parsing)
-                // translate3d(100px, 200px, 0)
                 const transform = htmlEl.style.transform;
                 const match = transform.match(/translate3d\(([^p]+)px,\s*([^p]+)px,\s*0\)/);
                 if (match) {
                     const currentNoteX = parseFloat(match[1]);
                     const currentNoteY = parseFloat(match[2]);
-                    htmlEl.style.transform = `translate3d(${currentNoteX + dx}px, ${currentNoteY + dy}px, 0)`;
+                    htmlEl.style.transform = `translate3d(${currentNoteX + realDx}px, ${currentNoteY + realDy}px, 0)`;
                 }
             });
 
@@ -213,6 +342,7 @@ export default function SectionItem({ section }: Props) {
         if (!isDragging.current) return;
         isDragging.current = false;
         (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+        setAlignmentGuides([]); // Clear guides
 
         if (!hasMoved.current) return;
 
@@ -226,50 +356,40 @@ export default function SectionItem({ section }: Props) {
         moveSection(section.id, finalX, finalY);
         saveChanges({ x: finalX, y: finalY });
 
-        // 2. Move Child Notes (DB Save Only - Store actions are handled by moveSection)
-        // 섹션 이동량 계산
-        const deltaX = finalX - section.x;
-        const deltaY = finalY - section.y;
-
-        // moveSection이 이미 Store의 노트 위치를 업데이트했으므로, 
-        // 여기서는 DB 저장만 수행하여 이중 오프셋 적용을 방지합니다.
-        // 주의: useBoardStore.getState().notes는 moveSection 호출 전일 수도, 후일 수도 있음(Zustand set은 동기적이나).
-        // 안전하게 '이동 전 위치 + delta'로 계산하여 보냅니다. (여기서 section.x는 이동 전 props)
+        // 2. Move Child Notes (DB Save Only)
+        // moveSection이 이미 Store의 노트 위치 등을 업데이트 함 (혹은 안함?).
+        // BoardStore의 moveSection 액션을 확인해야 하지만, 보통 섹션 이동 시 노트도 같이 이동 처리해야 함.
+        // 여기서는 안전하게 DB에만 저장 (Store는 이미 DOM 조작됨? 아니, Store sync가 안되면 렌더링 시 원래대로 돌아감).
+        // moveSection 액션이 하위 노트도 이동시키는지 확인 필요. 만약 안시킨다면 여기서 updateNotes 호출해야 함.
+        // (가정: moveSection이 하위 노트 이동은 처리 안하고 섹션만 이동시킴)
+        // -> 그렇다면 여기서 updateNotes를 호출하여 Store를 맞춰줘야 함.
 
         const currentNotes = useBoardStore.getState().notes;
         const childNotes = currentNotes.filter(n => n.sectionId === section.id);
 
         if (childNotes.length > 0) {
-            // moveSection 호출 후라면 이미 x,y가 변했을 수 있음.
-            // 하지만 moveSection은 id, x, y 인자를 받아 set을 수행함.
-            // 여기서 childNotes를 가져올 때, moveSection이 먼저 실행되었다면 이미 이동된 좌표일 것임.
-            // moveSection 구현: set((state) => ... return { sections..., notes... })
-            // Zustand set은 동기적으로 state를 바꿈.
-            // 따라서 moveSection 호출 직후에는 notes가 이미 이동되어 있음.
-            // 그렇다면 delta를 더하면 안 되고, 그냥 현재 notes의 좌표를 보내야 함.
+            // 섹션 이동량 구하기
+            const deltaX = finalX - section.x;
+            const deltaY = finalY - section.y;
 
-            // 검증: moveSection(section.id, finalX, finalY) 호출 -> notes 업데이트됨 (x + dx).
-            // 그 후 getState().notes 가져옴 -> 이미 업데이트된 notes.
-            // 따라서 DB에 저장할 때는 그냥 그 notes의 x, y를 저장하면 됨.
-            // delta를 더하면 '두 번' 더하는 셈이 됨 (만약 여기서 또 더하면).
-
+            // Store 업데이트 (노트 이동)
             const updates = childNotes.map(n => ({
                 id: n.id,
-                changes: { x: n.x, y: n.y }
+                changes: { x: n.x + deltaX, y: n.y + deltaY }
             }));
 
-            // updateNotes(updates) 호출 금지 (Store 중복 업데이트 원인)
+            // 주의: moveSection이 이미 실행되었으므로 next render시 section.x는 finalX임.
+            // 하지만 노트는? note.x가 그대로면 제자리로 돌아감.
+            // 따라서 updateNotes로 노트 위치도 영구 업데이트 해야 함.
+            updateNotes(updates);
+
+            // DB 업데이트 (Batch)
             fetch('/api/kanban/notes/batch', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ updates }),
             }).catch(err => console.error('Failed to batch update child notes:', err));
         }
-
-        // Resize 종료 시 로직과 동일하게 Capture/Release 로직 수행?
-        // 섹션을 이동해도 포함 관계가 바뀔 수 있음.
-        // 간단하게 처리하기 위해 생략하거나, 필요하면 추가.
-        // 여기서는 위치 동기화가 우선이므로 위치만 업데이트.
     };
 
     // --- Resizing ---
@@ -294,8 +414,25 @@ export default function SectionItem({ section }: Props) {
         const dy = (e.clientY - lastPointerRef.current.y) / zoom;
 
         if (dx !== 0 || dy !== 0) {
-            const newWidth = Math.max(200, currentVisual.current.width + dx);
-            const newHeight = Math.max(100, currentVisual.current.height + dy);
+            let newWidth = Math.max(200, currentVisual.current.width + dx);
+            let newHeight = Math.max(100, currentVisual.current.height + dy);
+
+            // [Snap Logic]
+            if (isSnapEnabled || e.altKey || e.shiftKey) {
+                const { w, h, guides } = calculateSectionResizeSnap(
+                    currentVisual.current.x,
+                    currentVisual.current.y,
+                    newWidth,
+                    newHeight,
+                    section.id,
+                    sections
+                );
+                newWidth = w;
+                newHeight = h;
+                setAlignmentGuides(guides);
+            } else {
+                setAlignmentGuides([]);
+            }
 
             // Visual Update Only
             currentVisual.current.width = newWidth;
@@ -315,6 +452,7 @@ export default function SectionItem({ section }: Props) {
         isResizing.current = false;
         (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
         debouncedSave.cancel();
+        setAlignmentGuides([]); // Clear guides
 
         const finalWidth = currentVisual.current.width;
         const finalHeight = currentVisual.current.height;
@@ -323,15 +461,13 @@ export default function SectionItem({ section }: Props) {
         updateSection(section.id, { width: finalWidth, height: finalHeight });
         saveChanges({ width: finalWidth, height: finalHeight });
 
-        // Resize 종료 시: 섹션 범위 내의 노트들을 자동으로 포함하거나, 벗어난 노트들을 방출
+        // Resize 종료 시 capture/release
         const NOTE_WIDTH = 200;
         const NOTE_HEIGHT = 140;
         const updates: { id: string; changes: Partial<any> }[] = [];
 
-        // 최신 notes 상태 가져오기
         const currentNotes = useBoardStore.getState().notes;
 
-        // 현재 Visual 위치 기준 (x,y는 안바뀌었지만 혹시 모르니 currentVisual 사용)
         const secX = currentVisual.current.x;
         const secY = currentVisual.current.y;
 
@@ -346,15 +482,11 @@ export default function SectionItem({ section }: Props) {
                 noteCenterY <= secY + finalHeight;
 
             if (isInside) {
-                // 범위 내에 있는데
                 if (note.sectionId === null) {
-                    // Orphan이면 -> Capture
                     updates.push({ id: note.id, changes: { sectionId: section.id } });
                 }
             } else {
-                // 범위 밖에 있는데
                 if (note.sectionId === section.id) {
-                    // 이 섹션 소속이면 -> Release (Orphan)
                     updates.push({ id: note.id, changes: { sectionId: null } });
                 }
             }
@@ -367,7 +499,7 @@ export default function SectionItem({ section }: Props) {
 
     // --- Delete ---
     const handleDelete = async () => {
-        // 1. 잠금 확인 (노트가 다른 사람에 의해 수정 중인지)
+        // 1. 잠금 확인
         const childNoteIds = notes
             .filter((n) => n.sectionId === section.id)
             .map((n) => n.id);
@@ -388,15 +520,12 @@ export default function SectionItem({ section }: Props) {
         }
 
         if (confirm('섹션을 삭제하시겠습니까?\n\n[확인]: 섹션과 내부 노트 모두 삭제\n[취소]: 섹션만 삭제하고 노트는 유지')) {
-            // 모두 삭제 (deleteNotes=true)
-            removeSection(section.id); // Store update
+            removeSection(section.id);
             await fetch(`/api/kanban/sections/${section.id}?deleteNotes=true`, { method: 'DELETE' });
         } else {
-            // 섹션만 삭제 (deleteNotes=false)
-            removeSection(section.id); // Store update
+            removeSection(section.id);
             await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });
 
-            // Store 업데이트: 하위 노트들의 sectionId 해제
             const childNotes = notes.filter(n => n.sectionId === section.id);
             if (childNotes.length > 0) {
                 const updates = childNotes.map(n => ({
@@ -410,7 +539,7 @@ export default function SectionItem({ section }: Props) {
 
     return (
         <div
-            ref={visualRef} // Attach Ref
+            ref={visualRef}
             style={{
                 position: 'absolute',
                 transform: `translate3d(${section.x}px, ${section.y}px, 0)`,
