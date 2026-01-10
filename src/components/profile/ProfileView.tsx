@@ -208,6 +208,8 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ portfolioLinks: newLinks })
+            }).then(() => {
+                alert('포트폴리오가 저장되었습니다! 📂');
             }).catch(console.error);
         } else {
             alert('이미 추가된 링크입니다.');

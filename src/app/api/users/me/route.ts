@@ -77,7 +77,7 @@ export async function PATCH(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { introduction, techTags, position, career, status, socialLinks } = body;
+        const { introduction, techTags, position, career, status, socialLinks, portfolioLinks } = body;
 
         await dbConnect();
 
@@ -89,6 +89,7 @@ export async function PATCH(req: NextRequest) {
         if (career !== undefined) updateData.career = career;
         if (status !== undefined) updateData.status = status;
         if (socialLinks !== undefined) updateData.socialLinks = socialLinks;
+        if (portfolioLinks !== undefined) updateData.portfolioLinks = portfolioLinks;
         if (body.avatarUrl !== undefined) updateData.avatarUrl = body.avatarUrl;
 
         const updatedUser = await User.findByIdAndUpdate(

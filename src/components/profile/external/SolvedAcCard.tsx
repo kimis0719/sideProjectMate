@@ -241,6 +241,9 @@ export default function SolvedAcCard({ handle }: SolvedAcCardProps) {
             <Header>
                 <SolvedLogo src="https://static.solved.ac/logo.svg" alt="solved.ac" />
                 Solved.ac
+                <span style={{ fontSize: '0.875rem', fontWeight: 400, color: 'var(--muted-foreground)', marginLeft: 'auto' }}>
+                    {handle}
+                </span>
             </Header>
 
             <div className="flex flex-col items-center py-2">
