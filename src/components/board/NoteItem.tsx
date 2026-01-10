@@ -105,6 +105,126 @@ const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#
 const SNAP_THRESHOLD = 3;
 const GRID_SIZE = 10;
 
+// [Helper] Note Alignment Snap Calculation
+// 현재 이동 중인 노트와 다른 노트들 간의 정렬 위치를 계산하고 가이드라인 정보를 반환합니다.
+const calculateSnap = (
+  currX: number,
+  currY: number,
+  width: number,
+  height: number,
+  myId: string,
+  notes: Note[]
+) => {
+  const THRESHOLD = 5; // 5px 이내 접근 시 스냅
+  let snappedX = currX;
+  let snappedY = currY;
+  const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
+
+  let minDiffX = THRESHOLD + 1;
+  let minDiffY = THRESHOLD + 1;
+  let bestGuideX: number | null = null;
+  let bestGuideY: number | null = null;
+
+  const my = {
+    l: currX, c: currX + width / 2, r: currX + width,
+    t: currY, m: currY + height / 2, b: currY + height
+  };
+
+  notes.forEach((note) => {
+    if (note.id === myId) return;
+
+    const other = {
+      l: note.x, c: note.x + note.width / 2, r: note.x + note.width,
+      t: note.y, m: note.y + note.height / 2, b: note.y + note.height
+    };
+
+    // X-Axis Snap (Vertical Guides)
+    const checkX = (target: number) => {
+      // My Left -> Target
+      if (Math.abs(target - my.l) < minDiffX) { minDiffX = Math.abs(target - my.l); snappedX = target; bestGuideX = target; }
+      // My Center -> Target
+      if (Math.abs(target - my.c) < minDiffX) { minDiffX = Math.abs(target - my.c); snappedX = target - width / 2; bestGuideX = target; }
+      // My Right -> Target
+      if (Math.abs(target - my.r) < minDiffX) { minDiffX = Math.abs(target - my.r); snappedX = target - width; bestGuideX = target; }
+    };
+    [other.l, other.c, other.r].forEach(checkX);
+
+    // Y-Axis Snap (Horizontal Guides)
+    const checkY = (target: number) => {
+      // My Top
+      if (Math.abs(target - my.t) < minDiffY) { minDiffY = Math.abs(target - my.t); snappedY = target; bestGuideY = target; }
+      // My Middle
+      if (Math.abs(target - my.m) < minDiffY) { minDiffY = Math.abs(target - my.m); snappedY = target - height / 2; bestGuideY = target; }
+      // My Bottom
+      if (Math.abs(target - my.b) < minDiffY) { minDiffY = Math.abs(target - my.b); snappedY = target - height; bestGuideY = target; }
+    };
+    [other.t, other.m, other.b].forEach(checkY);
+  });
+
+  if (bestGuideX !== null) guides.push({ type: 'vertical', x: bestGuideX });
+  if (bestGuideY !== null) guides.push({ type: 'horizontal', y: bestGuideY });
+
+  return { x: snappedX, y: snappedY, guides };
+};
+
+// [Helper] Note Resize Snap Calculation
+const calculateResizeSnap = (
+  currX: number,
+  currY: number,
+  targetWidth: number,
+  targetHeight: number,
+  myId: string,
+  notes: Note[]
+) => {
+  const THRESHOLD = 5;
+  let snappedWidth = targetWidth;
+  let snappedHeight = targetHeight;
+  const guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[] = [];
+
+  // My Edges (Right and Bottom only for resize)
+  const myR = currX + targetWidth;
+  const myB = currY + targetHeight;
+
+  let minDiffX = THRESHOLD + 1;
+  let minDiffY = THRESHOLD + 1;
+  let bestGuideX: number | null = null;
+  let bestGuideY: number | null = null;
+
+  notes.forEach((note) => {
+    if (note.id === myId) return;
+
+    const other = {
+      l: note.x, c: note.x + note.width / 2, r: note.x + note.width,
+      t: note.y, m: note.y + note.height / 2, b: note.y + note.height
+    };
+
+    // X-Axis Match (My Right vs Other L/C/R)
+    const checkX = (target: number) => {
+      if (Math.abs(target - myR) < minDiffX) {
+        minDiffX = Math.abs(target - myR);
+        snappedWidth = target - currX;
+        bestGuideX = target;
+      }
+    };
+    [other.l, other.c, other.r].forEach(checkX);
+
+    // Y-Axis Match (My Bottom vs Other T/M/B)
+    const checkY = (target: number) => {
+      if (Math.abs(target - myB) < minDiffY) {
+        minDiffY = Math.abs(target - myB);
+        snappedHeight = target - currY;
+        bestGuideY = target;
+      }
+    };
+    [other.t, other.m, other.b].forEach(checkY);
+  });
+
+  if (bestGuideX !== null) guides.push({ type: 'vertical', x: bestGuideX });
+  if (bestGuideY !== null) guides.push({ type: 'horizontal', y: bestGuideY });
+
+  return { w: snappedWidth, h: snappedHeight, guides };
+};
+
 export default function NoteItem({
   id,
   x,
@@ -394,17 +514,31 @@ export default function NoteItem({
           let newWidth = currentVisual.current.width + dx;
           let newHeight = currentVisual.current.height + dy;
 
+          // [Snap Logic]
+          if (isSnapEnabled || e.altKey || e.shiftKey) {
+            const allNotes = useBoardStore.getState().notes;
+            const { w, h, guides } = calculateResizeSnap(
+              currentVisual.current.x,
+              currentVisual.current.y,
+              newWidth, newHeight,
+              id,
+              allNotes
+            );
+            newWidth = w;
+            newHeight = h;
+            setAlignmentGuides(guides);
+          } else {
+            setAlignmentGuides([]);
+          }
+
           newWidth = Math.min(Math.max(100, newWidth), MAX_WIDTH);
           newHeight = Math.min(Math.max(100, newHeight), MAX_HEIGHT);
 
-          // Direct DOM Manipulation (Undo Stack에 영향 X)
+          // Direct DOM Manipulation
           if (visualRef.current) {
             visualRef.current.style.width = `${newWidth}px`;
             visualRef.current.style.height = `${newHeight}px`;
           }
-          // Visual Ref 업데이트 (누적 되지 않음. delta는 매번 이전 프레임 대비가 아니라 start 기준이어야 정확한데..
-          // 아, 여기서 dx, dy는 이전 move 이벤트 대비 차이(delta)임.
-          // 따라서 currentVisual을 계속 갱신해줘야 함.
           currentVisual.current.width = newWidth;
           currentVisual.current.height = newHeight;
         }
@@ -418,9 +552,26 @@ export default function NoteItem({
           totalDragRef.current.x += dx;
           totalDragRef.current.y += dy;
 
-          // 단순 이동 (Visual Update Only)
-          const newX = currentVisual.current.x + dx;
-          const newY = currentVisual.current.y + dy;
+          // 이동할 새로운 좌표 계산
+          let newX = currentVisual.current.x + dx;
+          let newY = currentVisual.current.y + dy;
+
+          // [Snap Logic & Alignment Guides]
+          // 자석 모드(Snap)가 켜져있거나, Alt 또는 Shift 키를 누르고 있을 때 동작
+          // 빨간 줄(가이드라인)을 표시하고 근처 노트에 스냅됨
+          if (selectedNoteIds.length <= 1 && (isSnapEnabled || e.altKey || e.shiftKey)) {
+            const allNotes = useBoardStore.getState().notes;
+            const { x: sx, y: sy, guides } = calculateSnap(newX, newY, width, height, id, allNotes);
+
+            // 만약 가이드에 의한 스냅이 없으면, GRID 스냅 적용 (선택적)
+            // 여기서는 Alignment Snap을 우선시하고, 가이드가 없으면 Grid Snap 적용 가능하지 않음 (사용자 요구사항은 Alignment Snap)
+            // 따라서 Alignment 결과값을 바로 적용.
+            newX = sx;
+            newY = sy;
+            setAlignmentGuides(guides);
+          } else {
+            setAlignmentGuides([]);
+          }
 
           currentVisual.current.x = newX;
           currentVisual.current.y = newY;
@@ -429,7 +580,7 @@ export default function NoteItem({
             visualRef.current.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
           }
 
-          // 다중 선택된 노트들의 이동 처리 (DOM 조작)
+          // 다중 선택된 노트들의 이동 처리
           if (selectedNoteIds.length > 1 && isSelected) {
             selectedNoteIds.forEach(selectedId => {
               if (selectedId === id) return;
@@ -451,7 +602,7 @@ export default function NoteItem({
 
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
     },
-    [isEditing, isDragging, isResizing, zoom, width, height, id, selectedNoteIds, isSelected, isSelectionMode]
+    [isEditing, isDragging, isResizing, zoom, width, height, id, selectedNoteIds, isSelected, isSelectionMode, isSnapEnabled, setAlignmentGuides]
   );
 
   const onPointerUp = React.useCallback(
@@ -468,6 +619,7 @@ export default function NoteItem({
         updateNote(id, { width: finalWidth, height: finalHeight });
         debouncedSave.cancel(); // 중간 저장 취소
         saveChanges({ width: finalWidth, height: finalHeight }); // 최종 저장
+        setAlignmentGuides([]); // Clear Guides
         return;
       }
 
