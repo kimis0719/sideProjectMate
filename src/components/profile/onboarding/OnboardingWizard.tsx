@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import CommunicationStyleSlider from '@/components/profile/CommunicationStyleSlider';
 import AvailabilityScheduler from '@/components/profile/AvailabilityScheduler';
 import { useSession } from 'next-auth/react';
+import BlockEditor from '@/components/editor/BlockEditor';
 
 interface OnboardingWizardProps {
     initialData: any;
@@ -33,8 +34,13 @@ export default function OnboardingWizard({ initialData, onComplete }: Onboarding
     const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && tagInput.trim()) {
             e.preventDefault();
-            if (!techTags.includes(tagInput.trim())) {
-                setTechTags([...techTags, tagInput.trim()]);
+            const newTag = tagInput.trim();
+            if (newTag.length > 20) {
+                alert('기술 태그는 20자 이내여야 합니다!');
+                return;
+            }
+            if (!techTags.includes(newTag)) {
+                setTechTags([...techTags, newTag]);
             }
             setTagInput('');
         }
@@ -175,12 +181,13 @@ export default function OnboardingWizard({ initialData, onComplete }: Onboarding
 
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-muted-foreground">간단 자기소개</label>
-                                <textarea
-                                    value={introduction}
-                                    onChange={(e) => setIntroduction(e.target.value)}
-                                    placeholder="자신을 표현하는 멋진 소개글을 작성해주세요!"
-                                    className="w-full p-3 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary focus:outline-none min-h-[120px]"
-                                />
+                                <div className="border border-input rounded-lg overflow-hidden min-h-[300px]">
+                                    <BlockEditor
+                                        content={introduction}
+                                        onChange={setIntroduction}
+                                        editable={true}
+                                    />
+                                </div>
                             </div>
                         </div>
                     )}

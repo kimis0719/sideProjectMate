@@ -16,6 +16,10 @@ export default function SkillSection({ techTags = [], githubVerifiedTags = [], o
     const handleAddManualTag = () => {
         if (newTag.trim()) {
             const tagToAdd = newTag.trim();
+            if (tagToAdd.length > 20) {
+                alert('기술 스택은 20자 이내로 입력해주세요. 😅');
+                return;
+            }
             if (!techTags.includes(tagToAdd)) {
                 const updatedTags = [...techTags, tagToAdd];
                 onUpdateTags?.(updatedTags);

@@ -99,7 +99,7 @@ export default function StatusDashboard({ status = '구직중', user, isEditing,
                             </div>
                         </div>
                         <div>
-                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Blog URL</label>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Blog URL (Velog, Tistory)</label>
                             <div className="flex gap-2">
                                 <input
                                     type="url"
