@@ -48,6 +48,7 @@ const OFFSET_CYCLE = 8;
 
 type BoardState = {
   boardId: string | null;
+  pid: number | null;
   notes: Note[];
   sections: Section[];
   zoom: number;
@@ -60,11 +61,14 @@ type BoardState = {
   alignmentGuides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[];
   lockedNotes: Record<string, { userId: string; socketId: string }>;
   lockedSections: Record<string, { userId: string; socketId: string }>;
+  currentUserId: string | null;
+  peerSelections: Record<string, { userId: string; color: string; socketId: string }[]>;
 
   // Actions
   initBoard: (pid: number) => Promise<void>;
   fetchMembers: (boardId: string) => Promise<void>;
   initSocket: () => void;
+  setCurrentUserId: (id: string) => void;
   addNote: (containerWidth?: number, containerHeight?: number) => Promise<void>;
   moveNote: (id: string, x: number, y: number) => void;
   moveNotes: (ids: string[], dx: number, dy: number) => void;
@@ -119,6 +123,7 @@ export const useBoardStore = create<BoardState>()(
         sections: [],
         members: [],
         boardId: null,
+        pid: null,
         scale: 1,
         pan: { x: 0, y: 0 },
         zoom: 1,
@@ -129,6 +134,8 @@ export const useBoardStore = create<BoardState>()(
         alignmentGuides: [],
         lockedNotes: {},
         lockedSections: {},
+        currentUserId: null,
+        peerSelections: {},
         isSnapEnabled: false,
         isSelectionMode: false,
 
@@ -136,7 +143,7 @@ export const useBoardStore = create<BoardState>()(
         toggleSelectionMode: () => set((state) => ({ isSelectionMode: !state.isSelectionMode })),
 
         initBoard: async (pid) => {
-          set({ notes: [], sections: [], boardId: null, selectedNoteIds: [], members: [] });
+          set({ notes: [], sections: [], boardId: null, selectedNoteIds: [], members: [], pid });
           try {
             // 1. Board ID 조회
             const boardRes = await fetch(`/api/kanban/boards?pid=${pid}`);
@@ -197,6 +204,7 @@ export const useBoardStore = create<BoardState>()(
             console.error('Failed to fetch members:', error);
           }
         },
+        setCurrentUserId: (id) => set({ currentUserId: id }),
 
         initSocket: () => {
           const { boardId } = get();
@@ -283,6 +291,35 @@ export const useBoardStore = create<BoardState>()(
             set(state => ({
               sections: state.sections.filter(s => s.id !== sectionId)
             }));
+          });
+
+          // Peer Selection
+          socket.off('note-selected');
+          socket.on('note-selected', (data: { noteIds: string[]; userId: string; color: string; socketId: string }) => {
+            set((state) => {
+              const newPeerSelections = { ...state.peerSelections };
+              Object.keys(newPeerSelections).forEach(key => {
+                newPeerSelections[key] = newPeerSelections[key].filter(s => s.socketId !== data.socketId);
+                if (newPeerSelections[key].length === 0) delete newPeerSelections[key];
+              });
+              data.noteIds.forEach(id => {
+                if (!newPeerSelections[id]) newPeerSelections[id] = [];
+                newPeerSelections[id].push({ userId: data.userId, color: data.color, socketId: data.socketId });
+              });
+              return { peerSelections: newPeerSelections };
+            });
+          });
+
+          socket.off('note-deselected');
+          socket.on('note-deselected', (data: { userId: string; socketId: string }) => {
+            set((state) => {
+              const newPeerSelections = { ...state.peerSelections };
+              Object.keys(newPeerSelections).forEach(key => {
+                newPeerSelections[key] = newPeerSelections[key].filter(s => s.socketId !== data.socketId);
+                if (newPeerSelections[key].length === 0) delete newPeerSelections[key];
+              });
+              return { peerSelections: newPeerSelections };
+            });
           });
 
           // [Undo/Redo Sync]
@@ -546,6 +583,35 @@ export const useBoardStore = create<BoardState>()(
               socket.emit('update-note', { boardId, note: updatedNote });
             }
 
+            // Notification Logic for Assignee
+            if (patch.assigneeId) {
+              const { currentUserId, pid } = get();
+              if (currentUserId && patch.assigneeId !== currentUserId) {
+                // API Call to create notification
+                fetch('/api/notifications', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    recipientId: patch.assigneeId,
+                    type: 'assign_note',
+                    projectPid: pid,
+                    metadata: { noteId: id }
+                  })
+                }).catch(err => console.error('Failed to send notification:', err));
+
+                // Socket Emit
+                if (boardId) {
+                  const socket = socketClient.connect();
+                  socket.emit('send-notification', {
+                    targetUserId: patch.assigneeId,
+                    type: 'assign_note',
+                    projectPid: pid,
+                    noteId: id
+                  });
+                }
+              }
+            }
+
             return {
               notes: state.notes.map((n) => (n.id === id ? updatedNote : n)),
             };
@@ -584,18 +650,56 @@ export const useBoardStore = create<BoardState>()(
 
         selectNote: (id, multi) =>
           set((state) => {
-            if (!id) return { selectedNoteIds: [] };
-            if (multi) {
-              return {
-                selectedNoteIds: state.selectedNoteIds.includes(id)
-                  ? state.selectedNoteIds.filter((sid) => sid !== id)
-                  : [...state.selectedNoteIds, id],
-              };
+            let newSelectedIds: string[];
+            if (!id) {
+              newSelectedIds = [];
+            } else if (multi) {
+              newSelectedIds = state.selectedNoteIds.includes(id)
+                ? state.selectedNoteIds.filter((sid) => sid !== id)
+                : [...state.selectedNoteIds, id];
+            } else {
+              newSelectedIds = [id];
             }
-            return { selectedNoteIds: [id] };
+
+            const { boardId, currentUserId } = get();
+            if (boardId && currentUserId) {
+              const socket = socketClient.connect();
+              if (newSelectedIds.length > 0) {
+                let hash = 0;
+                for (let i = 0; i < currentUserId.length; i++) {
+                  hash = currentUserId.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+                const color = '#' + '00000'.substring(0, 6 - c.length) + c;
+
+                socket.emit('select-note', { boardId, noteIds: newSelectedIds, userId: currentUserId, color });
+              } else {
+                socket.emit('deselect-note', { boardId, userId: currentUserId });
+              }
+            }
+
+            return { selectedNoteIds: newSelectedIds };
           }),
 
-        selectNotes: (ids) => set({ selectedNoteIds: ids }),
+        selectNotes: (ids) => {
+          set({ selectedNoteIds: ids });
+          const { boardId, currentUserId } = get();
+          if (boardId && currentUserId) {
+            const socket = socketClient.connect();
+            if (ids.length > 0) {
+              let hash = 0;
+              for (let i = 0; i < currentUserId.length; i++) {
+                hash = currentUserId.charCodeAt(i) + ((hash << 5) - hash);
+              }
+              const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+              const color = '#' + '00000'.substring(0, 6 - c.length) + c;
+
+              socket.emit('select-note', { boardId, noteIds: ids, userId: currentUserId, color });
+            } else {
+              socket.emit('deselect-note', { boardId, userId: currentUserId });
+            }
+          }
+        },
         setOpenPaletteNoteId: (id) => set({ openPaletteNoteId: id }),
         setZoom: (z) => set({ zoom: z }),
         setPan: (x, y) => set({ pan: { x, y } }),
@@ -685,35 +789,39 @@ export const useBoardStore = create<BoardState>()(
         },
 
         moveSection: (id, x, y) => {
-          const { boardId } = get();
-          set((state) => {
-            const section = state.sections.find((s) => s.id === id);
-            if (!section) return state;
+          const { boardId, sections, notes } = get();
+          const section = sections.find((s) => s.id === id);
+          if (!section) return;
 
-            const dx = x - section.x;
-            const dy = y - section.y;
+          const dx = x - section.x;
+          const dy = y - section.y;
 
-            const newSections = state.sections.map((s) => (s.id === id ? { ...s, x, y } : s));
+          if (dx === 0 && dy === 0) return;
 
-            const newNotes = state.notes.map((n) => {
-              if (n.sectionId?.toString() === id) {
-                return { ...n, x: n.x + dx, y: n.y + dy };
-              }
-              return n;
-            });
+          const updatedSection = { ...section, x, y };
+          const newSections = sections.map((s) => (s.id === id ? updatedSection : s));
 
-            if (boardId) {
-              const socket = socketClient.connect();
-              newSections.forEach(section => {
-                socket.emit('update-section', { boardId, section });
-              })
-              newNotes.forEach(note => {
-                socket.emit('update-note', { boardId, note });
-              })
+          // 섹션 내 노트들을 함께 이동
+          const affectedNotes: Note[] = [];
+          const newNotes = notes.map((n) => {
+            if (n.sectionId?.toString() === id) {
+              const updatedNote = { ...n, x: n.x + dx, y: n.y + dy };
+              affectedNotes.push(updatedNote);
+              return updatedNote;
             }
-
-            return { sections: newSections, notes: newNotes };
+            return n;
           });
+
+          set({ sections: newSections, notes: newNotes });
+
+          // 실시간 브로드캐스트 (변경된 항목만)
+          if (boardId) {
+            const socket = socketClient.connect();
+            socket.emit('update-section', { boardId, section: updatedSection });
+            affectedNotes.forEach(note => {
+              socket.emit('update-note', { boardId, note });
+            });
+          }
         },
 
         lockNote: (noteId, userId) => {

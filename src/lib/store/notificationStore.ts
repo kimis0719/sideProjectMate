@@ -4,9 +4,10 @@ import { create } from 'zustand';
 interface Notification {
   _id: string;
   sender: { nName: string };
-  type: 'new_applicant' | 'application_accepted' | 'application_rejected';
+  type: 'new_applicant' | 'application_accepted' | 'application_rejected' | 'assign_note';
   project: { title: string, pid: number };
   read: boolean;
+  metadata?: { noteId?: string };
   createdAt: string;
 }
 

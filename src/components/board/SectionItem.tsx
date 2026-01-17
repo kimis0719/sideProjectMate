@@ -161,6 +161,7 @@ export default function SectionItem({ section }: Props) {
         moveSection,
         updateSection,
         removeSection,
+        removeNotes,
         zoom,
         moveNotes,
         notes,
@@ -178,6 +179,7 @@ export default function SectionItem({ section }: Props) {
         moveSection: s.moveSection,
         updateSection: s.updateSection,
         removeSection: s.removeSection,
+        removeNotes: s.removeNotes,
         zoom: s.zoom,
         moveNotes: s.moveNotes,
         notes: s.notes,
@@ -346,44 +348,29 @@ export default function SectionItem({ section }: Props) {
 
         if (!hasMoved.current) return;
 
-        // 드래그 종료 시: 섹션 위치 저장 + 하위 노트 위치 저장 (Undo 1회)
+        // 드래그 종료 시: 섹션 위치 저장 + 하위 노트 위치 저장
         debouncedSave.cancel();
 
         const finalX = currentVisual.current.x;
         const finalY = currentVisual.current.y;
 
-        // 1. Move Section (Store Update)
+        const deltaX = finalX - section.x;
+        const deltaY = finalY - section.y;
+
+        // 1. Move Section (Store Update - 하위 노트 이동 포함됨)
         moveSection(section.id, finalX, finalY);
         saveChanges({ x: finalX, y: finalY });
 
         // 2. Move Child Notes (DB Save Only)
-        // moveSection이 이미 Store의 노트 위치 등을 업데이트 함 (혹은 안함?).
-        // BoardStore의 moveSection 액션을 확인해야 하지만, 보통 섹션 이동 시 노트도 같이 이동 처리해야 함.
-        // 여기서는 안전하게 DB에만 저장 (Store는 이미 DOM 조작됨? 아니, Store sync가 안되면 렌더링 시 원래대로 돌아감).
-        // moveSection 액션이 하위 노트도 이동시키는지 확인 필요. 만약 안시킨다면 여기서 updateNotes 호출해야 함.
-        // (가정: moveSection이 하위 노트 이동은 처리 안하고 섹션만 이동시킴)
-        // -> 그렇다면 여기서 updateNotes를 호출하여 Store를 맞춰줘야 함.
-
-        const currentNotes = useBoardStore.getState().notes;
-        const childNotes = currentNotes.filter(n => n.sectionId === section.id);
+        const childNotes = notes.filter(n => n.sectionId === section.id);
 
         if (childNotes.length > 0) {
-            // 섹션 이동량 구하기
-            const deltaX = finalX - section.x;
-            const deltaY = finalY - section.y;
-
-            // Store 업데이트 (노트 이동)
             const updates = childNotes.map(n => ({
                 id: n.id,
                 changes: { x: n.x + deltaX, y: n.y + deltaY }
             }));
 
-            // 주의: moveSection이 이미 실행되었으므로 next render시 section.x는 finalX임.
-            // 하지만 노트는? note.x가 그대로면 제자리로 돌아감.
-            // 따라서 updateNotes로 노트 위치도 영구 업데이트 해야 함.
-            updateNotes(updates);
-
-            // DB 업데이트 (Batch)
+            // DB 업데이트 (Batch) - Store는 moveSection에서 이미 업데이트됨
             fetch('/api/kanban/notes/batch', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -520,8 +507,14 @@ export default function SectionItem({ section }: Props) {
         }
 
         if (confirm('섹션을 삭제하시겠습니까?\n\n[확인]: 섹션과 내부 노트 모두 삭제\n[취소]: 섹션만 삭제하고 노트는 유지')) {
+            // Notes Deletion (Store + DB + Socket)
+            if (childNoteIds.length > 0) {
+                removeNotes(childNoteIds);
+            }
+            // Section Deletion (Store + Socket)
             removeSection(section.id);
-            await fetch(`/api/kanban/sections/${section.id}?deleteNotes=true`, { method: 'DELETE' });
+            // Section Deletion (DB) - deleteNotes=false because we handled it via removeNotes
+            await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });
         } else {
             removeSection(section.id);
             await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });

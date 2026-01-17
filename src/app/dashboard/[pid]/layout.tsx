@@ -1,8 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+
+interface ProjectMember {
+    userId: { _id: string };
+    role: string;
+    status: string;
+}
+
+interface ProjectData {
+    _id: string;
+    author: { _id: string };
+    projectMembers: ProjectMember[];
+}
 
 export default function DashboardLayout({
     children,
@@ -17,14 +30,74 @@ export default function DashboardLayout({
     // Helper to check active link
     const isActive = (path: string) => pathname === path;
 
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+    const router = useRouter();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { data: session, status } = useSession();
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null); // null: loading
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     // Close sidebar when path changes (mobile)
-    React.useEffect(() => {
+    useEffect(() => {
         setIsSidebarOpen(false);
     }, [pathname]);
+
+    // Access Control Check
+    useEffect(() => {
+        const checkAccess = async () => {
+            if (status === 'loading') return;
+            if (status === 'unauthenticated') {
+                router.replace('/');
+                return;
+            }
+
+            if (session?.user?.id) {
+                try {
+                    const res = await fetch(`/api/projects/${pid}`);
+                    if (!res.ok) {
+                        router.replace('/');
+                        return;
+                    }
+                    const data = await res.json();
+                    if (!data.success || !data.data) {
+                        router.replace('/');
+                        return;
+                    }
+
+                    const project = data.data as ProjectData;
+                    const userId = session.user.id;
+                    const isAuthor = project.author._id === userId;
+                    const isMember = project.projectMembers.some(
+                        (m) => m.userId._id === userId && m.status === 'active'
+                    );
+
+                    if (isAuthor || isMember) {
+                        setIsAuthorized(true);
+                    } else {
+                        setIsAuthorized(false);
+                        router.replace('/');
+                    }
+                } catch (error) {
+                    console.error('Failed to check access:', error);
+                    router.replace('/');
+                }
+            }
+        };
+
+        checkAccess();
+    }, [pid, session, status, router]);
+
+    if (status === 'loading' || isAuthorized === null) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-background">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (isAuthorized === false) {
+        return null; // Redirecting...
+    }
 
     return (
         <div className="flex h-[calc(100vh-64px)] relative"> {/* Header height assumed 64px */}

@@ -8,6 +8,8 @@ import Minimap from '@/components/board/Minimap';
 import ShortcutHandler from '@/components/board/ShortcutHandler';
 import ZoomController from '@/components/board/ZoomController';
 import ShortcutModal from '@/components/board/ShortcutModal';
+import { useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 /**
  * 임시로 사용할 공용 보드의 프로젝트 ID.
@@ -47,6 +49,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     isSelectionMode,
     toggleSnap,
     toggleSelectionMode,
+    setCurrentUserId,
   } = useBoardStore((s) => ({
     notes: s.notes,
     sections: s.sections,
@@ -68,7 +71,10 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     isSelectionMode: s.isSelectionMode,
     toggleSnap: s.toggleSnap,
     toggleSelectionMode: s.toggleSelectionMode,
+    setCurrentUserId: s.setCurrentUserId,
   }));
+  const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const notesCount = notes.length;
 
   // 현재 보드의 ID를 결정합니다. pid가 유효하면 해당 pid를, 그렇지 않으면 임시 ID를 사용합니다.
@@ -76,14 +82,60 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
   const containerRef = React.useRef<HTMLDivElement>(null);
 
+  const isMounted = React.useRef(false);
+
   // 컴포넌트 마운트 시 또는 boardPid가 변경될 때 서버에서 보드와 노트 데이터를 불러옵니다.
   React.useEffect(() => {
     initBoard(boardPid).then(() => {
+      isMounted.current = true;
       if (containerRef.current) {
-        fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
+        // 초기 로드 시 fitToContent 호출 (searchParams 없을 때만)
+        if (!searchParams?.get('noteId')) {
+          fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
+        }
       }
     });
-  }, [boardPid, initBoard, fitToContent]);
+  }, [boardPid, initBoard, fitToContent, searchParams]);
+
+  // Set current user ID
+  React.useEffect(() => {
+    if (session?.user?.id) {
+      setCurrentUserId(session.user.id);
+    }
+  }, [session, setCurrentUserId]);
+
+  // Handle Note Highlight & Center
+  const handledNoteIdRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    const noteId = searchParams?.get('noteId');
+    // Only run if mounted and notes are loaded
+    if (isMounted.current && noteId && notes.length > 0 && containerRef.current) {
+      // 이미 처리된 noteId라면 건너뛰기
+      if (handledNoteIdRef.current === noteId) return;
+
+      const targetNote = notes.find((n) => n.id === noteId);
+      if (targetNote) {
+        selectNote(noteId);
+
+        // Center note
+        const containerW = containerRef.current.clientWidth;
+        const containerH = containerRef.current.clientHeight;
+        const noteCenterX = targetNote.x + (targetNote.width || 200) / 2;
+        const noteCenterY = targetNote.y + (targetNote.height || 140) / 2;
+
+        const newZoom = 1;
+        const newPanX = -noteCenterX * newZoom + containerW / 2;
+        const newPanY = -noteCenterY * newZoom + containerH / 2;
+
+        setZoom(newZoom);
+        setPan(newPanX, newPanY);
+
+        // 처리 완료 표시
+        handledNoteIdRef.current = noteId;
+      }
+    }
+  }, [searchParams, notes, selectNote, setZoom, setPan]);
 
   // 키보드 이벤트를 처리하는 useEffect 훅
   React.useEffect(() => {
@@ -599,7 +651,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         </svg>
 
         {/* 미니맵 */}
-        <div className="absolute bottom-4 right-4 z-50">
+        <div className="absolute bottom-4 right-4 z-[10000]">
           <Minimap
             notes={notes}
             sections={sections}
@@ -612,7 +664,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         </div>
 
         {/* 줌 컨트롤 (통합형) */}
-        <div className="absolute bottom-6 left-6 z-50">
+        <div className="absolute bottom-6 left-6 z-[10000]">
           <ZoomController
             onFit={() => {
               if (containerRef.current) {

@@ -258,6 +258,7 @@ export default function NoteItem({
     unlockNote,
     isSnapEnabled,
     isSelectionMode,
+    peerSelections,
   } = useBoardStore((s) => ({
     moveNote: s.moveNote,
     moveNotes: s.moveNotes,
@@ -276,6 +277,7 @@ export default function NoteItem({
     unlockNote: s.unlockNote,
     isSnapEnabled: s.isSnapEnabled,
     isSelectionMode: s.isSelectionMode,
+    peerSelections: s.peerSelections,
   }));
 
   const { data: session } = useSession();
@@ -316,6 +318,10 @@ export default function NoteItem({
   const lockedByUser = isLockedByOther ? members.find(m => m._id === lockInfo.userId) : null;
   const lockedByName = lockedByUser ? lockedByUser.nName : (lockInfo?.userId || 'Unknown');
   const lockedColor = lockInfo ? stringToColor(lockInfo.userId) : '#EF4444';
+
+  const peerSelection = peerSelections && peerSelections[id] ? peerSelections[id].find(s => s.socketId !== socketClient.socket?.id) : null;
+  const isPeerSelected = !!peerSelection;
+  const peerColor = peerSelection ? peerSelection.color : 'transparent';
 
   // --- 서버 저장 로직 ---
   const saveChanges = React.useCallback(
@@ -440,8 +446,8 @@ export default function NoteItem({
     }
 
     // 2. Calculate Total Height
-    const PADDING_TOP = 32;
-    const PADDING_BOTTOM = 32;
+    const PADDING_TOP = 28;
+    const PADDING_BOTTOM = 8;
     const FOOTER_HEIGHT = 48;
 
     const tagsH = tagsRef.current ? tagsRef.current.offsetHeight : 0;
@@ -776,8 +782,8 @@ export default function NoteItem({
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
-        borderWidth: isLockedByOther ? 3 : 2,
-        borderColor: isLockedByOther ? lockedColor : (isSelected ? '#3B82F6' : 'transparent'),
+        borderWidth: isLockedByOther ? 3 : (isSelected || isPeerSelected ? 2 : 0),
+        borderColor: isLockedByOther ? lockedColor : (isSelected ? '#3B82F6' : (isPeerSelected ? peerColor : 'transparent')),
         opacity: isTempNote ? 0.7 : 1,
         zIndex: isSelected ? 9999 : zIndex,
         pointerEvents: isLockedByOther ? 'none' : 'auto',
@@ -799,184 +805,205 @@ export default function NoteItem({
           borderRadius: '4px 4px 4px 0',
           zIndex: 100,
           whiteSpace: 'nowrap',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
         }}>
-          {lockedByName}
+          {lockedByName}님이 편집 중
         </div>
       )}
 
+      {/* Peer Selection Indicator */}
+      {!isLockedByOther && isPeerSelected && (
+        <div style={{
+          position: 'absolute',
+          top: -10,
+          right: -2,
+          background: peerColor,
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          border: '2px solid white',
+          zIndex: 100,
+          boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+        }} title="다른 사용자가 선택 중" />
+      )}
+
+
       {/* Settings Popover */}
-      {isPaletteOpen && (
-        <div
-          className="flex flex-col gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-xl z-20 border border-gray-100 dark:border-gray-700"
-          style={{
-            position: 'absolute',
-            top: 40,
-            right: -240,
-            width: 240,
-            cursor: 'default',
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          {/* 1. 색상 선택 */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">색상</div>
-            <div className="flex gap-2 flex-wrap">
-              {COLOR_PALETTE.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => changeColor(c)}
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    background: c,
-                    border: c === color ? '2px solid #3B82F6' : '1px solid rgba(0,0,0,0.1)',
-                    cursor: 'pointer',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 2. 담당자 설정 */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">담당자</div>
-            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-              {members.length > 0 ? (
-                members.map((member) => (
+      {
+        isPaletteOpen && (
+          <div
+            className="flex flex-col gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-xl z-20 border border-gray-100 dark:border-gray-700"
+            style={{
+              position: 'absolute',
+              top: 40,
+              right: -240,
+              width: 240,
+              cursor: 'default',
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {/* 1. 색상 선택 */}
+            <div>
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">색상</div>
+              <div className="flex gap-2 flex-wrap">
+                {COLOR_PALETTE.map((c) => (
                   <button
-                    key={member._id}
-                    onClick={() => {
-                      updateNote(id, { assigneeId: member._id });
-                      saveChanges({ assigneeId: member._id });
+                    key={c}
+                    type="button"
+                    onClick={() => changeColor(c)}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      background: c,
+                      border: c === color ? '2px solid #3B82F6' : '1px solid rgba(0,0,0,0.1)',
+                      cursor: 'pointer',
                     }}
-                    className={`flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors border ${assigneeId === member._id ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800' : 'hover:bg-gray-50 border-transparent dark:hover:bg-gray-700'}`}
-                  >
-                    {member.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={member.avatarUrl} alt={member.nName} className="w-5 h-5 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
-                        {member.nName[0]}
-                      </div>
-                    )}
-                    <span className={`text-xs ${assigneeId === member._id ? 'font-semibold text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
-                      {member.nName}
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="text-xs text-gray-400">멤버가 없습니다.</div>
-              )}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* 3. 태그 설정 */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">태그</div>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {tags.map((tag) => (
-                <span key={tag} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs flex items-center gap-1 text-gray-700 dark:text-gray-200">
-                  #{tag}
-                  <button
-                    onClick={() => {
-                      const newTags = tags.filter(t => t !== tag);
+            {/* 2. 담당자 설정 */}
+            <div>
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">담당자</div>
+              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                {members.length > 0 ? (
+                  members.map((member) => (
+                    <button
+                      key={member._id}
+                      onClick={() => {
+                        updateNote(id, { assigneeId: member._id });
+                        saveChanges({ assigneeId: member._id });
+                      }}
+                      className={`flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors border ${assigneeId === member._id ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800' : 'hover:bg-gray-50 border-transparent dark:hover:bg-gray-700'}`}
+                    >
+                      {member.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={member.avatarUrl} alt={member.nName} className="w-5 h-5 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                          {member.nName[0]}
+                        </div>
+                      )}
+                      <span className={`text-xs ${assigneeId === member._id ? 'font-semibold text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                        {member.nName}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-xs text-gray-400">멤버가 없습니다.</div>
+                )}
+              </div>
+            </div>
+
+            {/* 3. 태그 설정 */}
+            <div>
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">태그</div>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {tags.map((tag) => (
+                  <span key={tag} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs flex items-center gap-1 text-gray-700 dark:text-gray-200">
+                    #{tag}
+                    <button
+                      onClick={() => {
+                        const newTags = tags.filter(t => t !== tag);
+                        updateNote(id, { tags: newTags });
+                        saveChanges({ tags: newTags });
+                      }}
+                      className="hover:text-red-500 ml-1"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <input
+                type="text"
+                placeholder="태그 입력 후 Enter"
+                className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = tagInput.trim();
+                    if (val && !tags.includes(val)) {
+                      const newTags = [...tags, val];
                       updateNote(id, { tags: newTags });
                       saveChanges({ tags: newTags });
-                    }}
-                    className="hover:text-red-500 ml-1"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-            <input
-              type="text"
-              placeholder="태그 입력 후 Enter"
-              className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const val = tagInput.trim();
-                  if (val && !tags.includes(val)) {
-                    const newTags = [...tags, val];
-                    updateNote(id, { tags: newTags });
-                    saveChanges({ tags: newTags });
-                    setTagInput('');
+                      setTagInput('');
+                    }
                   }
-                }
-              }}
-            />
-          </div>
-
-          {/* 4. 마감일 설정 (Input Style Change for clickable area) */}
-          <div>
-            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">마감일</div>
-            <div className="relative">
-              <input
-                type="date"
-                className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 cursor-pointer"
-                style={{ minHeight: '32px' }} // 높이 확보
-                value={dueDate ? toInputDate(dueDate) : ''}
-                onChange={(e) => {
-                  const date = e.target.value ? new Date(e.target.value) : undefined;
-                  updateNote(id, { dueDate: date });
-                  saveChanges({ dueDate: date });
                 }}
               />
             </div>
+
+            {/* 4. 마감일 설정 (Input Style Change for clickable area) */}
+            <div>
+              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">마감일</div>
+              <div className="relative">
+                <input
+                  type="date"
+                  className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 cursor-pointer"
+                  style={{ minHeight: '32px' }} // 높이 확보
+                  value={dueDate ? toInputDate(dueDate) : ''}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : undefined;
+                    updateNote(id, { dueDate: date });
+                    saveChanges({ dueDate: date });
+                  }}
+                />
+              </div>
+            </div>
+
+            <hr className="border-gray-100 dark:border-gray-700" />
+
+            {/* 5. 삭제 버튼 */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isTempNote) removeNote(id);
+              }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+            >
+              <span>🗑️ 노트 삭제</span>
+            </button>
+
           </div>
-
-          <hr className="border-gray-100 dark:border-gray-700" />
-
-          {/* 5. 삭제 버튼 */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!isTempNote) removeNote(id);
-            }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-          >
-            <span>🗑️ 노트 삭제</span>
-          </button>
-
-        </div>
-      )}
+        )
+      }
 
       {/* Done Button for Mobile Editing - Top Center */}
-      {isEditing && (
-        <button
-          type="button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            saveEdit();
-          }}
-          style={{
-            position: 'absolute',
-            top: -36,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 100,
-            backgroundColor: '#3B82F6',
-            color: 'white',
-            padding: '4px 12px',
-            borderRadius: 16,
-            fontSize: 13,
-            fontWeight: 600,
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          완료
-        </button>
-      )}
+      {
+        isEditing && (
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              saveEdit();
+            }}
+            style={{
+              position: 'absolute',
+              top: -36,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 100,
+              backgroundColor: '#3B82F6',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: 16,
+              fontSize: 13,
+              fontWeight: 600,
+              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            완료
+          </button>
+        )
+      }
 
       {/* Settings Button */}
       <button
@@ -1009,37 +1036,55 @@ export default function NoteItem({
 
       {/* Main Content Area */}
       <div
-        className="flex-1 flex flex-col pt-8 pb-8 px-4"
+        className="flex-1 flex flex-col pt-7 pb-2 px-4"
         ref={contentRef}
         style={{ overflow: 'hidden' }}
       >
         {isEditing ? (
-          <textarea
-            ref={textareaRef}
-            defaultValue={text}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              // 높이 자동 조절 트리거 (LayoutEffect가 감지)
-              // (state인 draft가 바뀌므로 effect 실행됨)
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              height: '100%',
-              resize: 'none',
-              outline: 'none',
-              background: 'transparent',
-              fontSize: 14,
-              lineHeight: 1.5,
-              color: '#111827',
-              overflow: 'hidden',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-              padding: 0,
-              margin: 0,
-              border: 'none',
-            }}
-          />
+          <>
+            <textarea
+              ref={textareaRef}
+              defaultValue={text}
+              maxLength={2000}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                // 높이 자동 조절 트리거 (LayoutEffect가 감지)
+                // (state인 draft가 바뀌므로 effect 실행됨)
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                height: '100%',
+                resize: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontSize: 14,
+                lineHeight: 1.5,
+                color: '#111827',
+                overflow: 'hidden',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+                padding: 0,
+                margin: 0,
+                border: 'none',
+              }}
+            />
+            <div style={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              fontSize: 10,
+              color: draft.length > 1900 ? '#EF4444' : '#9CA3AF',
+              pointerEvents: 'none',
+              zIndex: 10,
+              fontWeight: 600,
+              backgroundColor: 'rgba(255,255,255,0.7)',
+              padding: '2px 4px',
+              borderRadius: 4
+            }}>
+              {draft.length}/2000
+            </div>
+          </>
         ) : (
           <div className="prose prose-sm max-w-none text-gray-900 select-text pointer-events-auto cursor-text text-sm break-all whitespace-pre-wrap leading-relaxed">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -1094,26 +1139,28 @@ export default function NoteItem({
       </div>
 
       {/* Resize Handle (Bottom-Right) */}
-      {!isEditing && !isLockedByOther && (
-        <div
-          onPointerDown={onResizePointerDown}
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            width: 20,
-            height: 20,
-            cursor: 'nwse-resize',
-            zIndex: 50, // More than content
-          }}
-        >
-          {/* 시각적 핸들 아이콘 (Optional) */}
-          <svg width="100%" height="100%" viewBox="0 0 20 20" fill="none">
-            <path d="M14 14L20 20" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
-            <path d="M10 18L18 10" stroke="rgba(0,0,0,0.1)" strokeWidth="2" />
-          </svg>
-        </div>
-      )}
-    </div>
+      {
+        !isEditing && !isLockedByOther && (
+          <div
+            onPointerDown={onResizePointerDown}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: 20,
+              height: 20,
+              cursor: 'nwse-resize',
+              zIndex: 50, // More than content
+            }}
+          >
+            {/* 시각적 핸들 아이콘 (Optional) */}
+            <svg width="100%" height="100%" viewBox="0 0 20 20" fill="none">
+              <path d="M14 14L20 20" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
+              <path d="M10 18L18 10" stroke="rgba(0,0,0,0.1)" strokeWidth="2" />
+            </svg>
+          </div>
+        )
+      }
+    </div >
   );
 }

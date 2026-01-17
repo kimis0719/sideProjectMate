@@ -213,10 +213,10 @@ export default function Minimap({
     // 모바일 감지는 여기서는 어려우므로 일단 기본은 펼침, 사용자가 접을 수 있게.
 
     return (
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-2 pointer-events-none">
             <button
                 onClick={(e) => { e.stopPropagation(); setIsCollapsed(!isCollapsed); }}
-                className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 pointer-events-auto"
                 title={isCollapsed ? "미니맵 펼치기" : "미니맵 접기"}
             >
                 {isCollapsed ? (
@@ -227,7 +227,7 @@ export default function Minimap({
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
                 )}
             </button>
-            <div style={{ display: isCollapsed ? 'none' : 'block' }}>
+            <div style={{ display: isCollapsed ? 'none' : 'block' }} className="pointer-events-auto">
                 <canvas
                     ref={canvasRef}
                     className="border border-gray-300 bg-white shadow-lg rounded-lg cursor-crosshair"
