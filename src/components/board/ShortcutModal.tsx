@@ -24,6 +24,10 @@ const SHORTCUTS: Shortcut[] = [
     { key: 'Ctrl + D', description: '노트 복제' },
     { key: 'Arrow Keys', description: '노트 이동 (미세)' },
     { key: 'Shift + Arrow', description: '노트 이동 (크게)' },
+
+    // History
+    { key: 'Ctrl + Z', description: '실행 취소 (Undo)' },
+    { key: 'Ctrl + Shift + Z / Ctrl + Y', description: '다시 실행 (Redo)' },
 ];
 
 type Props = {

@@ -6,13 +6,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useNotificationStore } from '@/lib/store/notificationStore';
+import { socketClient } from '@/lib/socket';
 
 interface Notification {
     _id: string;
     sender: { nName: string };
-    type: 'new_applicant' | 'application_accepted' | 'application_rejected';
+    type: 'new_applicant' | 'application_accepted' | 'application_rejected' | 'assign_note';
     project: { title: string, pid: number };
     read: boolean;
+    metadata?: { noteId?: string };
     createdAt: string;
 }
 
@@ -26,12 +28,31 @@ export default function Header() {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState('추천');
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const [showToast, setShowToast] = useState(false);
 
     useEffect(() => {
-        if (status === 'authenticated') {
+        if (status === 'authenticated' && session?.user?._id) {
             fetchNotifications();
+
+            const socket = socketClient.connect();
+            // User Room Join (서버 구현에 따라 다를 수 있으나, 일반적으로 사용자 ID로 Room을 생성하여 참여)
+            socket.emit('join-user', session.user._id);
+
+            const handleNewNotification = (data: any) => {
+                fetchNotifications();
+                setToastMessage('새로운 알림이 도착했습니다.');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            };
+
+            socket.on('new-notification', handleNewNotification);
+
+            return () => {
+                socket.off('new-notification', handleNewNotification);
+            };
         }
-    }, [status, pathname, fetchNotifications]);
+    }, [status, pathname, fetchNotifications, session]);
 
     const handleNotificationClick = async (notification: Notification) => {
         if (!notification.read) {
@@ -46,6 +67,8 @@ export default function Header() {
         let targetPath = '/';
         if (notification.type === 'new_applicant') {
             targetPath = `/projects/${notification.project.pid}/manage`;
+        } else if (notification.type === 'assign_note') {
+            targetPath = `/dashboard/${notification.project.pid}/kanban?noteId=${notification.metadata?.noteId}`;
         } else {
             targetPath = `/projects/${notification.project.pid}`;
         }
@@ -62,6 +85,8 @@ export default function Header() {
                 return `축하합니다! '${projectTitle}' 프로젝트에 참여가 수락되었습니다.`;
             case 'application_rejected':
                 return `아쉽지만 '${projectTitle}' 프로젝트 참여가 거절되었습니다.`;
+            case 'assign_note':
+                return `'${projectTitle}' 프로젝트에서 새로운 노트의 담당자로 지정되었습니다.`;
             default:
                 return '새로운 알림';
         }
@@ -228,6 +253,17 @@ export default function Header() {
                             ))}
                         </nav>
                     </div>
+                </div>
+            )}
+
+            {/* Toast Message */}
+            {showToast && (
+                <div className="fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-bounce flex items-center gap-3">
+                    <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                    <span className="text-sm font-medium">{toastMessage}</span>
+                    <button onClick={() => setShowToast(false)} className="text-gray-400 hover:text-white">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                 </div>
             )}
         </header>
