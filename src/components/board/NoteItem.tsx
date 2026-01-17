@@ -783,7 +783,9 @@ export default function NoteItem({
         touchAction: 'none',
         overscrollBehavior: 'contain',
         borderWidth: isLockedByOther ? 3 : (isSelected || isPeerSelected ? 2 : 0),
+        borderStyle: 'solid',
         borderColor: isLockedByOther ? lockedColor : (isSelected ? '#3B82F6' : (isPeerSelected ? peerColor : 'transparent')),
+        outline: 'none',
         opacity: isTempNote ? 0.7 : 1,
         zIndex: isSelected ? 9999 : zIndex,
         pointerEvents: isLockedByOther ? 'none' : 'auto',
@@ -811,20 +813,38 @@ export default function NoteItem({
         </div>
       )}
 
-      {/* Peer Selection Indicator */}
+      {/* Peer Selection Indicator & Name */}
       {!isLockedByOther && isPeerSelected && (
-        <div style={{
-          position: 'absolute',
-          top: -10,
-          right: -2,
-          background: peerColor,
-          width: 20,
-          height: 20,
-          borderRadius: '50%',
-          border: '2px solid white',
-          zIndex: 100,
-          boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-        }} title="다른 사용자가 선택 중" />
+        <>
+          <div style={{
+            position: 'absolute',
+            top: -26,
+            left: -2,
+            background: peerColor,
+            color: 'white',
+            fontSize: 12,
+            fontWeight: 'bold',
+            padding: '2px 8px',
+            borderRadius: '4px 4px 4px 0',
+            zIndex: 100,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+          }}>
+            {members.find(m => m._id === peerSelection.userId)?.nName || peerSelection.userId}님이 선택 중
+          </div>
+          <div style={{
+            position: 'absolute',
+            top: -10,
+            right: -2,
+            background: peerColor,
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            border: '2px solid white',
+            zIndex: 100,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+          }} />
+        </>
       )}
 
 
