@@ -113,6 +113,27 @@ app.prepare().then(() => {
             socket.to(boardId).emit('board-synced', { notes, sections });
         });
 
+        // 11. 노트 선택 (실시간 표시)
+        socket.on('select-note', (data) => {
+            const { boardId, noteIds, userId, color } = data;
+            // 보드 내의 다른 사용자들에게 선택 상태 전달 (socket.id 포함)
+            socket.to(boardId).emit('note-selected', { noteIds, userId, color, socketId: socket.id });
+        });
+
+        // 12. 노트 선택 해제
+        socket.on('deselect-note', (data) => {
+            const { boardId, userId } = data;
+            socket.to(boardId).emit('note-deselected', { userId, socketId: socket.id });
+        });
+
+        // 13. 실시간 알림 전송
+        socket.on('send-notification', (data) => {
+            const { targetUserId, ...rest } = data;
+            // 전체 사용자 중 대상 유저에게만 전송 (서버 전체 브로드캐스트 후 클라이언트 필터링 혹은 룸 활용 가능)
+            // 여기서는 간단히 전체에 보내고 클라이언트가 본인 것인지 판단하게 함
+            io.emit('notification-received', { targetUserId, ...rest });
+        });
+
         socket.on('disconnect', () => {
             console.log('Client disconnected:', socket.id);
 
