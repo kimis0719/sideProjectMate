@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { getIconSlug, getSkillCategory, CATEGORY_ORDER, SkillCategory } from '@/lib/iconUtils';
+import { useModal } from '@/hooks/useModal';
 
 interface SkillSectionProps {
     techTags?: string[];
@@ -10,14 +11,15 @@ interface SkillSectionProps {
 }
 
 export default function SkillSection({ techTags = [], githubVerifiedTags = [], onUpdateTags }: SkillSectionProps) {
+    const { alert } = useModal();
     const [isAdding, setIsAdding] = useState(false);
     const [newTag, setNewTag] = useState('');
 
-    const handleAddManualTag = () => {
+    const handleAddManualTag = async () => {
         if (newTag.trim()) {
             const tagToAdd = newTag.trim();
             if (tagToAdd.length > 20) {
-                alert('기술 스택은 20자 이내로 입력해주세요. 😅');
+                await alert('입력 제한', '기술 스택은 20자 이내로 입력해주세요. 😅');
                 return;
             }
             if (!techTags.includes(tagToAdd)) {

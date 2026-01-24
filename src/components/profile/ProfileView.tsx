@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
+import { useModal } from '@/hooks/useModal';
 import DetailProfileCard from '@/components/profile/DetailProfileCard';
 import StatusDashboard from '@/components/profile/StatusDashboard';
 
@@ -39,6 +40,7 @@ interface ProfileViewProps {
  * - **readOnly={true}**: 남의 프로필. 단순 조회만 가능하며 수정 버튼이 숨겨집니다.
  */
 export default function ProfileView({ initialUserData, readOnly }: ProfileViewProps) {
+    const { alert } = useModal();
     // 사용자 데이터 상태
     const [userData, setUserData] = useState<any>(initialUserData);
 
@@ -104,10 +106,10 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
                 if (data.data.techTags) setTechTags(data.data.techTags);
             }
 
-            alert('소셜 링크가 저장되었습니다! ✅');
+            await alert('소셜 링크', '소셜 링크가 저장되었습니다! ✅');
         } catch (error) {
             console.error(error);
-            alert('링크 저장 실패');
+            await alert('에러', '링크 저장 실패');
         }
     };
 
@@ -127,13 +129,13 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
             });
 
             if (res.ok) {
-                alert('가용성 정보가 저장되었습니다! ✅');
+                await alert('저장 완료', '가용성 정보가 저장되었습니다! ✅');
             } else {
                 throw new Error('Save Failed');
             }
         } catch (error) {
             console.error(error);
-            alert('저장 실패');
+            await alert('에러', '저장 실패');
         }
     };
 
@@ -147,13 +149,13 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
             const data = await res.json();
             if (data.success) {
                 setUserData({ ...userData, introduction });
-                alert('자기소개가 저장되었습니다! ✅');
+                await alert('저장 완료', '자기소개가 저장되었습니다! ✅');
             } else {
                 throw new Error(data.message);
             }
         } catch (error: any) {
             console.error('Failed to save intro:', error);
-            alert(`저장 실패: ${error.message}`);
+            await alert('에러', `저장 실패: ${error.message}`);
         }
     };
 
@@ -171,10 +173,10 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
             if (!res.ok) throw new Error('Failed to save tags');
 
             // 저장 완료 알림 (너무 잦은 알림이 싫다면 Toast로 대체 가능하나 요청사항에 따라 Alert 사용)
-            alert('기술 스택이 저장되었습니다! ✅');
+            await alert('저장 완료', '기술 스택이 저장되었습니다! ✅');
         } catch (error) {
             console.error(error);
-            alert('기술 스택 저장 실패');
+            await alert('에러', '기술 스택 저장 실패');
         }
     };
 
@@ -199,28 +201,28 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
     };
 
     // 포트폴리오 추가/삭제 핸들러
-    const handleAddPortfolio = (url: string) => {
+    const handleAddPortfolio = async (url: string) => {
         if (!portfolioLinks.includes(url)) {
             const newLinks = [...portfolioLinks, url];
             setPortfolioLinks(newLinks);
             // Auto Save
-            fetch('/api/users/me', {
+            await fetch('/api/users/me', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ portfolioLinks: newLinks })
-            }).then(() => {
-                alert('포트폴리오가 저장되었습니다! 📂');
+            }).then(async () => {
+                await alert('저장 완료', '포트폴리오가 저장되었습니다! 📂');
             }).catch(console.error);
         } else {
-            alert('이미 추가된 링크입니다.');
+            await alert('중복 링크', '이미 추가된 링크입니다.');
         }
     };
 
-    const handleDeletePortfolio = (url: string) => {
+    const handleDeletePortfolio = async (url: string) => {
         const newLinks = portfolioLinks.filter(l => l !== url);
         setPortfolioLinks(newLinks);
         // Auto Save
-        fetch('/api/users/me', {
+        await fetch('/api/users/me', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ portfolioLinks: newLinks })
@@ -251,10 +253,10 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
             });
 
             // [UX] 직군/경력 등 중요 정보 저장 시 사용자 피드백 제공 (요청사항)
-            alert('정보가 저장되었습니다! ✅');
+            await alert('저장 완료', '정보가 저장되었습니다! ✅');
         } catch (error) {
             console.error('Failed to save basic info:', error);
-            alert('저장 실패 ❌');
+            await alert('에러', '저장 실패 ❌');
         }
     };
 

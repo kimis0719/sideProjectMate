@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useModal } from '@/hooks/useModal';
 
 interface CommunicationStyleSliderProps {
     preference: number;
@@ -24,13 +25,14 @@ export default function CommunicationStyleSlider({
     tags,
     onChangeTags,
 }: CommunicationStyleSliderProps) {
+    const { alert } = useModal();
 
-    const toggleTag = (tagId: string) => {
+    const toggleTag = async (tagId: string) => {
         if (tags.includes(tagId)) {
             onChangeTags(tags.filter(t => t !== tagId));
         } else {
             if (tags.length >= 3) {
-                alert('성향 태그는 최대 3개까지 선택 가능합니다.');
+                await alert('선택 제한', '성향 태그는 최대 3개까지 선택 가능합니다.');
                 return;
             }
             onChangeTags([...tags, tagId]);

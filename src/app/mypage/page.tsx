@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import DetailProfileCard from '@/components/profile/DetailProfileCard';
 import ImageEditModal from '@/components/profile/modals/ImageEditModal';
+import { useModal } from '@/hooks/useModal';
 
 interface MyApplication {
     _id: string;
@@ -20,6 +21,7 @@ interface MyApplication {
 export default function MyPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
+    const { alert, confirm } = useModal();
     const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
 
     const fetchMyApplications = useCallback(async () => {
@@ -57,23 +59,28 @@ export default function MyPage() {
         if (res.ok) {
             setUserData({ ...userData, avatarUrl: url });
         } else {
-            alert('이미지 변경 실패');
+            await alert('에러', '이미지 변경 실패');
         }
     };
 
     const handleCancelApplication = async (appId: string) => {
-        if (confirm('정말 지원을 취소하시겠습니까?')) {
+        const ok = await confirm(
+            '지원 취소',
+            '정말 지원을 취소하시겠습니까?',
+            { isDestructive: true, closeOnBackdropClick: false }
+        );
+        if (ok === true) {
             try {
                 const response = await fetch(`/api/applications/${appId}`, { method: 'DELETE' });
                 const data = await response.json();
                 if (data.success) {
-                    alert('지원서가 삭제되었습니다.');
+                    await alert('취소 완료', '지원서가 삭제되었습니다.');
                     fetchMyApplications(); // 목록 새로고침
                 } else {
                     throw new Error(data.message);
                 }
             } catch (err: any) {
-                alert(err.message);
+                await alert('에러', err.message);
             }
         }
     };

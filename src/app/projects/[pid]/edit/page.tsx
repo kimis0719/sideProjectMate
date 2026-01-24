@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useModal } from '@/hooks/useModal';
 import { ITechStack } from '@/lib/models/TechStack';
 import Image from 'next/image';
 
@@ -49,6 +50,7 @@ export default function EditProjectPage() {
   const params = useParams();
   const pid = params.pid as string;
   const { data: session, status: sessionStatus } = useSession();
+  const { alert } = useModal();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -221,7 +223,7 @@ export default function EditProjectPage() {
 
       const data = await res.json();
       if (data.success) {
-        alert('프로젝트가 성공적으로 수정되었습니다.');
+        await alert('수정 완료', '프로젝트가 성공적으로 수정되었습니다.');
         router.push(`/projects/${pid}`);
       } else {
         throw new Error(data.message || '프로젝트 수정에 실패했습니다.');
