@@ -8,6 +8,67 @@ import { fetchOGMetadata, validateResource } from '@/lib/utils/resourceUtils';
 
 export const dynamic = 'force-dynamic';
 
+// 리소스 수정
+export async function PUT(
+    request: Request,
+    { params }: { params: { pid: string } }
+) {
+    headers();
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user?._id) {
+            return NextResponse.json({ success: false, message: '인증이 필요합니다.' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const { resourceId, content, category, type, metadata } = body; // metadata 추가
+
+        if (!resourceId) {
+            return NextResponse.json({ success: false, message: 'Resource ID가 필요합니다.' }, { status: 400 });
+        }
+
+        await dbConnect();
+        const { pid } = params;
+
+        // 프로젝트 조회 및 권한 확인
+        const project = await Project.findOne({ pid: Number(pid) });
+        if (!project) {
+            return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
+        }
+
+        if (project.author.toString() !== session.user._id) {
+            return NextResponse.json({ success: false, message: '수정 권한이 없습니다.' }, { status: 403 });
+        }
+
+        // 해당 리소스 찾아서 업데이트
+        const updateFields: any = {
+            'resources.$.content': content,
+            'resources.$.category': category,
+        };
+        if (metadata) {
+            updateFields['resources.$.metadata'] = metadata;
+        }
+
+        const updatedProject = await Project.findOneAndUpdate(
+            { _id: project._id, 'resources._id': resourceId },
+            { $set: updateFields },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedProject) {
+            return NextResponse.json({ success: false, message: '리소스를 찾을 수 없거나 업데이트에 실패했습니다.' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, message: '리소스가 수정되었습니다.', data: updatedProject.resources });
+    } catch (error: any) {
+        console.error(`[API ERROR: PUT /api/projects/${params.pid}/resources]`, error);
+        return NextResponse.json(
+            { success: false, message: '리소스 수정 중 오류가 발생했습니다.', error: error.message },
+            { status: 500 }
+        );
+    }
+}
+
 // 리소스 추가
 export async function POST(
     request: Request,

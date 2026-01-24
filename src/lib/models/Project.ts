@@ -9,6 +9,7 @@ export interface IResource {
   category: 'CODE' | 'DESIGN' | 'DOCS' | 'ENV' | 'ACCOUNT' | 'OTHER'; // 리소스 분류
   content: string; // URL 또는 텍스트 내용
   metadata?: Record<string, any>; // OG 태그 정보나 추가 설명을 위한 메타데이터
+  _id?: string; // 클라이언트 식별용
 }
 
 export interface IProject extends Document {
