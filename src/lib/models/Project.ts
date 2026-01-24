@@ -3,6 +3,14 @@ import './TechStack';
 import './ProjectMember';
 import { IUser } from './User';
 
+// 📝 [리소스 인터페이스] 프로젝트 내 공유 자원 구조 정의
+export interface IResource {
+  type: 'LINK' | 'TEXT'; // 리소스 형태 (링크형, 텍스트형)
+  category: 'CODE' | 'DESIGN' | 'DOCS' | 'ENV' | 'ACCOUNT' | 'OTHER'; // 리소스 분류
+  content: string; // URL 또는 텍스트 내용
+  metadata?: Record<string, any>; // OG 태그 정보나 추가 설명을 위한 메타데이터
+}
+
 export interface IProject extends Document {
   pid: number;
   title: string;
@@ -17,6 +25,8 @@ export interface IProject extends Document {
   images: string[];
   content: string;
   status: '01' | '02' | '03'; // 01: 모집중, 02: 진행중, 03: 완료
+  overview?: string; // ✨ [추가] 프로젝트 개요 (PM 전용 관리 필드)
+  resources: IResource[]; // ✨ [추가] 프로젝트 공유 자원 리스트
   deadline?: Date;
   views: number;
   likes: IUser['_id'][];
@@ -48,6 +58,24 @@ const ProjectSchema: Schema = new Schema(
       enum: ['01', '02', '03'], // 01: 모집중, 02: 진행중, 03: 완료
       default: '01',
     },
+    overview: { type: String }, // ✨ [추가] 프로젝트 개요
+    // ✨ [리소스 필드 스키마]
+    resources: [
+      {
+        type: {
+          type: String,
+          enum: ['LINK', 'TEXT'],
+          required: true,
+        },
+        category: {
+          type: String,
+          enum: ['CODE', 'DESIGN', 'DOCS', 'ENV', 'ACCOUNT', 'OTHER'],
+          required: true,
+        },
+        content: { type: String, required: true },
+        metadata: { type: Object }, // 유연성을 위해 Object 타입 사용 (OG 정보 등)
+      },
+    ],
     deadline: { type: Date },
     views: { type: Number, default: 0 },
     likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
