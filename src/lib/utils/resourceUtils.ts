@@ -36,10 +36,9 @@ export function validateResource(
 ): { valid: boolean; message?: string } {
     // 1. LINK 타입 검증
     if (type === 'LINK') {
-        // 간단한 URL 형식 체크
-        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-        if (!urlPattern.test(content)) {
-            return { valid: false, message: '유효하지 않은 URL 형식입니다.' };
+        // 간단한 URL 형식 체크 (너무 엄격한 정규식 대신 프로토콜 확인만 수행)
+        if (!content.includes('http://') && !content.includes('https://')) {
+            return { valid: false, message: 'URL은 http:// 또는 https:// 를 포함해야 합니다.' };
         }
     }
 
