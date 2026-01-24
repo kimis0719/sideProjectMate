@@ -9,6 +9,7 @@ import { IProject } from '@/lib/models/Project';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import DetailProfileCard from '@/components/profile/DetailProfileCard';
 import ProjectThumbnail from '@/components/projects/ProjectThumbnail';
+import { useModal } from '@/hooks/useModal';
 
 // 동적 임포트를 사용하여 이미지 슬라이더 컴포넌트를 로드 (SSR 제외)
 const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider'), {
@@ -42,6 +43,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const { pid } = params;
   const { data: session } = useSession();
   const router = useRouter();
+  const { alert, confirm } = useModal();
 
   const [project, setProject] = useState<PopulatedProject | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -150,27 +152,32 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         setIsLiked(data.data.likes.includes(session.user._id));
         fetchNotifications();
       } else {
-        alert(data.message || '요청에 실패했습니다.');
+        await alert('알림', data.message || '요청에 실패했습니다.');
       }
     } catch (err) {
-      alert('좋아요 처리 중 오류가 발생했습니다.');
+      await alert('에러', '좋아요 처리 중 오류가 발생했습니다.');
     }
   };
 
   const handleDelete = async () => {
     if (!isOwner) return;
-    if (confirm('정말 이 프로젝트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    const ok = await confirm(
+      '프로젝트 삭제',
+      '정말 이 프로젝트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+      { isDestructive: true, closeOnBackdropClick: false }
+    );
+    if (ok === true) {
       try {
         const response = await fetch(`/api/projects/${pid}`, { method: 'DELETE' });
         const data = await response.json();
         if (data.success) {
-          alert('프로젝트가 삭제되었습니다.');
+          await alert('삭제 완료', '프로젝트가 삭제되었습니다.');
           router.push('/projects');
         } else {
           throw new Error(data.message || '삭제에 실패했습니다.');
         }
       } catch (err: any) {
-        alert(err.message);
+        await alert('에러', err.message);
       }
     }
   };
@@ -200,7 +207,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const handleApplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRole) {
-      alert('지원할 역할을 선택해주세요.');
+      await alert('알림', '지원할 역할을 선택해주세요.');
       return;
     }
     setIsSubmitting(true);
@@ -212,7 +219,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       });
       const data = await response.json();
       if (data.success) {
-        alert('성공적으로 지원했습니다.');
+        await alert('지원 완료', '성공적으로 지원했습니다.');
         setIsApplyModalOpen(false);
         setApplyMessage('');
         setHasApplied(true); // 지원 상태 업데이트
@@ -221,7 +228,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         throw new Error(data.message || '지원에 실패했습니다.');
       }
     } catch (err: any) {
-      alert(err.message);
+      await alert('에러', err.message);
     } finally {
       setIsSubmitting(false);
     }

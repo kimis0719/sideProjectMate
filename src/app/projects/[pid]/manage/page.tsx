@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import SimpleProfileCard from '@/components/profile/SimpleProfileCard';
+import { useModal } from '@/hooks/useModal';
 
 interface Applicant {
   _id: string;
@@ -26,6 +27,7 @@ export default function ManageApplicantsPage() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const pid = params.pid as string;
+  const { alert, confirm } = useModal();
 
   // 상태 관리
   const [project, setProject] = useState<any>(null); // 프로젝트 정보 (멤버 포함)
@@ -99,24 +101,29 @@ export default function ManageApplicantsPage() {
         throw new Error(data.message || '상태 변경에 실패했습니다.');
       }
     } catch (err: any) {
-      alert(err.message);
+      await alert('에러', err.message);
     }
   };
 
   // 지원 내역 삭제 핸들러
   const handleDeleteApplication = async (appId: string) => {
-    if (confirm('정말 이 지원 내역을 목록에서 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    const ok = await confirm(
+      '지원 내역 삭제',
+      '정말 이 지원 내역을 목록에서 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+      { isDestructive: true, closeOnBackdropClick: false }
+    );
+    if (ok === true) {
       try {
         const response = await fetch(`/api/applications/${appId}`, { method: 'DELETE' });
         const data = await response.json();
         if (data.success) {
-          alert('지원 내역이 삭제되었습니다.');
+          await alert('삭제 완료', '지원 내역이 삭제되었습니다.');
           fetchApplications();
         } else {
           throw new Error(data.message);
         }
       } catch (err: any) {
-        alert(err.message);
+        await alert('에러', err.message);
       }
     }
   };

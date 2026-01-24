@@ -6,6 +6,7 @@ import CommunicationStyleSlider from '@/components/profile/CommunicationStyleSli
 import AvailabilityScheduler from '@/components/profile/AvailabilityScheduler';
 import { useSession } from 'next-auth/react';
 import BlockEditor from '@/components/editor/BlockEditor';
+import { useModal } from '@/hooks/useModal';
 
 interface OnboardingWizardProps {
     initialData: any;
@@ -15,6 +16,7 @@ interface OnboardingWizardProps {
 export default function OnboardingWizard({ initialData, onComplete }: OnboardingWizardProps) {
     const router = useRouter();
     const { update: updateSession } = useSession();
+    const { alert } = useModal();
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,12 +33,12 @@ export default function OnboardingWizard({ initialData, onComplete }: Onboarding
     // Custom Input for Tech Tags
     const [tagInput, setTagInput] = useState('');
 
-    const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleAddTag = async (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && tagInput.trim()) {
             e.preventDefault();
             const newTag = tagInput.trim();
             if (newTag.length > 20) {
-                alert('기술 태그는 20자 이내여야 합니다!');
+                await alert('입력 제한', '기술 태그는 20자 이내여야 합니다!');
                 return;
             }
             if (!techTags.includes(newTag)) {
@@ -79,7 +81,7 @@ export default function OnboardingWizard({ initialData, onComplete }: Onboarding
             onComplete(true); // 저장 완료 (true)
         } catch (error) {
             console.error(error);
-            alert('프로필 저장 중 오류가 발생했습니다.');
+            await alert('저장 실패', '프로필 저장 중 오류가 발생했습니다.');
         } finally {
             setIsSubmitting(false);
         }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Task } from '@/store/wbsStore';
 import { checkAllScheduleConflicts, calculateConflictSeverity } from '@/lib/utils/wbs/scheduleConflict';
+import { useModal } from '@/hooks/useModal';
 
 /**
  * TaskList 컴포넌트 Props 타입
@@ -26,6 +27,7 @@ interface TaskListProps {
  * - 수정/삭제 버튼
  */
 export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEdit, onTaskDelete, onTaskUpdate }: TaskListProps) {
+    const { confirm } = useModal();
     // 전체 작업의 충돌 검사
     const allConflicts = checkAllScheduleConflicts(
         tasks.map(task => ({
@@ -232,11 +234,10 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                                     e.stopPropagation();
                                                     onTaskUpdate?.(task.id, { status: 'todo' });
                                                 }}
-                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
-                                                    task.status === 'todo'
-                                                        ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                                }`}
+                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${task.status === 'todo'
+                                                    ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                                                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                                    }`}
                                                 title="대기"
                                             >
                                                 대기
@@ -246,11 +247,10 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                                     e.stopPropagation();
                                                     onTaskUpdate?.(task.id, { status: 'in-progress' });
                                                 }}
-                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
-                                                    task.status === 'in-progress'
-                                                        ? 'bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                                        : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900'
-                                                }`}
+                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${task.status === 'in-progress'
+                                                    ? 'bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                                    : 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900'
+                                                    }`}
                                                 title="진행 중"
                                             >
                                                 진행
@@ -260,11 +260,10 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                                     e.stopPropagation();
                                                     onTaskUpdate?.(task.id, { status: 'done', progress: 100 });
                                                 }}
-                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${
-                                                    task.status === 'done'
-                                                        ? 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                                        : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900'
-                                                }`}
+                                                className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${task.status === 'done'
+                                                    ? 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                    : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900'
+                                                    }`}
                                                 title="완료"
                                             >
                                                 완료
@@ -285,9 +284,10 @@ export default function TaskList({ tasks, selectedTaskId, onTaskSelect, onTaskEd
                                                 수정
                                             </button>
                                             <button
-                                                onClick={(e) => {
+                                                onClick={async (e) => {
                                                     e.stopPropagation();
-                                                    if (confirm('정말 이 작업을 삭제하시겠습니까?')) {
+                                                    const ok = await confirm('작업 삭제', '정말 이 작업을 삭제하시겠습니까?');
+                                                    if (ok) {
                                                         onTaskDelete(task.id);
                                                     }
                                                 }}

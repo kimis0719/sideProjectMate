@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useModal } from '@/hooks/useModal';
 
 interface ImageEditModalProps {
     isOpen: boolean;
@@ -10,6 +11,7 @@ interface ImageEditModalProps {
 }
 
 export default function ImageEditModal({ isOpen, onClose, onSave, currentUrl }: ImageEditModalProps) {
+    const { alert } = useModal();
     const [file, setFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState(currentUrl || '');
     const [isUploading, setIsUploading] = useState(false);
@@ -61,7 +63,7 @@ export default function ImageEditModal({ isOpen, onClose, onSave, currentUrl }: 
             onClose();
         } catch (error) {
             console.error('Upload Error:', error);
-            alert('이미지 업로드 중 오류가 발생했습니다.');
+            await alert('업로드 실패', '이미지 업로드 중 오류가 발생했습니다.');
         } finally {
             setIsUploading(false);
         }

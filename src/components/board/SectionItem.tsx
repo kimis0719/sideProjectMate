@@ -4,6 +4,7 @@ import React from 'react';
 import { useBoardStore, Section } from '@/store/boardStore';
 import { socketClient } from '@/lib/socket';
 import { useSession } from 'next-auth/react';
+import { useModal } from '@/hooks/useModal';
 
 // Color Gen Helper
 const stringToColor = (str: string) => {
@@ -196,6 +197,7 @@ export default function SectionItem({ section }: Props) {
     }));
 
     const { data: session } = useSession();
+    const { confirm, alert } = useModal();
     const myUserId = session?.user?.id || 'anonymous';
 
     const [isEditingTitle, setIsEditingTitle] = React.useState(false);
@@ -492,7 +494,7 @@ export default function SectionItem({ section }: Props) {
             .map((n) => n.id);
 
         if (lockedSections && lockedSections[section.id] && lockedSections[section.id].socketId !== socketClient.socket?.id) {
-            alert('다른 사용자가 이 섹션을 편집 중입니다.');
+            await alert('삭제 불가', '다른 사용자가 이 섹션을 편집 중입니다.');
             return;
         }
 
@@ -502,20 +504,37 @@ export default function SectionItem({ section }: Props) {
         });
 
         if (lockedChildNotes.length > 0) {
-            alert(`섹션 내에 다른 사용자가 편집 중인 노트가 ${lockedChildNotes.length}개 있습니다.\n삭제할 수 없습니다.`);
+            await alert(
+                '삭제 불가',
+                `섹션 내에 다른 사용자가 편집 중인 노트가 ${lockedChildNotes.length}개 있습니다.\n삭제할 수 없습니다.`
+            );
             return;
         }
 
-        if (confirm('섹션을 삭제하시겠습니까?\n\n[확인]: 섹션과 내부 노트 모두 삭제\n[취소]: 섹션만 삭제하고 노트는 유지')) {
-            // Notes Deletion (Store + DB + Socket)
+        const isDeleteAll = await confirm(
+            '섹션 삭제',
+            '섹션을 삭제하시겠습니까?\n\n[확인]: 섹션과 내부 노트 모두 삭제\n[취소]: 섹션만 삭제하고 노트는 유지',
+            {
+                confirmText: '모두 삭제',
+                cancelText: '섹션만 삭제',
+                closeOnBackdropClick: false
+            }
+        );
+
+        if (isDeleteAll === null) return;
+
+        if (isDeleteAll === true) {
+            // [확인] 클릭 시: 섹션과 내부 노트 모두 삭제
             if (childNoteIds.length > 0) {
                 removeNotes(childNoteIds);
             }
-            // Section Deletion (Store + Socket)
             removeSection(section.id);
-            // Section Deletion (DB) - deleteNotes=false because we handled it via removeNotes
+            // DB 삭제 (노트도 삭제하도록 서버 사이드 처리가 되어있을 수 있으나, 명시적으로 deleteNotes=false로 호출하고 위에서 removeNotes로 처리)
             await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });
         } else {
+            // [취소] 클릭 시 (또는 닫기): 모달이 false를 반환하므로 여기서는 '섹션만 삭제' 의도로 처리
+            // 주의: 백드롭 클릭 시에도 취소(false)가 반환되므로, 사용자 경험상 '섹션만 삭제'가 안전한지 확인이 필요함. 
+            // 프로젝트 룰상 [취소] 버튼이 '섹션만 삭제' 기능을 수행하도록 유도.
             removeSection(section.id);
             await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });
 

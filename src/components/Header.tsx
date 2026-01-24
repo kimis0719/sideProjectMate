@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import { socketClient } from '@/lib/socket';
+import { useModal } from '@/hooks/useModal';
 
 interface Notification {
     _id: string;
@@ -22,6 +23,7 @@ export default function Header() {
     const pathname = usePathname();
     const router = useRouter();
     const { data: session, status } = useSession();
+    const { confirm } = useModal();
 
     const { notifications, unreadCount, fetchNotifications } = useNotificationStore();
 
@@ -164,9 +166,10 @@ export default function Header() {
                                                 <span>알림</span>
                                                 {notifications.length > 0 && (
                                                     <button
-                                                        onClick={(e) => {
+                                                        onClick={async (e) => {
                                                             e.stopPropagation(); // 드롭다운 닫힘 방지 (필요 시)
-                                                            if (confirm('모든 알림을 삭제하시겠습니까?')) {
+                                                            const ok = await confirm('알림 전체 삭제', '모든 알림을 삭제하시겠습니까?');
+                                                            if (ok === true) {
                                                                 useNotificationStore.getState().deleteAllNotifications();
                                                             }
                                                         }}

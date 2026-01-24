@@ -5,7 +5,8 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import FloatingThemeButton from '@/components/FloatingThemeButton'
 import { ThemeProvider } from '@/components/ThemeProvider'
-import AuthSessionProvider from '@/components/AuthSessionProvider' // AuthSessionProvider import
+import AuthSessionProvider from '@/components/AuthSessionProvider'
+import GlobalModal from '@/components/common/GlobalModal'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -31,6 +32,7 @@ export default function RootLayout({
               </main>
               <Footer />
               <FloatingThemeButton />
+              <GlobalModal />
             </div>
           </ThemeProvider>
         </AuthSessionProvider>
