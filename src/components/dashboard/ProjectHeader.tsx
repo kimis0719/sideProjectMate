@@ -12,13 +12,13 @@ export default function ProjectHeader({ project, categoryLabel, isAuthor, onStat
     const getStatusInfo = (status: string) => {
         switch (status) {
             case '01':
-                return { label: '모집중', color: 'bg-green-100 text-green-700 border-green-200' };
+                return { label: '모집중', color: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' };
             case '02':
-                return { label: '진행중', color: 'bg-blue-100 text-blue-700 border-blue-200' };
+                return { label: '진행중', color: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' };
             case '03':
-                return { label: '완료', color: 'bg-gray-100 text-gray-700 border-gray-200' };
+                return { label: '완료', color: 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700' };
             default:
-                return { label: '미정', color: 'bg-gray-100 text-gray-700 border-gray-200' };
+                return { label: '미정', color: 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700' };
         }
     };
 
@@ -46,11 +46,11 @@ export default function ProjectHeader({ project, categoryLabel, isAuthor, onStat
                                 onChange={handleStatusChange}
                                 className={`appearance-none pl-3 pr-8 py-0.5 rounded-full text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${statusInfo.color}`}
                             >
-                                <option value="01">모집중</option>
-                                <option value="02">진행중</option>
-                                <option value="03">완료</option>
+                                <option value="01" className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100">모집중</option>
+                                <option value="02" className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100">진행중</option>
+                                <option value="03" className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100">완료</option>
                             </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-current opacity-50">
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500 dark:text-slate-400">
                                 <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                             </div>
                         </div>
@@ -60,11 +60,11 @@ export default function ProjectHeader({ project, categoryLabel, isAuthor, onStat
                         </span>
                     )}
 
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
                         {categoryLabel || project.category}
                     </span>
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">{project.title}</h1>
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">{project.title}</h1>
             </div>
 
             {/* 6단계에서 상태 변경 드롭다운 등 추가 예정 */}

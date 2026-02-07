@@ -7,22 +7,20 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { IProject } from '@/lib/models/Project';
 import { useNotificationStore } from '@/lib/store/notificationStore';
+import { getSocket } from '@/lib/socket';
 
-// 프로젝트 데이터 타입 확장 (populate된 필드 포함)
+// 프로젝트 데이터 타입 확장
 interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
     author: { _id: string; nName: string } | string;
     tags: { _id: string; name: string; category: string }[];
     likesCount: number;
-    projectMembers?: any[]; // projectMembers 필드 추가
+    projectMembers?: any[];
 }
 
-// ... (imports)
 import ProjectHeader from '@/components/dashboard/ProjectHeader';
 import ResourceModal from '@/components/dashboard/ResourceModal';
 import ProjectOverview from '@/components/dashboard/ProjectOverview';
-
-
-// ... (interface PopulatedProject)
+import MemberWidget from '@/components/dashboard/MemberWidget';
 
 export default function DashboardPage({ params }: { params: { pid: string } }) {
     const { pid } = params;
@@ -30,11 +28,11 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
     const [categoryLabel, setCategoryLabel] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [isResourceModalOpen, setIsResourceModalOpen] = useState(false); // ✨ 모달 상태
+    const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
 
     const { data: session } = useSession();
 
-    // 1. 프로젝트 데이터 조회 (기존과 동일)
+    // 1. 프로젝트 데이터 조회
     const fetchProject = async () => {
         try {
             const projectRes = await fetch(`/api/projects/${pid}`);
@@ -66,7 +64,37 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
         if (pid) fetchProject();
     }, [pid]);
 
-    // ✨ 프로젝트 정보 업데이트 핸들러 (상태, 개요)
+    // ✨ 소켓 연결 및 프로젝트 입장
+    useEffect(() => {
+        if (!pid || !session?.user?._id) return;
+
+        const socket = getSocket();
+
+        // 연결되면 프로젝트 룸 입장
+        if (socket.connected) {
+            socket.emit('join-project', { projectId: pid, userId: session.user._id });
+        } else {
+            socket.on('connect', () => {
+                socket.emit('join-project', { projectId: pid, userId: session.user._id });
+            });
+        }
+
+        // ✨ 리소스/프로젝트 실시간 동기화
+        const handleSync = () => {
+            console.log('Real-time sync triggered');
+            fetchProject();
+        };
+
+        socket.on('resource-updated', handleSync);
+        socket.on('project-updated', handleSync);
+
+        return () => {
+            socket.off('resource-updated', handleSync);
+            socket.off('project-updated', handleSync);
+        };
+    }, [pid, session?.user?._id]);
+
+    // ✨ 프로젝트 정보 업데이트 핸들러
     const handleUpdateProject = async (updates: { status?: string, overview?: string }) => {
         try {
             const res = await fetch(`/api/projects/${pid}`, {
@@ -78,6 +106,9 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
 
             if (data.success) {
                 fetchProject();
+                // 📡 소켓 알림
+                const type = updates.status ? 'status' : 'overview';
+                getSocket().emit('project-update', { projectId: pid, type, data: updates });
             } else {
                 alert(data.message);
             }
@@ -98,8 +129,9 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
             const data = await res.json();
 
             if (data.success) {
-                // 데이터를 다시 불러오거나 로컬 상태만 업데이트
-                fetchProject(); // 편의상 전체 재조회 (리소스는 무겁지 않으므로)
+                fetchProject();
+                // 📡 소켓 알림
+                getSocket().emit('resource-update', { projectId: pid, action: 'create', resource: data.data });
             } else {
                 alert(data.message);
             }
@@ -120,6 +152,8 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
 
             if (data.success) {
                 fetchProject();
+                // 📡 소켓 알림
+                getSocket().emit('resource-update', { projectId: pid, action: 'delete', resourceId });
             } else {
                 alert(data.message);
             }
@@ -141,6 +175,8 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
 
             if (data.success) {
                 fetchProject();
+                // 📡 소켓 알림
+                getSocket().emit('resource-update', { projectId: pid, action: 'update', resource: data.data });
             } else {
                 alert(data.message);
             }
@@ -159,7 +195,6 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
     const userId = session?.user?._id;
     const isAuthor = userId === authorId;
 
-    console.log('[Dashboard] Auth Check:', { authorId, userId, isAuthor }); // 디버깅용 로그
 
     return (
         <div className="container mx-auto p-4 lg:p-8 max-w-7xl">
@@ -182,35 +217,26 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
                         isAuthor={isAuthor || false}
                         onUpdate={(newOverview) => handleUpdateProject({ overview: newOverview })}
                     />
-
-                    {/* Future Widgets (e.g. Schedule, Kanban Preview) */}
-                    <div className="bg-white rounded-xl border border-dashed border-gray-200 p-8 text-center text-gray-400">
-                        <p>추후 일정/칸반 위젯 영역</p>
-                    </div>
                 </div>
 
                 {/* Right Column (Sidebar) - 1/4 width */}
-                <div className="lg:col-span-1 space-y-6">
-                    {/* Member List Widget */}
-                    <div className="bg-white rounded-xl border shadow-sm p-5">
-                        <h3 className="font-semibold mb-3 flex items-center justify-between">
-                            팀원 <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{project.members?.length || 0}</span>
-                        </h3>
-                        {/* Placeholder */}
-                        <div className="text-sm text-gray-500 py-4 text-center">
-                            멤버 리스트 (준비중)
-                        </div>
-                    </div>
+                <div className="lg:col-span-1 h-full">
+                    {/* Member List Widget (Real-time) */}
+                    {project && session?.user && (
+                        <MemberWidget
+                            members={(project.projectMembers || []).map((pm: any) => ({
+                                _id: pm.userId?._id,
+                                nName: pm.userId?.nName,
+                                email: pm.userId?.authorEmail,
+                                image: pm.userId?.avatarUrl,
+                                role: pm.role
+                            })).filter(m => m._id)} // 유효한 유저만 필터링
+                            currentUserId={session.user._id}
+                            projectId={pid}
+                        />
+                    )}
 
-                    {/* Shared Resources Widget */}
-                    <div className="bg-white rounded-xl border shadow-sm p-5">
-                        <h3 className="font-semibold mb-3 flex items-center justify-between">
-                            공유 자원 <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">{project.resources?.length || 0}</span>
-                        </h3>
-                        <div className="text-sm text-gray-400 py-4 text-center">
-                            우측 하단 버튼을 통해<br />자원을 관리하세요.
-                        </div>
-                    </div>
+
                 </div>
             </div>
 

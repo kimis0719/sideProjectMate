@@ -26,13 +26,25 @@ app.prepare().then(() => {
         },
     });
 
-    // 리소스 잠금 관리 (Memory Store)
+    // ==========================================
+    // 기존 로직: 리소스 잠금 관리 (Memory Store)
+    // ==========================================
     // key: "type:id" (예: "note:123", "section:456") -> socketId
     const resourceLocks = new Map<string, string>();
+
+    // ==========================================
+    // 신규 로직: 온라인 유저 관리 (Side Project Mate)
+    // ==========================================
+    // socketId -> { userId, projectId }
+    const onlineUsers = new Map<string, { userId: string, projectId: string }>();
 
     // Socket.io 이벤트 핸들링
     io.on('connection', (socket) => {
         console.log('Client connected:', socket.id);
+
+        // ------------------------------------------------------------
+        // [Part 1] 기존 보드/노트 협업 로직 (유지)
+        // ------------------------------------------------------------
 
         // 1. 보드 접속 (Room Join)
         socket.on('join-board', (boardId: string) => {
@@ -134,10 +146,45 @@ app.prepare().then(() => {
             io.emit('notification-received', { targetUserId, ...rest });
         });
 
+
+        // ------------------------------------------------------------
+        // [Part 2] Side Project Mate 신규 로직 (추가)
+        // ------------------------------------------------------------
+
+        // 1. 프로젝트 접속 (Room Join)
+        socket.on('join-project', ({ projectId, userId }) => {
+            socket.join(`project-${projectId}`);
+
+            // 온라인 상태 등록
+            onlineUsers.set(socket.id, { userId, projectId });
+
+            console.log(`User ${userId} joined project: ${projectId}`);
+
+            // 같은 프로젝트에 있는 다른 사람들에게 '나 들어왔어' 알림 (본인은 제외)
+            socket.to(`project-${projectId}`).emit('member-online', { userId });
+        });
+
+        // 2. 리소스 변경 알림 (동기화)
+        socket.on('resource-update', ({ projectId, action, resource }) => {
+            // action: 'create' | 'update' | 'delete'
+            socket.to(`project-${projectId}`).emit('resource-updated', { action, resource });
+            console.log(`Resource updated in project ${projectId}: ${action}`);
+        });
+
+        // 3. 프로젝트 상태/개요 변경 알림
+        socket.on('project-update', ({ projectId, type, data }) => {
+            // type: 'status' | 'overview'
+            socket.to(`project-${projectId}`).emit('project-updated', { type, data });
+        });
+
+
+        // ------------------------------------------------------------
+        // [Common] 연결 해제 처리 (공통)
+        // ------------------------------------------------------------
         socket.on('disconnect', () => {
             console.log('Client disconnected:', socket.id);
 
-            // 이 소켓이 잠근 모든 리소스 해제
+            // 1. [기존] 이 소켓이 잠근 모든 리소스 해제
             resourceLocks.forEach((socketId, key) => {
                 if (socketId === socket.id) {
                     resourceLocks.delete(key);
@@ -146,6 +193,17 @@ app.prepare().then(() => {
                     io.emit(eventName, { id });
                 }
             });
+
+            // 2. [신규] 프로젝트 멤버 오프라인 처리
+            const userInfo = onlineUsers.get(socket.id);
+            if (userInfo) {
+                const { userId, projectId } = userInfo;
+                onlineUsers.delete(socket.id);
+
+                // 퇴장 알림
+                io.to(`project-${projectId}`).emit('member-offline', { userId });
+                console.log(`User ${userId} left project: ${projectId}`);
+            }
         });
     });
 

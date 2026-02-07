@@ -226,31 +226,34 @@ export default function ResourceModal({
 
     return (
         <div className={`fixed right-8 bottom-24 z-50 w-full max-w-sm transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[700px]">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[700px]">
 
                 {/* Header */}
-                <div className={`p-4 border-b transition-colors flex justify-between items-center shrink-0 ${editingResource ? 'bg-amber-50 border-amber-100' : 'bg-white border-slate-100'}`}>
+                <div className={`p-4 border-b transition-colors flex justify-between items-center shrink-0 
+                    ${editingResource
+                        ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50'
+                        : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
                     <div>
-                        <h3 className={`text-lg font-bold flex items-center gap-2 ${editingResource ? 'text-amber-700' : 'text-slate-800'}`}>
+                        <h3 className={`text-lg font-bold flex items-center gap-2 ${editingResource ? 'text-amber-700 dark:text-amber-500' : 'text-slate-800 dark:text-slate-100'}`}>
                             {editingResource ? '✏️ 자산 수정 중' : '🔐 프로젝트 자산 박스'}
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className={`text-xs mt-0.5 ${editingResource ? 'text-amber-600/80 dark:text-amber-400/80' : 'text-slate-500 dark:text-slate-400'}`}>
                             {editingResource ? '내용을 수정하면 자동 분류됩니다' : '팀원들과 공유할 리소스를 관리하세요'}
                         </p>
                     </div>
                     {editingResource ? (
-                        <button onClick={resetForm} className="text-xs bg-white border border-amber-200 px-2 py-1 rounded text-amber-600 hover:bg-amber-100 font-bold">취소</button>
+                        <button onClick={resetForm} className="text-xs bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 px-2 py-1 rounded text-amber-600 dark:text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/50 font-bold">취소</button>
                     ) : (
-                        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     )}
                 </div>
 
                 {/* Resource List */}
-                <div className="p-4 space-y-3 overflow-y-auto bg-slate-50/50 min-h-[200px] flex-1">
+                <div className="p-4 space-y-3 overflow-y-auto bg-slate-50/50 dark:bg-black/20 min-h-[200px] flex-1">
                     {filteredResources.length === 0 ? (
-                        <div className="text-center py-10 text-slate-400 text-xs text-balance">
+                        <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-xs text-balance">
                             {filterCategory === 'ALL'
                                 ? <>등록된 자산이 없습니다.<br />아래에서 새로운 자산을 추가해보세요!</>
                                 : <>이 카테고리({categoryLabels[filterCategory]})에<br />등록된 자산이 없습니다.</>}
@@ -266,14 +269,14 @@ export default function ResourceModal({
                                         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setEditingResource(res); }}
-                                                className="bg-white p-1 rounded border border-slate-200 text-blue-500 hover:bg-blue-50 shadow-sm"
+                                                className="bg-white dark:bg-slate-800 p-1 rounded border border-slate-200 dark:border-slate-700 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 shadow-sm"
                                                 title="수정"
                                             >
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                             </button>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onDeleteResource(res._id!); }}
-                                                className="bg-white p-1 rounded border border-slate-200 text-red-500 hover:bg-red-50 shadow-sm"
+                                                className="bg-white dark:bg-slate-800 p-1 rounded border border-slate-200 dark:border-slate-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 shadow-sm"
                                                 title="삭제"
                                             >
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -282,22 +285,22 @@ export default function ResourceModal({
                                     )}
 
                                     {/* Card Renderer */}
-                                    <div className={`${res.category === 'ENV' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-xl p-3 border shadow-sm`}>
+                                    <div className={`${res.category === 'ENV' ? 'bg-slate-900 dark:bg-slate-950 border-slate-800 dark:border-slate-900' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'} rounded-xl p-3 border shadow-sm`}>
 
                                         {/* Link Style (ENV, ACCOUNT, OTHER 제외) */}
                                         {res.type === 'LINK' && !['ENV', 'ACCOUNT', 'OTHER'].includes(res.category) && (
                                             <div className="flex gap-3 items-center" onClick={() => !editingResource && window.open(res.content, '_blank')}>
-                                                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500 shrink-0">
+                                                <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-500 dark:text-blue-400 shrink-0">
                                                     {res.metadata?.image ? (
                                                         <img src={res.metadata.image} alt="" className="w-full h-full object-cover rounded-lg" />
                                                     ) : <span className="text-sm">🔗</span>}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">{res.category}</span>
+                                                        <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">{res.category}</span>
                                                     </div>
-                                                    <h4 className="text-xs font-semibold text-slate-800 truncate">{res.metadata?.title || res.content}</h4>
-                                                    <p className="text-[10px] text-slate-400 truncate">{res.content}</p>
+                                                    <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{res.metadata?.title || res.content}</h4>
+                                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{res.content}</p>
                                                 </div>
                                             </div>
                                         )}
@@ -317,28 +320,28 @@ export default function ResourceModal({
                                         {res.category === 'ACCOUNT' && accountInfo && (
                                             <>
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">🔑 Account</span>
-                                                    {res.metadata?.title && <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{res.metadata.title}</span>}
+                                                    <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">🔑 Account</span>
+                                                    {res.metadata?.title && <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">{res.metadata.title}</span>}
                                                 </div>
                                                 {/* ID Row */}
-                                                <div className="flex items-center justify-between bg-slate-50 p-1.5 rounded border border-slate-100 mb-1">
+                                                <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-700/50 p-1.5 rounded border border-slate-100 dark:border-slate-700 mb-1">
                                                     <div className="flex items-center gap-2 min-w-0">
-                                                        <span className="text-[9px] font-bold text-slate-400 w-4">ID</span>
-                                                        <code className="text-xs text-slate-700 font-mono truncate">{accountInfo.id}</code>
+                                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 w-4">ID</span>
+                                                        <code className="text-xs text-slate-700 dark:text-slate-200 font-mono truncate">{accountInfo.id}</code>
                                                     </div>
                                                     <button onClick={() => handleCopy(accountInfo.id!)} className="text-[10px] text-blue-400 hover:text-blue-600 font-bold ml-1 shrink-0">Copy</button>
                                                 </div>
                                                 {/* PW Row */}
                                                 {accountInfo.pw && (
-                                                    <div className="flex items-center justify-between bg-slate-50 p-1.5 rounded border border-slate-100">
+                                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-700/50 p-1.5 rounded border border-slate-100 dark:border-slate-700">
                                                         <div className="flex items-center gap-2 min-w-0">
-                                                            <span className="text-[9px] font-bold text-slate-400 w-4">PW</span>
-                                                            <code className="text-xs text-slate-700 font-mono truncate">
+                                                            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 w-4">PW</span>
+                                                            <code className="text-xs text-slate-700 dark:text-slate-200 font-mono truncate">
                                                                 {isPwVisible ? accountInfo.pw : '••••••••'}
                                                             </code>
                                                         </div>
                                                         <div className="flex gap-2">
-                                                            <button onClick={() => togglePassword(res._id!)} className="text-[10px] text-slate-400 hover:text-slate-600 font-bold">
+                                                            <button onClick={() => togglePassword(res._id!)} className="text-[10px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-bold">
                                                                 {isPwVisible ? '숨기기' : '보기'}
                                                             </button>
                                                             <button onClick={() => handleCopy(accountInfo.pw!)} className="text-[10px] text-blue-400 hover:text-blue-600 font-bold ml-1 shrink-0">Copy</button>
@@ -348,13 +351,13 @@ export default function ResourceModal({
                                             </>
                                         )}
 
-                                        {/* Other Style (메모) */}
+                                        {/* Other Style */}
                                         {res.category === 'OTHER' && (
                                             <>
                                                 <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">📝 MEMO</span>
+                                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">📝 MEMO</span>
                                                 </div>
-                                                <p className="text-xs text-slate-700 whitespace-pre-wrap break-all">{res.content}</p>
+                                                <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-all">{res.content}</p>
                                             </>
                                         )}
                                     </div>
@@ -365,7 +368,9 @@ export default function ResourceModal({
                 </div>
 
                 {/* Input Form (Footer) */}
-                <div className={`p-4 border-t shrink-0 transition-colors ${editingResource ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'}`}>
+                <div className={`p-4 border-t shrink-0 transition-colors ${editingResource
+                        ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50'
+                        : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
 
                     {/* 카테고리 수동 선택 칩 */}
                     <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 px-1 scrollbar-hide">
@@ -378,8 +383,8 @@ export default function ResourceModal({
                             }}
                             className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all border shrink-0 whitespace-nowrap
                                  ${filterCategory === 'ALL'
-                                    ? 'bg-slate-800 text-white border-slate-800'
-                                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                    ? 'bg-slate-800 dark:bg-slate-700 text-white border-slate-800 dark:border-slate-700'
+                                    : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                         >
                             전체
                         </button>
@@ -393,7 +398,7 @@ export default function ResourceModal({
                                 className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all border shrink-0 whitespace-nowrap
                                     ${detectedCategory === cat
                                         ? 'bg-purple-600 text-white border-purple-600' // 선택된 카테고리 강조
-                                        : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                                        : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                             >
                                 {categoryLabels[cat]}
                             </button>
@@ -407,13 +412,13 @@ export default function ResourceModal({
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder={detectedCategory === 'ACCOUNT' ? "계정 설명 (예: AWS 루트 계정)" : "설명 (선택사항, 링크 제목 등)"}
-                            className="w-full text-xs bg-white border border-slate-200 rounded px-2 py-1.5 focus:border-purple-500 outline-none placeholder:text-slate-400"
+                            className="w-full text-xs bg-white dark:bg-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 focus:border-purple-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                         />
                     </div>
 
                     {/* 계정 프리뷰 */}
                     {parsedAccount && !editingResource && (
-                        <div className="mb-2 bg-purple-50 border border-purple-100 rounded p-2 text-xs text-purple-800">
+                        <div className="mb-2 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded p-2 text-xs text-purple-800 dark:text-purple-300">
                             <div className="flex"><span className="w-6 font-bold opacity-50">ID</span> {parsedAccount.id}</div>
                             <div className="flex"><span className="w-6 font-bold opacity-50">PW</span> {parsedAccount.pw}</div>
                         </div>
@@ -424,14 +429,18 @@ export default function ResourceModal({
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             placeholder="공유할 내용을 입력하세요... (자동 분류됨)"
-                            className={`w-full bg-white border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 transition-all resize-none min-h-[80px]
-                                ${editingResource ? 'border-amber-200 focus:ring-amber-500' : 'border-slate-200 focus:ring-blue-500'}`}
+                            className={`w-full bg-white dark:bg-slate-800 dark:text-slate-100 border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 transition-all resize-none min-h-[80px]
+                                ${editingResource
+                                    ? 'border-amber-200 dark:border-amber-800 focus:ring-amber-500'
+                                    : 'border-slate-200 dark:border-slate-700 focus:ring-blue-500 dark:focus:ring-blue-600'}`}
                         />
 
                         <button
                             onClick={handleSubmit}
                             className={`w-full py-2.5 rounded-lg text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-2
-                                ${editingResource ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-slate-800 hover:bg-slate-900 text-white'}`}
+                                ${editingResource
+                                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                    : 'bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white'}`}
                         >
                             {editingResource ? (
                                 <><span>💾</span> 수정 완료</>
