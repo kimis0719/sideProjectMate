@@ -63,6 +63,7 @@ type BoardState = {
   lockedSections: Record<string, { userId: string; socketId: string }>;
   currentUserId: string | null;
   peerSelections: Record<string, { userId: string; color: string; socketId: string }[]>;
+  isRemoteUpdate: boolean; // 원격 업데이트 여부를 나타내는 플래그 (Undo 히스토리 기록 제외용)
 
   // Actions
   initBoard: (pid: number) => Promise<void>;
@@ -108,6 +109,15 @@ type BoardState = {
   // Undo/Redo
   undo: () => void;
   redo: () => void;
+
+  // Remote-only Actions (Internal use by socket listeners)
+  applyRemoteNoteCreation: (note: Note) => void;
+  applyRemoteNoteUpdate: (note: Note) => void;
+  applyRemoteNoteDeletion: (noteId: string) => void;
+  applyRemoteSectionCreation: (section: Section) => void;
+  applyRemoteSectionUpdate: (section: Section) => void;
+  applyRemoteSectionDeletion: (sectionId: string) => void;
+  applyRemoteBoardSync: (data: { notes: Note[]; sections: Section[] }) => void;
 };
 
 const transformDoc = (doc: any) => {
@@ -138,6 +148,7 @@ export const useBoardStore = create<BoardState>()(
         peerSelections: {},
         isSnapEnabled: false,
         isSelectionMode: false,
+        isRemoteUpdate: false,
 
         toggleSnap: () => set((state) => ({ isSnapEnabled: !state.isSnapEnabled })),
         toggleSelectionMode: () => set((state) => ({ isSelectionMode: !state.isSelectionMode })),
@@ -213,30 +224,23 @@ export const useBoardStore = create<BoardState>()(
           const socket = socketClient.connect();
           socket.emit('join-board', boardId);
 
+          // Note Events
           socket.off('note-created');
           socket.on('note-created', (note: any) => {
-            const { notes } = get();
-            if (!notes.find((n) => n.id === (note.id || note._id))) {
-              set((state) => ({
-                notes: [...state.notes, transformDoc(note)]
-              }));
-            }
+            get().applyRemoteNoteCreation(transformDoc(note));
           });
 
           socket.off('note-updated');
           socket.on('note-updated', (note: any) => {
-            set((state) => ({
-              notes: state.notes.map((n) => n.id === (note.id || note._id) ? { ...n, ...transformDoc(note) } : n)
-            }));
+            get().applyRemoteNoteUpdate(transformDoc(note));
           });
 
           socket.off('note-deleted');
           socket.on('note-deleted', (noteId: string) => {
-            set((state) => ({
-              notes: state.notes.filter((n) => n.id !== noteId)
-            }));
+            get().applyRemoteNoteDeletion(noteId);
           });
 
+          // Lock Events
           socket.off('note-locked');
           socket.on('note-locked', (data: { id: string; userId: string; socketId: string }) => {
             set(state => ({
@@ -269,28 +273,20 @@ export const useBoardStore = create<BoardState>()(
             });
           });
 
+          // Section Events
           socket.off('section-created');
           socket.on('section-created', (section: any) => {
-            const { sections } = get();
-            const newSection = transformDoc(section);
-            if (!sections.find(s => s.id === newSection.id)) {
-              set(state => ({ sections: [...state.sections, newSection] }));
-            }
+            get().applyRemoteSectionCreation(transformDoc(section));
           });
 
           socket.off('section-updated');
           socket.on('section-updated', (section: any) => {
-            const updatedSection = transformDoc(section);
-            set(state => ({
-              sections: state.sections.map(s => s.id === updatedSection.id ? { ...s, ...updatedSection } : s)
-            }));
+            get().applyRemoteSectionUpdate(transformDoc(section));
           });
 
           socket.off('section-deleted');
           socket.on('section-deleted', (sectionId: string) => {
-            set(state => ({
-              sections: state.sections.filter(s => s.id !== sectionId)
-            }));
+            get().applyRemoteSectionDeletion(sectionId);
           });
 
           // Peer Selection
@@ -325,14 +321,7 @@ export const useBoardStore = create<BoardState>()(
           // [Undo/Redo Sync]
           socket.off('board-synced');
           socket.on('board-synced', (data: { notes: Note[], sections: Section[] }) => {
-            const syncedNotes = data.notes.map((n: any) => ({
-              ...n,
-              dueDate: n.dueDate ? new Date(n.dueDate) : undefined
-            }));
-            set({
-              notes: syncedNotes,
-              sections: data.sections
-            });
+            get().applyRemoteBoardSync(data);
           });
         },
 
@@ -870,9 +859,11 @@ export const useBoardStore = create<BoardState>()(
 
         undo: () => {
           useBoardStore.temporal.getState().undo();
+
           const { boardId, notes, sections } = get();
           if (boardId) {
             const socket = socketClient.connect();
+            // Undo 직후 전체 보드 상태를 다른 사용자들에게 동기화
             socket.emit('sync-board', { boardId, notes, sections });
           }
         },
@@ -884,10 +875,79 @@ export const useBoardStore = create<BoardState>()(
             const socket = socketClient.connect();
             socket.emit('sync-board', { boardId, notes, sections });
           }
+        },
+
+        // --- Remote-only Actions Implementation ---
+        applyRemoteNoteCreation: (note) => {
+          const { notes } = get();
+          if (!notes.find((n) => n.id === note.id)) {
+            useBoardStore.temporal.getState().pause();
+            set({ notes: [...notes, note] });
+            useBoardStore.temporal.getState().resume();
+          }
+        },
+
+        applyRemoteNoteUpdate: (note) => {
+          useBoardStore.temporal.getState().pause();
+          set((state) => ({
+            notes: state.notes.map((n) => n.id === note.id ? { ...n, ...note } : n)
+          }));
+          useBoardStore.temporal.getState().resume();
+        },
+
+        applyRemoteNoteDeletion: (noteId) => {
+          useBoardStore.temporal.getState().pause();
+          set((state) => ({
+            notes: state.notes.filter((n) => n.id !== noteId)
+          }));
+          useBoardStore.temporal.getState().resume();
+        },
+
+        applyRemoteSectionCreation: (section) => {
+          const { sections } = get();
+          if (!sections.find((s) => s.id === section.id)) {
+            useBoardStore.temporal.getState().pause();
+            set({ sections: [...sections, section] });
+            useBoardStore.temporal.getState().resume();
+          }
+        },
+
+        applyRemoteSectionUpdate: (section) => {
+          useBoardStore.temporal.getState().pause();
+          set((state) => ({
+            sections: state.sections.map((s) => s.id === section.id ? { ...s, ...section } : s)
+          }));
+          useBoardStore.temporal.getState().resume();
+        },
+
+        applyRemoteSectionDeletion: (sectionId) => {
+          useBoardStore.temporal.getState().pause();
+          set((state) => ({
+            sections: state.sections.filter((s) => s.id !== sectionId)
+          }));
+          useBoardStore.temporal.getState().resume();
+        },
+
+        applyRemoteBoardSync: (data) => {
+          const syncedNotes = data.notes.map((n: any) => ({
+            ...n,
+            dueDate: n.dueDate ? new Date(n.dueDate) : undefined
+          }));
+          useBoardStore.temporal.getState().pause();
+          set({
+            notes: syncedNotes,
+            sections: data.sections
+          });
+          useBoardStore.temporal.getState().resume();
         }
       }),
       {
         limit: 50,
+        handleSet: (handleSet) => (state) => {
+          // pause/resume을 사용하므로 여기서의 추가 필터는 보조적으로 유지하거나 제거 가능
+          if ((state as any).isRemoteUpdate) return;
+          handleSet(state);
+        },
         partialize: (state) => ({
           notes: state.notes,
           sections: state.sections
