@@ -858,49 +858,112 @@ export const useBoardStore = create<BoardState>()(
         },
 
         undo: () => {
+          const { notes: oldNotes, sections: oldSections, boardId } = get();
           useBoardStore.temporal.getState().undo();
+          const { notes: newNotes, sections: newSections } = get();
 
-          const { boardId, notes, sections } = get();
-          if (boardId) {
-            const socket = socketClient.connect();
-            // Undo 직후 전체 보드 상태를 다른 사용자들에게 동기화
-            socket.emit('sync-board', { boardId, notes, sections });
-          }
+          if (!boardId) return;
+          const socket = socketClient.connect();
+
+          // 1. 변경된 노트들만 식별하여 전송 (Differential Sync)
+          newNotes.forEach(note => {
+            const oldNote = oldNotes.find(on => on.id === note.id);
+            // 과거 스냅샷과 현재가 다르면 해당 노트만 전송
+            if (!oldNote || JSON.stringify(oldNote) !== JSON.stringify(note)) {
+              socket.emit('update-note', { boardId, note });
+            }
+          });
+
+          // 2. Undo로 인해 다시 생겨난 노트 (원래 삭제했었으나 Undo)
+          newNotes.forEach(note => {
+            if (!oldNotes.find(on => on.id === note.id)) {
+              socket.emit('create-note', { boardId, note });
+            }
+          });
+
+          // 3. Undo로 인해 사라진 노트 (원래 생성했었으나 Undo)
+          oldNotes.forEach(oldNote => {
+            if (!newNotes.find(n => n.id === oldNote.id)) {
+              socket.emit('delete-note', { boardId, noteId: oldNote.id });
+            }
+          });
+
+          // 섹션에 대해서도 상세 동기화가 필요하지만, 
+          // 노트 업데이트 로직을 우선 적용하고 섹션은 필요 시 확장 가능합니다.
         },
 
         redo: () => {
+          const { notes: oldNotes, sections: oldSections, boardId } = get();
           useBoardStore.temporal.getState().redo();
-          const { boardId, notes, sections } = get();
-          if (boardId) {
-            const socket = socketClient.connect();
-            socket.emit('sync-board', { boardId, notes, sections });
-          }
+          const { notes: newNotes, sections: newSections } = get();
+
+          if (!boardId) return;
+          const socket = socketClient.connect();
+
+          // Undo와 동일한 로직으로 변경된 페이로드만 전송
+          newNotes.forEach(note => {
+            const oldNote = oldNotes.find(on => on.id === note.id);
+            if (!oldNote || JSON.stringify(oldNote) !== JSON.stringify(note)) {
+              socket.emit('update-note', { boardId, note });
+            }
+          });
         },
 
         // --- Remote-only Actions Implementation ---
         applyRemoteNoteCreation: (note) => {
           const { notes } = get();
           if (!notes.find((n) => n.id === note.id)) {
+            // 1. 현재 상태 업데이트 (기록 제외)
             useBoardStore.temporal.getState().pause();
             set({ notes: [...notes, note] });
             useBoardStore.temporal.getState().resume();
+
+            // 2. 히스토리 주입 (모든 히스토리에 새 노트 추가)
+            // 내가 과거로 가더라도 새로 생성된 노트는 존재해야 함
+            const { pastStates, futureStates } = useBoardStore.temporal.getState();
+            const inject = (s: any) => ({ ...s, notes: [...s.notes, note] });
+            (useBoardStore.temporal as any).setState({
+              pastStates: pastStates.map(inject),
+              futureStates: futureStates.map(inject)
+            });
           }
         },
 
         applyRemoteNoteUpdate: (note) => {
+          // 1. 현재 상태 업데이트 (기록 제외)
           useBoardStore.temporal.getState().pause();
           set((state) => ({
             notes: state.notes.map((n) => n.id === note.id ? { ...n, ...note } : n)
           }));
           useBoardStore.temporal.getState().resume();
+
+          // 2. 히스토리 주입 (모든 과거/미래 스냅샷의 해당 노트 정보를 최신으로 업데이트)
+          const { pastStates, futureStates } = useBoardStore.temporal.getState();
+          const patch = (s: any) => ({
+            ...s,
+            notes: s.notes.map((n: any) => n.id === note.id ? { ...n, ...note } : n)
+          });
+          (useBoardStore.temporal as any).setState({
+            pastStates: pastStates.map(patch),
+            futureStates: futureStates.map(patch)
+          });
         },
 
         applyRemoteNoteDeletion: (noteId) => {
+          // 1. 현재 상태 업데이트 (기록 제외)
           useBoardStore.temporal.getState().pause();
           set((state) => ({
             notes: state.notes.filter((n) => n.id !== noteId)
           }));
           useBoardStore.temporal.getState().resume();
+
+          // 2. 히스토리 주입 (모든 스냅샷에서 삭제)
+          const { pastStates, futureStates } = useBoardStore.temporal.getState();
+          const filter = (s: any) => ({ ...s, notes: s.notes.filter((n: any) => n.id !== noteId) });
+          (useBoardStore.temporal as any).setState({
+            pastStates: pastStates.map(filter),
+            futureStates: futureStates.map(filter)
+          });
         },
 
         applyRemoteSectionCreation: (section) => {
@@ -909,6 +972,13 @@ export const useBoardStore = create<BoardState>()(
             useBoardStore.temporal.getState().pause();
             set({ sections: [...sections, section] });
             useBoardStore.temporal.getState().resume();
+
+            const { pastStates, futureStates } = useBoardStore.temporal.getState();
+            const inject = (s: any) => ({ ...s, sections: [...s.sections, section] });
+            (useBoardStore.temporal as any).setState({
+              pastStates: pastStates.map(inject),
+              futureStates: futureStates.map(inject)
+            });
           }
         },
 
@@ -918,6 +988,16 @@ export const useBoardStore = create<BoardState>()(
             sections: state.sections.map((s) => s.id === section.id ? { ...s, ...section } : s)
           }));
           useBoardStore.temporal.getState().resume();
+
+          const { pastStates, futureStates } = useBoardStore.temporal.getState();
+          const patch = (s: any) => ({
+            ...s,
+            sections: state.sections.map((s: any) => s.id === section.id ? { ...s, ...section } : s)
+          });
+          (useBoardStore.temporal as any).setState({
+            pastStates: pastStates.map(patch),
+            futureStates: futureStates.map(patch)
+          });
         },
 
         applyRemoteSectionDeletion: (sectionId) => {
@@ -926,6 +1006,13 @@ export const useBoardStore = create<BoardState>()(
             sections: state.sections.filter((s) => s.id !== sectionId)
           }));
           useBoardStore.temporal.getState().resume();
+
+          const { pastStates, futureStates } = useBoardStore.temporal.getState();
+          const filter = (s: any) => ({ ...s, sections: s.sections.filter((s: any) => s.id !== sectionId) });
+          (useBoardStore.temporal as any).setState({
+            pastStates: pastStates.map(filter),
+            futureStates: futureStates.map(filter)
+          });
         },
 
         applyRemoteBoardSync: (data) => {
@@ -939,6 +1026,16 @@ export const useBoardStore = create<BoardState>()(
             sections: data.sections
           });
           useBoardStore.temporal.getState().resume();
+
+          // 전체 동기화의 경우 히스토리를 덮어쓰거나 무시할 수 있으나, 
+          // 안전을 위해 히스토리를 비우거나 최신으로 보정하는 전략 선택
+          // 여기서는 모든 히스토리 스냅샷에 동기화된 데이터를 일단 주입
+          const { pastStates, futureStates } = useBoardStore.temporal.getState();
+          const sync = () => ({ notes: syncedNotes, sections: data.sections });
+          (useBoardStore.temporal as any).setState({
+            pastStates: pastStates.map(sync),
+            futureStates: futureStates.map(sync)
+          });
         }
       }),
       {
