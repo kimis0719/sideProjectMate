@@ -1,13 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useRouter, useParams } from 'next/navigation';
 import { IProject } from '@/lib/models/Project';
-import { useNotificationStore } from '@/lib/store/notificationStore';
 import { getSocket } from '@/lib/socket';
+import { useModalStore } from '@/store/modalStore';
 
 // 프로젝트 데이터 타입 확장
 interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
@@ -31,6 +28,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
     const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
 
     const { data: session } = useSession();
+    const { openAlert } = useModalStore();
 
     // 1. 프로젝트 데이터 조회
     const fetchProject = async () => {
@@ -110,11 +108,11 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
                 const type = updates.status ? 'status' : 'overview';
                 getSocket().emit('project-update', { projectId: pid, type, data: updates });
             } else {
-                alert(data.message);
+                await openAlert('오류', data.message);
             }
         } catch (e) {
             console.error(e);
-            alert('업데이트 중 오류가 발생했습니다.');
+            await openAlert('오류', '업데이트 중 오류가 발생했습니다.');
         }
     };
 
@@ -133,17 +131,17 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
                 // 📡 소켓 알림
                 getSocket().emit('resource-update', { projectId: pid, action: 'create', resource: data.data });
             } else {
-                alert(data.message);
+                await openAlert('오류', data.message);
             }
         } catch (e) {
             console.error(e);
-            alert('리소스 추가 중 오류가 발생했습니다.');
+            await openAlert('오류', '리소스 추가 중 오류가 발생했습니다.');
         }
     };
 
     // ✨ 리소스 삭제 핸들러
     const handleDeleteResource = async (resourceId: string) => {
-        if (!confirm('정말 삭제하시겠습니까?')) return;
+        // Confirm은 Modal 내부에서 처리하므로 삭제
         try {
             const res = await fetch(`/api/projects/${pid}/resources?resourceId=${resourceId}`, {
                 method: 'DELETE',
@@ -155,11 +153,11 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
                 // 📡 소켓 알림
                 getSocket().emit('resource-update', { projectId: pid, action: 'delete', resourceId });
             } else {
-                alert(data.message);
+                await openAlert('오류', data.message);
             }
         } catch (e) {
             console.error(e);
-            alert('리소스 삭제 중 오류가 발생했습니다.');
+            await openAlert('오류', '리소스 삭제 중 오류가 발생했습니다.');
         }
     };
 
@@ -178,11 +176,11 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
                 // 📡 소켓 알림
                 getSocket().emit('resource-update', { projectId: pid, action: 'update', resource: data.data });
             } else {
-                alert(data.message);
+                await openAlert('오류', data.message);
             }
         } catch (e) {
             console.error(e);
-            alert('리소스 수정 중 오류가 발생했습니다.');
+            await openAlert('오류', '리소스 수정 중 오류가 발생했습니다.');
         }
     };
 
@@ -260,6 +258,8 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
                 onAddResource={handleAddResource}
                 onDeleteResource={handleDeleteResource}
                 onUpdateResource={handleUpdateResource}
+                currentUserId={session?.user?._id || ''} // ✨ Prop 전달
+                projectAuthorId={authorId} // ✨ Prop 전달
             />
         </div>
     );

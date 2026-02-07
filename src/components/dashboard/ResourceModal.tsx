@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { IResource } from '@/lib/models/Project';
+import { useModalStore } from '@/store/modalStore';
 
 interface ResourceModalProps {
     isOpen: boolean;
@@ -8,6 +9,8 @@ interface ResourceModalProps {
     onAddResource: (type: 'LINK' | 'TEXT', category: string, content: string, metadata?: any) => Promise<void>;
     onDeleteResource: (resourceId: string) => Promise<void>;
     onUpdateResource: (resourceId: string, category: string, content: string, metadata?: any) => Promise<void>;
+    currentUserId: string; // ✨ 현재 로그인한 유저 ID
+    projectAuthorId: string; // ✨ 프로젝트 생성자(PM) ID
 }
 
 export default function ResourceModal({
@@ -17,7 +20,10 @@ export default function ResourceModal({
     onAddResource,
     onDeleteResource,
     onUpdateResource,
+    currentUserId,
+    projectAuthorId,
 }: ResourceModalProps) {
+    const { openConfirm, openAlert } = useModalStore();
     const [filterCategory, setFilterCategory] = useState<string>('ALL');
 
     // 통합 입력 상태
@@ -159,7 +165,7 @@ export default function ResourceModal({
 
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert('복사되었습니다!');
+        // alert('복사되었습니다!'); -> 굳이 모달까지 띄울 필요 없거나 토스트가 적합하나, 여기선 일단 유지하되 openAlert 사용 고려 (너무 잦은 알림 방지 위해 일단 둠)
     };
 
     const togglePassword = (id: string) => {
@@ -178,7 +184,7 @@ export default function ResourceModal({
 
     const handleSubmit = async () => {
         if (!content.trim()) {
-            alert('내용을 입력해주세요.');
+            await openAlert('안내', '내용을 입력해주세요.');
             return;
         }
 
@@ -224,6 +230,19 @@ export default function ResourceModal({
         }
     };
 
+    // 삭제 핸들러 (컨펌 모달 적용)
+    const handleDeleteClick = async (e: React.MouseEvent, resourceId: string) => {
+        e.stopPropagation();
+        const confirmed = await openConfirm('자산 삭제', '정말 이 자산을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.', {
+            isDestructive: true,
+            confirmText: '삭제',
+            cancelText: '취소'
+        });
+        if (confirmed) {
+            await onDeleteResource(resourceId);
+        }
+    }
+
     return (
         <div className={`fixed right-8 bottom-24 z-50 w-full max-w-sm transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[700px]">
@@ -263,9 +282,15 @@ export default function ResourceModal({
                             const accountInfo = res.category === 'ACCOUNT' ? parseAccountContent(res.content) : null;
                             const isPwVisible = visiblePasswords[res._id] || false;
 
+                            // ✨ 권한 체크 (본인 작성 or 프로젝트 관리자)
+                            const isOwner = res.userId === currentUserId || (!res.userId && currentUserId === projectAuthorId); // (레거시 데이터는 관리자만)
+                            const isAdmin = currentUserId === projectAuthorId;
+                            const hasPermission = isOwner || isAdmin;
+
                             return (
                                 <div key={res._id} className={`relative group transition-opacity ${editingResource && editingResource._id !== res._id ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-                                    {!editingResource && (
+                                    {/* 수정/삭제 버튼: 권한이 있는 경우에만 표시 */}
+                                    {!editingResource && hasPermission && (
                                         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setEditingResource(res); }}
@@ -275,7 +300,7 @@ export default function ResourceModal({
                                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                             </button>
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); onDeleteResource(res._id!); }}
+                                                onClick={(e) => handleDeleteClick(e, res._id!)}
                                                 className="bg-white dark:bg-slate-800 p-1 rounded border border-slate-200 dark:border-slate-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 shadow-sm"
                                                 title="삭제"
                                             >
@@ -369,8 +394,8 @@ export default function ResourceModal({
 
                 {/* Input Form (Footer) */}
                 <div className={`p-4 border-t shrink-0 transition-colors ${editingResource
-                        ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50'
-                        : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
+                    ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-900/50'
+                    : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
 
                     {/* 카테고리 수동 선택 칩 */}
                     <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 px-1 scrollbar-hide">
