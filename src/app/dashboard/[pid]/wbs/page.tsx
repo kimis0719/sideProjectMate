@@ -206,7 +206,7 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
     }
 
     return (
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col min-h-full">
             {/* 상단 툴바 */}
             <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
                 <div>
@@ -312,8 +312,8 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
                 return null;
             })()}
 
-            {/* 메인 컨텐츠 */}
-            <div className="flex-1 overflow-auto p-6 space-y-6">
+            {/* 메인 컨텐츠 (브라우저 스크롤 활용) */}
+            <div className="p-6 space-y-6">
                 {/* 작업 폼 (모달 형태) */}
                 {showTaskForm && (
                     <div className="mb-6">
