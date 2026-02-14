@@ -187,6 +187,37 @@ export default function ManageApplicantsPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
+                {/* ✨ 대화하기 버튼 (면접/인터뷰) */}
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/api/chat/rooms', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          category: 'RECRUIT',
+                          participants: [app.applicantId._id],
+                          applicationId: app._id,
+                          projectId: project._id, // 🔥 프로젝트의 실제 ObjectId (_id)로 수정
+                        }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        router.push(`/chat?roomId=${data.data._id}`);
+                      } else {
+                        const errorMsg = data.error ? `${data.message}\n(${data.error})` : (data.message || '채팅방 생성 실패');
+                        await alert('오류', errorMsg);
+                      }
+                    } catch (e: any) {
+                      await alert('오류', `요청 중 문제가 발생했습니다.\n${e.message}`);
+                    }
+                  }}
+                  className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                  대화하기
+                </button>
+
                 {app.status === 'pending' && (
                   <>
                     <button onClick={() => handleStatusChange(app._id, 'accepted')} className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors">수락</button>
