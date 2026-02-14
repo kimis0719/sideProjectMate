@@ -136,10 +136,57 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       }
     };
 
+    // ... (previous code)
     fetchData();
   }, [pid, session]);
 
+  // ✨ [채팅] 1:1 문의하기 핸들러
+  const handleInquiry = async () => {
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (!project || typeof project.author !== 'object') {
+      await alert('오류', '프로젝트 작성자 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    if (isOwner) {
+      await alert('알림', '본인의 프로젝트에는 문의할 수 없습니다.');
+      return;
+    }
+
+    try {
+      // 채팅방 생성 요청 (INQUIRY)
+      const res = await fetch('/api/chat/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'INQUIRY',
+          participants: [project.author._id], // 작성자 ID (나 자신은 API에서 자동 추가됨)
+          projectId: project._id, // 🔥 프로젝트의 실제 ObjectId (_id)로 수정
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // 채팅방으로 이동 (임시 라우트 /chat)
+        router.push(`/chat?roomId=${data.data._id}`);
+      } else {
+        // ✨ 에러 디버깅을 위해 상세 메시지 표시
+        const errorMsg = data.error ? `${data.message}\n(${data.error})` : (data.message || '채팅방 생성에 실패했습니다.');
+        await alert('오류', errorMsg);
+      }
+    } catch (e: any) {
+      console.error(e);
+      await alert('오류', `문의하기 요청 중 문제가 발생했습니다.\n${e.message}`);
+    }
+  };
+
   const handleLike = async () => {
+    // ... (rest of code)
     if (!session) {
       router.push('/login');
       return;
@@ -326,6 +373,19 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                     }
                   }}
                 />
+
+                {/* ✨ 문의하기 버튼 추가 */}
+                {!isOwner && (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={handleInquiry}
+                      className="flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-lg transition-colors shadow-sm"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                      작성자에게 1:1 문의하기
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

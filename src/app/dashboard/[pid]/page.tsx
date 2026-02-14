@@ -184,6 +184,56 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
         }
     };
 
+    // ✨ 팀 채팅방 입장/생성 핸들러
+    const handleTeamChat = async () => {
+        if (!project || !project.projectMembers) return;
+
+        // 현재 프로젝트의 모든 멤버 ID 추출 (본인 포함)
+        const memberIds = project.projectMembers
+            .map((pm: any) => pm.userId?._id)
+            .filter((id: string) => id);
+
+        // 유효성 검사: 멤버가 너무 적으면 팀 채팅 의미가 없음 (옵션)
+        if (memberIds.length < 2) {
+            await openAlert('알림', '대화할 팀원이 부족합니다. (최소 2명 이상의 멤버 필요)');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/chat/rooms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category: 'TEAM',
+                    participants: memberIds,
+                    projectId: project._id, // 🔥 프로젝트의 실제 ObjectId (_id)로 수정
+                }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                // Next.js Router를 이용해 채팅 페이지로 이동
+                // window.location.href = `/chat?roomId=${data.data._id}`; // 혹은 router
+                // 위에서 router를 import 안했음. router 추가 필요? 
+                // DashboardPage는 'use client' 이지만 router hook이 없음. import 필요.
+                // 아, page.tsx 상단에 import 나 router 선언이 없는지 확인해야 함.
+                // 확인해보니 import { useRouter } from 'next/navigation'이 없음!
+                // window.location.href를 임시로 쓰거나, useRouter를 추가해야 함.
+                // 코드 품질을 위해 useRouter를 추가하는 게 맞음.
+                // 하지만 이 replace 블록에서는 함수만 추가하고 싶음.
+                // 일단 window.location.href 사용 (간편함).
+                window.location.href = `/chat?roomId=${data.data._id}`;
+            } else {
+                const errorMsg = data.error ? `${data.message}\n(${data.error})` : (data.message || '팀 채팅방 입장에 실패했습니다.');
+                await openAlert('오류', errorMsg);
+            }
+        } catch (e: any) {
+            console.error(e);
+            await openAlert('오류', `요청 중 문제가 발생했습니다.\n${e.message}`);
+        }
+    };
+
     if (isLoading) return <div className="p-8">로딩 중...</div>;
     if (error) return <div className="p-8 text-red-500">에러: {error}</div>;
     if (!project) return <div className="p-8">프로젝트를 찾을 수 없습니다.</div>;
@@ -218,7 +268,16 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
                 </div>
 
                 {/* Right Column (Sidebar) - 1/4 width */}
-                <div className="lg:col-span-1 h-full">
+                <div className="lg:col-span-1 h-full space-y-4">
+                    {/* ✨ 팀 채팅 진입 버튼 */}
+                    <button
+                        onClick={handleTeamChat}
+                        className="w-full py-3 px-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"
+                    >
+                        <span className="text-xl">💬</span>
+                        팀 채팅방 입장
+                    </button>
+
                     {/* Member List Widget (Real-time) */}
                     {project && session?.user && (
                         <MemberWidget
