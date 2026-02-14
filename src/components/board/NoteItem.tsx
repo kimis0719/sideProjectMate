@@ -746,18 +746,26 @@ export default function NoteItem({
     debouncedSave({ x: newX, y: newY });
   }, [isEditing, x, y, id, moveNote, debouncedSave, setIsEditing, removeNote]);
 
+  // --- Box-Shadow (Border Replacement) ---
+  const baseShadow = '0 2px 8px rgba(0,0,0,0.15)';
+  let ringShadow = '';
+
+  if (isLockedByOther) {
+    ringShadow = `inset 0 0 0 3px ${lockedColor}`;
+  } else if (isSelected) {
+    ringShadow = `inset 0 0 0 2px #3B82F6`;
+  } else if (isPeerSelected) {
+    ringShadow = `inset 0 0 0 2px ${peerColor}`;
+  }
+
+  const finalShadow = ringShadow ? `${baseShadow}, ${ringShadow}` : baseShadow;
+
   return (
     <div
       ref={visualRef} // Attach Ref
       role="note"
       data-note-id={id} // For DOM manipulation
-      data-section-id={useBoardStore.getState().notes.find(n => n.id === id)?.sectionId || ''} // 섹션 연결용 (props로 받는게 정확하지만 store에서 조회가 안전)
-      // Note: props로 받는게 좋은데, NoteItem은 props로 sectionId를 안받고 있음?
-      // 아, Note 타입 text, color 등등만 받고 sectionId는 안받았었나?
-      // Props 정의 다시 확인: width, height, ... tags. sectionId 없음.
-      // 근데 store에는 있음.
-      // NoteItem은 'Note' 객체를 통째로 안받고 분해해서 받음.
-      // -> useBoardStore에서 조회해서 넣어야함.
+      data-section-id={useBoardStore.getState().notes.find(n => n.id === id)?.sectionId || ''}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onTouchEnd={handleTouchEnd}
@@ -775,16 +783,13 @@ export default function NoteItem({
         width: width,
         height: height,
         background: color,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        boxShadow: finalShadow,
         borderRadius: 12,
         padding: 0,
         cursor: isEditing ? 'text' : 'grab',
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
-        borderWidth: isLockedByOther ? 3 : (isSelected || isPeerSelected ? 2 : 0),
-        borderStyle: 'solid',
-        borderColor: isLockedByOther ? lockedColor : (isSelected ? '#3B82F6' : (isPeerSelected ? peerColor : 'transparent')),
         outline: 'none',
         opacity: isTempNote ? 0.7 : 1,
         zIndex: isSelected ? 9999 : zIndex,
