@@ -2,6 +2,7 @@
 
 import { getCategoryColor } from '@/constants/chat';
 import { MockChatRoom } from './ChatRoomList';
+import { useChatSocket } from '@/hooks/useChatSocket';
 
 interface ChatWindowProps {
     room: MockChatRoom;
@@ -13,6 +14,10 @@ interface ChatWindowProps {
  */
 export default function ChatWindow({ room }: ChatWindowProps) {
     const categoryColor = getCategoryColor(room.category);
+
+    // 🔌 Step 5.2: 해당 채팅방에 입장하면서 소켓 연결하기
+    // useChatSocket 훅 내부의 useEffect가 roomId가 바뀔 때마다 기존 방에서 나가고 새 방으로 입장(join)하도록 처리해줘.
+    const { isConnected } = useChatSocket(room._id);
 
     return (
         <div className="flex-1 flex flex-col bg-slate-50/50 relative">
@@ -53,6 +58,11 @@ export default function ChatWindow({ room }: ChatWindowProps) {
                     <button className="hover:text-slate-600 transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                     </button>
+                    {/* 디버깅용 실시간 연결 상태 표시기 (우측 상단 점) */}
+                    <div
+                        className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-400'}`}
+                        title={isConnected ? '실시간 통신 연결됨' : '연결 끊김'}
+                    />
                 </div>
             </div>
 
