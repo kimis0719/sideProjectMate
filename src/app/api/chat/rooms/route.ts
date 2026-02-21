@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import ChatRoom from '@/lib/models/ChatRoom';
+import ChatMessage from '@/lib/models/ChatMessage';
 import User from '@/lib/models/User';
 
 export async function POST(request: Request) {
@@ -85,6 +86,38 @@ export async function POST(request: Request) {
             applicationId: applicationId || null,
             unreadCounts: {}, // 초기화
         });
+
+        // 8. 🤖 [Step 4.2] 시스템 메시지(Bot) 자동 생성 로직
+        // 방이 생성된 직후, 카테고리에 맞는 안내 메시지를 자동으로 뿌려준다!
+        let systemMessageContent = '';
+        switch (category) {
+            case 'INQUIRY':
+                systemMessageContent = '프로젝트에 대한 문의 대화방이 생성되었습니다. 궁금한 점을 편하게 남겨주세요!';
+                break;
+            case 'RECRUIT':
+                systemMessageContent = '지원자 인터뷰를 위한 대화방입니다. 서로 예의를 갖추어 대화해주세요. 😊';
+                break;
+            case 'TEAM':
+                systemMessageContent = '팀 매칭이 완료되어 공식 팀 채팅방이 생성되었습니다! 자유롭게 소통하며 멋진 프로젝트를 만들어보세요! 🚀';
+                break;
+            case 'SYSTEM':
+                systemMessageContent = 'Side Project Mate 시스템 가이드 봇입니다. 무엇을 도와드릴까요?';
+                break;
+            // DM은 특별한 시스템 메시지 없이 시작
+        }
+
+        if (systemMessageContent) {
+            await ChatMessage.create({
+                roomId: newRoom._id,
+                sender: currentUserId, // 시스템 메시지지만, 편의상 생성자를 sender로 두거나 어드민 봇 계정이 있다면 그 ID를 넣을 수 있음
+                content: systemMessageContent,
+                messageType: 'SYSTEM',
+                readBy: [currentUserId],
+            });
+
+            // 🔥 방의 lastMessage 업데이트 (선택 사항)
+            // ChatRoom 모델에 lastMessage 필드가 있다면 여기서 트리거 업데이트 해주는 게 좋아!
+        }
 
         return NextResponse.json(
             { success: true, message: '채팅방이 생성되었습니다.', data: newRoom },
