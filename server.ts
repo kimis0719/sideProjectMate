@@ -241,6 +241,18 @@ app.prepare().then(() => {
             socket.leave(chatRoomKey);
             console.log(`[Chat] User ${userId} left room: ${roomId}`);
         });
+
+        // 3. 메시지 송수신 흐름 (Phase 6.2)
+        socket.on('send_message', (messageData) => {
+            const { roomId } = messageData;
+            const chatRoomKey = `chat-${roomId}`;
+
+            // 나를 제외한 방 안에 있는 모든 유저에게 메시지 브로드캐스트
+            socket.to(chatRoomKey).emit('receive_message', messageData);
+
+            // 필요하다면 나 자신에게도 에코(echo)를 보낼 수 있음. 
+            // 클라이언트에서 낙관적 업데이트(Optimistic UI) 처리를 한다면 to()만 써도 무방.
+        });
         // [Common] 연결 해제 처리 (공통)
         // ------------------------------------------------------------
         socket.on('disconnect', () => {

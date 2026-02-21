@@ -4,13 +4,13 @@ import { useState } from 'react';
 import ChatRoomList, { MockChatRoom } from '@/components/chat/ChatRoomList';
 import ChatWindow from '@/components/chat/ChatWindow';
 
-// 🧪 UI 테스트를 위한 가짜(Mock) 데이터 셋이야.
+// 🧪 UI 테스트를 위한 가짜(Mock) 데이터 셋이야. (MongoDB ObjectId 형식으로 변경!)
 const MOCK_ROOMS: MockChatRoom[] = [
-    { _id: 'room_1', category: 'INQUIRY', title: '사이드프로젝트 관련 문의사항 남깁니다.', lastMessage: '안녕하세요, 혹시 포트폴리오 필수인가요?', updatedAt: new Date().toISOString() },
-    { _id: 'room_2', category: 'RECRUIT', title: '프론트엔드 지원자 프론찌님 인터뷰', lastMessage: '네, 내일 오후 3시 좋을 것 같습니다!', updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
-    { _id: 'room_3', category: 'TEAM', title: '🔥 [SPM] 어벤져스 팀 공식 채팅방', lastMessage: '회의록 노션에 정리해서 올렸습니다~ 확인 부탁드려요!', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
-    { _id: 'room_4', category: 'DM', title: '프론찌 (프론트엔드)', lastMessage: '다음에 또 같이 프로젝트 하면 좋겠네요 ㅎㅎ', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() },
-    { _id: 'room_5', category: 'SYSTEM', title: '가이드 봇', lastMessage: '환영합니다! 프로젝트 설정을 완료해 보세요.', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString() },
+    { _id: '65f0a1b2c3d4e5f6a1b2c3d1', category: 'INQUIRY', title: '사이드프로젝트 관련 문의사항 남깁니다.', lastMessage: '안녕하세요, 혹시 포트폴리오 필수인가요?', updatedAt: new Date().toISOString() },
+    { _id: '65f0a1b2c3d4e5f6a1b2c3d2', category: 'RECRUIT', title: '프론트엔드 지원자 프론찌님 인터뷰', lastMessage: '네, 내일 오후 3시 좋을 것 같습니다!', updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+    { _id: '65f0a1b2c3d4e5f6a1b2c3d3', category: 'TEAM', title: '🔥 [SPM] 어벤져스 팀 공식 채팅방', lastMessage: '회의록 노션에 정리해서 올렸습니다~ 확인 부탁드려요!', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
+    { _id: '65f0a1b2c3d4e5f6a1b2c3d4', category: 'DM', title: '프론찌 (프론트엔드)', lastMessage: '다음에 또 같이 프로젝트 하면 좋겠네요 ㅎㅎ', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() },
+    { _id: '65f0a1b2c3d4e5f6a1b2c3d5', category: 'SYSTEM', title: '가이드 봇', lastMessage: '환영합니다! 프로젝트 설정을 완료해 보세요.', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString() },
 ];
 
 export default function ChatPage() {

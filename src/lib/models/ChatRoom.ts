@@ -17,7 +17,7 @@ export interface IChatRoom extends Document {
     };
     projectId?: mongoose.Types.ObjectId; // 프로젝트 참조 (빠른 조회를 위해 별도 필드)
     applicationId?: mongoose.Types.ObjectId; // 지원서 참조
-    lastMessage?: mongoose.Types.ObjectId; // 마지막 메시지 참조 (목록 미리보기용)
+    lastMessage?: string; // 마지막 메시지 내용 (목록 미리보기용)
     unreadCounts?: Map<string, number>; // 유저별 안 읽은 메시지 수 (확장성 고려)
     createdAt: Date;
     updatedAt: Date;
@@ -52,8 +52,7 @@ const ChatRoomSchema: Schema = new Schema(
             ref: 'Application',
         },
         lastMessage: {
-            type: Schema.Types.ObjectId,
-            ref: 'ChatMessage',
+            type: String, // String으로 저장하여 목록 렌더링 최적화
         },
         // ✨ [추가] 유저별 안 읽은 메시지 카운트 (Map 구조 사용: userId -> count)
         unreadCounts: {

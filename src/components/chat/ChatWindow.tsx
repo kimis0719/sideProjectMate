@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { getCategoryColor } from '@/constants/chat';
 import { MockChatRoom } from './ChatRoomList';
 import { useChatSocket } from '@/hooks/useChatSocket';
@@ -16,8 +17,123 @@ export default function ChatWindow({ room }: ChatWindowProps) {
     const categoryColor = getCategoryColor(room.category);
 
     // 🔌 Step 5.2: 해당 채팅방에 입장하면서 소켓 연결하기
-    // useChatSocket 훅 내부의 useEffect가 roomId가 바뀔 때마다 기존 방에서 나가고 새 방으로 입장(join)하도록 처리해줘.
-    const { isConnected } = useChatSocket(room._id);
+    const { isConnected, emit, subscribe } = useChatSocket(room._id);
+
+    // 💬 Step 6.2: 메시지 상태 및 입력 관리
+    const [messageInput, setMessageInput] = useState('');
+    const [messages, setMessages] = useState<any[]>([]);
+
+    // ⬇️ Step 7.1: 자동 스크롤을 위한 Ref
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    // ⬇️ Step 7.1: 메시지가 추가될 때마다 해당 컨테이너의 스크롤만 맨 아래로 이동
+    useEffect(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        }
+    }, [messages]);
+
+    // 🧪 테스트용 가짜 유저 ID 생성기 (브라우저 탭/창마다 다른 사람인 척 하기 위함)
+    const [mockUserId, setMockUserId] = useState<string>('65f0a1b2c3d4e5f6a1b2c3d9');
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            let stored = sessionStorage.getItem('spm_mock_userId');
+            if (!stored) {
+                // MongoDB ObjectId 규격인 24자리 16진수 랜덤 생성
+                stored = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+                sessionStorage.setItem('spm_mock_userId', stored);
+            }
+            setMockUserId(stored);
+        }
+    }, []);
+
+    // 📡 Step 6.3: (초기) 대화 내역 불러오기 API 호출
+    useEffect(() => {
+        const fetchMessages = async () => {
+            try {
+                const res = await fetch(`/api/chat/messages/${room._id}`);
+                const { success, data } = await res.json();
+                if (success) {
+                    setMessages(data);
+                }
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        };
+        fetchMessages();
+    }, [room._id]);
+
+    // 📡 Step 6.2: 새 메시지 수신 (receive_message) 리스너 등록
+    useEffect(() => {
+        const unsubscribe = subscribe('receive_message', (incomingMessage) => {
+            // 방 ID가 현재 활성화된 방과 일치할 때만 추가
+            if (incomingMessage.roomId === room._id) {
+                setMessages((prev) => [...prev, incomingMessage]);
+            }
+        });
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
+    }, [subscribe, room._id]);
+
+    // 🚀 Step 6.2: 메시지 전송 로직 (SEND_MESSAGE)
+    const handleSendMessage = async () => {
+        if (!messageInput.trim()) return;
+
+        const content = messageInput.trim();
+        const temporaryId = Date.now().toString(); // 낙관적 업데이트용 임시 키
+
+        const newMessage = {
+            _id: temporaryId,
+            roomId: room._id,
+            // 💡 탭마다 다르게 생성된 임시 ID 부여
+            sender: mockUserId,
+            content,
+            createdAt: new Date().toISOString(),
+            type: 'TEXT'
+        };
+
+        // 1. 화면에 즉시 표시 (Optimistic UI - 낙관적 업데이트)
+        setMessages((prev) => [...prev, newMessage]);
+
+        // 2. 입력창 초기화
+        setMessageInput('');
+
+        try {
+            // 3. DB에 진짜로 저장 (영속성 확보)
+            const res = await fetch('/api/chat/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId: room._id, content, senderId: mockUserId }),
+            });
+
+            if (res.ok) {
+                const { data } = await res.json();
+
+                // 4. DB 저장이 성공하면 내가 보낸 원본 메시지 정보 업데이트 
+                setMessages(prev => prev.map(msg => msg._id === temporaryId ? data : msg));
+
+                // 5. 서버에 브로드캐스트 요청 (Socket.io)
+                // DB의 _id가 담긴 완전한 data를 날려보내야 상대방도 Key 충돌을 겪지 않음
+                emit('send_message', data);
+            } else {
+                console.error('Failed to save message to DB');
+                // 에러 처리: 모달이나 토스트 알림 등을 띄우거나, optimistic UI를 롤백해주는 로직 필요.
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+        }
+    };
+
+    // 엔터키 입력 처리
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    };
 
     return (
         <div className="flex-1 flex flex-col bg-slate-50/50 relative">
@@ -66,26 +182,48 @@ export default function ChatWindow({ room }: ChatWindowProps) {
                 </div>
             </div>
 
-            {/* 메인 채팅 내역 영역 (추후 무한 스크롤 및 메시지 버블 구현 예정) */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {/* 봇 안내 메시지 예시 (시스템 카테고리인 경우 보여주기 좋음) */}
+            {/* 메인 채팅 내역 영역 (추후 무한 스크롤(Step 8.1) 및 DB 연동 적용) */}
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth"
+            >
                 <div className="flex justify-center my-4">
                     <span className="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
                         대화가 시작되었습니다.
                     </span>
                 </div>
 
-                {/* 임시 메시지 버블 */}
-                <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
-                    <div className="flex flex-col gap-1 items-start">
-                        <span className="text-xs text-slate-500 ml-1">상대방</span>
-                        <div className="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm border border-slate-100 max-w-md">
-                            <p className="text-slate-700 text-sm leading-relaxed">{room.lastMessage || '안녕하세요!'}</p>
-                        </div>
-                        <span className="text-[10px] text-slate-400 ml-1">오후 2:30</span>
+                {/* 💬 저장/수신된 메시지 목록 맵핑 렌더링 */}
+                {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
+                        <p className="text-sm">아직 아무런 대화가 없어요!</p>
+                        <p className="text-xs mt-1">첫 인사를 건네보세요 👋</p>
                     </div>
-                </div>
+                ) : (
+                    messages.map((msg, idx) => {
+                        const isMine = msg.sender === mockUserId || msg.sender?._id === mockUserId;
+
+                        return (
+                            <div key={idx} className={`flex items-start gap-3 ${isMine ? 'flex-row-reverse' : ''}`}>
+                                <div className={`w-8 h-8 rounded-full shrink-0 ${isMine ? 'bg-blue-200' : 'bg-slate-200'}`} />
+                                <div className={`flex flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
+                                    <span className="text-xs text-slate-500 mx-1">{isMine ? '나' : '상대방'}</span>
+                                    <div
+                                        className={`p-3 rounded-2xl shadow-sm border max-w-md ${isMine
+                                            ? 'bg-slate-800 text-white rounded-tr-sm border-slate-700'
+                                            : 'bg-white text-slate-700 rounded-tl-sm border-slate-100'
+                                            }`}
+                                    >
+                                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 mx-1" suppressHydrationWarning>
+                                        {new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
             </div>
 
             {/* 채팅 입력창 영역 */}
@@ -96,11 +234,17 @@ export default function ChatWindow({ room }: ChatWindowProps) {
                     </button>
                     <input
                         type="text"
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         placeholder="메시지를 입력하세요..."
                         className="flex-1 bg-transparent border-none focus:outline-none text-sm text-slate-700 px-2"
                     />
                     <button
-                        className="bg-slate-800 text-white p-1.5 rounded-full hover:bg-slate-700 transition-colors flex shrink-0 items-center justify-center h-8 w-8"
+                        onClick={handleSendMessage}
+                        disabled={!messageInput.trim()}
+                        className={`p-1.5 rounded-full transition-colors flex shrink-0 items-center justify-center h-8 w-8 
+                            ${messageInput.trim() ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-200 text-slate-400'}`}
                     >
                         <svg className="w-4 h-4 translate-x-[-1px] translate-y-[1px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                     </button>
