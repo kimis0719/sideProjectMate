@@ -63,12 +63,13 @@ type BoardState = {
   lockedSections: Record<string, { userId: string; socketId: string }>;
   currentUserId: string | null;
   peerSelections: Record<string, { userId: string; color: string; socketId: string }[]>;
+  activeUsers: Array<{ _id: string; nName: string; avatarUrl?: string; color?: string }>;
   isRemoteUpdate: boolean; // 원격 업데이트 여부를 나타내는 플래그 (Undo 히스토리 기록 제외용)
 
   // Actions
   initBoard: (pid: number) => Promise<void>;
   fetchMembers: (boardId: string) => Promise<void>;
-  initSocket: () => void;
+  initSocket: (user?: { _id: string; nName: string; avatarUrl?: string }) => void;
   setCurrentUserId: (id: string) => void;
   addNote: (containerWidth?: number, containerHeight?: number) => Promise<void>;
   moveNote: (id: string, x: number, y: number) => void;
@@ -118,6 +119,7 @@ type BoardState = {
   applyRemoteSectionUpdate: (section: Section) => void;
   applyRemoteSectionDeletion: (sectionId: string) => void;
   applyRemoteBoardSync: (data: { notes: Note[]; sections: Section[] }) => void;
+  setActiveUsers: (users: Array<{ _id: string; nName: string; avatarUrl?: string; color?: string }>) => void;
 };
 
 const transformDoc = (doc: any) => {
@@ -146,9 +148,12 @@ export const useBoardStore = create<BoardState>()(
         lockedSections: {},
         currentUserId: null,
         peerSelections: {},
+        activeUsers: [],
         isSnapEnabled: false,
         isSelectionMode: false,
         isRemoteUpdate: false,
+
+        setActiveUsers: (users) => set({ activeUsers: users }),
 
         toggleSnap: () => set((state) => ({ isSnapEnabled: !state.isSnapEnabled })),
         toggleSelectionMode: () => set((state) => ({ isSelectionMode: !state.isSelectionMode })),
@@ -192,8 +197,7 @@ export const useBoardStore = create<BoardState>()(
             // 초기화 직후 히스토리 비우기
             useBoardStore.temporal.getState().clear();
 
-            // 4. 소켓 및 멤버 초기화
-            get().initSocket();
+            // 4. 멤버 및 보드 데이터 관련 추가 정보 초기화
             get().fetchMembers(board.id);
 
           } catch (error) {
@@ -217,12 +221,19 @@ export const useBoardStore = create<BoardState>()(
         },
         setCurrentUserId: (id) => set({ currentUserId: id }),
 
-        initSocket: () => {
+        initSocket: (userInfo) => {
           const { boardId } = get();
           if (!boardId) return;
 
           const socket = socketClient.connect();
+          // [긴급 복구] 기존 서버 로직과의 호환성을 위해 boardId를 문자열로 직접 전송
           socket.emit('join-board', boardId);
+
+          // Presence 기록을 위해 유저 정보가 있다면 별도 알림 (서버 지원 시)
+          if (userInfo) {
+            socket.emit('user-activity', { boardId, user: userInfo });
+          }
+
 
           // Note Events
           socket.off('note-created');
@@ -322,6 +333,12 @@ export const useBoardStore = create<BoardState>()(
           socket.off('board-synced');
           socket.on('board-synced', (data: { notes: Note[], sections: Section[] }) => {
             get().applyRemoteBoardSync(data);
+          });
+
+          // Presence Events
+          socket.off('board-users-update');
+          socket.on('board-users-update', (users: any[]) => {
+            get().setActiveUsers(users);
           });
         },
 

@@ -38,6 +38,14 @@ app.prepare().then(() => {
     // socketId -> { userId, projectId }
     const onlineUsers = new Map<string, { userId: string, projectId: string }>();
 
+    // ==========================================
+    // 신규 로직: 칸반보드 접속자 관리 (Presence)
+    // ==========================================
+    // boardId -> Map<socketId, any(userInfo)>
+    const boardUsers = new Map<string, Map<string, any>>();
+    // socketId -> { boardId, user }
+    const socketUserMap = new Map<string, { boardId: string, user: any }>();
+
     // Socket.io 이벤트 핸들링
     io.on('connection', (socket) => {
         console.log('Client connected:', socket.id);
@@ -50,6 +58,43 @@ app.prepare().then(() => {
         socket.on('join-board', (boardId: string) => {
             socket.join(boardId);
             console.log(`Socket ${socket.id} joined board: ${boardId}`);
+        });
+
+        // 1.5 보드 접속 실시간 유저 정보 동기화 (Presence)
+        socket.on('user-activity', (data) => {
+            const { boardId, user } = data;
+
+            if (!boardUsers.has(boardId)) {
+                boardUsers.set(boardId, new Map());
+            }
+
+            const roomUsers = boardUsers.get(boardId)!;
+            roomUsers.set(socket.id, user);
+            socketUserMap.set(socket.id, { boardId, user });
+
+            // 중복된 사용자(다중 탭 접속 등)를 제외한 유저 목록 전송
+            const uniqueUsers = Array.from(
+                new Map(Array.from(roomUsers.values()).map(u => [u._id, u])).values()
+            );
+
+            io.in(boardId).emit('board-users-update', uniqueUsers);
+        });
+
+        // 1.6 보드 퇴장 (Leave)
+        socket.on('leave-board', (data) => {
+            const { boardId } = data;
+            socket.leave(boardId);
+
+            if (boardUsers.has(boardId)) {
+                const roomUsers = boardUsers.get(boardId)!;
+                roomUsers.delete(socket.id);
+
+                const uniqueUsers = Array.from(
+                    new Map(Array.from(roomUsers.values()).map(u => [u._id, u])).values()
+                );
+                io.in(boardId).emit('board-users-update', uniqueUsers);
+            }
+            socketUserMap.delete(socket.id);
         });
 
         // 2. 노트 업데이트 (이동, 수정)
@@ -203,6 +248,22 @@ app.prepare().then(() => {
                 // 퇴장 알림
                 io.to(`project-${projectId}`).emit('member-offline', { userId });
                 console.log(`User ${userId} left project: ${projectId}`);
+            }
+
+            // 3. [신규] 칸반보드 Presence 접속 해제 처리
+            const boardUserInfo = socketUserMap.get(socket.id);
+            if (boardUserInfo) {
+                const { boardId } = boardUserInfo;
+                if (boardUsers.has(boardId)) {
+                    const roomUsers = boardUsers.get(boardId)!;
+                    roomUsers.delete(socket.id);
+
+                    const uniqueUsers = Array.from(
+                        new Map(Array.from(roomUsers.values()).map(u => [u._id, u])).values()
+                    );
+                    io.in(boardId).emit('board-users-update', uniqueUsers);
+                }
+                socketUserMap.delete(socket.id);
             }
         });
     });
