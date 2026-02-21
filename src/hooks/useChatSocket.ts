@@ -23,13 +23,13 @@ export const useChatSocket = (roomId?: string) => {
         if (roomId) {
             // 임시로 userId를 넘겨주는 로직 (추후 session 객체 등에서 가져와 실제 ID 연동 필요)
             // 현재 단계에선 단순히 소켓 서버에 '나 들어왔다'고 알림
-            socketInstance.emit('join-chat-room', { roomId, userId: 'temp_user_id' });
+            socketInstance.emit('join-chat-room', { roomId, userId: '65f0a1b2c3d4e5f6a1b2c3d9' });
         }
 
         // 4. 클린업 (컴포넌트 언마운트 시)
         return () => {
             if (roomId) {
-                socketInstance.emit('leave-chat-room', { roomId, userId: 'temp_user_id' });
+                socketInstance.emit('leave-chat-room', { roomId, userId: '65f0a1b2c3d4e5f6a1b2c3d9' });
             }
 
             socketInstance.off('connect', onConnect);

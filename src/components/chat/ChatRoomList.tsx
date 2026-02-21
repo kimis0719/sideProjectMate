@@ -112,7 +112,7 @@ export default function ChatRoomList({ rooms, activeRoomId, onRoomClick }: ChatR
                                         <p className="truncate pr-4 flex-1">
                                             {room.lastMessage || '새로운 채팅방이 생성되었습니다.'}
                                         </p>
-                                        <span className="whitespace-nowrap shrink-0">
+                                        <span className="whitespace-nowrap shrink-0" suppressHydrationWarning>
                                             {new Date(room.updatedAt).toLocaleTimeString('ko-KR', {
                                                 hour: '2-digit',
                                                 minute: '2-digit',

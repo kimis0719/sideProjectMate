@@ -9,7 +9,7 @@ export interface IChatMessage extends Document {
     sender: IUser['_id']; // 보낸 사람 ID
     content: string; // 메시지 내용
     readBy: IUser['_id'][]; // 읽은 사람 목록 (1:N 채팅 읽음 처리용)
-    messageType: 'TEXT' | 'IMAGE' | 'SYSTEM'; // 메시지 타입 (확장성)
+    messageType: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'; // 메시지 타입 (확장성)
     createdAt: Date;
     updatedAt: Date;
 }
@@ -39,7 +39,7 @@ const ChatMessageSchema: Schema = new Schema(
         ],
         messageType: {
             type: String,
-            enum: ['TEXT', 'IMAGE', 'SYSTEM'],
+            enum: ['TEXT', 'IMAGE', 'FILE', 'SYSTEM'],
             default: 'TEXT',
         },
     },
