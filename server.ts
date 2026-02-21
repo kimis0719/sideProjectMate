@@ -224,6 +224,23 @@ app.prepare().then(() => {
 
 
         // ------------------------------------------------------------
+        // [Part 3] SPM 실시간 채팅 로직 (Phase 5)
+        // ------------------------------------------------------------
+
+        // 1. 채팅방 접속 (Room Join)
+        socket.on('join-chat-room', ({ roomId, userId }) => {
+            // 채팅방 ID 전용 네임스페이스처럼 사용
+            const chatRoomKey = `chat-${roomId}`;
+            socket.join(chatRoomKey);
+            console.log(`[Chat] User ${userId} joined room: ${roomId}`);
+        });
+
+        // 2. 채팅방 이탈 (Room Leave)
+        socket.on('leave-chat-room', ({ roomId, userId }) => {
+            const chatRoomKey = `chat-${roomId}`;
+            socket.leave(chatRoomKey);
+            console.log(`[Chat] User ${userId} left room: ${roomId}`);
+        });
         // [Common] 연결 해제 처리 (공통)
         // ------------------------------------------------------------
         socket.on('disconnect', () => {
