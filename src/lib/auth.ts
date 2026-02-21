@@ -25,6 +25,7 @@ export const authOptions: NextAuthOptions = {
             _id: user._id.toString(),
             email: user.authorEmail,
             name: user.nName,
+            image: user.avatarUrl,
           };
         } else {
           throw new Error('이메일 또는 비밀번호가 일치하지 않습니다.');

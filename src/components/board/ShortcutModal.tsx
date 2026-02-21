@@ -8,7 +8,7 @@ type Shortcut = {
 const SHORTCUTS: Shortcut[] = [
     // View
     { key: 'Drag BG', description: '화면 이동 (Pan)' },
-    { key: 'Alt + Wheel', description: '줌 확대/축소' },
+    { key: 'Mouse Wheel', description: '줌 확대/축소' },
     { key: 'Shift + 1', description: '전체 화면 맞춤 (Fit)' },
 
     // Selection

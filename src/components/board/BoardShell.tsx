@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useBoardStore } from '@/store/boardStore';
+import { socketClient } from '@/lib/socket';
 import NoteItem from '@/components/board/NoteItem';
 import SectionItem from '@/components/board/SectionItem';
 import Minimap from '@/components/board/Minimap';
@@ -31,6 +32,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
   const {
     notes,
     sections,
+    boardId,
+    initSocket,
     zoom,
     pan,
     addNote,
@@ -50,9 +53,13 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     toggleSnap,
     toggleSelectionMode,
     setCurrentUserId,
+    activeUsers,
+    setActiveUsers,
   } = useBoardStore((s) => ({
     notes: s.notes,
     sections: s.sections,
+    boardId: s.boardId,
+    initSocket: s.initSocket,
     zoom: s.zoom,
     pan: s.pan,
     addNote: s.addNote,
@@ -72,6 +79,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     toggleSnap: s.toggleSnap,
     toggleSelectionMode: s.toggleSelectionMode,
     setCurrentUserId: s.setCurrentUserId,
+    activeUsers: s.activeUsers,
+    setActiveUsers: s.setActiveUsers,
   }));
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -103,6 +112,21 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
       setCurrentUserId(session.user.id);
     }
   }, [session, setCurrentUserId]);
+
+  // --- Presence & Socket Integration ---
+  React.useEffect(() => {
+    if (boardPid && session?.user && boardId) {
+      initSocket({
+        _id: session.user.id,
+        nName: session.user.name || 'Unknown',
+        avatarUrl: session.user.image || undefined // next-auth의 image를 avatarUrl로 매핑
+      });
+
+      return () => {
+        socketClient.socket?.emit('leave-board', { boardId, userId: session.user.id });
+      };
+    }
+  }, [boardPid, session, boardId, initSocket]);
 
   // Handle Note Highlight & Center
   const handledNoteIdRef = React.useRef<string | null>(null);
@@ -177,15 +201,14 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if (e.altKey) {
-        e.preventDefault();
-        const ZOOM_SENSITIVITY = 0.001;
-        const currentZoom = useBoardStore.getState().zoom;
-        let newZoom = currentZoom - e.deltaY * ZOOM_SENSITIVITY;
-        if (newZoom <= 0.1) newZoom = 0.1;
-        if (newZoom >= 1.5) newZoom = 1.5;
-        setZoom(newZoom);
-      }
+      // Alt 키 없이도 휠만으로 줌이 가능하도록 수정
+      e.preventDefault();
+      const ZOOM_SENSITIVITY = 0.001;
+      const currentZoom = useBoardStore.getState().zoom;
+      let newZoom = currentZoom - e.deltaY * ZOOM_SENSITIVITY;
+      if (newZoom <= 0.1) newZoom = 0.1;
+      if (newZoom >= 1.5) newZoom = 1.5;
+      setZoom(newZoom);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
@@ -441,7 +464,46 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             </span>
           </div>
 
-          <div className="h-6 w-px bg-border mx-1"></div>
+          {/* 접속자 아바타 그룹 (Presence UI) */}
+          <div className="flex items-center -space-x-2 mr-2 ml-1" id="board-presence-area">
+            {/* 1. 서버에 로드된 멤버 정보에서 내 프로필을 우선적으로 찾아 매칭 */}
+            {[
+              ...(session?.user ? [{
+                _id: session.user.id,
+                nName: session.user.name || 'Me',
+                avatarUrl: session.user.image || undefined
+              }] : []),
+              ...(activeUsers || []).filter(u => u._id !== session?.user?.id)
+            ].slice(0, 5).map((user) => (
+              <div key={user._id} className="relative group">
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.nName}
+                    title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
+                    className={`w-8 h-8 rounded-full border-2 border-background object-cover z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'border-primary' : 'bg-secondary'}`}
+                  />
+                ) : (
+                  <div
+                    title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
+                    className={`w-8 h-8 rounded-full border-2 border-background flex items-center justify-center text-[10px] font-bold z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground'}`}
+                  >
+                    {user.nName ? user.nName.charAt(0).toUpperCase() : '?'}
+                  </div>
+                )}
+              </div>
+            ))}
+            {activeUsers.length > 5 && (
+              <div
+                title={`${activeUsers.length - 5}명 더 접속 중`}
+                className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-background bg-muted text-muted-foreground text-[10px] font-bold z-10 shadow-sm"
+              >
+                +{activeUsers.length - 5}
+              </div>
+            )}
+          </div>
+
+          <div className="h-6 w-px bg-border mx-1 hidden sm:block"></div>
 
           <button
             onClick={() => setIsShortcutModalOpen(true)}
