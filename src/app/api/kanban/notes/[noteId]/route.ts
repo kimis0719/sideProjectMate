@@ -12,7 +12,7 @@ export async function PATCH(
 ) {
   const { noteId } = params;
   if (!noteId || !mongoose.Types.ObjectId.isValid(noteId)) {
-    return NextResponse.json({ error: 'Invalid Note ID' }, { status: 400 });
+    return NextResponse.json({ success: false, message: '유효하지 않은 노트 ID입니다.' }, { status: 400 });
   }
 
   try {
@@ -29,13 +29,13 @@ export async function PATCH(
     );
 
     if (!updatedNote) {
-      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+      return NextResponse.json({ success: false, message: '노트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    return NextResponse.json(updatedNote);
+    return NextResponse.json({ success: true, data: updatedNote });
   } catch (error) {
     console.error(`Failed to update note ${noteId}:`, error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }
 
@@ -48,7 +48,7 @@ export async function DELETE(
 ) {
   const { noteId } = params;
   if (!noteId || !mongoose.Types.ObjectId.isValid(noteId)) {
-    return NextResponse.json({ error: 'Invalid Note ID' }, { status: 400 });
+    return NextResponse.json({ success: false, message: '유효하지 않은 노트 ID입니다.' }, { status: 400 });
   }
 
   try {
@@ -56,12 +56,12 @@ export async function DELETE(
     const deletedNote = await Note.findByIdAndDelete(noteId);
 
     if (!deletedNote) {
-      return NextResponse.json({ message: 'Note not found or already deleted' }, { status: 404 });
+      return NextResponse.json({ success: false, message: '노트를 찾을 수 없거나 이미 삭제되었습니다.' }, { status: 404 });
     }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error(`Failed to delete note ${noteId}:`, error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }

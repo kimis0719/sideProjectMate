@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         const { noteIds, boardId } = await request.json();
 
         if (!Array.isArray(noteIds) || noteIds.length === 0) {
-            return NextResponse.json({ error: 'Invalid noteIds' }, { status: 400 });
+            return NextResponse.json({ success: false, message: '유효하지 않은 noteIds입니다.' }, { status: 400 });
         }
 
         // boardId 검증 (선택적이지만 안전을 위해)
@@ -25,11 +25,11 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            deletedCount: result.deletedCount,
-            message: `${result.deletedCount} notes deleted`
+            data: { deletedCount: result.deletedCount },
+            message: `${result.deletedCount}개의 노트가 삭제되었습니다.`
         }, { status: 200 });
     } catch (error) {
         console.error('Failed to batch delete notes:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
     }
 }

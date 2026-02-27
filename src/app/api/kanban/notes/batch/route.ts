@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest) {
 
         if (!Array.isArray(updates)) {
             return NextResponse.json(
-                { error: 'Updates must be an array' },
+                { success: false, message: 'updates는 배열이어야 합니다.' },
                 { status: 400 }
             );
         }
@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest) {
     } catch (error) {
         console.error('Batch update failed:', error);
         return NextResponse.json(
-            { error: 'Internal Server Error' },
+            { success: false, message: 'Internal Server Error' },
             { status: 500 }
         );
     }
@@ -49,7 +49,7 @@ export async function DELETE(req: NextRequest) {
 
         if (!Array.isArray(ids)) {
             return NextResponse.json(
-                { error: 'IDs must be an array' },
+                { success: false, message: 'ids는 배열이어야 합니다.' },
                 { status: 400 }
             );
         }
@@ -62,7 +62,7 @@ export async function DELETE(req: NextRequest) {
     } catch (error) {
         console.error('Batch delete failed:', error);
         return NextResponse.json(
-            { error: 'Internal Server Error' },
+            { success: false, message: 'Internal Server Error' },
             { status: 500 }
         );
     }

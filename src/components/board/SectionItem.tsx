@@ -511,30 +511,40 @@ export default function SectionItem({ section }: Props) {
             return;
         }
 
+        // 1단계: 노트 포함 전체 삭제 여부 확인
         const isDeleteAll = await confirm(
             '섹션 삭제',
-            '섹션을 삭제하시겠습니까?\n\n[확인]: 섹션과 내부 노트 모두 삭제\n[취소]: 섹션만 삭제하고 노트는 유지',
+            `섹션과 내부 노트(${childNoteIds.length}개)를 모두 삭제할까요?`,
             {
                 confirmText: '모두 삭제',
-                cancelText: '섹션만 삭제',
-                closeOnBackdropClick: false
+                cancelText: '취소',
+                isDestructive: true,
+                closeOnBackdropClick: false,
             }
         );
 
-        if (isDeleteAll === null) return;
-
         if (isDeleteAll === true) {
-            // [확인] 클릭 시: 섹션과 내부 노트 모두 삭제
+            // [모두 삭제] 클릭 시: 섹션과 내부 노트 전부 삭제
             if (childNoteIds.length > 0) {
                 removeNotes(childNoteIds);
             }
             removeSection(section.id);
-            // DB 삭제 (노트도 삭제하도록 서버 사이드 처리가 되어있을 수 있으나, 명시적으로 deleteNotes=false로 호출하고 위에서 removeNotes로 처리)
             await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });
-        } else {
-            // [취소] 클릭 시 (또는 닫기): 모달이 false를 반환하므로 여기서는 '섹션만 삭제' 의도로 처리
-            // 주의: 백드롭 클릭 시에도 취소(false)가 반환되므로, 사용자 경험상 '섹션만 삭제'가 안전한지 확인이 필요함. 
-            // 프로젝트 룰상 [취소] 버튼이 '섹션만 삭제' 기능을 수행하도록 유도.
+            return;
+        }
+
+        // 2단계: 섹션만 삭제할지 확인 (노트는 보드에 유지)
+        const isSectionOnly = await confirm(
+            '섹션만 삭제',
+            '섹션만 삭제하고 노트는 보드에 남길까요?',
+            {
+                confirmText: '섹션만 삭제',
+                cancelText: '취소',
+                closeOnBackdropClick: false,
+            }
+        );
+
+        if (isSectionOnly === true) {
             removeSection(section.id);
             await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });
 
