@@ -164,15 +164,16 @@ export const useBoardStore = create<BoardState>()(
             // 1. Board ID 조회
             const boardRes = await fetch(`/api/kanban/boards?pid=${pid}`);
             if (!boardRes.ok) throw new Error('Failed to fetch board');
-            const boardDoc = await boardRes.json();
-            const board = transformDoc(boardDoc);
+            const boardJson = await boardRes.json();
+            const board = transformDoc(boardJson.data);
             set({ boardId: board.id });
 
             // 2. 노트 조회
             const notesRes = await fetch(`/api/kanban/notes?boardId=${board.id}`);
             if (notesRes.ok) {
-              const notes = await notesRes.json();
-              const parsedNotes = notes.map((n: any) => ({
+              const notesJson = await notesRes.json();
+              const noteList = notesJson.data || [];
+              const parsedNotes = noteList.map((n: any) => ({
                 ...n,
                 id: n._id,
                 tags: n.tags || [],
@@ -398,8 +399,8 @@ export const useBoardStore = create<BoardState>()(
               body: JSON.stringify({ ...optimisticNote, boardId }),
             });
             if (!response.ok) throw new Error('Failed to save note');
-            const savedNoteDoc = await response.json();
-            const savedNote = transformDoc(savedNoteDoc);
+            const savedNoteJson = await response.json();
+            const savedNote = transformDoc(savedNoteJson.data);
 
             set((state) => ({
               notes: state.notes.map((n) => (n.id === optimisticNote.id ? savedNote : n)),
@@ -506,8 +507,9 @@ export const useBoardStore = create<BoardState>()(
               }),
             })
               .then(res => res.json())
-              .then(savedNote => {
-                if (savedNote && !savedNote.error) {
+              .then(json => {
+                if (json?.success && json.data) {
+                  const savedNote = json.data;
                   set(state => ({
                     notes: state.notes.map(n => n.id === newId ? { ...savedNote, id: savedNote._id } : n),
                     selectedNoteIds: [savedNote._id]
@@ -725,8 +727,8 @@ export const useBoardStore = create<BoardState>()(
           notes.forEach((n) => {
             minX = Math.min(minX, n.x);
             minY = Math.min(minY, n.y);
-            maxX = Math.max(maxX, n.x + 200);
-            maxY = Math.max(maxY, n.y + 140);
+            maxX = Math.max(maxX, n.x + (n.width || 200));
+            maxY = Math.max(maxY, n.y + (n.height || 140));
           });
 
           sections.forEach((s) => {
@@ -905,8 +907,27 @@ export const useBoardStore = create<BoardState>()(
             }
           });
 
-          // 섹션에 대해서도 상세 동기화가 필요하지만, 
-          // 노트 업데이트 로직을 우선 적용하고 섹션은 필요 시 확장 가능합니다.
+          // 4. 변경된 섹션 동기화
+          newSections.forEach(section => {
+            const oldSection = oldSections.find(os => os.id === section.id);
+            if (!oldSection || JSON.stringify(oldSection) !== JSON.stringify(section)) {
+              socket.emit('update-section', { boardId, section });
+            }
+          });
+
+          // 5. Undo로 인해 다시 생겨난 섹션
+          newSections.forEach(section => {
+            if (!oldSections.find(os => os.id === section.id)) {
+              socket.emit('create-section', { boardId, section });
+            }
+          });
+
+          // 6. Undo로 인해 사라진 섹션
+          oldSections.forEach(oldSection => {
+            if (!newSections.find(s => s.id === oldSection.id)) {
+              socket.emit('delete-section', { boardId, sectionId: oldSection.id });
+            }
+          });
         },
 
         redo: () => {
@@ -922,6 +943,42 @@ export const useBoardStore = create<BoardState>()(
             const oldNote = oldNotes.find(on => on.id === note.id);
             if (!oldNote || JSON.stringify(oldNote) !== JSON.stringify(note)) {
               socket.emit('update-note', { boardId, note });
+            }
+          });
+
+          // Redo로 인해 다시 생겨난 노트
+          newNotes.forEach(note => {
+            if (!oldNotes.find(on => on.id === note.id)) {
+              socket.emit('create-note', { boardId, note });
+            }
+          });
+
+          // Redo로 인해 사라진 노트
+          oldNotes.forEach(oldNote => {
+            if (!newNotes.find(n => n.id === oldNote.id)) {
+              socket.emit('delete-note', { boardId, noteId: oldNote.id });
+            }
+          });
+
+          // 변경된 섹션 동기화
+          newSections.forEach(section => {
+            const oldSection = oldSections.find(os => os.id === section.id);
+            if (!oldSection || JSON.stringify(oldSection) !== JSON.stringify(section)) {
+              socket.emit('update-section', { boardId, section });
+            }
+          });
+
+          // Redo로 인해 다시 생겨난 섹션
+          newSections.forEach(section => {
+            if (!oldSections.find(os => os.id === section.id)) {
+              socket.emit('create-section', { boardId, section });
+            }
+          });
+
+          // Redo로 인해 사라진 섹션
+          oldSections.forEach(oldSection => {
+            if (!newSections.find(s => s.id === oldSection.id)) {
+              socket.emit('delete-section', { boardId, sectionId: oldSection.id });
             }
           });
         },
@@ -1009,7 +1066,7 @@ export const useBoardStore = create<BoardState>()(
           const { pastStates, futureStates } = useBoardStore.temporal.getState();
           const patch = (s: any) => ({
             ...s,
-            sections: state.sections.map((s: any) => s.id === section.id ? { ...s, ...section } : s)
+            sections: s.sections.map((sec: any) => sec.id === section.id ? { ...sec, ...section } : sec)
           });
           (useBoardStore.temporal as any).setState({
             pastStates: pastStates.map(patch),
