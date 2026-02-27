@@ -252,6 +252,11 @@ export const useBoardStore = create<BoardState>()(
             get().applyRemoteNoteDeletion(noteId);
           });
 
+          socket.off('notes-deleted-batch');
+          socket.on('notes-deleted-batch', (noteIds: string[]) => {
+            noteIds.forEach(noteId => get().applyRemoteNoteDeletion(noteId));
+          });
+
           // Lock Events
           socket.off('note-locked');
           socket.on('note-locked', (data: { id: string; userId: string; socketId: string }) => {
@@ -456,9 +461,7 @@ export const useBoardStore = create<BoardState>()(
 
             if (boardId) {
               const socket = socketClient.connect();
-              ids.forEach(id => {
-                socket.emit('delete-note', { boardId: boardId!, noteId: id });
-              });
+              socket.emit('delete-notes-batch', { boardId, noteIds: ids });
             }
           } catch (error) {
             console.error(error);

@@ -115,6 +115,12 @@ app.prepare().then(() => {
             socket.to(boardId).emit('note-deleted', noteId);
         });
 
+        // 4-1. 노트 배치 삭제
+        socket.on('delete-notes-batch', (data) => {
+            const { boardId, noteIds } = data;
+            socket.to(boardId).emit('notes-deleted-batch', noteIds);
+        });
+
         // 5. 섹션 업데이트
         socket.on('update-section', (data) => {
             const { boardId, section } = data;
