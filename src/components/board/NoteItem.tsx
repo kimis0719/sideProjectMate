@@ -477,6 +477,9 @@ export default function NoteItem({
   // Drag Accumulator for Multi-Select
   const totalDragRef = React.useRef({ x: 0, y: 0 });
 
+  // 다중 선택 드래그 시 DOM 캐시 (드래그 시작 시 1회 빌드, 매 프레임 querySelector 제거)
+  const nodeCacheRef = React.useRef<Map<string, { el: HTMLElement; startX: number; startY: number }>>(new Map());
+
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
@@ -498,6 +501,20 @@ export default function NoteItem({
 
       // 현재 상태 캡처 (드래그 시작 좌표)
       currentVisual.current = { x, y, width, height };
+
+      // 다중 선택 드래그 시 선택된 노트들의 DOM 요소와 시작 위치를 1회 캐싱
+      nodeCacheRef.current = new Map();
+      const { selectedNoteIds: currentSelected, notes: allNotes } = useBoardStore.getState();
+      if (currentSelected.length > 1) {
+        currentSelected.forEach(selectedId => {
+          if (selectedId === id) return;
+          const el = document.querySelector(`[data-note-id="${selectedId}"]`) as HTMLElement;
+          const note = allNotes.find(n => n.id === selectedId);
+          if (el && note) {
+            nodeCacheRef.current.set(selectedId, { el, startX: note.x, startY: note.y });
+          }
+        });
+      }
 
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     },
@@ -586,21 +603,10 @@ export default function NoteItem({
             visualRef.current.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
           }
 
-          // 다중 선택된 노트들의 이동 처리
+          // 다중 선택된 노트들의 이동 처리 (드래그 시작 시 캐싱된 DOM 요소 사용)
           if (selectedNoteIds.length > 1 && isSelected) {
-            selectedNoteIds.forEach(selectedId => {
-              if (selectedId === id) return;
-              const el = document.querySelector(`[data-note-id="${selectedId}"]`) as HTMLElement;
-              if (el) {
-                const transform = el.style.transform || '';
-                const match = transform.match(/translate3d\(([^p]+)px,\s*([^p]+)px,\s*0\)/);
-
-                if (match) {
-                  const currentX = parseFloat(match[1]);
-                  const currentY = parseFloat(match[2]);
-                  el.style.transform = `translate3d(${currentX + dx}px, ${currentY + dy}px, 0)`;
-                }
-              }
+            nodeCacheRef.current.forEach(({ el, startX, startY }) => {
+              el.style.transform = `translate3d(${startX + totalDragRef.current.x}px, ${startY + totalDragRef.current.y}px, 0)`;
             });
           }
         }

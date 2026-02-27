@@ -211,6 +211,10 @@ export default function SectionItem({ section }: Props) {
     const visualRef = React.useRef<HTMLDivElement>(null);
     const currentVisual = React.useRef({ x: section.x, y: section.y, width: section.width, height: section.height });
 
+    // 섹션 드래그 시 자식 노트 DOM 캐시 (드래그 시작 시 1회 빌드, 매 프레임 querySelectorAll 제거)
+    const childNodeCacheRef = React.useRef<Map<HTMLElement, { startX: number; startY: number }>>(new Map());
+    const sectionDragDeltaRef = React.useRef({ x: 0, y: 0 });
+
     // Sync Visual State when props change (only if not interacting)
     React.useEffect(() => {
         if (!isDragging.current && !isResizing.current) {
@@ -278,6 +282,18 @@ export default function SectionItem({ section }: Props) {
         // Capture start position
         currentVisual.current = { x: section.x, y: section.y, width: section.width, height: section.height };
 
+        // 자식 노트의 DOM 요소와 시작 위치를 1회 캐싱 (매 포인터 이벤트에서 querySelectorAll 제거)
+        childNodeCacheRef.current = new Map();
+        sectionDragDeltaRef.current = { x: 0, y: 0 };
+        const childEls = document.querySelectorAll(`[data-section-id="${section.id}"]`);
+        childEls.forEach(el => {
+            const htmlEl = el as HTMLElement;
+            const match = htmlEl.style.transform.match(/translate3d\(([^p]+)px,\s*([^p]+)px,\s*0\)/);
+            if (match) {
+                childNodeCacheRef.current.set(htmlEl, { startX: parseFloat(match[1]), startY: parseFloat(match[2]) });
+            }
+        });
+
         (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
 
         // 섹션 내의 모든 노트 선택
@@ -322,20 +338,14 @@ export default function SectionItem({ section }: Props) {
                 visualRef.current.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
             }
 
-            // Sync Child Notes
+            // Sync Child Notes (캐싱된 DOM 요소와 누적 delta 사용)
             const realDx = newX - prevX;
             const realDy = newY - prevY;
 
-            const childNoteEls = document.querySelectorAll(`[data-section-id="${section.id}"]`);
-            childNoteEls.forEach((el) => {
-                const htmlEl = el as HTMLElement;
-                const transform = htmlEl.style.transform;
-                const match = transform.match(/translate3d\(([^p]+)px,\s*([^p]+)px,\s*0\)/);
-                if (match) {
-                    const currentNoteX = parseFloat(match[1]);
-                    const currentNoteY = parseFloat(match[2]);
-                    htmlEl.style.transform = `translate3d(${currentNoteX + realDx}px, ${currentNoteY + realDy}px, 0)`;
-                }
+            sectionDragDeltaRef.current.x += realDx;
+            sectionDragDeltaRef.current.y += realDy;
+            childNodeCacheRef.current.forEach(({ startX, startY }, el) => {
+                el.style.transform = `translate3d(${startX + sectionDragDeltaRef.current.x}px, ${startY + sectionDragDeltaRef.current.y}px, 0)`;
             });
 
             lastPointerRef.current = { x: e.clientX, y: e.clientY };

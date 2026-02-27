@@ -124,6 +124,24 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
       return () => {
         socketClient.socket?.emit('leave-board', { boardId, userId: session.user.id });
+        const socket = socketClient.socket;
+        if (socket) {
+          socket.off('note-created');
+          socket.off('note-updated');
+          socket.off('note-deleted');
+          socket.off('notes-deleted-batch');
+          socket.off('note-locked');
+          socket.off('note-unlocked');
+          socket.off('section-locked');
+          socket.off('section-unlocked');
+          socket.off('section-created');
+          socket.off('section-updated');
+          socket.off('section-deleted');
+          socket.off('note-selected');
+          socket.off('note-deselected');
+          socket.off('board-synced');
+          socket.off('board-users-update');
+        }
       };
     }
   }, [boardPid, session, boardId, initSocket]);
@@ -284,7 +302,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         isDragOccurred.current = true;
       }
 
-      setPan(pan.x + dx, pan.y + dy);
+      const { pan: currentPan } = useBoardStore.getState();
+      setPan(currentPan.x + dx, currentPan.y + dy);
       lastPanRef.current = { x: e.clientX, y: e.clientY };
     }
   };
