@@ -4,10 +4,21 @@
 
 @layer base {
   :root {
-    /* 
+    /*
       Semantic Colors (시맨틱 컬러) 정의
       Tailwind Config와 연결되어 사용됩니다.
     */
+
+    /* === 브랜드 컬러 (인디고 계열) === */
+    --brand: #4f46e5;
+    /* indigo-600 */
+    --brand-hover: #4338ca;
+    /* indigo-700 */
+    --brand-light: #e0e7ff;
+    /* indigo-100 */
+    --brand-foreground: #ffffff;
+
+    /* === 배경 / 텍스트 === */
     --background: #ffffff;
     --foreground: #111827;
     /* gray-900 */
@@ -18,11 +29,13 @@
     --popover: #ffffff;
     --popover-foreground: #111827;
 
-    --primary: #1f2937;
-    /* gray-800 */
+    /* === 버튼 Primary = 브랜드 컬러 === */
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
     --primary-foreground: #ffffff;
 
-    --secondary: #ffffff;
+    --secondary: #f3f4f6;
+    /* gray-100 */
     --secondary-foreground: #374151;
     /* gray-700 */
 
@@ -35,15 +48,16 @@
     /* gray-50 */
     --accent-foreground: #111827;
 
+    /* destructive — light/dark 모두 선명하게 */
     --destructive: #ef4444;
     /* red-500 */
+    --destructive-hover: #dc2626;
+    /* red-600 */
     --destructive-foreground: #ffffff;
 
-    --border: rgba(164, 164, 164, 0.814);
-    /* Modern Subtle Gray */
-    --input: rgba(164, 164, 164, 0.814);
-    --ring: #111827;
-    /* gray-900 */
+    --border: rgba(156, 163, 175, 0.6);
+    --input: rgba(156, 163, 175, 0.6);
+    --ring: #4f46e5;
   }
 
   .dark {
@@ -59,12 +73,14 @@
     --popover: #1f2937;
     --popover-foreground: #f3f4f6;
 
-    --primary: #374151;
-    /* gray-700 */
+    /* 다크모드에서도 브랜드 컬러 유지 */
+    --primary: #6366f1;
+    /* indigo-500 (살짝 밝게) */
+    --primary-hover: #4f46e5;
+    /* indigo-600 */
     --primary-foreground: #ffffff;
 
     --secondary: #1f2937;
-    /* gray-800 */
     --secondary-foreground: #d1d5db;
     /* gray-300 */
 
@@ -74,59 +90,118 @@
     /* gray-400 */
 
     --accent: #1f2937;
-    /* gray-800 */
     --accent-foreground: #f3f4f6;
 
-    --destructive: #7f1d1d;
-    /* red-900 */
-    --destructive-foreground: #f3f4f6;
+    /* destructive — dark에서도 동일하게 선명히 */
+    --destructive: #ef4444;
+    --destructive-hover: #dc2626;
+    --destructive-foreground: #ffffff;
 
-    --border: rgba(164, 164, 164, 0.814);
-    /* Modern Subtle White */
-    --input: rgba(164, 164, 164, 0.814);
-    --ring: #d1d5db;
-    /* gray-300 */
+    --border: rgba(156, 163, 175, 0.25);
+    --input: rgba(156, 163, 175, 0.25);
+    --ring: #6366f1;
   }
 
+  /* === Pretendard 폰트 === */
   @font-face {
     font-family: 'Pretendard';
     font-weight: 400;
     font-display: swap;
-    src: local('Pretendard'), url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    src: local('Pretendard'),
+      url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
   }
 
   @font-face {
     font-family: 'Pretendard';
     font-weight: 600;
     font-display: swap;
-    src: local('Pretendard'), url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    src: local('Pretendard'),
+      url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
   }
 
   @font-face {
     font-family: 'Pretendard';
     font-weight: 700;
     font-display: swap;
-    src: local('Pretendard'), url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
+    src: local('Pretendard'),
+      url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Bold.woff') format('woff');
   }
 
   body {
     @apply bg-background text-foreground font-sans transition-colors duration-200;
   }
+
+  /* 기본 focus outline 스타일 */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
 }
 
 @layer components {
+
+  /* === 버튼 === */
+  /* @apply 안에서 CSS 변수 색상에 /opacity 수정자를 쓰면 오류 발생.
+     hover 상태는 brightness 필터 또는 별도 CSS 변수로 처리합니다. */
   .btn-primary {
-    @apply px-6 py-2.5 bg-gray-800 dark:bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-900 dark:hover:bg-gray-600 transition-colors duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-primary-foreground active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--primary-hover);
   }
 
   .btn-secondary {
-    @apply px-6 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-secondary text-secondary-foreground border border-border hover:bg-muted active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  .btn-destructive {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-destructive text-destructive-foreground active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-destructive:hover:not(:disabled) {
+    background-color: var(--destructive-hover);
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150;
+  }
+
+  /* === 폼 인풋 === */
+  .form-input {
+    @apply w-full px-3 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-foreground mb-1.5;
+  }
+
+  /* === 카드 === */
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden;
+    @apply bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-200;
   }
 
+  /* === 배지 === */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-primary {
+    @apply badge bg-brand-light text-brand;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+  }
+
+  /* === 스크롤바 숨김 === */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -134,5 +209,40 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@layer utilities {
+
+  /* 토스트 슬라이드 애니메이션 */
+  @keyframes slide-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-in-up {
+    animation: slide-in-up 0.25s ease-out forwards;
+  }
+
+  /* 페이드 인 */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out forwards;
   }
 }
