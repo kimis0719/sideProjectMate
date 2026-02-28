@@ -66,15 +66,41 @@ export default function ChatWindow({ room }: ChatWindowProps) {
 
     // 📡 Step 6.2: 새 메시지 수신 (receive_message) 리스너 등록
     useEffect(() => {
-        const unsubscribe = subscribe('receive_message', (incomingMessage) => {
+        const unsubscribeMsg = subscribe('receive_message', (incomingMessage) => {
             // 방 ID가 현재 활성화된 방과 일치할 때만 추가
             if (incomingMessage.roomId === room._id) {
                 setMessages((prev) => [...prev, incomingMessage]);
+
+                // 📢 [Step 7.2 추가] 방에 켜져 있는 상태에서 상대방 메시지가 오면 즉시 "읽었음" 처리!
+                const isMine = incomingMessage.sender === mockUserId || incomingMessage.sender?._id === mockUserId;
+                if (!isMine) {
+                    // 1. 상대방 화면의 숫자 1을 지우기 위해 소켓 발송
+                    emit('mark-messages-read', { roomId: room._id, userId: mockUserId });
+
+                    // 2. DB에도 "이 메시지 내가 읽었어"라고 영구 반영하기 위해 백그라운드로 조회 API 찌르기
+                    fetch(`/api/chat/messages/${room._id}?userId=${mockUserId}`);
+                }
+            }
+        });
+
+        // 📢 [Step 7.2] 상대방이 내 메시지를 읽었다는 브로드캐스트를 받으면 UI 업데이트
+        const unsubscribeRead = subscribe('messages-read-receipt', ({ roomId, readByUserId }) => {
+            if (roomId === room._id) {
+                // 내 방에 띄워진 메시지 중 '나'가 보낸 메시지들의 readBy 배열에 상대방 ID를 쓱 추가해 줌
+                setMessages(prev => prev.map(msg => {
+                    // 내가 보낸 메시지고, 아직 상대방이 안 읽은 상태 (배열에 상대방 아이디가 없다면)
+                    const isMine = msg.sender === mockUserId || msg.sender?._id === mockUserId;
+                    if (isMine && msg.readBy && !msg.readBy.includes(readByUserId)) {
+                        return { ...msg, readBy: [...msg.readBy, readByUserId] };
+                    }
+                    return msg;
+                }));
             }
         });
 
         return () => {
-            if (unsubscribe) unsubscribe();
+            if (unsubscribeMsg) unsubscribeMsg();
+            if (unsubscribeRead) unsubscribeRead();
         };
     }, [subscribe, room._id]);
 
@@ -208,17 +234,28 @@ export default function ChatWindow({ room }: ChatWindowProps) {
                                 <div className={`w-8 h-8 rounded-full shrink-0 ${isMine ? 'bg-blue-200' : 'bg-slate-200'}`} />
                                 <div className={`flex flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
                                     <span className="text-xs text-slate-500 mx-1">{isMine ? '나' : '상대방'}</span>
-                                    <div
-                                        className={`p-3 rounded-2xl shadow-sm border max-w-md ${isMine
-                                            ? 'bg-slate-800 text-white rounded-tr-sm border-slate-700'
-                                            : 'bg-white text-slate-700 rounded-tl-sm border-slate-100'
-                                            }`}
-                                    >
-                                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+
+                                    <div className={`flex items-end gap-1 ${isMine ? 'flex-row-reverse' : ''}`}>
+                                        <div
+                                            className={`p-3 rounded-2xl shadow-sm border max-w-md ${isMine
+                                                ? 'bg-slate-800 text-white rounded-tr-sm border-slate-700'
+                                                : 'bg-white text-slate-700 rounded-tl-sm border-slate-100'
+                                                }`}
+                                        >
+                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                        </div>
+
+                                        {/* 📢 [Step 7.2] 읽음 처리 인디케이터 렌더링 영역 */}
+                                        <div className="flex flex-col items-center justify-end mb-1">
+                                            {/* (임시 1:1 가정) 방 참가자는 2명. 나를 제외하고 아무도 안 읽었으면 배열 길이는 1 */}
+                                            {isMine && (!msg.readBy || msg.readBy.length < 2) && (
+                                                <span className="text-[10px] text-yellow-500 font-bold mb-0.5">1</span>
+                                            )}
+                                            <span className="text-[10px] text-slate-400 mx-1 min-w-fit" suppressHydrationWarning>
+                                                {new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className="text-[10px] text-slate-400 mx-1" suppressHydrationWarning>
-                                        {new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
                                 </div>
                             </div>
                         );

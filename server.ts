@@ -256,8 +256,15 @@ app.prepare().then(() => {
             // 나를 제외한 방 안에 있는 모든 유저에게 메시지 브로드캐스트
             socket.to(chatRoomKey).emit('receive_message', messageData);
 
-            // 필요하다면 나 자신에게도 에코(echo)를 보낼 수 있음. 
+            // 필요하다면 나 자신에게도 에코(echo)를 보낼 수 있음.
             // 클라이언트에서 낙관적 업데이트(Optimistic UI) 처리를 한다면 to()만 써도 무방.
+        });
+
+        // 4. [Step 7.2] 메시지 읽음 처리 브로드캐스트 (READ_RECEIPT)
+        socket.on('mark-messages-read', ({ roomId, userId }) => {
+            const chatRoomKey = `chat-${roomId}`;
+            // 나를 제외한 방 안의 다른 유저들에게 "내가 지금 네 메시지들 읽었어!" 라고 방송
+            socket.to(chatRoomKey).emit('messages-read-receipt', { roomId, readByUserId: userId });
         });
         // [Common] 연결 해제 처리 (공통)
         // ------------------------------------------------------------

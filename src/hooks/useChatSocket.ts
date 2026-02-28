@@ -23,13 +23,18 @@ export const useChatSocket = (roomId?: string) => {
         if (roomId) {
             // 임시로 userId를 넘겨주는 로직 (추후 session 객체 등에서 가져와 실제 ID 연동 필요)
             // 현재 단계에선 단순히 소켓 서버에 '나 들어왔다'고 알림
-            socketInstance.emit('join-chat-room', { roomId, userId: '65f0a1b2c3d4e5f6a1b2c3d9' });
+            const tempUserId = sessionStorage.getItem('spm_mock_userId') || '65f0a1b2c3d4e5f6a1b2c3d9';
+            socketInstance.emit('join-chat-room', { roomId, userId: tempUserId });
+
+            // 📢 [Step 7.2] 방에 들어왔으니 "나 여기 있는 메시지 다 읽었음!" 신호 전송
+            socketInstance.emit('mark-messages-read', { roomId, userId: tempUserId });
         }
 
         // 4. 클린업 (컴포넌트 언마운트 시)
         return () => {
             if (roomId) {
-                socketInstance.emit('leave-chat-room', { roomId, userId: '65f0a1b2c3d4e5f6a1b2c3d9' });
+                const tempUserId = sessionStorage.getItem('spm_mock_userId') || '65f0a1b2c3d4e5f6a1b2c3d9';
+                socketInstance.emit('leave-chat-room', { roomId, userId: tempUserId });
             }
 
             socketInstance.off('connect', onConnect);
