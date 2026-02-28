@@ -73,7 +73,7 @@ export async function GET() {
             as: 'stack',
           },
         },
-        { $unwind: { path: '$stack', preserveNullAndEmpty: false } },
+        { $unwind: { path: '$stack', preserveNullAndEmptyArrays: false } },
         { $project: { _id: 0, name: '$stack.name', count: 1 } },
       ]),
     ]);

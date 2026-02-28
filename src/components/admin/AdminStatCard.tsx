@@ -21,14 +21,14 @@ export default function AdminStatCard({
   color = 'blue',
 }: AdminStatCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-start gap-4">
+    <div className="bg-card rounded-xl shadow-sm border border-border p-5 flex items-start gap-4">
       <div className={`w-11 h-11 rounded-lg flex items-center justify-center text-xl shrink-0 ${COLOR_MAP[color]}`}>
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-gray-500 font-medium mb-0.5">{label}</p>
-        <p className="text-2xl font-bold text-gray-800 leading-tight">{value}</p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+        <p className="text-xs text-muted-foreground font-medium mb-0.5">{label}</p>
+        <p className="text-2xl font-bold text-foreground leading-tight">{value}</p>
+        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
       </div>
     </div>
   );

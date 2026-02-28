@@ -26,9 +26,9 @@ interface StatsData {
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  '01': { label: '모집중', color: 'text-blue-600 bg-blue-50' },
-  '02': { label: '진행중', color: 'text-yellow-600 bg-yellow-50' },
-  '03': { label: '완료', color: 'text-gray-500 bg-gray-100' },
+  '01': { label: '모집중', color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/50' },
+  '02': { label: '진행중', color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/50' },
+  '03': { label: '완료', color: 'text-muted-foreground bg-muted' },
 };
 
 export default function AdminDashboard() {
@@ -53,12 +53,12 @@ export default function AdminDashboard() {
         <div className="animate-pulse space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-xl" />
+              <div key={i} className="h-24 bg-muted rounded-xl" />
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="h-64 bg-gray-200 rounded-xl" />
-            <div className="h-64 bg-gray-200 rounded-xl" />
+            <div className="h-64 bg-muted rounded-xl" />
+            <div className="h-64 bg-muted rounded-xl" />
           </div>
         </div>
       </div>
@@ -78,8 +78,8 @@ export default function AdminDashboard() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-1">관리자 대시보드</h2>
-        <p className="text-gray-500 text-sm">플랫폼 현황을 한눈에 확인하세요.</p>
+        <h2 className="text-2xl font-bold text-foreground mb-1">관리자 대시보드</h2>
+        <p className="text-muted-foreground text-sm">플랫폼 현황을 한눈에 확인하세요.</p>
       </div>
 
       {/* KPI 카드 4개 */}
@@ -119,12 +119,12 @@ export default function AdminDashboard() {
         {[
           { label: '모집중', count: stats.projects.byStatus.recruiting, color: 'bg-blue-500' },
           { label: '진행중', count: stats.projects.byStatus.inProgress, color: 'bg-yellow-400' },
-          { label: '완료', count: stats.projects.byStatus.completed, color: 'bg-gray-300' },
+          { label: '완료', count: stats.projects.byStatus.completed, color: 'bg-gray-400' },
         ].map(({ label, count, color }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
+          <div key={label} className="bg-card rounded-xl border border-border shadow-sm p-4 text-center">
             <div className={`w-2 h-2 rounded-full ${color} mx-auto mb-2`} />
-            <p className="text-xl font-bold text-gray-800">{count}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+            <p className="text-xl font-bold text-foreground">{count}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
           </div>
         ))}
       </div>
@@ -132,15 +132,15 @@ export default function AdminDashboard() {
       {/* 하단 2컬럼: 인기 기술 스택 + 최근 가입자/프로젝트 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 인기 기술 스택 Top 10 */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-800">인기 기술 스택 Top 10</h3>
-            <Link href="/admin/tech-stacks" className="text-xs text-blue-500 hover:underline">
+            <h3 className="font-semibold text-foreground">인기 기술 스택 Top 10</h3>
+            <Link href="/admin/tech-stacks" className="text-xs text-primary hover:underline">
               관리 →
             </Link>
           </div>
           {stats.topTechStacks.length === 0 ? (
-            <p className="text-sm text-gray-400">데이터가 없습니다.</p>
+            <p className="text-sm text-muted-foreground">데이터가 없습니다.</p>
           ) : (
             <ol className="space-y-2">
               {stats.topTechStacks.map((stack, idx) => {
@@ -148,21 +148,21 @@ export default function AdminDashboard() {
                 const barWidth = Math.max(4, Math.round((stack.count / maxStackCount) * 100));
                 return (
                   <li key={stack.name} className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 w-4 text-right">{idx + 1}</span>
+                    <span className="text-xs text-muted-foreground w-4 text-right">{idx + 1}</span>
                     <img
                       src={`https://skillicons.dev/icons?i=${slug}`}
                       alt={stack.name}
                       className="w-5 h-5 object-contain"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
-                    <span className="text-sm text-gray-700 w-24 truncate">{stack.name}</span>
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <span className="text-sm text-foreground w-24 truncate">{stack.name}</span>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-blue-400 rounded-full"
+                        className="h-full bg-primary/60 rounded-full"
                         style={{ width: `${barWidth}%` }}
                       />
                     </div>
-                    <span className="text-xs text-gray-400 w-6 text-right">{stack.count}</span>
+                    <span className="text-xs text-muted-foreground w-6 text-right">{stack.count}</span>
                   </li>
                 );
               })}
@@ -173,10 +173,10 @@ export default function AdminDashboard() {
         {/* 오른쪽 2행: 최근 가입자 + 최근 프로젝트 */}
         <div className="space-y-6">
           {/* 최근 가입 사용자 5명 */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <div className="bg-card rounded-xl border border-border shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-800">최근 가입 사용자</h3>
-              <Link href="/admin/users" className="text-xs text-blue-500 hover:underline">
+              <h3 className="font-semibold text-foreground">최근 가입 사용자</h3>
+              <Link href="/admin/users" className="text-xs text-primary hover:underline">
                 전체 보기 →
               </Link>
             </div>
@@ -184,16 +184,16 @@ export default function AdminDashboard() {
               {stats.users.recent.map((user) => (
                 <li key={user._id} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-medium text-gray-800 truncate">
+                    <span className="font-medium text-foreground truncate">
                       {user.nName || '(이름 없음)'}
                     </span>
                     {user.memberType === 'admin' && (
-                      <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                      <span className="text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded">
                         관리자
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-400 shrink-0 ml-2">
+                  <span className="text-xs text-muted-foreground shrink-0 ml-2">
                     {new Date(user.createdAt).toLocaleDateString('ko-KR')}
                   </span>
                 </li>
@@ -202,22 +202,22 @@ export default function AdminDashboard() {
           </div>
 
           {/* 최근 생성 프로젝트 5개 */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <div className="bg-card rounded-xl border border-border shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-800">최근 생성 프로젝트</h3>
-              <Link href="/admin/projects" className="text-xs text-blue-500 hover:underline">
+              <h3 className="font-semibold text-foreground">최근 생성 프로젝트</h3>
+              <Link href="/admin/projects" className="text-xs text-primary hover:underline">
                 전체 보기 →
               </Link>
             </div>
             <ul className="space-y-2">
               {stats.projects.recent.map((project) => {
-                const statusInfo = STATUS_LABEL[project.status] ?? { label: project.status, color: 'text-gray-500 bg-gray-100' };
+                const statusInfo = STATUS_LABEL[project.status] ?? { label: project.status, color: 'text-muted-foreground bg-muted' };
                 return (
                   <li key={project._id} className="flex items-center justify-between text-sm gap-2">
                     <Link
                       href={`/projects/${project.pid}`}
                       target="_blank"
-                      className="font-medium text-gray-800 hover:text-blue-600 hover:underline truncate"
+                      className="font-medium text-foreground hover:text-primary hover:underline truncate"
                     >
                       {project.title}
                     </Link>
@@ -225,7 +225,7 @@ export default function AdminDashboard() {
                       <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${statusInfo.color}`}>
                         {statusInfo.label}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {new Date(project.createdAt).toLocaleDateString('ko-KR')}
                       </span>
                     </div>

@@ -24,9 +24,9 @@ interface PaginatedResult {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  '01': { label: '모집중', color: 'bg-blue-100 text-blue-700' },
-  '02': { label: '진행중', color: 'bg-yellow-100 text-yellow-700' },
-  '03': { label: '완료', color: 'bg-gray-100 text-gray-600' },
+  '01': { label: '모집중', color: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400' },
+  '02': { label: '진행중', color: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400' },
+  '03': { label: '완료', color: 'bg-muted text-muted-foreground' },
 };
 
 const STATUS_FILTERS = [
@@ -113,7 +113,7 @@ export default function ProjectModerateTable() {
               className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                 statusFilter === value
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
+                  : 'bg-card text-muted-foreground border-border hover:border-foreground/40'
               }`}
             >
               {label}
@@ -121,23 +121,23 @@ export default function ProjectModerateTable() {
           ))}
         </div>
         <input
-          className="border rounded-lg px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="border border-border bg-background text-foreground rounded-lg px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-300"
           placeholder="제목 검색 후 Enter"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleSearchKeyDown}
         />
         {data && (
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             총 <strong>{data.total}</strong>개
           </span>
         )}
       </div>
 
       {/* 테이블 */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
+          <thead className="bg-muted/50 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 text-left font-medium w-16">PID</th>
               <th className="px-4 py-3 text-left font-medium">제목</th>
@@ -149,28 +149,28 @@ export default function ProjectModerateTable() {
               <th className="px-4 py-3 text-right font-medium">액션</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
+          <tbody className="divide-y divide-border bg-card">
             {loading && (
               <tr>
-                <td colSpan={8} className="text-center py-8 text-gray-400">
+                <td colSpan={8} className="text-center py-8 text-muted-foreground">
                   로딩 중...
                 </td>
               </tr>
             )}
             {!loading && data?.projects.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center py-8 text-gray-400">
+                <td colSpan={8} className="text-center py-8 text-muted-foreground">
                   프로젝트가 없습니다.
                 </td>
               </tr>
             )}
             {!loading &&
               data?.projects.map((project) => {
-                const statusInfo = STATUS_MAP[project.status] ?? { label: project.status, color: 'bg-gray-100' };
+                const statusInfo = STATUS_MAP[project.status] ?? { label: project.status, color: 'bg-muted text-muted-foreground' };
                 return (
-                  <tr key={project._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-400 font-mono text-xs">{project.pid}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800 max-w-xs">
+                  <tr key={project._id} className="hover:bg-muted/30">
+                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{project.pid}</td>
+                    <td className="px-4 py-3 font-medium text-foreground max-w-xs">
                       <Link
                         href={`/projects/${project.pid}`}
                         target="_blank"
@@ -179,7 +179,7 @@ export default function ProjectModerateTable() {
                         {project.title}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
                       {project.author ? (
                         <Link
                           href={`/profile/${project.author._id}`}
@@ -189,7 +189,7 @@ export default function ProjectModerateTable() {
                           {project.author.nName}
                         </Link>
                       ) : (
-                        <span className="text-gray-400">알 수 없음</span>
+                        <span className="text-muted-foreground/60">알 수 없음</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -197,15 +197,15 @@ export default function ProjectModerateTable() {
                         {statusInfo.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{project.views}</td>
-                    <td className="px-4 py-3 text-gray-500">{project.likes?.length ?? 0}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
+                    <td className="px-4 py-3 text-muted-foreground">{project.views}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{project.likes?.length ?? 0}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">
                       {new Date(project.createdAt).toLocaleDateString('ko-KR')}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleDelete(project)}
-                        className="text-xs px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                        className="text-xs px-3 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 rounded hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
                       >
                         삭제
                       </button>
@@ -223,17 +223,17 @@ export default function ProjectModerateTable() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 disabled:opacity-40"
+            className="px-3 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
           >
             이전
           </button>
-          <span className="px-3 py-1.5 text-sm text-gray-600">
+          <span className="px-3 py-1.5 text-sm text-muted-foreground">
             {page} / {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 disabled:opacity-40"
+            className="px-3 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
           >
             다음
           </button>

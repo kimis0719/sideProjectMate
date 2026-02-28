@@ -118,7 +118,7 @@ export default function TechStackManager() {
   return (
     <div>
       {/* 카테고리 탭 */}
-      <div className="flex gap-2 mb-6 flex-wrap border-b border-gray-200">
+      <div className="flex gap-2 mb-6 flex-wrap border-b border-border">
         {CATEGORIES.map(({ value, label }) => (
           <button
             key={value}
@@ -126,7 +126,7 @@ export default function TechStackManager() {
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeCategory === value
                 ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             {label}
@@ -146,20 +146,20 @@ export default function TechStackManager() {
 
       {/* 추가 폼 */}
       {showAddForm && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3 flex-wrap items-end">
+        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-3 flex-wrap items-end">
           <div>
-            <label className="block text-xs text-gray-600 mb-1">기술명 *</label>
+            <label className="block text-xs text-muted-foreground mb-1">기술명 *</label>
             <input
-              className="border rounded px-2 py-1 text-sm w-36"
+              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-36"
               placeholder="예: React"
               value={addForm.name}
               onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-600 mb-1">카테고리 *</label>
+            <label className="block text-xs text-muted-foreground mb-1">카테고리 *</label>
             <select
-              className="border rounded px-2 py-1 text-sm"
+              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm"
               value={addForm.category}
               onChange={(e) => setAddForm((f) => ({ ...f, category: e.target.value as TechCategory }))}
             >
@@ -171,9 +171,9 @@ export default function TechStackManager() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-600 mb-1">로고 URL (선택)</label>
+            <label className="block text-xs text-muted-foreground mb-1">로고 URL (선택)</label>
             <input
-              className="border rounded px-2 py-1 text-sm w-48"
+              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-48"
               placeholder="비워두면 자동 생성"
               value={addForm.logoUrl}
               onChange={(e) => setAddForm((f) => ({ ...f, logoUrl: e.target.value }))}
@@ -189,7 +189,7 @@ export default function TechStackManager() {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
-              <span className="text-xs text-gray-500">미리보기</span>
+              <span className="text-xs text-muted-foreground">미리보기</span>
             </div>
           )}
           <button
@@ -203,11 +203,11 @@ export default function TechStackManager() {
 
       {/* 테이블 */}
       {loading ? (
-        <p className="text-gray-400 text-sm py-8 text-center">로딩 중...</p>
+        <p className="text-muted-foreground text-sm py-8 text-center">로딩 중...</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
+            <thead className="bg-muted/50 text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left font-medium w-12">아이콘</th>
                 <th className="px-4 py-3 text-left font-medium">기술명</th>
@@ -216,16 +216,16 @@ export default function TechStackManager() {
                 <th className="px-4 py-3 text-right font-medium">액션</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-border bg-card">
               {stacks.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">
+                  <td colSpan={5} className="text-center py-8 text-muted-foreground">
                     기술 스택이 없습니다.
                   </td>
                 </tr>
               )}
               {stacks.map((stack) => (
-                <tr key={stack._id} className="hover:bg-gray-50">
+                <tr key={stack._id} className="hover:bg-muted/30">
                   <td className="px-4 py-3">
                     <img
                       src={getIconUrl(
@@ -239,10 +239,10 @@ export default function TechStackManager() {
                       }}
                     />
                   </td>
-                  <td className="px-4 py-3 font-medium text-gray-800">
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {editingId === stack._id ? (
                       <input
-                        className="border rounded px-2 py-0.5 text-sm w-36"
+                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm w-36"
                         value={editForm.name ?? ''}
                         onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
                       />
@@ -250,10 +250,10 @@ export default function TechStackManager() {
                       stack.name
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {editingId === stack._id ? (
                       <select
-                        className="border rounded px-2 py-0.5 text-sm"
+                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm"
                         value={editForm.category ?? stack.category}
                         onChange={(e) =>
                           setEditForm((f) => ({ ...f, category: e.target.value as TechCategory }))
@@ -269,10 +269,10 @@ export default function TechStackManager() {
                       CATEGORIES.find((c) => c.value === stack.category)?.label ?? stack.category
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate">
+                  <td className="px-4 py-3 text-muted-foreground text-xs max-w-xs truncate">
                     {editingId === stack._id ? (
                       <input
-                        className="border rounded px-2 py-0.5 text-sm w-full"
+                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm w-full"
                         placeholder="비워두면 자동"
                         value={editForm.logoUrl ?? ''}
                         onChange={(e) => setEditForm((f) => ({ ...f, logoUrl: e.target.value }))}
@@ -293,7 +293,7 @@ export default function TechStackManager() {
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="text-xs px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                            className="text-xs px-3 py-1 bg-muted text-foreground rounded hover:bg-muted/70"
                           >
                             취소
                           </button>
@@ -302,13 +302,13 @@ export default function TechStackManager() {
                         <>
                           <button
                             onClick={() => handleEditStart(stack)}
-                            className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                            className="text-xs px-3 py-1 bg-muted text-foreground rounded hover:bg-muted/70"
                           >
                             편집
                           </button>
                           <button
                             onClick={() => handleDelete(stack)}
-                            className="text-xs px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100"
+                            className="text-xs px-3 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 rounded hover:bg-red-100 dark:hover:bg-red-950/50"
                           >
                             삭제
                           </button>

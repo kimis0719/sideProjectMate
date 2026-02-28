@@ -137,10 +137,13 @@ export default function Header() {
         }
     };
 
+    const isAdmin = session?.user?.memberType === 'admin';
+
     const mainCategories = [
         { label: '프로필', path: '/profile' },
         { label: '프로젝트', path: '/projects' },
         { label: '대쉬보드', path: '/dashboard' },
+        ...(isAdmin ? [{ label: '관리자', path: '/admin' }] : []),
     ];
 
     const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/');

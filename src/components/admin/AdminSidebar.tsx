@@ -15,8 +15,8 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-60 min-h-screen bg-gray-900 text-white flex flex-col">
-      <div className="px-6 py-5 border-b border-gray-700">
+    <aside className="w-60 min-h-screen bg-gray-900 dark:bg-gray-950 text-white flex flex-col shrink-0">
+      <div className="px-6 py-5 border-b border-gray-700 dark:border-gray-800">
         <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Side Project Mate</p>
         <h1 className="text-lg font-bold text-white">관리자 패널</h1>
       </div>
@@ -42,7 +42,7 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      <div className="px-6 py-4 border-t border-gray-700">
+      <div className="px-6 py-4 border-t border-gray-700 dark:border-gray-800">
         <Link
           href="/"
           className="text-xs text-gray-400 hover:text-white transition-colors"
