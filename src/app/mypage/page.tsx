@@ -22,7 +22,11 @@ export default function MyPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const { alert, confirm } = useModal();
+
+    // ✅ 모든 훅을 조건부 return 이전에 선언 (React 훅 규칙 준수)
     const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
+    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+    const [userData, setUserData] = useState<any>(null);
 
     const fetchMyApplications = useCallback(async () => {
         try {
@@ -38,17 +42,28 @@ export default function MyPage() {
         }
     }, []);
 
+    const fetchUserProfile = useCallback(async () => {
+        try {
+            const res = await fetch('/api/users/me');
+            const data = await res.json();
+            if (data.success) {
+                setUserData(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to load profile:', error);
+        }
+    }, []);
+
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.push('/login');
         }
         if (status === 'authenticated') {
             fetchMyApplications();
+            fetchUserProfile();
         }
-    }, [status, router, fetchMyApplications]);
+    }, [status, router, fetchMyApplications, fetchUserProfile]);
 
-    // Avatar Edit Logic
-    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
     const handleSaveAvatar = async (url: string) => {
         const res = await fetch('/api/users/me', {
             method: 'PATCH',
@@ -57,7 +72,7 @@ export default function MyPage() {
         });
 
         if (res.ok) {
-            setUserData({ ...userData, avatarUrl: url });
+            setUserData((prev: any) => ({ ...prev, avatarUrl: url }));
         } else {
             await alert('에러', '이미지 변경 실패');
         }
@@ -75,7 +90,7 @@ export default function MyPage() {
                 const data = await response.json();
                 if (data.success) {
                     await alert('취소 완료', '지원서가 삭제되었습니다.');
-                    fetchMyApplications(); // 목록 새로고침
+                    fetchMyApplications();
                 } else {
                     throw new Error(data.message);
                 }
@@ -85,40 +100,21 @@ export default function MyPage() {
         }
     };
 
+    // 로딩/미인증 상태 처리 — 훅 선언 이후에 위치
     if (status === 'loading' || !session) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="text-lg">로딩 중...</div>
+                <div className="text-lg text-muted-foreground">로딩 중...</div>
             </div>
         );
     }
 
-    const user = session.user as any;
-
-    const [userData, setUserData] = useState<any>(null);
-
-    const fetchUserProfile = useCallback(async () => {
-        try {
-            const res = await fetch('/api/users/me');
-            const data = await res.json();
-            if (data.success) {
-                setUserData(data.data);
-            }
-        } catch (error) {
-            console.error('Failed to load profile:', error);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (status === 'authenticated') {
-            fetchUserProfile();
-        }
-    }, [status, fetchUserProfile]);
+    // ✅ session.user._id 접근을 next-auth.d.ts 타입 확장 활용
+    const userId = session.user?._id;
 
     return (
         <div className="container mx-auto px-4 py-8 space-y-8">
-            {/* Profile Header Section */}
-            {/* Profile Card Section (Detail Preview) */}
+            {/* 프로필 카드 섹션 */}
             <section>
                 <div className="mb-4 flex items-center gap-2">
                     <h2 className="text-xl font-bold text-foreground">내 프로필 카드</h2>
@@ -127,8 +123,8 @@ export default function MyPage() {
                 {userData && (
                     <DetailProfileCard
                         user={userData}
-                        onClick={() => router.push(`/profile`)} // go to full profile view
-                        isEditing={true} // 항상 수정 가능 상태로 (아바타 오버레이 노출)
+                        onClick={() => router.push(`/profile`)}
+                        isEditing={true}
                         onEditAvatar={() => setIsAvatarModalOpen(true)}
                     />
                 )}
@@ -141,12 +137,13 @@ export default function MyPage() {
                 currentUrl={userData?.avatarUrl}
             />
 
+            {/* 지원 현황 섹션 */}
             <div className="bg-card shadow rounded-lg p-6 border border-border">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-bold text-foreground">내 지원 현황</h2>
                     <button
-                        onClick={() => router.push(`/projects?authorId=${user._id}`)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors text-sm"
+                        onClick={() => router.push(`/projects?authorId=${userId}`)}
+                        className="btn-primary text-sm"
                     >
                         내 프로젝트 보기
                     </button>
@@ -158,11 +155,11 @@ export default function MyPage() {
                             <div key={app._id} className="p-4 border border-border rounded-lg flex justify-between items-center bg-card">
                                 <div>
                                     {app.projectId ? (
-                                        <Link href={`/projects/${app.projectId.pid}`} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                        <Link href={`/projects/${app.projectId.pid}`} className="font-semibold text-primary hover:underline">
                                             {app.projectId.title}
                                         </Link>
                                     ) : (
-                                        <span className="font-semibold text-gray-400">삭제된 프로젝트</span>
+                                        <span className="font-semibold text-muted-foreground">삭제된 프로젝트</span>
                                     )}
                                     <p className="text-sm text-muted-foreground">지원 역할: {app.role}</p>
                                 </div>
@@ -174,7 +171,7 @@ export default function MyPage() {
                                         {app.status === 'pending' ? '대기중' : app.status === 'accepted' ? '수락됨' : '거절됨'}
                                     </span>
                                     {app.status === 'pending' && (
-                                        <button onClick={() => handleCancelApplication(app._id)} className="text-sm text-red-500 hover:underline">
+                                        <button onClick={() => handleCancelApplication(app._id)} className="text-sm text-destructive hover:underline">
                                             지원 취소
                                         </button>
                                     )}
