@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import { socketClient } from '@/lib/socket';
@@ -29,9 +29,11 @@ export default function Header() {
 
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [activeCategory, setActiveCategory] = useState('추천');
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [showToast, setShowToast] = useState(false);
+
+    // 알림 드롭다운 외부 클릭 감지용 ref
+    const notificationRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (status === 'authenticated' && session?.user?._id) {
@@ -55,6 +57,21 @@ export default function Header() {
             };
         }
     }, [status, pathname, fetchNotifications, session]);
+
+    // 알림 드롭다운 외부 클릭 시 닫기
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+                setIsNotificationOpen(false);
+            }
+        };
+        if (isNotificationOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isNotificationOpen]);
 
     const handleNotificationClick = async (notification: Notification) => {
         if (!notification.read) {
@@ -99,7 +116,6 @@ export default function Header() {
         { label: '프로젝트', path: '/projects' },
         { label: '대쉬보드', path: '/dashboard' },
     ];
-    const subCategories = ['추천', '최신', '인기', '마감임박'];
 
     const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/');
 
@@ -142,18 +158,8 @@ export default function Header() {
                     <div className="flex items-center gap-4">
                         {status === 'loading' ? <div className="h-5 w-20 bg-gray-200 rounded animate-pulse" /> : session ? (
                             <>
-                                <button className="hidden md:block text-muted-foreground hover:text-foreground transition-colors">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                </button>
-                                <button className="hidden md:block text-muted-foreground hover:text-foreground transition-colors">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                    </svg>
-                                </button>
-
-                                <div className="relative flex items-center">
+                                {/* 알림 버튼 — ref로 감싸서 외부 클릭 감지 */}
+                                <div className="relative flex items-center" ref={notificationRef}>
                                     <button onClick={() => setIsNotificationOpen(prev => !prev)} className="text-muted-foreground hover:text-foreground">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                                         {unreadCount > 0 && (
@@ -238,26 +244,7 @@ export default function Header() {
                 </div>
             )}
 
-            {pathname === '/projects' && (
-                <div className="bg-muted/50 border-b border-border">
-                    <div className="container mx-auto px-4">
-                        <nav className="flex items-center gap-8 h-12 overflow-x-auto scrollbar-hide">
-                            {subCategories.map((category) => (
-                                <button
-                                    key={category}
-                                    onClick={() => setActiveCategory(category)}
-                                    className={`text-sm font-semibold whitespace-nowrap transition-colors ${activeCategory === category
-                                        ? 'text-foreground border-b-2 border-foreground'
-                                        : 'text-muted-foreground hover:text-foreground'
-                                        }`}
-                                >
-                                    {category}
-                                </button>
-                            ))}
-                        </nav>
-                    </div>
-                </div>
-            )}
+            {/* 서브 카테고리 탭은 ProjectList 내부의 필터 UI로 관리됩니다 */}
 
             {/* Toast Message */}
             {showToast && (
