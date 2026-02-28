@@ -6,7 +6,7 @@ export interface IUser extends Document {
   password: string;
   nName?: string;
   mblNo?: string;
-  memberType: string;
+  memberType: 'user' | 'admin';
   delYn: boolean;
   uid: number;
   // 프로필 확장 필드
@@ -63,6 +63,7 @@ const UserSchema: Schema = new Schema(
     },
     memberType: {
       type: String,
+      enum: ['user', 'admin'],
       default: 'user',
     },
     delYn: {

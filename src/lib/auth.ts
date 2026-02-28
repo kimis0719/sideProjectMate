@@ -20,12 +20,16 @@ export const authOptions: NextAuthOptions = {
         const user = await User.findOne({ authorEmail: credentials.authorEmail });
 
         if (user && (await user.comparePassword(credentials.password))) {
+          if (user.delYn === true) {
+            throw new Error('비활성화된 계정입니다. 관리자에게 문의하세요.');
+          }
           return {
             id: user._id.toString(),
             _id: user._id.toString(),
             email: user.authorEmail,
             name: user.nName,
             image: user.avatarUrl,
+            memberType: user.memberType,
           };
         } else {
           throw new Error('이메일 또는 비밀번호가 일치하지 않습니다.');
