@@ -181,6 +181,8 @@ export default function Header() {
                                 className="md:hidden p-2 -ml-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                                 aria-label="메뉴 열기"
+                                aria-expanded={isMobileMenuOpen}
+                                aria-controls="mobile-nav"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     {isMobileMenuOpen ? (
@@ -392,49 +394,65 @@ export default function Header() {
                 </div>
             </div>
 
-            {/* ── 모바일 메뉴 오버레이 */}
-            {isMobileMenuOpen && (
-                <>
-                    {/* 백드롭 */}
-                    <div
-                        className="md:hidden fixed inset-0 top-16 bg-black/40 z-30"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                    />
-                    {/* 슬라이드 패널 */}
-                    <div className="md:hidden fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-background border-r border-border z-40 shadow-xl overflow-y-auto">
-                        <nav className="flex flex-col p-4 gap-1">
-                            {mainCategories.map((category) => (
-                                <Link
-                                    key={category.label}
-                                    href={category.path}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive(category.path)
-                                        ? 'bg-primary/10 text-primary font-semibold'
-                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                                        }`}
-                                >
-                                    {category.label}
-                                </Link>
-                            ))}
+            {/* ── 모바일 메뉴 오버레이 (항상 마운트, translateX로 슬라이드) */}
+            {/* 백드롭 */}
+            <div
+                className={`md:hidden fixed inset-0 top-16 bg-black/40 z-30 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                    }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                aria-hidden="true"
+            />
+            {/* 슬라이드 패널 */}
+            <div
+                id="mobile-nav"
+                role="navigation"
+                aria-label="모바일 메뉴"
+                className={`md:hidden fixed top-16 left-0 h-[calc(100vh-4rem)] w-64
+                    bg-background border-r border-border z-40 shadow-xl overflow-y-auto
+                    transition-transform duration-300 ease-in-out
+                    ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                `}
+            >
+                <nav className="flex flex-col p-4 gap-1">
+                    {mainCategories.map((category) => (
+                        <Link
+                            key={category.label}
+                            href={category.path}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive(category.path)
+                                ? 'bg-primary/10 text-primary font-semibold'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                                }`}
+                        >
+                            {category.label}
+                        </Link>
+                    ))}
 
-                            {session && (
-                                <>
-                                    <div className="border-t border-border my-2" />
-                                    <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
-                                        마이페이지
-                                    </Link>
-                                    <button
-                                        onClick={() => signOut({ callbackUrl: '/' })}
-                                        className="px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
-                                    >
-                                        로그아웃
-                                    </button>
-                                </>
-                            )}
-                        </nav>
-                    </div>
-                </>
-            )}
+                    {session && (
+                        <>
+                            <div className="border-t border-border my-2" />
+                            <Link href="/mypage" onClick={() => setIsMobileMenuOpen(false)} className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                                마이페이지
+                            </Link>
+                            <button
+                                onClick={() => signOut({ callbackUrl: '/' })}
+                                className="px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                            >
+                                로그아웃
+                            </button>
+                        </>
+                    )}
+                </nav>
+            </div>
+
+            {/* aria-live — 알림/토스트 상태 변경을 스크린리더에 알림 */}
+            <div
+                role="status"
+                aria-live="polite"
+                aria-atomic="false"
+                className="sr-only"
+                id="header-live-region"
+            />
         </header>
     );
 }

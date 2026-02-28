@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useModalStore } from '@/store/modalStore';
 
 /**
- * 전역 모달 컴포넌트
- * modalStore의 상태를 구독하여 Alert/Confirm 모달을 렌더링합니다.
+ * 전역 모달 컴포넌트 (접근성 강화)
+ * - aria-labelledby / aria-describedby 적용
+ * - 모달 열릴 때 확인 버튼 자동 포커스
+ * - 포커스 트랩 (Tab / Shift+Tab 순환)
+ * - 시스템 컬러 토큰 사용 (하드코딩 컬러 제거)
  */
 const GlobalModal = () => {
     const {
@@ -18,143 +21,161 @@ const GlobalModal = () => {
         isDestructive,
         closeOnBackdropClick,
         showCloseButton,
-        resolve
+        resolve,
     } = useModalStore();
 
     const [mounted, setMounted] = useState(false);
     const [isAnimate, setIsAnimate] = useState(false);
 
-    // 클라이언트 사이드 렌더링 보장
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    // 포커스 트랩 refs
+    const confirmBtnRef = useRef<HTMLButtonElement>(null);
+    const cancelBtnRef = useRef<HTMLButtonElement>(null);
+    const closeBtnRef = useRef<HTMLButtonElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    // 애니메이션 제어
+    const titleId = 'global-modal-title';
+    const descId = 'global-modal-desc';
+
+    // 클라이언트 마운트 보장
+    useEffect(() => { setMounted(true); }, []);
+
+    // 열림 시 애니메이션 + 자동 포커스
     useEffect(() => {
         if (isOpen) {
-            const timer = setTimeout(() => setIsAnimate(true), 10);
+            const timer = setTimeout(() => {
+                setIsAnimate(true);
+                // 확인 버튼에 자동 포커스 (취소 버튼 우선)
+                if (type === 'confirm' && cancelBtnRef.current) {
+                    cancelBtnRef.current.focus();
+                } else if (confirmBtnRef.current) {
+                    confirmBtnRef.current.focus();
+                }
+            }, 10);
             return () => clearTimeout(timer);
         } else {
             setIsAnimate(false);
         }
+    }, [isOpen, type]);
+
+    // 스크롤 lock
+    useEffect(() => {
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
 
-    // 모달이 열려있을 때 배경 스크롤 방지
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
+    // 포커스 트랩 (Tab / Shift+Tab)
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Escape' && closeOnBackdropClick) {
+            resolve(null);
+            return;
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen]);
+
+        if (e.key !== 'Tab') return;
+
+        // 현재 모달 안의 포커스 가능한 요소 수집
+        const focusable = containerRef.current?.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [tabindex="0"]'
+        );
+        if (!focusable || focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+            if (document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            }
+        } else {
+            if (document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        }
+    }, [closeOnBackdropClick, resolve]);
 
     if (!mounted || !isOpen) return null;
 
-    /**
-     * 확인 버튼 클릭 시 resolve(true) 호출
-     */
-    const handleConfirm = () => {
-        resolve(true);
-    };
-
-    /**
-     * 취소 버튼 클릭 시 resolve(false) 호출
-     */
-    const handleCancel = () => {
-        resolve(false);
-    };
-
-    /**
-     * X 버튼 또는 백드롭 클릭 시 resolve(null) 호출 (아무 로직도 실행하지 않음)
-     */
-    const handleDismiss = () => {
-        resolve(null);
-    };
-
-    /**
-     * 백드롭 클릭 처리
-     */
-    const handleBackdropClick = () => {
-        if (closeOnBackdropClick) {
-            handleDismiss();
-        }
-    };
+    const handleConfirm = () => resolve(true);
+    const handleCancel = () => resolve(false);
+    const handleDismiss = () => resolve(null);
+    const handleBackdropClick = () => { if (closeOnBackdropClick) handleDismiss(); };
 
     return (
         <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            aria-modal="true"
             role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            aria-describedby={descId}
+            onKeyDown={handleKeyDown}
         >
             {/* Backdrop */}
             <div
-                className={`
-                    fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300
-                    ${isAnimate ? 'opacity-100' : 'opacity-0'}
-                `}
+                className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isAnimate ? 'opacity-100' : 'opacity-0'}`}
                 onClick={handleBackdropClick}
+                aria-hidden="true"
             />
 
-            {/* Modal Container */}
+            {/* Modal 박스 — 시스템 토큰 사용 */}
             <div
+                ref={containerRef}
                 className={`
-                    relative w-full max-w-sm overflow-hidden 
-                    bg-white dark:bg-gray-800 
-                    rounded-2xl shadow-2xl 
+                    relative w-full max-w-sm overflow-hidden
+                    bg-card text-card-foreground
+                    rounded-2xl shadow-2xl border border-border
                     transform transition-all duration-300 ease-out
                     ${isAnimate ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'}
                 `}
             >
-                {/* Close Button ('X') */}
+                {/* X 버튼 */}
                 {showCloseButton && (
                     <button
+                        ref={closeBtnRef}
                         onClick={handleDismiss}
-                        className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors z-[110]"
+                        className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors z-[110]"
                         aria-label="닫기"
                     >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 )}
 
                 <div className="p-6">
-                    {/* Title */}
+                    {/* 제목 */}
                     {title && (
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 pr-8">
+                        <h3 id={titleId} className="text-lg font-bold text-foreground mb-2 pr-8">
                             {title}
                         </h3>
                     )}
 
-                    {/* Message */}
-                    <div className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                    {/* 본문 */}
+                    <div id={descId} className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
                         {message}
                     </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex border-t border-gray-100 dark:border-gray-700">
+                {/* 액션 버튼 영역 */}
+                <div className="flex border-t border-border" role="group" aria-label="모달 액션">
                     {type === 'confirm' && (
                         <button
+                            ref={cancelBtnRef}
                             type="button"
                             onClick={handleCancel}
-                            className="flex-1 px-4 py-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors border-r border-gray-100 dark:border-gray-700"
+                            className="flex-1 px-4 py-3.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors border-r border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                         >
                             {cancelText}
                         </button>
                     )}
                     <button
+                        ref={confirmBtnRef}
                         type="button"
                         onClick={handleConfirm}
-                        className={`
-                            flex-1 px-4 py-4 text-sm font-bold transition-colors
-                            ${isDestructive
-                                ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
-                                : 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'}
-                        `}
+                        className={`flex-1 px-4 py-3.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${isDestructive
+                                ? 'text-destructive hover:bg-destructive/10'
+                                : 'text-primary hover:bg-primary/10'
+                            }`}
                     >
                         {confirmText}
                     </button>
