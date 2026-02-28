@@ -2,7 +2,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { getSocket } from '@/lib/socket';
 import { Socket } from 'socket.io-client';
 
-export const useChatSocket = (roomId?: string) => {
+// 🔧 Step 9.1: userId를 외부에서 prop으로 받아서 sessionStorage 의존성 완전 제거
+// 이전에는 useChatSocket 내부에서 sessionStorage를 직접 읽었으나,
+// 이제 ChatWindow에서 실제 세션 userId를 받아서 주입하는 방식으로 변경했어!
+interface UseChatSocketOptions {
+    roomId?: string;
+    userId?: string; // 실제 로그인 사용자 ID (ChatWindow에서 주입)
+}
+
+export const useChatSocket = ({ roomId, userId }: UseChatSocketOptions = {}) => {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
@@ -20,11 +28,8 @@ export const useChatSocket = (roomId?: string) => {
         socketInstance.on('disconnect', onDisconnect);
 
         // 3. 특정 방(roomId)이 주어지면 방에 입장 (Join Room)
-        if (roomId) {
-            // TODO: Step 8.4 완료 후 실제 세션 userId로 교체 예정
-            // 현재는 ChatWindow에서 useSession으로 실제 userId를 사용하고 있으므로
-            // 소켓 join 시에도 sessionStorage fallback 대신 빈 값으로만 전달
-            const userId = sessionStorage.getItem('spm_mock_userId') ?? '';
+        if (roomId && userId) {
+            // 🔧 Step 9.1: 이제 sessionStorage 없이 실제 userId 주입!
             socketInstance.emit('join-chat-room', { roomId, userId });
 
             // 📢 [Step 7.2] 방에 들어왔으니 "나 여기 있는 메시지 다 읽었음!" 신호 전송
@@ -33,8 +38,7 @@ export const useChatSocket = (roomId?: string) => {
 
         // 4. 클린업 (컴포넌트 언마운트 시)
         return () => {
-            if (roomId) {
-                const userId = sessionStorage.getItem('spm_mock_userId') ?? '';
+            if (roomId && userId) {
                 socketInstance.emit('leave-chat-room', { roomId, userId });
             }
 
@@ -45,7 +49,7 @@ export const useChatSocket = (roomId?: string) => {
             // 컴포넌트 언마운트 시 무조건 disconnectSocket()을 호출하면 안됨.
             // 필요하다면 전역 소켓 관리 로직을 더 정교하게 다듬어야 함.
         };
-    }, [roomId]);
+    }, [roomId, userId]);
 
     // 외부 컴포넌트에서 이벤트를 구독하거나 해제할 수 있는 헬퍼 함수
     const subscribe = useCallback((event: string, callback: (...args: any[]) => void) => {

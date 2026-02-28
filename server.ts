@@ -255,6 +255,21 @@ app.prepare().then(() => {
             const chatRoomKey = `chat-${roomId}`;
             socket.to(chatRoomKey).emit('messages-read-receipt', { roomId, readByUserId: userId });
         });
+
+        // Step 9.5: 새 채팅방 생성 알림 브로드캐스트
+        // POST /api/chat/rooms에서 방 생성 후 클라이언트가 이 이벤트를 발생시키면
+        // 상대방의 개인 소켓 Room에 new-room 이벤트를 전송해서 목록을 실시간 갱신!
+        socket.on('notify-new-room', ({ participantIds, room }) => {
+            participantIds.forEach((participantId: string) => {
+                socket.to(`user-${participantId}`).emit('new-room', room);
+            });
+        });
+
+        // 개인 소켓 Room 입장 (로그인 후 user-{id} 방에 join해야 new-room 등 개인 이벤트를 받을 수 있어!)
+        socket.on('join-user-room', ({ userId }) => {
+            socket.join(`user-${userId}`);
+        });
+
         socket.on('disconnect', () => {
 
             // 1. [기존] 이 소켓이 잠근 모든 리소스 해제

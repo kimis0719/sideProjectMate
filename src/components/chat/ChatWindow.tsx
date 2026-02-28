@@ -2,25 +2,52 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { getCategoryColor } from '@/constants/chat';
 import { MockChatRoom } from './ChatRoomList';
 import { useChatSocket } from '@/hooks/useChatSocket';
+import { useModalStore } from '@/store/modalStore';
 
 interface ChatWindowProps {
     room: MockChatRoom;
     // 📱 [Step 8.3 - 모바일] 모바일에서 목록으로 돌아가는 콜백 함수 (PC에서는 사용 안 함)
     onBack?: () => void;
+    // 🚪 [Step 9.4] 채팅방 나가기 완료 후 부모에서 목록을 갱신하기 위한 콜백
+    onLeaveRoom?: (roomId: string) => void;
 }
 
 /**
  * 💬 채팅 대화창 컴포넌트야.
  * Step 3.3 요구사항에 맞춰서 활성화된 채팅방 카테고리에 따라 상단(Header)의 테마를 변경하고 있어!
  */
-export default function ChatWindow({ room, onBack }: ChatWindowProps) {
+export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProps) {
     const categoryColor = getCategoryColor(room.category);
+    const { openConfirm } = useModalStore();
+    const router = useRouter();
 
-    // 🔌 Step 5.2: 해당 채팅방에 입장하면서 소켓 연결하기
-    const { isConnected, emit, subscribe } = useChatSocket(room._id);
+    // Step 8.4 / Step 9.1: NextAuth 세션 우선. 없으면 sessionStorage 폴백 (실제 로그인 연동 후 제거 예정)
+    const { data: session } = useSession();
+    const [currentUserId, setCurrentUserId] = useState<string>('');
+
+    useEffect(() => {
+        if (session?.user?._id) {
+            // 실제 로그인 세션이 있으면 세션 ID 사용
+            setCurrentUserId(session.user._id);
+        } else if (typeof window !== 'undefined') {
+            // 세션이 없으면 sessionStorage 임시 ID 사용 (추후 세션 연동 후 이 분기 제거)
+            let stored = sessionStorage.getItem('spm_mock_userId');
+            if (!stored) {
+                // MongoDB ObjectId 규격인 24자리 16진수 랜덤 생성
+                stored = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+                sessionStorage.setItem('spm_mock_userId', stored);
+            }
+            setCurrentUserId(stored);
+        }
+    }, [session]);
+
+    // 🔌 Step 5.2 / Step 9.1: 해당 채팅방에 입장하면서 소켓 연결
+    // userId를 직접 주입해서 sessionStorage 의존 없이 실제 userId 사용!
+    const { isConnected, emit, subscribe } = useChatSocket({ roomId: room._id, userId: currentUserId });
 
     // 💬 Step 6.2: 메시지 상태 및 입력 관리
     const [messageInput, setMessageInput] = useState('');
@@ -52,26 +79,30 @@ export default function ChatWindow({ room, onBack }: ChatWindowProps) {
         setIsLoadMoreAction(false);
     }, [messages]);
 
-    // Step 8.4: 실제 NextAuth 세션에서 userId를 가져오고, 세션이 없으면 sessionStorage 임시 ID로 폴백
-    // (Phase 9에서 실제 채팅방 생성 및 로그인 연동이 완료되면 sessionStorage 폴백 제거 예정)
-    const { data: session } = useSession();
-    const [currentUserId, setCurrentUserId] = useState<string>('');
+    // 🚪 Step 9.4: 채팅방 헤더 메뉴(점세개) 열기/닫기 상태
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    useEffect(() => {
-        if (session?.user?._id) {
-            // 실제 로그인 세션이 있으면 세션 ID 사용
-            setCurrentUserId(session.user._id);
-        } else if (typeof window !== 'undefined') {
-            // 세션이 없으면 sessionStorage 임시 ID 사용 (useChatSocket과 동일한 키 사용!)
-            let stored = sessionStorage.getItem('spm_mock_userId');
-            if (!stored) {
-                // MongoDB ObjectId 규격인 24자리 16진수 랜덤 생성
-                stored = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-                sessionStorage.setItem('spm_mock_userId', stored);
+    // 🚪 Step 9.4: 채팅방 나가기 핸들러
+    const handleLeaveRoom = async () => {
+        setIsMenuOpen(false); // 메뉴 먼저 닫기
+        // GlobalModal로 확인 다이얼로그 표시 (브라우저 기본 confirm 대신 커스텀 모달 사용!)
+        const confirmed = await openConfirm(
+            '채팅방 나가기',
+            '이 채팅방을 나가시겠어요?\n나가면 목록에서 더 이상 보이지 않습니다.',
+            { confirmText: '나가기', cancelText: '취소', isDestructive: true }
+        );
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`/api/chat/rooms/${room._id}`, { method: 'DELETE' });
+            if (res.ok) {
+                // 부모 컴포넌트에 나간 방 ID 알려서 목록에서 제거
+                onLeaveRoom?.(room._id);
             }
-            setCurrentUserId(stored);
+        } catch {
+            // 나가기 실패 시 조용히 실패 (재시도는 사용자가 다시 버튼을 누르면 됨)
         }
-    }, [session]);
+    };
 
     // 📡 Step 6.3: 대화 내역 불러오기 API 호출 함수 (초기 및 재연결 시 재사용)
     const fetchInitialMessages = async () => {
@@ -348,14 +379,37 @@ export default function ChatWindow({ room, onBack }: ChatWindowProps) {
                     </div>
                 </div>
 
-                {/* 우측 도구 모음 (추후 구현 예정) */}
+                {/* 우측 도구 모음 */}
                 <div className="flex items-center gap-3 text-slate-400">
                     <button className="hover:text-slate-600 transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </button>
-                    <button className="hover:text-slate-600 transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-                    </button>
+
+                    {/* 🚪 Step 9.4: 점세개 메뉴 버튼 (채팅방 나가기 옵션 포함) */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsMenuOpen(prev => !prev)}
+                            className="hover:text-slate-600 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                        </button>
+
+                        {/* 드롭다운 메뉴 */}
+                        {isMenuOpen && (
+                            <>
+                                {/* 바깥 클릭 시 메뉴 닫기 */}
+                                <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)} />
+                                <div className="absolute right-0 top-8 z-20 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px]">
+                                    <button
+                                        onClick={handleLeaveRoom}
+                                        className="w-full px-4 py-2.5 text-sm text-left text-red-500 hover:bg-red-50 transition-colors font-medium"
+                                    >
+                                        채팅방 나가기
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -400,7 +454,7 @@ export default function ChatWindow({ room, onBack }: ChatWindowProps) {
 
                         return (
                             <div key={idx} className={`flex items-start gap-3 ${isMine ? 'flex-row-reverse' : ''}`}>
-                                {/* 프로필 아바타 (임시 더미 - Phase 9에 실제 프로필 이미지로 교체 예정) */}
+                                {/* 프로필 아바타 (임시 더미 - Phase 9에서 실제 프로필 이미지로 교체 예정) */}
                                 <div className={`w-8 h-8 rounded-full shrink-0 ${isMine ? 'bg-blue-200' : 'bg-slate-200'}`} />
                                 <div className={`flex flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
                                     <span className="text-xs text-slate-500 mx-1">{isMine ? '나' : '상대방'}</span>
