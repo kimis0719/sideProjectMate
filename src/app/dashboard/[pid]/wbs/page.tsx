@@ -31,6 +31,8 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
         updateTaskDates,
         selectTask,
         setViewMode,
+        initSocket,
+        cleanupSocket,
     } = useWbsStore();
 
     const [projectMembers, setProjectMembers] = useState<any[]>([]);
@@ -43,6 +45,17 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
             router.push('/login');
         }
     }, [status, router]);
+
+    // 소켓 실시간 협업 초기화 (인증 후 연결, 페이지 이탈 시 정리)
+    useEffect(() => {
+        if (status !== 'authenticated' || !projectId) return;
+
+        initSocket(projectId);
+
+        return () => {
+            cleanupSocket();
+        };
+    }, [status, projectId]);
 
     // 프로젝트 작업 목록 및 멤버 정보 가져오기
     useEffect(() => {
