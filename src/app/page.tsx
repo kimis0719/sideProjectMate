@@ -1,26 +1,31 @@
+import type { Metadata } from 'next';
 import React from 'react';
-import HomeBanner from '@/components/HomeBanner';
+import HeroSection from '@/components/HeroSection';
 import ProjectList from '@/components/projects/ProjectList';
 import dbConnect from '@/lib/mongodb';
 import CommonCode, { ICommonCode } from '@/lib/models/CommonCode';
 
+export const metadata: Metadata = {
+  title: 'Side Project Mate — 사이드 프로젝트 팀 매칭 플랫폼',
+  description: '디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼. 칸반 보드, WBS, 실시간 협업 도구까지.',
+  openGraph: {
+    title: 'Side Project Mate',
+    description: '디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼',
+    type: 'website',
+  },
+};
+
 // 공통 코드를 가져오는 헬퍼 함수 (서버 사이드)
 async function getCommonCodes(group: string) {
   await dbConnect();
-  // order 순으로 정렬하여 가져옴
   const codes: any[] = await CommonCode.find({ group, isActive: true }).sort('order').lean();
-
-  // Mongoose 문서를 Plain Object로 변환 (직렬화 문제 방지)
   return codes.map(code => ({
     ...code,
     _id: code._id.toString(),
   })) as ICommonCode[];
 }
 
-// 메인 페이지 컴포넌트 (Server Component)
-// 서버에서 필요한 데이터를 미리 fetch하여 클라이언트 컴포넌트에 전달
 export default async function Home() {
-  // 카테고리와 상태 코드를 병렬로 조회
   const [categoryCodes, statusCodes] = await Promise.all([
     getCommonCodes('CATEGORY'),
     getCommonCodes('STATUS'),
@@ -28,12 +33,13 @@ export default async function Home() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* 배너 영역 (클라이언트 컴포넌트) */}
-      <HomeBanner />
+      {/* Hero + 통계 + 기능 소개 섹션 */}
+      <HeroSection />
 
-      {/* 프로젝트 목록 및 필터 영역 (클라이언트 컴포넌트) */}
-      {/* 서버에서 가져온 공통 코드를 props로 전달 */}
-      <ProjectList categoryCodes={categoryCodes} statusCodes={statusCodes} />
+      {/* 프로젝트 목록 */}
+      <div className="container mx-auto px-4 py-10">
+        <ProjectList categoryCodes={categoryCodes} statusCodes={statusCodes} />
+      </div>
     </div>
   );
 }
