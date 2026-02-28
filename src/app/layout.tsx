@@ -35,15 +35,19 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <AuthSessionProvider>
           <ThemeProvider>
+            {/* Skip to main — 키보드 접근성 */}
+            <a href="#main-content" className="skip-to-main">
+              본문 바로가기
+            </a>
             <div className="flex flex-col min-h-screen">
               <Header />
-              <main className="flex-1 bg-background">
+              <main id="main-content" className="flex-1 bg-background">
                 {children}
               </main>
               <Footer />
               {/* 전역 모달 */}
               <GlobalModal />
-              {/* 전역 Toast (FloatingThemeButton 제거 후 Toast로 대체) */}
+              {/* 전역 Toast */}
               <Toast />
             </div>
           </ThemeProvider>
