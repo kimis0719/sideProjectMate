@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Task from '@/lib/models/wbs/TaskModel';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/wbs/tasks?pid={pid}
  * 특정 프로젝트의 모든 작업 목록을 조회합니다.
@@ -33,7 +35,7 @@ export async function GET(request: NextRequest) {
             .populate('assignee', 'nName email')  // 담당자의 이름과 이메일만 가져옴
             .sort({ startDate: 1 });
 
-        return NextResponse.json(tasks, { status: 200 });
+        return NextResponse.json({ success: true, data: tasks });
     } catch (error) {
         console.error('작업 목록 조회 실패:', error);
         return NextResponse.json(
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
         // 생성된 작업을 populate하여 담당자 정보와 함께 반환
         const populatedTask = await Task.findById(newTask._id).populate('assignee', 'nName email');
 
-        return NextResponse.json(populatedTask, { status: 201 });
+        return NextResponse.json({ success: true, data: populatedTask }, { status: 201 });
     } catch (error) {
         console.error('작업 생성 실패:', error);
         return NextResponse.json(

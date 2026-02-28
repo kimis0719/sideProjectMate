@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Task from '@/lib/models/wbs/TaskModel';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * PATCH /api/wbs/tasks/{taskId}
  * 특정 작업의 정보를 수정합니다.
@@ -53,7 +55,7 @@ export async function PATCH(
             );
         }
 
-        return NextResponse.json(updatedTask, { status: 200 });
+        return NextResponse.json({ success: true, data: updatedTask });
     } catch (error) {
         console.error('작업 수정 실패:', error);
         return NextResponse.json(
