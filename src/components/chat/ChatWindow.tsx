@@ -1,19 +1,22 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import { getCategoryColor } from '@/constants/chat';
 import { MockChatRoom } from './ChatRoomList';
 import { useChatSocket } from '@/hooks/useChatSocket';
 
 interface ChatWindowProps {
     room: MockChatRoom;
+    // 📱 [Step 8.3 - 모바일] 모바일에서 목록으로 돌아가는 콜백 함수 (PC에서는 사용 안 함)
+    onBack?: () => void;
 }
 
 /**
  * 💬 채팅 대화창 컴포넌트야.
  * Step 3.3 요구사항에 맞춰서 활성화된 채팅방 카테고리에 따라 상단(Header)의 테마를 변경하고 있어!
  */
-export default function ChatWindow({ room }: ChatWindowProps) {
+export default function ChatWindow({ room, onBack }: ChatWindowProps) {
     const categoryColor = getCategoryColor(room.category);
 
     // 🔌 Step 5.2: 해당 채팅방에 입장하면서 소켓 연결하기
@@ -23,73 +26,207 @@ export default function ChatWindow({ room }: ChatWindowProps) {
     const [messageInput, setMessageInput] = useState('');
     const [messages, setMessages] = useState<any[]>([]);
 
+    // 📜 Step 8.1: 무한 스크롤(Pagination)을 위한 상태 관리
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasNextPage, setHasNextPage] = useState<boolean>(true);
+    const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+    // 스크롤 유지를 위한 플래그 (과거 대화 로드 시엔 맨 아래로 튀지 않도록)
+    const [isLoadMoreAction, setIsLoadMoreAction] = useState<boolean>(false);
+
     // ⬇️ Step 7.1: 자동 스크롤을 위한 Ref
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    // 🔧 버그 1 수정: "실제 새 메시지가 온 경우"에만 스크롤 내리도록 shouldAutoScroll Ref 추가
+    const shouldAutoScroll = useRef<boolean>(false);
 
-    // ⬇️ Step 7.1: 메시지가 추가될 때마다 해당 컨테이너의 스크롤만 맨 아래로 이동
+    // ⬇️ Step 7.1: messages state가 바뀌었을 때 스크롤 로직 실행
     useEffect(() => {
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        if (shouldAutoScroll.current) {
+            // 실제 새 메시지 수신/전송 시에만 맨 아래로!
+            container.scrollTop = container.scrollHeight;
+            shouldAutoScroll.current = false;
         }
+        // isLoadMoreAction이 true일 때 (8.1 데이터 로드) 스크롤 유지도 이쪽에서 진행
+        setIsLoadMoreAction(false);
     }, [messages]);
 
-    // 🧪 테스트용 가짜 유저 ID 생성기 (브라우저 탭/창마다 다른 사람인 척 하기 위함)
-    const [mockUserId, setMockUserId] = useState<string>('65f0a1b2c3d4e5f6a1b2c3d9');
+    // Step 8.4: 실제 NextAuth 세션에서 userId를 가져오고, 세션이 없으면 sessionStorage 임시 ID로 폴백
+    // (Phase 9에서 실제 채팅방 생성 및 로그인 연동이 완료되면 sessionStorage 폴백 제거 예정)
+    const { data: session } = useSession();
+    const [currentUserId, setCurrentUserId] = useState<string>('');
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (session?.user?._id) {
+            // 실제 로그인 세션이 있으면 세션 ID 사용
+            setCurrentUserId(session.user._id);
+        } else if (typeof window !== 'undefined') {
+            // 세션이 없으면 sessionStorage 임시 ID 사용 (useChatSocket과 동일한 키 사용!)
             let stored = sessionStorage.getItem('spm_mock_userId');
             if (!stored) {
                 // MongoDB ObjectId 규격인 24자리 16진수 랜덤 생성
                 stored = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
                 sessionStorage.setItem('spm_mock_userId', stored);
             }
-            setMockUserId(stored);
+            setCurrentUserId(stored);
         }
-    }, []);
+    }, [session]);
 
-    // 📡 Step 6.3: (초기) 대화 내역 불러오기 API 호출
-    useEffect(() => {
-        const fetchMessages = async () => {
-            try {
-                const res = await fetch(`/api/chat/messages/${room._id}`);
-                const { success, data } = await res.json();
-                if (success) {
-                    setMessages(data);
+    // 📡 Step 6.3: 대화 내역 불러오기 API 호출 함수 (초기 및 재연결 시 재사용)
+    const fetchInitialMessages = async () => {
+        if (!currentUserId) return; // ID가 세팅된 후 호출
+        try {
+            const res = await fetch(`/api/chat/messages/${room._id}?userId=${currentUserId}&limit=20`);
+            const { success, data, pagination } = await res.json();
+            if (success) {
+                // 🔧 추가 버그 수정: 초기 로드 시에도 스크롤 맨 아래로!
+                shouldAutoScroll.current = true;
+                setMessages(data);
+                if (pagination) {
+                    setNextCursor(pagination.nextCursor);
+                    setHasNextPage(pagination.hasNextPage);
                 }
-            } catch (error) {
-                console.error('Failed to load history:', error);
             }
+        } catch (error) {
+            // 메시지 로드 실패 시 UI는 빈 대화창을 보여줌 (재시도는 재마운트 시 자동 실행)
+        }
+    };
+
+    // 최초 렌더링 시 대화 내역 로드
+    useEffect(() => {
+        fetchInitialMessages();
+    }, [room._id, currentUserId]);
+
+    // 🔧 버그 3 수정: 오프라인 중 전송못한 메시지를 쌓아두는 임시 큐
+    const pendingMessages = useRef<Array<{ content: string }>>([]);
+
+    // 인터넷이 다시 연결됐을 때 대기 메시지들을 순서대로 전송
+    const flushPendingMessages = async () => {
+        if (pendingMessages.current.length === 0 || !currentUserId) return;
+
+        const queue = [...pendingMessages.current];
+        pendingMessages.current = []; // 큐 초기화
+
+        for (const pending of queue) {
+            try {
+                const res = await fetch('/api/chat/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomId: room._id, content: pending.content, senderId: currentUserId }),
+                });
+                if (res.ok) {
+                    const { data } = await res.json();
+                    // 정상 저장된 메시지를 소켓으로 브로드캐스트
+                    emit('send_message', data);
+                }
+            } catch (e) {
+                // 여전히 불안정하면 다시 큐에 집어넣기
+                pendingMessages.current.push(pending);
+            }
+        }
+        // 메시지 재조회 (화면 최신화)
+        fetchInitialMessages();
+    };
+
+    // 🔌 Step 8.2: 브라우저 내장 네트워크 감지 이벤트 사용 (소켓 유레벨 대신!)
+    // Socket.io는 DevTools Offline 모드를 즉각 못 잡아냄
+    const [isOnline, setIsOnline] = useState<boolean>(
+        typeof window !== 'undefined' ? navigator.onLine : true
+    );
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            // 다시 온라인! 누락 메시지 재조회 및 대기 메시지 순서 전송
+            fetchInitialMessages();
+            flushPendingMessages();
+            emit('mark-messages-read', { roomId: room._id, userId: currentUserId });
         };
-        fetchMessages();
-    }, [room._id]);
+        const handleOffline = () => {
+            setIsOnline(false);
+        };
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [room._id, currentUserId]);
+
+    // 📜 Step 8.1: 무한 스크롤 - 스크롤 최상단 도달 시 과거 메시지 로드
+    const loadMoreMessages = async () => {
+        if (isLoadingMore || !hasNextPage || !nextCursor || !currentUserId) return;
+
+        setIsLoadingMore(true);
+        setIsLoadMoreAction(true); // 맨 아래로 튀는 현상 방지
+
+        // API 찌르기 전에 현재 스크롤의 '높이'를 기억해둠 (나중에 스크롤 위치 유지할 때 씀)
+        const container = scrollContainerRef.current;
+        const previousScrollHeight = container ? container.scrollHeight : 0;
+
+        try {
+            const res = await fetch(`/api/chat/messages/${room._id}?userId=${currentUserId}&limit=20&cursor=${nextCursor}`);
+            const { success, data, pagination } = await res.json();
+
+            if (success) {
+                // 기존 메시지 "앞에" 과거 메시지들을 쏙 붙여넣음!
+                setMessages(prev => [...data, ...prev]);
+
+                if (pagination) {
+                    setNextCursor(pagination.nextCursor);
+                    setHasNextPage(pagination.hasNextPage);
+                }
+
+                // 리렌더링 직후(DOM 업데이트 후) 스크롤 위치 보정
+                // 과거 메시지가 위에 추가되면 스크롤바가 꼭대기에 그대로 있어버리므로,
+                // 새로 늘어난 높이만큼 스크롤을 억지로 조금 내려서 "보고 있던 메시지" 위치를 유지시킴!
+                setTimeout(() => {
+                    if (container) {
+                        const newScrollHeight = container.scrollHeight;
+                        container.scrollTop = newScrollHeight - previousScrollHeight;
+                    }
+                }, 0);
+            }
+        } catch (error) {
+            // 과거 메시지 로드 실패 - 다음 스크롤 시 자동 재시도
+        } finally {
+            setIsLoadingMore(false);
+        }
+    };
+
+    // 📜 Step 8.1: 스크롤 이벤트 핸들러
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop } = e.currentTarget;
+        // 스크롤이 맨 위(0)에 도달하면 과거 메시지 로드 트리거 발동!
+        if (scrollTop === 0) {
+            loadMoreMessages();
+        }
+    };
 
     // 📡 Step 6.2: 새 메시지 수신 (receive_message) 리스너 등록
     useEffect(() => {
         const unsubscribeMsg = subscribe('receive_message', (incomingMessage) => {
-            // 방 ID가 현재 활성화된 방과 일치할 때만 추가
             if (incomingMessage.roomId === room._id) {
+                shouldAutoScroll.current = true; // 새 메시지를 받는 경우에만 스크롤 허용!
                 setMessages((prev) => [...prev, incomingMessage]);
 
-                // 📢 [Step 7.2 추가] 방에 켜져 있는 상태에서 상대방 메시지가 오면 즉시 "읽었음" 처리!
-                const isMine = incomingMessage.sender === mockUserId || incomingMessage.sender?._id === mockUserId;
+                // 📢 [Step 7.2] 방에 켜져 있는 상태에서 상대방 메시지가 오면 즉시 "읽었음" 처리!
+                const isMine = incomingMessage.sender === currentUserId || incomingMessage.sender?._id === currentUserId;
                 if (!isMine) {
-                    // 1. 상대방 화면의 숫자 1을 지우기 위해 소켓 발송
-                    emit('mark-messages-read', { roomId: room._id, userId: mockUserId });
-
-                    // 2. DB에도 "이 메시지 내가 읽었어"라고 영구 반영하기 위해 백그라운드로 조회 API 찌르기
-                    fetch(`/api/chat/messages/${room._id}?userId=${mockUserId}`);
+                    emit('mark-messages-read', { roomId: room._id, userId: currentUserId });
+                    fetch(`/api/chat/messages/${room._id}?userId=${currentUserId}`);
                 }
             }
         });
 
-        // 📢 [Step 7.2] 상대방이 내 메시지를 읽었다는 브로드캐스트를 받으면 UI 업데이트
+        // 📢 [Step 7.2] 상대방이 내 메시지를 읽었다는 브로드캐스트를 받으면 UI 업데이트 (스크롤 안 내림!)
         const unsubscribeRead = subscribe('messages-read-receipt', ({ roomId, readByUserId }) => {
             if (roomId === room._id) {
-                // 내 방에 띄워진 메시지 중 '나'가 보낸 메시지들의 readBy 배열에 상대방 ID를 쓱 추가해 줌
+                // shouldAutoScroll.current를 true로 만들지 않으면 스크롤 안 내려감!
                 setMessages(prev => prev.map(msg => {
-                    // 내가 보낸 메시지고, 아직 상대방이 안 읽은 상태 (배열에 상대방 아이디가 없다면)
-                    const isMine = msg.sender === mockUserId || msg.sender?._id === mockUserId;
+                    const isMine = msg.sender === currentUserId || msg.sender?._id === currentUserId;
                     if (isMine && msg.readBy && !msg.readBy.includes(readByUserId)) {
                         return { ...msg, readBy: [...msg.readBy, readByUserId] };
                     }
@@ -102,7 +239,9 @@ export default function ChatWindow({ room }: ChatWindowProps) {
             if (unsubscribeMsg) unsubscribeMsg();
             if (unsubscribeRead) unsubscribeRead();
         };
-    }, [subscribe, room._id]);
+        // 🔑 currentUserId를 의존성 배열에 꼭 넣어야 해!
+        // 없으면 클로저가 초기값('')을 캡처해버려서 isMine 판별이 영원히 false가 됨
+    }, [subscribe, room._id, currentUserId]);
 
     // 🚀 Step 6.2: 메시지 전송 로직 (SEND_MESSAGE)
     const handleSendMessage = async () => {
@@ -114,42 +253,47 @@ export default function ChatWindow({ room }: ChatWindowProps) {
         const newMessage = {
             _id: temporaryId,
             roomId: room._id,
-            // 💡 탭마다 다르게 생성된 임시 ID 부여
-            sender: mockUserId,
+            sender: currentUserId,
             content,
             createdAt: new Date().toISOString(),
             type: 'TEXT'
         };
 
         // 1. 화면에 즉시 표시 (Optimistic UI - 낙관적 업데이트)
+        // 새 메시지를 추가하기 전 auto-scroll 플래그 ON → 맨 아래로 내려감!
+        shouldAutoScroll.current = true;
         setMessages((prev) => [...prev, newMessage]);
 
         // 2. 입력창 초기화
         setMessageInput('');
+
+        // 🔧 버그 3 수정: isOnline 기준으로 오프라인이면 임시 큐에 저장하고 나중에 보냄
+        if (!isOnline) {
+            pendingMessages.current.push({ content });
+            return; // 오프라인이면 API/소켓 시도 없이 리턴
+        }
 
         try {
             // 3. DB에 진짜로 저장 (영속성 확보)
             const res = await fetch('/api/chat/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ roomId: room._id, content, senderId: mockUserId }),
+                body: JSON.stringify({ roomId: room._id, content, senderId: currentUserId }),
             });
 
             if (res.ok) {
                 const { data } = await res.json();
 
-                // 4. DB 저장이 성공하면 내가 보낸 원본 메시지 정보 업데이트 
+                // 4. DB 저장이 성공하면 내가 보낸 원본 메시지 정보 업데이트
                 setMessages(prev => prev.map(msg => msg._id === temporaryId ? data : msg));
 
                 // 5. 서버에 브로드캐스트 요청 (Socket.io)
                 // DB의 _id가 담긴 완전한 data를 날려보내야 상대방도 Key 충돌을 겪지 않음
                 emit('send_message', data);
-            } else {
-                console.error('Failed to save message to DB');
-                // 에러 처리: 모달이나 토스트 알림 등을 띄우거나, optimistic UI를 롤백해주는 로직 필요.
             }
         } catch (error) {
-            console.error('Save error:', error);
+            // 전송 실패 시 오프라인 큐에 보관 (재연결 시 자동 재전송)
+            pendingMessages.current.push({ content });
         }
     };
 
@@ -162,8 +306,8 @@ export default function ChatWindow({ room }: ChatWindowProps) {
     };
 
     return (
-        <div className="flex-1 flex flex-col bg-slate-50/50 relative">
-            {/* 
+        <div className="flex-1 min-h-0 flex flex-col bg-slate-50/50 relative">
+            {/*
               🌟 상단 헤더 영역 (Step 3.3 핵심 구현 부분)
               - top border 박스로 컬러 라인을 명확하게 줬어!
               - 배경색에도 살짝 투명도를 넣어서 대화방 성격을 은은하게 인지하도록 만들었지.
@@ -178,6 +322,18 @@ export default function ChatWindow({ room }: ChatWindowProps) {
             >
                 <div>
                     <div className="flex items-center gap-2 mb-1">
+                        {/* 📱 [Step 8.3] 모바일에서만 보이는 뒤로가기 버튼 (PC에서는 hidden) */}
+                        {onBack && (
+                            <button
+                                onClick={onBack}
+                                className="md:hidden p-1.5 -ml-1 rounded-full hover:bg-slate-100 transition-colors text-slate-500"
+                                title="목록으로"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                        )}
                         {/* 📛 헤더에도 배지를 배치해서 현재 어떤 성격의 대화인지 확실히 각인! */}
                         <span
                             className="text-xs font-bold px-2 py-0.5 rounded-md"
@@ -200,24 +356,36 @@ export default function ChatWindow({ room }: ChatWindowProps) {
                     <button className="hover:text-slate-600 transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                     </button>
-                    {/* 디버깅용 실시간 연결 상태 표시기 (우측 상단 점) */}
-                    <div
-                        className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-400'}`}
-                        title={isConnected ? '실시간 통신 연결됨' : '연결 끊김'}
-                    />
                 </div>
             </div>
 
-            {/* 메인 채팅 내역 영역 (추후 무한 스크롤(Step 8.1) 및 DB 연동 적용) */}
+            {/* 🔌 Step 8.2: 오프라인(연결 끊김) 경고 배너 - 브라우저 isOnline 기준으로 체크 */}
+            {!isOnline && (
+                <div className="bg-red-500 text-white text-xs font-bold text-center py-1.5 shadow-sm z-20">
+                    인터넷 연결이 불안정하여 오프라인 모드로 전환되었습니다. 대기 중...
+                </div>
+            )}
+
+            {/* 메인 채팅 내역 영역 (무한 스크롤[Step 8.1] 적용) */}
             <div
                 ref={scrollContainerRef}
-                className="flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth"
+                onScroll={handleScroll}
+                className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 scroll-smooth"
             >
-                <div className="flex justify-center my-4">
-                    <span className="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                        대화가 시작되었습니다.
-                    </span>
-                </div>
+                {/* 📜 Step 8.1: 무한스크롤 로딩 인디케이터 */}
+                {isLoadingMore && (
+                    <div className="flex justify-center py-2">
+                        <span className="text-xs text-slate-400">이전 대화 불러오는 중...</span>
+                    </div>
+                )}
+
+                {!hasNextPage && messages.length > 0 && (
+                    <div className="flex justify-center my-4">
+                        <span className="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                            대화가 시작되었습니다.
+                        </span>
+                    </div>
+                )}
 
                 {/* 💬 저장/수신된 메시지 목록 맵핑 렌더링 */}
                 {messages.length === 0 ? (
@@ -227,10 +395,12 @@ export default function ChatWindow({ room }: ChatWindowProps) {
                     </div>
                 ) : (
                     messages.map((msg, idx) => {
-                        const isMine = msg.sender === mockUserId || msg.sender?._id === mockUserId;
+                        // 내가 보낸 메시지인지 판별 (sender가 populate된 객체일 수도 있고 ID 문자열일 수도 있음)
+                        const isMine = msg.sender === currentUserId || msg.sender?._id === currentUserId;
 
                         return (
                             <div key={idx} className={`flex items-start gap-3 ${isMine ? 'flex-row-reverse' : ''}`}>
+                                {/* 프로필 아바타 (임시 더미 - Phase 9에 실제 프로필 이미지로 교체 예정) */}
                                 <div className={`w-8 h-8 rounded-full shrink-0 ${isMine ? 'bg-blue-200' : 'bg-slate-200'}`} />
                                 <div className={`flex flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
                                     <span className="text-xs text-slate-500 mx-1">{isMine ? '나' : '상대방'}</span>
