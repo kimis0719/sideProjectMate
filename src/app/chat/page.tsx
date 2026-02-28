@@ -1,26 +1,113 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import ChatRoomList, { MockChatRoom } from '@/components/chat/ChatRoomList';
 import ChatWindow from '@/components/chat/ChatWindow';
-
-// 🧪 UI 테스트를 위한 가짜(Mock) 데이터 셋이야. (MongoDB ObjectId 형식으로 변경!)
-const MOCK_ROOMS: MockChatRoom[] = [
-    { _id: '65f0a1b2c3d4e5f6a1b2c3d1', category: 'INQUIRY', title: '사이드프로젝트 관련 문의사항 남깁니다.', lastMessage: '안녕하세요, 혹시 포트폴리오 필수인가요?', updatedAt: new Date().toISOString() },
-    { _id: '65f0a1b2c3d4e5f6a1b2c3d2', category: 'RECRUIT', title: '프론트엔드 지원자 프론찌님 인터뷰', lastMessage: '네, 내일 오후 3시 좋을 것 같습니다!', updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
-    { _id: '65f0a1b2c3d4e5f6a1b2c3d3', category: 'TEAM', title: '🔥 [SPM] 어벤져스 팀 공식 채팅방', lastMessage: '회의록 노션에 정리해서 올렸습니다~ 확인 부탁드려요!', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
-    { _id: '65f0a1b2c3d4e5f6a1b2c3d4', category: 'DM', title: '프론찌 (프론트엔드)', lastMessage: '다음에 또 같이 프로젝트 하면 좋겠네요 ㅎㅎ', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() },
-    { _id: '65f0a1b2c3d4e5f6a1b2c3d5', category: 'SYSTEM', title: '가이드 봇', lastMessage: '환영합니다! 프로젝트 설정을 완료해 보세요.', updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString() },
-];
+import { getSocket } from '@/lib/socket';
 
 export default function ChatPage() {
-    // 현재 선택된 채팅방의 상태 관리를 위한 훅이야.
-    const [activeRoomId, setActiveRoomId] = useState<string>(MOCK_ROOMS[0]._id);
+    // 현재 선택된 채팅방 ID 상태
+    const [activeRoomId, setActiveRoomId] = useState<string>('');
+
+    // 📋 Step 9.2: 실제 DB에서 불러온 채팅방 목록을 저장하는 상태야.
+    // 이전의 MOCK_ROOMS 하드코딩을 완전히 대체함!
+    const [rooms, setRooms] = useState<MockChatRoom[]>([]);
+    const [isLoadingRooms, setIsLoadingRooms] = useState<boolean>(true);
 
     // 📱 [모바일 반응형] 채팅방 목록을 보여줄지 여부를 관리하는 상태야.
     // PC에서는 항상 목록과 창을 함께 보여주고,
     // 모바일에서는 목록 또는 창 중 하나만 보여주는 방식으로 동작해!
     const [showListOnMobile, setShowListOnMobile] = useState<boolean>(true);
+
+    const { data: session } = useSession();
+    const searchParams = useSearchParams();
+
+    // Step 9.2: 서버에서 내가 참여 중인 채팅방 목록을 가져오는 함수
+    const fetchRooms = useCallback(async () => {
+        try {
+            const res = await fetch('/api/chat/rooms');
+            const { success, data } = await res.json();
+            if (success && data) {
+                // API에서 온 데이터를 MockChatRoom 인터페이스 구조에 맞게 변환!
+                // title → 상대방 닉네임(DM) 또는 방 metadata.name 활용
+                const mapped: MockChatRoom[] = data.map((room: any) => ({
+                    _id: room._id,
+                    category: room.category,
+                    title: room.metadata?.name || room.category,
+                    lastMessage: room.lastMessage || '',
+                    updatedAt: room.updatedAt,
+                }));
+                setRooms(mapped);
+            }
+        } catch {
+            // 목록 로드 실패 시 빈 목록 유지
+        } finally {
+            setIsLoadingRooms(false);
+        }
+    }, []);
+
+    // 최초 마운트 시 채팅방 목록 로드
+    useEffect(() => {
+        fetchRooms();
+    }, [fetchRooms]);
+
+    // Step 9.3: URL 쿼리로 특정 방이 지정된 경우 해당 방을 자동으로 활성화
+    // (DM 보내기 버튼에서 /chat?roomId=xxx 형태로 이동할 때 사용)
+    useEffect(() => {
+        const roomId = searchParams.get('roomId');
+        if (roomId) {
+            setActiveRoomId(roomId);
+            setShowListOnMobile(false);
+        }
+    }, [searchParams]);
+
+    // Step 9.5: 실시간 채팅방 목록 동기화
+    // receive_message 소켓 이벤트를 받으면 lastMessage와 updatedAt을 실시간으로 갱신!
+    useEffect(() => {
+        const socket = getSocket();
+
+        const handleReceiveMessage = (message: any) => {
+            setRooms(prev => {
+                const updated = prev.map(room => {
+                    if (room._id === message.roomId) {
+                        // 해당 방의 마지막 메시지 및 시간 갱신
+                        return { ...room, lastMessage: message.content, updatedAt: message.createdAt };
+                    }
+                    return room;
+                });
+                // 갱신된 방을 목록 최상단으로 이동 (최신 메시지 기준 정렬)
+                return [...updated].sort((a, b) =>
+                    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+                );
+            });
+        };
+
+        // Step 9.5: 새 채팅방이 생성되면 목록에 즉시 추가 (상대방이 DM을 시작했을 때!)
+        const handleNewRoom = (newRoom: any) => {
+            setRooms(prev => {
+                const exists = prev.some(r => r._id === newRoom._id);
+                if (exists) return prev;
+                const mapped: MockChatRoom = {
+                    _id: newRoom._id,
+                    category: newRoom.category,
+                    title: newRoom.metadata?.name || newRoom.category,
+                    lastMessage: newRoom.lastMessage || '',
+                    updatedAt: newRoom.updatedAt,
+                };
+                return [mapped, ...prev];
+            });
+        };
+
+        socket.on('receive_message', handleReceiveMessage);
+        socket.on('new-room', handleNewRoom);
+
+        return () => {
+            socket.off('receive_message', handleReceiveMessage);
+            socket.off('new-room', handleNewRoom);
+        };
+    }, []);
 
     const handleRoomClick = (id: string) => {
         setActiveRoomId(id);
@@ -32,6 +119,20 @@ export default function ChatPage() {
         // 뒤로가기 버튼 클릭 시 목록을 다시 보여줌
         setShowListOnMobile(true);
     };
+
+    // 🚪 Step 9.4: 채팅방 나가기 완료 핸들러
+    // ChatWindow에서 나가기 API 호출 성공 후 이 함수가 호출됨
+    const handleLeaveRoom = (roomId: string) => {
+        // 목록에서 해당 방 즉시 제거
+        setRooms(prev => prev.filter(r => r._id !== roomId));
+        // 나간 방이 현재 활성화된 방이면 선택 초기화
+        if (activeRoomId === roomId) {
+            setActiveRoomId('');
+            setShowListOnMobile(true); // 모바일에선 목록으로 돌아가기
+        }
+    };
+
+    const activeRoom = rooms.find(r => r._id === activeRoomId);
 
     return (
         <div className="flex h-[calc(100vh-64px)] bg-slate-100 overflow-hidden">
@@ -45,11 +146,20 @@ export default function ChatPage() {
                 <div className="p-4 border-b border-slate-100">
                     <h2 className="text-lg font-bold text-slate-800">메시지</h2>
                 </div>
-                <ChatRoomList
-                    rooms={MOCK_ROOMS}
-                    activeRoomId={activeRoomId}
-                    onRoomClick={handleRoomClick}
-                />
+
+                {/* Step 9.2: 로딩 상태 처리 */}
+                {isLoadingRooms ? (
+                    <div className="flex flex-col items-center justify-center flex-1 text-slate-400 gap-2">
+                        <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />
+                        <p className="text-xs">채팅방 목록 불러오는 중...</p>
+                    </div>
+                ) : (
+                    <ChatRoomList
+                        rooms={rooms}
+                        activeRoomId={activeRoomId}
+                        onRoomClick={handleRoomClick}
+                    />
+                )}
             </div>
 
             {/* 우측 메인: 채팅 대화창 영역
@@ -61,10 +171,11 @@ export default function ChatPage() {
                 ${!showListOnMobile ? 'flex' : 'hidden'} md:flex
                 flex-col
             `}>
-                {MOCK_ROOMS.find(r => r._id === activeRoomId) ? (
+                {activeRoom ? (
                     <ChatWindow
-                        room={MOCK_ROOMS.find(r => r._id === activeRoomId)!}
+                        room={activeRoom}
                         onBack={handleBackToList}
+                        onLeaveRoom={handleLeaveRoom}
                     />
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50">

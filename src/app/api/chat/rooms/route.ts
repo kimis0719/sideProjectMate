@@ -7,6 +7,41 @@ import ChatRoom from '@/lib/models/ChatRoom';
 import ChatMessage from '@/lib/models/ChatMessage';
 import User from '@/lib/models/User';
 
+// Step 9.2: 내가 참여 중인 채팅방 목록 조회
+// 최신 메시지(updatedAt) 기준 정렬하여 반환
+export async function GET() {
+    try {
+        // 1. 인증 확인
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user?._id) {
+            return NextResponse.json(
+                { success: false, message: '로그인이 필요한 서비스입니다.' },
+                { status: 401 }
+            );
+        }
+        const currentUserId = session.user._id;
+
+        // 2. DB 연결 및 조회
+        await dbConnect();
+
+        // 3. 내가 participants 배열에 포함된 방만 조회, 최신 순 정렬
+        const rooms = await ChatRoom.find({ participants: currentUserId })
+            .sort({ updatedAt: -1 }) // 마지막 메시지 기준 최신 순
+            .populate('participants', 'name nickname profileImage') // 참여자 정보 채우기
+            .lean(); // 성능 최적화: 순수 JS 객체로 반환
+
+        return NextResponse.json({ success: true, data: rooms });
+
+    } catch (error: any) {
+        return NextResponse.json(
+            { success: false, message: '채팅방 목록 조회 중 오류가 발생했습니다.', error: error.message },
+            { status: 500 }
+        );
+    }
+}
+
+
+
 export async function POST(request: Request) {
     try {
         // 1. 인증 확인
