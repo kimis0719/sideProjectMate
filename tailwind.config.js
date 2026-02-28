@@ -9,50 +9,49 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        border: "var(--border)",
-        input: "var(--input)",
-        ring: "var(--ring)",
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        /* 시스템 토큰 (CSS 변수 연결) */
+        border: 'var(--border)',
+        input: 'var(--input)',
+        ring: 'var(--ring)',
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+
+        /* 브랜드 컬러 */
+        brand: {
+          DEFAULT: 'var(--brand)',
+          hover: 'var(--brand-hover)',
+          light: 'var(--brand-light)',
+          foreground: 'var(--brand-foreground)',
+        },
+
         primary: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          300: '#d1d5db',
-          400: '#9ca3af',
-          500: '#6b7280',
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-          900: '#111827',
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
+          DEFAULT: 'var(--primary)',
+          hover: 'var(--primary-hover)',
+          foreground: 'var(--primary-foreground)',
         },
         secondary: {
-          DEFAULT: "var(--secondary)",
-          foreground: "var(--secondary-foreground)",
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)',
         },
         destructive: {
-          DEFAULT: "var(--destructive)",
-          foreground: "var(--destructive-foreground)",
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)',
         },
         muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)',
         },
         accent: {
-          light: '#f8f9fa',
-          dark: '#dee2e6',
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)',
         },
         popover: {
-          DEFAULT: "var(--popover)",
-          foreground: "var(--popover-foreground)",
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)',
         },
         card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)',
         },
       },
       fontFamily: {
@@ -67,6 +66,10 @@ module.exports = {
           xl: '5rem',
           '2xl': '6rem',
         },
+      },
+      animation: {
+        'slide-in-up': 'slide-in-up 0.25s ease-out forwards',
+        'fade-in': 'fade-in 0.2s ease-out forwards',
       },
     },
   },
