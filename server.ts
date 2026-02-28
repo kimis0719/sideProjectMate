@@ -46,6 +46,12 @@ app.prepare().then(() => {
     // socketId -> { boardId, user }
     const socketUserMap = new Map<string, { boardId: string, user: any }>();
 
+    // ==========================================
+    // 신규 로직: WBS 실시간 협업 룸 관리
+    // ==========================================
+    // socketId -> { projectId }
+    const wbsSocketMap = new Map<string, { projectId: string }>();
+
     // Socket.io 이벤트 핸들링
     io.on('connection', (socket) => {
         console.log('Client connected:', socket.id);
@@ -229,7 +235,38 @@ app.prepare().then(() => {
         });
 
 
-        // [Part 3] 채팅 실시간 소켓 이벤트 핸들러
+        // ------------------------------------------------------------
+        // [Part 3] WBS 실시간 협업 소켓 이벤트 핸들러
+        // ------------------------------------------------------------
+
+        // WBS 룸 입장
+        socket.on('join-wbs-project', (projectId: string) => {
+            socket.join(`wbs-${projectId}`);
+            wbsSocketMap.set(socket.id, { projectId });
+        });
+
+        // WBS 룸 이탈
+        socket.on('leave-wbs-project', (projectId: string) => {
+            socket.leave(`wbs-${projectId}`);
+            wbsSocketMap.delete(socket.id);
+        });
+
+        // 작업 추가 브로드캐스트 (낙관적 업데이트 사용 중이므로 발신자 제외)
+        socket.on('wbs-create-task', ({ projectId, task }: { projectId: string; task: any }) => {
+            socket.to(`wbs-${projectId}`).emit('wbs-task-created', task);
+        });
+
+        // 작업 수정 브로드캐스트
+        socket.on('wbs-update-task', ({ projectId, task }: { projectId: string; task: any }) => {
+            socket.to(`wbs-${projectId}`).emit('wbs-task-updated', task);
+        });
+
+        // 작업 삭제 브로드캐스트
+        socket.on('wbs-delete-task', ({ projectId, taskId }: { projectId: string; taskId: string }) => {
+            socket.to(`wbs-${projectId}`).emit('wbs-task-deleted', taskId);
+        });
+
+        // [Part 4] 채팅 실시간 소켓 이벤트 핸들러
 
         // 채팅방 접속
         socket.on('join-chat-room', ({ roomId, userId }) => {
@@ -306,6 +343,13 @@ app.prepare().then(() => {
                     io.in(boardId).emit('board-users-update', uniqueUsers);
                 }
                 socketUserMap.delete(socket.id);
+            }
+
+            // 4. [신규] WBS 룸 접속 해제 처리
+            const wbsInfo = wbsSocketMap.get(socket.id);
+            if (wbsInfo) {
+                socket.leave(`wbs-${wbsInfo.projectId}`);
+                wbsSocketMap.delete(socket.id);
             }
         });
     });

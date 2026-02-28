@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { ITask } from '@/lib/models/wbs/TaskModel';
+import { getSocket } from '@/lib/socket';
 
 /**
  * Task 타입 정의
@@ -24,6 +25,7 @@ type WbsState = {
     selectedTaskId: string | null;          // 현재 선택된 작업 ID
     viewMode: 'day' | 'week' | 'month';     // 간트차트 표시 모드 (일/주/월)
     isLoading: boolean;                     // 로딩 상태
+    currentPid: number | null;              // 현재 프로젝트 ID (소켓 이벤트 emit용)
 
     // 액션 (Actions)
     fetchTasks: (pid: number) => Promise<void>;                           // 작업 목록 조회
@@ -33,6 +35,8 @@ type WbsState = {
     updateTaskDates: (taskId: string, startDate: Date, endDate: Date) => Promise<void>; // 날짜 변경
     selectTask: (taskId: string | null) => void;                          // 작업 선택
     setViewMode: (mode: 'day' | 'week' | 'month') => void;                // 표시 모드 변경
+    initSocket: (pid: number) => void;                                    // 소켓 룸 입장 + 이벤트 등록
+    cleanupSocket: () => void;                                            // 소켓 룸 이탈 + 이벤트 해제
 };
 
 /**
@@ -71,6 +75,7 @@ export const useWbsStore = create<WbsState>()(
             selectedTaskId: null,
             viewMode: 'week',  // 기본값: 주 단위 표시
             isLoading: false,
+            currentPid: null,
 
             /**
              * fetchTasks: 프로젝트의 작업 목록을 API에서 가져와 상태에 저장
@@ -132,6 +137,14 @@ export const useWbsStore = create<WbsState>()(
                         tasks: state.tasks.map((t) => (t.id === optimisticTask.id ? savedTask : t)),
                         selectedTaskId: state.selectedTaskId === optimisticTask.id ? savedTask.id : state.selectedTaskId,
                     }));
+
+                    // 다른 팀원에게 작업 추가 실시간 브로드캐스트
+                    const pid = get().currentPid;
+                    if (pid !== null) {
+                        try {
+                            getSocket().emit('wbs-create-task', { projectId: String(pid), task: data });
+                        } catch { /* 소켓 미연결 시 무시 */ }
+                    }
                 } catch (error) {
                     console.error('작업 추가 실패:', error);
                     // 에러 발생 시 롤백: 임시 작업 제거
@@ -173,6 +186,14 @@ export const useWbsStore = create<WbsState>()(
                     set((state) => ({
                         tasks: state.tasks.map((t) => (t.id === taskId ? updatedTask : t)),
                     }));
+
+                    // 다른 팀원에게 작업 수정 실시간 브로드캐스트
+                    const pid = get().currentPid;
+                    if (pid !== null) {
+                        try {
+                            getSocket().emit('wbs-update-task', { projectId: String(pid), task: data });
+                        } catch { /* 소켓 미연결 시 무시 */ }
+                    }
                 } catch (error) {
                     console.error('작업 수정 실패:', error);
                     // 에러 발생 시 롤백
@@ -200,6 +221,14 @@ export const useWbsStore = create<WbsState>()(
                     });
 
                     if (!response.ok) throw new Error('작업 삭제 실패');
+
+                    // 다른 팀원에게 작업 삭제 실시간 브로드캐스트
+                    const pid = get().currentPid;
+                    if (pid !== null) {
+                        try {
+                            getSocket().emit('wbs-delete-task', { projectId: String(pid), taskId });
+                        } catch { /* 소켓 미연결 시 무시 */ }
+                    }
                 } catch (error) {
                     console.error('작업 삭제 실패:', error);
                     // 에러 발생 시 롤백
@@ -241,6 +270,14 @@ export const useWbsStore = create<WbsState>()(
                     set((state) => ({
                         tasks: state.tasks.map((t) => (t.id === taskId ? updatedTask : t)),
                     }));
+
+                    // 다른 팀원에게 날짜 변경 실시간 브로드캐스트
+                    const pid = get().currentPid;
+                    if (pid !== null) {
+                        try {
+                            getSocket().emit('wbs-update-task', { projectId: String(pid), task: data });
+                        } catch { /* 소켓 미연결 시 무시 */ }
+                    }
                 } catch (error) {
                     console.error('날짜 수정 실패:', error);
                     // 에러 발생 시 롤백
@@ -262,6 +299,67 @@ export const useWbsStore = create<WbsState>()(
              */
             setViewMode: (mode: 'day' | 'week' | 'month') => {
                 set({ viewMode: mode });
+            },
+
+            /**
+             * initSocket: WBS 소켓 룸 입장 및 실시간 이벤트 핸들러 등록
+             * @param pid - 프로젝트 ID
+             */
+            initSocket: (pid: number) => {
+                set({ currentPid: pid });
+                const socket = getSocket();
+                const projectId = String(pid);
+
+                // WBS 전용 룸 입장
+                socket.emit('join-wbs-project', projectId);
+
+                // ── 수신 이벤트 핸들러 ──────────────────────────────
+                // 다른 팀원이 작업을 추가했을 때: 중복 방지 후 상태에 추가
+                const onTaskCreated = (rawTask: any) => {
+                    const task = transformDoc(rawTask);
+                    set((state) => {
+                        if (state.tasks.some((t) => t.id === task.id)) return state;
+                        return { tasks: [...state.tasks, task] };
+                    });
+                };
+
+                // 다른 팀원이 작업을 수정했을 때: 상태 업데이트
+                const onTaskUpdated = (rawTask: any) => {
+                    const task = transformDoc(rawTask);
+                    set((state) => ({
+                        tasks: state.tasks.map((t) => (t.id === task.id ? task : t)),
+                    }));
+                };
+
+                // 다른 팀원이 작업을 삭제했을 때: 상태에서 제거
+                const onTaskDeleted = (taskId: string) => {
+                    set((state) => ({
+                        tasks: state.tasks.filter((t) => t.id !== taskId),
+                        selectedTaskId: state.selectedTaskId === taskId ? null : state.selectedTaskId,
+                    }));
+                };
+
+                socket.on('wbs-task-created', onTaskCreated);
+                socket.on('wbs-task-updated', onTaskUpdated);
+                socket.on('wbs-task-deleted', onTaskDeleted);
+            },
+
+            /**
+             * cleanupSocket: WBS 소켓 룸 이탈 및 이벤트 핸들러 해제
+             */
+            cleanupSocket: () => {
+                const pid = get().currentPid;
+                if (pid === null) return;
+
+                try {
+                    const socket = getSocket();
+                    socket.emit('leave-wbs-project', String(pid));
+                    socket.off('wbs-task-created');
+                    socket.off('wbs-task-updated');
+                    socket.off('wbs-task-deleted');
+                } catch { /* 소켓이 이미 끊어진 경우 무시 */ }
+
+                set({ currentPid: null });
             },
         })
     )

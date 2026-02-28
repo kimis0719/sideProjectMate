@@ -1,519 +1,428 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { Gantt, Task as GanttTask, ViewMode } from 'gantt-task-react';
-import "gantt-task-react/dist/index.css";
+import { useRef, useMemo, useState, useCallback } from 'react';
 import { Task } from '@/store/wbsStore';
-import { drawDependencyLines, getTaskPositions, highlightDependencies, clearHighlightDependencies, debugDependencyInfo } from '@/lib/utils/wbs/drawDependencies';
+import { checkAllScheduleConflicts } from '@/lib/utils/wbs/scheduleConflict';
+import GanttHeader from './GanttHeader';
+import GanttBar from './GanttBar';
+import GanttArrows, { TaskBarPosition } from './GanttArrows';
 
+// ─────────────────────────────────────────
+// 레이아웃 상수
+// ─────────────────────────────────────────
+const LEFT_PANEL_WIDTH = 220;
+const ROW_HEIGHT = 44;
+const HEADER_HEIGHT = 56; // 2행 × 28px
+const BAR_HEIGHT = 26;
+
+/** 뷰 모드별 1일 픽셀 환산 */
+const PX_PER_DAY: Record<'Day' | 'Week' | 'Month', number> = {
+  Day: 30,
+  Week: 14,
+  Month: 5,
+};
+
+// ─────────────────────────────────────────
+// 좌표 유틸리티
+// ─────────────────────────────────────────
+function dateToX(date: Date, start: Date, pxPerDay: number): number {
+  return ((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) * pxPerDay;
+}
+
+// ─────────────────────────────────────────
+// 드래그 상태 타입
+// ─────────────────────────────────────────
+interface DragState {
+  taskId: string;
+  type: 'move' | 'resize-left' | 'resize-right';
+  startClientX: number;
+  originalStart: Date;
+  originalEnd: Date;
+}
+
+// ─────────────────────────────────────────
+// Props
+// ─────────────────────────────────────────
 interface GanttChartProps {
   tasks: Task[];
   viewMode: 'Day' | 'Week' | 'Month';
   onTaskClick?: (task: Task) => void;
   onDateChange?: (task: Task, start: Date, end: Date) => void;
-  dateRangeMonths?: number;  // 표시할 기간 (개월 수)
 }
 
 /**
- * GanttChart 컴포넌트
- * 
- * 주요 기능:
- * - 작업을 간트차트 형태로 시각화
- * - milestone 속성이 true인 작업은 다이아몬드 모양으로 표시
- * - phase를 통해 작업 그룹화 (같은 phase의 작업들이 함께 표시)
- * - 드래그로 작업 날짜 변경 가능
+ * GanttChart 컴포넌트 (커스텀 SVG 구현)
+ *
+ * 레이아웃:
+ *   ┌──────────────────────┬──────────────────────────┐
+ *   │ 작업명 (sticky left) │ 날짜 헤더 SVG             │ ← sticky top
+ *   ├──────────────────────┼──────────────────────────┤
+ *   │ 작업명 목록           │ 타임라인 SVG              │
+ *   │ (sticky left)        │ (바, 화살표, 오늘선 등)   │
+ *   └──────────────────────┴──────────────────────────┘
+ *
+ * 전체 컨테이너를 overflow-auto로 감싸 수평/수직 스크롤 지원.
+ * 좌측 패널은 sticky left-0, 헤더는 sticky top-0 처리.
  */
-export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange, dateRangeMonths = 12 }: GanttChartProps) {
-  const [ganttTasks, setGanttTasks] = useState<GanttTask[]>([]);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const [chartWidth, setChartWidth] = useState<number>(0);
+export default function GanttChart({
+  tasks,
+  viewMode,
+  onTaskClick,
+  onDateChange,
+}: GanttChartProps) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const [dragDeltaDays, setDragDeltaDays] = useState(0);
 
-  // 드래그 추적
-  const dragStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
-  const isDraggingRef = useRef(false);
-  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const DRAG_THRESHOLD = 5; // 5px 이상 드래그되면 드래그로 간주
-  const CLICK_DELAY = 300; // 300ms (단순 클릭 판단 대기 시간)
+  const pxPerDay = PX_PER_DAY[viewMode];
 
-  useEffect(() => {
-    if (tasks.length === 0) {
-      setGanttTasks([]);
-      return;
-    }
-
-    const newGanttTasks: GanttTask[] = tasks.map((task) => ({
-      start: new Date(task.startDate),
-      end: new Date(task.endDate),
-      name: task.title,
-      id: task.id,
-      type: task.milestone ? 'milestone' : 'task',
-      progress: task.progress,
-      isDisabled: false,
-      styles: {
-        progressColor: task.status === 'done' ? '#10b981' : task.milestone ? '#eab308' : '#3b82f6',
-        progressSelectedColor: task.status === 'done' ? '#059669' : task.milestone ? '#ca8a04' : '#2563eb',
-        backgroundColor: task.status === 'done' ? '#d1fae5' : task.milestone ? '#fef3c7' : '#dbeafe',
-        backgroundSelectedColor: task.status === 'done' ? '#a7f3d0' : task.milestone ? '#fde68a' : '#bfdbfe',
-      },
-      project: task.pid.toString(),
-      // dependencies를 문자열 배열로 변환
-      dependencies: task.dependencies?.map(dep => {
-        if (typeof dep === 'string') return dep;
-        if (typeof dep === 'object' && dep.taskId) return dep.taskId.toString();
-        return '';
-      }).filter(Boolean) as string[],
-    }));
-
-    // 기간별 범위 강제 확장을 위한 투명 더미 작업 추가
-    // 시작일: 현재 월의 1일
+  // ── 타임라인 범위 계산 ──────────────────
+  const { timelineStart, timelineEnd } = useMemo(() => {
     const today = new Date();
-    const startBoundary = new Date(today.getFullYear(), today.getMonth(), 1);
+    today.setHours(0, 0, 0, 0);
 
-    // 종료일: 현재 월 기준 dateRangeMonths개월 후 말일
-    const endBoundary = new Date(today.getFullYear(), today.getMonth() + dateRangeMonths, 0);
+    let start: Date, end: Date;
 
-    // 범위 시작 더미
-    newGanttTasks.push({
-      start: startBoundary,
-      end: new Date(startBoundary.getTime() + 86400000),
-      name: "",
-      id: "ghost-start",
-      type: 'task',
-      progress: 0,
-      isDisabled: true,
-      hideChildren: false,
-      styles: {
-        progressColor: 'transparent',
-        progressSelectedColor: 'transparent',
-        backgroundColor: 'transparent',
-        backgroundSelectedColor: 'transparent',
-      },
-      project: "ghost",
-    });
+    if (tasks.length === 0) {
+      start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      end = new Date(today.getFullYear(), today.getMonth() + 12, 0);
+    } else {
+      const allDates = tasks.flatMap((t) => [new Date(t.startDate), new Date(t.endDate)]);
+      const minDate = new Date(Math.min(...allDates.map((d) => d.getTime())));
+      const maxDate = new Date(Math.max(...allDates.map((d) => d.getTime())));
 
-    // 범위 끝 더미
-    newGanttTasks.push({
-      start: endBoundary,
-      end: new Date(endBoundary.getTime() + 86400000),
-      name: "",
-      id: "ghost-end",
-      type: 'task',
-      progress: 0,
-      isDisabled: true,
-      hideChildren: false,
-      styles: {
-        progressColor: 'transparent',
-        progressSelectedColor: 'transparent',
-        backgroundColor: 'transparent',
-        backgroundSelectedColor: 'transparent',
-      },
-      project: "ghost",
-    });
-
-    setGanttTasks(newGanttTasks);
-
-    // 차트 너비 계산 (스크롤 강제)
-    const columnWidth = 60;
-    const days = (endBoundary.getTime() - startBoundary.getTime()) / (1000 * 60 * 60 * 24);
-    let estimatedWidth = 0;
-
-    if (viewMode === 'Day') {
-      estimatedWidth = days * columnWidth;
-    } else if (viewMode === 'Week') {
-      estimatedWidth = (days / 7) * columnWidth;
-    } else if (viewMode === 'Month') {
-      estimatedWidth = (days / 30) * columnWidth;
+      start = new Date(minDate.getFullYear(), minDate.getMonth() - 1, 1);
+      end = new Date(maxDate.getFullYear(), maxDate.getMonth() + 3, 0);
     }
 
-    // 최소 너비 보장 (화면보다 작으면 100% 사용)
-    setChartWidth(Math.max(estimatedWidth + 200, 1200)); // 여유분 추가
+    return { timelineStart: start, timelineEnd: end };
+  }, [tasks]);
 
-  }, [tasks, viewMode, dateRangeMonths]);
+  const svgWidth = useMemo(
+    () => Math.max(dateToX(timelineEnd, timelineStart, pxPerDay) + 120, 800),
+    [timelineStart, timelineEnd, pxPerDay]
+  );
 
-  const handleTaskChange = (task: GanttTask) => {
-    const originalTask = tasks.find((t) => t.id === task.id);
-    if (originalTask && onDateChange) {
-      onDateChange(originalTask, task.start, task.end);
-    }
-  };
+  const svgBodyHeight = Math.max(tasks.length * ROW_HEIGHT, 200);
 
-  const handleSelect = (task: GanttTask, isSelected: boolean) => {
-    // 클릭이 선택된 경우만 처리
-    if (!isSelected) return;
-
-    // 이미 대기중인 타이머가 있으면 취소
-    if (clickTimeoutRef.current) {
-      clearTimeout(clickTimeoutRef.current);
-      clickTimeoutRef.current = null;
-    }
-
-    // 드래그가 이미 발생된 경우 처리 무시
-    if (isDraggingRef.current) {
-      return;
-    }
-
-    // 300ms 대기 후, 드래그가 아닌 단순 클릭만 실행
-    clickTimeoutRef.current = setTimeout(() => {
-      // 300ms 동안 드래그가 발생하지 않았으면 클릭 이벤트 발생
-      if (!isDraggingRef.current && onTaskClick) {
-        const originalTask = tasks.find((t) => t.id === task.id);
-        if (originalTask) {
-          onTaskClick(originalTask);
+  // ── 충돌 작업 ID 집합 ───────────────────
+  const conflictTaskIds = useMemo(() => {
+    const ids = new Set<string>();
+    const conflictMap = checkAllScheduleConflicts(
+      tasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        startDate: new Date(t.startDate),
+        endDate: new Date(t.endDate),
+        assignee: { _id: t.assignee._id, nName: t.assignee.nName },
+      }))
+    );
+    for (const conflicts of Array.from(conflictMap.values())) {
+      for (const conflict of conflicts) {
+        for (const ct of conflict.conflictingTasks) {
+          ids.add(ct.id);
         }
       }
-      clickTimeoutRef.current = null;
-    }, CLICK_DELAY);
-  };
-
-  const getGanttViewMode = (mode: 'Day' | 'Week' | 'Month'): ViewMode => {
-    switch (mode) {
-      case 'Day': return ViewMode.Day;
-      case 'Week': return ViewMode.Week;
-      case 'Month': return ViewMode.Month;
-      default: return ViewMode.Day;
     }
-  };
+    return ids;
+  }, [tasks]);
 
-  // 클릭과 드래그 구분 로직
-  useEffect(() => {
-    const ganttContainer = wrapperRef.current;
-    if (!ganttContainer) return;
+  // ── 오늘 X 좌표 ────────────────────────
+  const todayX = dateToX(new Date(), timelineStart, pxPerDay);
 
-    const handleMouseDown = (e: MouseEvent) => {
-      dragStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
-      isDraggingRef.current = false;
-    };
+  // ── 수직 그리드 선 ──────────────────────
+  const gridLines = useMemo(() => {
+    const lines: { x: number; major: boolean }[] = [];
+    const cur = new Date(timelineStart.getFullYear(), timelineStart.getMonth(), 1);
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!dragStartRef.current) return;
+    while (dateToX(cur, timelineStart, pxPerDay) < svgWidth) {
+      lines.push({ x: dateToX(cur, timelineStart, pxPerDay), major: true });
 
-      const deltaX = Math.abs(e.clientX - dragStartRef.current.x);
-      const deltaY = Math.abs(e.clientY - dragStartRef.current.y);
-
-      // 5px 이상 드래그되면, 드래그 개시
-      if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
-        isDraggingRef.current = true;
-
-        // 드래그 중에 대기되지 않은 타이머 취소
-        if (clickTimeoutRef.current) {
-          clearTimeout(clickTimeoutRef.current);
-          clickTimeoutRef.current = null;
+      if (viewMode === 'Week' || viewMode === 'Day') {
+        // 주 단위 보조선
+        const weekCur = new Date(cur);
+        weekCur.setDate(weekCur.getDate() + 7);
+        while (weekCur.getMonth() === cur.getMonth()) {
+          const wx = dateToX(weekCur, timelineStart, pxPerDay);
+          if (wx < svgWidth) lines.push({ x: wx, major: false });
+          weekCur.setDate(weekCur.getDate() + 7);
         }
       }
-    };
 
-    const handleMouseUp = () => {
-      dragStartRef.current = null;
-      // 초기화 시점 (0.3초 대기로 단순 클릭 판단)
-      isDraggingRef.current = false;
-    };
+      cur.setMonth(cur.getMonth() + 1);
+    }
 
-    ganttContainer.addEventListener('mousedown', handleMouseDown);
-    ganttContainer.addEventListener('mousemove', handleMouseMove);
-    ganttContainer.addEventListener('mouseup', handleMouseUp);
-    ganttContainer.addEventListener('mouseleave', handleMouseUp);
+    return lines;
+  }, [timelineStart, pxPerDay, svgWidth, viewMode]);
 
-    return () => {
-      ganttContainer.removeEventListener('mousedown', handleMouseDown);
-      ganttContainer.removeEventListener('mousemove', handleMouseMove);
-      ganttContainer.removeEventListener('mouseup', handleMouseUp);
-      ganttContainer.removeEventListener('mouseleave', handleMouseUp);
+  // ── 드래그 핸들러 ───────────────────────
+  const handleBarMouseDown = useCallback(
+    (e: React.MouseEvent, task: Task, type: DragState['type']) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragState({
+        taskId: task.id,
+        type,
+        startClientX: e.clientX,
+        originalStart: new Date(task.startDate),
+        originalEnd: new Date(task.endDate),
+      });
+      setDragDeltaDays(0);
+    },
+    []
+  );
 
-      // 정리 시간에 대기된 타이머 취소
-      if (clickTimeoutRef.current) {
-        clearTimeout(clickTimeoutRef.current);
-      }
-    };
-  }, [onTaskClick, tasks]);
+  const handleSvgMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!dragState) return;
+      const deltaX = e.clientX - dragState.startClientX;
+      const newDeltaDays = Math.round(deltaX / pxPerDay);
+      if (newDeltaDays !== dragDeltaDays) setDragDeltaDays(newDeltaDays);
+    },
+    [dragState, pxPerDay, dragDeltaDays]
+  );
 
-  // 중복 동작 방지 useEffect
-  useEffect(() => {
-    return () => {
-      if (clickTimeoutRef.current) {
-        clearTimeout(clickTimeoutRef.current);
-      }
-    };
-  }, []);
+  const handleSvgMouseUp = useCallback(() => {
+    if (!dragState) return;
 
-  // 의존관계 연결선 그리기
-  useEffect(() => {
-    const ganttContainer = wrapperRef.current;
-    if (!ganttContainer || ganttTasks.length === 0) return;
+    if (dragDeltaDays !== 0 && onDateChange) {
+      const task = tasks.find((t) => t.id === dragState.taskId);
+      if (task) {
+        const newStart = new Date(dragState.originalStart);
+        const newEnd = new Date(dragState.originalEnd);
 
-    // 약간의 지연을 주어 DOM이 완전히 렌더링되도록
-    const drawTimer = setTimeout(() => {
-      // 작업 맵 생성
-      const taskMap = new Map(tasks.map((task) => [task.id, task]));
-
-      // 작업 위치 정보 추출
-      const positions = getTaskPositions(ganttContainer);
-
-      // 디버그 정보 출력
-      debugDependencyInfo(ganttContainer, taskMap, positions);
-
-      // 의존관계 연결선 그리기
-      const isDarkMode = document.documentElement.classList.contains('dark');
-      drawDependencyLines(ganttContainer, taskMap, positions, isDarkMode);
-    }, 500);
-
-    return () => clearTimeout(drawTimer);
-  }, [ganttTasks, tasks]);
-
-  // 작업명 텍스트 색상 및 위치 조정
-  useEffect(() => {
-    const ganttContainer = wrapperRef.current;
-    if (!ganttContainer || ganttTasks.length === 0) return;
-
-    const adjustTextStyling = () => {
-      const svg = ganttContainer.querySelector('svg');
-      if (!svg) return;
-
-      const taskGroups = svg.querySelectorAll('g[data-id]');
-
-      taskGroups.forEach((group, index) => {
-        const dataId = group.getAttribute('data-id');
-
-        // 더미 작업 제외
-        if (dataId === 'ghost-start' || dataId === 'ghost-end') return;
-
-        const rect = group.querySelector('rect.bar');
-        const text = group.querySelector('text');
-
-        if (!rect || !text) return;
-
-        try {
-          const x = parseFloat(rect.getAttribute('x') || '0');
-          const y = parseFloat(rect.getAttribute('y') || '0');
-          const width = parseFloat(rect.getAttribute('width') || '0');
-          const height = parseFloat(rect.getAttribute('height') || '0');
-
-          // 새로운 text 요소 생성 (라이브러리 간섭 제거)
-          const newText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          const textContent = text.textContent || '';
-
-          const centerX = x + width / 2;
-          const centerY = y + height / 2;
-
-          newText.setAttribute('x', String(centerX));
-          newText.setAttribute('y', String(centerY));
-          newText.setAttribute('text-anchor', 'middle');
-          newText.setAttribute('dominant-baseline', 'central');
-          newText.setAttribute('fill', 'currentColor');
-          newText.classList.add('text-foreground');
-          newText.setAttribute('font-weight', '500');
-          newText.setAttribute('font-size', '12px');
-          newText.setAttribute('pointer-events', 'none');
-          newText.textContent = textContent;
-
-          // 기존 text 요소 제거하고 새 요소 추가
-          text.replaceWith(newText);
-        } catch (e) {
-          console.error('Error adjusting text styling:', e);
+        if (dragState.type === 'move') {
+          newStart.setDate(newStart.getDate() + dragDeltaDays);
+          newEnd.setDate(newEnd.getDate() + dragDeltaDays);
+        } else if (dragState.type === 'resize-right') {
+          newEnd.setDate(newEnd.getDate() + dragDeltaDays);
+        } else {
+          newStart.setDate(newStart.getDate() + dragDeltaDays);
         }
-      });
-    };
 
-    // 초기 조정
-    const timer = setTimeout(adjustTextStyling, 150);
-
-    // 주기적으로 조정 (드래그 등으로 리렌더링될 때)
-    const interval = setInterval(adjustTextStyling, 800);
-
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-    };
-  }, [ganttTasks]);
-
-  // 다크모드 변경 감지 시 다시 그리기
-  useEffect(() => {
-    const ganttContainer = wrapperRef.current;
-    if (!ganttContainer || ganttTasks.length === 0) return;
-
-    const observer = new MutationObserver(() => {
-      const taskMap = new Map(tasks.map((task) => [task.id, task]));
-      const positions = getTaskPositions(ganttContainer);
-      const isDarkMode = document.documentElement.classList.contains('dark');
-      drawDependencyLines(ganttContainer, taskMap, positions, isDarkMode);
-    });
-
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-    return () => observer.disconnect();
-  }, [ganttTasks, tasks]);
-
-  // 3단 헤더 구현을 위한 DOM 조작
-  useEffect(() => {
-    const formatHeader = () => {
-      const ganttContainer = wrapperRef.current;
-      if (!ganttContainer) return;
-
-      const svg = ganttContainer.querySelector('svg');
-      if (!svg) return;
-
-      // calendarTop 그룹의 text 처리
-      const calendarTopGroups = svg.querySelectorAll('g.calendarTop');
-      
-      calendarTopGroups.forEach((group: any) => {
-        const texts = group.querySelectorAll('text');
-        texts.forEach((text: any) => {
-          const content = text.textContent || '';
-          const monthYearMatch = content.match(/(\d+)월,\s*(\d{4})/);
-          
-          if (monthYearMatch) {
-            const month = monthYearMatch[1];
-            const year = monthYearMatch[2];
-            
-            // viewMode에 따라 다른 헤더 표기
-            if (viewMode === 'Day') {
-              // 일 구분: 월 표기
-              text.textContent = month + '월';
-            } else if (viewMode === 'Week') {
-              // 주 구분: 헤더 제거
-              text.textContent = '';
-            } else if (viewMode === 'Month') {
-              // 월 구분: 연도 표기
-              text.textContent = year + '년';
-            } else {
-              text.textContent = '';
-            }
-          }
-        });
-      });
-
-      // calendar 그룹 찾기 (주/일이 표시되는 곳)
-      const calendarGroup = svg.querySelector('g.calendar');
-      if (!calendarGroup) return;
-
-      const allTexts = Array.from(calendarGroup.querySelectorAll('text'));
-
-      // 하단 헤더 (y >= 90): 주/일 표시 부분 -> 월/일로 변환
-      const weekTexts = allTexts.filter(text => {
-        const y = parseFloat(text.getAttribute('y') || '0');
-        return y >= 90;
-      });
-
-      weekTexts.forEach((text: any) => {
-        const content = text.textContent || '';
-        const weekMatch = content.match(/W(\d+)/i);
-        
-        if (weekMatch) {
-          const weekNumber = parseInt(weekMatch[1]);
-          
-          // 현재 연도 기반 주 계산
-          const today = new Date();
-          const year = today.getFullYear();
-          const jan1 = new Date(year, 0, 1);
-          const jan1Day = jan1.getDay();
-          
-          // 첫 번째 월요일 찾기 (0 = Sunday, 1 = Monday)
-          let firstMonday = new Date(jan1);
-          if (jan1Day === 0) {
-            firstMonday.setDate(2);
-          } else if (jan1Day === 1) {
-            // 그대로
-          } else {
-            firstMonday.setDate(jan1.getDate() + (8 - jan1Day));
-          }
-          
-          // 해당 주의 월요일 계산
-          const targetMonday = new Date(firstMonday);
-          targetMonday.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
-          
-          // 날짜 포맷팅 (예: "1월 5일")
-          const month = targetMonday.getMonth() + 1;
-          const date = targetMonday.getDate();
-          const dateStr = `${month}월 ${date}일`;
-          
-          text.textContent = dateStr;
+        if (newEnd > newStart) {
+          onDateChange(task, newStart, newEnd);
         }
-      });
-    };
+      }
+    } else if (dragDeltaDays === 0) {
+      // 클릭 (드래그 없음)
+      const task = tasks.find((t) => t.id === dragState.taskId);
+      if (task) onTaskClick?.(task);
+    }
 
-    // 더 자주 업데이트하도록 설정 (100ms)
-    const timer = setInterval(formatHeader, 100);
-    formatHeader(); // 즉시 첫 실행
+    setDragState(null);
+    setDragDeltaDays(0);
+  }, [dragState, dragDeltaDays, tasks, onDateChange, onTaskClick]);
 
-    return () => clearInterval(timer);
-  }, [ganttTasks, viewMode]);
+  // ── 바 위치 맵 (화살표용) ───────────────
+  const positionMap = useMemo<Map<string, TaskBarPosition>>(() => {
+    return new Map(
+      tasks.map((task, i) => {
+        const bx = dateToX(new Date(task.startDate), timelineStart, pxPerDay);
+        const ex = dateToX(new Date(task.endDate), timelineStart, pxPerDay);
+        const dragOffset = dragState?.taskId === task.id ? dragDeltaDays * pxPerDay : 0;
+        return [
+          task.id,
+          {
+            x: bx + dragOffset,
+            rowY: i * ROW_HEIGHT,
+            width: Math.max(ex - bx, 4),
+            barHeight: BAR_HEIGHT,
+            rowHeight: ROW_HEIGHT,
+          },
+        ];
+      })
+    );
+  }, [tasks, timelineStart, pxPerDay, dragState, dragDeltaDays]);
 
+  // ── 렌더 ────────────────────────────────
   return (
-    <div className="gantt-chart-wrapper h-[600px] overflow-x-auto overflow-y-hidden rounded-lg border border-border bg-card">
-      <div ref={wrapperRef} style={{ width: chartWidth > 0 ? `${chartWidth}px` : '100%', height: '100%', position: 'relative' }}>
-        {ganttTasks.length > 0 ? (
-          <Gantt
-            tasks={ganttTasks}
-            viewMode={getGanttViewMode(viewMode)}
-            onDateChange={handleTaskChange}
-            onSelect={handleSelect}
-            listCellWidth=""
-            columnWidth={60}
-            headerHeight={120}
-            barCornerRadius={4}
-            barFill={60}
-            ganttHeight={550}
-            locale="ko"
-            fontFamily="inherit"
-            fontSize="12px"
-            rowHeight={40}
-          />
+    <div
+      className="relative border border-border rounded-lg overflow-auto bg-card"
+      style={{ height: 600 }}
+    >
+      {/* ── 내부 래퍼 (전체 너비 확보) ── */}
+      <div style={{ minWidth: LEFT_PANEL_WIDTH + svgWidth }}>
+
+        {/* ── 헤더 행 (sticky top) ── */}
+        {/*
+          z-index 계층:
+            코너 셀 (z-40) > 헤더 행 (z-20) > 바디 좌측 패널 (z-10)
+          - 헤더 행(z-20)은 바디가 스크롤 시 덮이지 않도록 상위 z-index 유지.
+          - 코너 셀(z-40)은 헤더 행의 stacking context 내부에서 날짜 헤더 SVG보다 위에 렌더.
+          - 코너 셀 배경은 완전 불투명(bg-muted)으로 설정, 수평 스크롤 시 날짜 SVG가 비치지 않도록 함.
+        */}
+        <div
+          className="flex sticky top-0 bg-card border-b border-border"
+          style={{ height: HEADER_HEIGHT, zIndex: 20 }}
+        >
+          {/* 왼쪽 코너 셀 — top-0 + left-0 동시 sticky, 완전 불투명 배경 */}
+          <div
+            className="sticky top-0 left-0 flex items-center px-4 border-r border-border bg-muted flex-shrink-0"
+            style={{ width: LEFT_PANEL_WIDTH, height: HEADER_HEIGHT, zIndex: 40 }}
+          >
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              작업명
+            </span>
+          </div>
+
+          {/* 날짜 헤더 SVG */}
+          <div style={{ width: svgWidth, flexShrink: 0 }}>
+            <svg width={svgWidth} height={HEADER_HEIGHT}>
+              <GanttHeader
+                timelineStart={timelineStart}
+                pixelsPerDay={pxPerDay}
+                viewMode={viewMode}
+                width={svgWidth}
+                height={HEADER_HEIGHT}
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* ── 바디 ── */}
+        {tasks.length === 0 ? (
+          <div
+            className="flex items-center justify-center text-sm text-muted-foreground"
+            style={{ height: 200 }}
+          >
+            작업이 없습니다. [+ 작업 추가] 버튼을 눌러 시작하세요.
+          </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p>작업이 없습니다. 새 작업을 추가해보세요!</p>
+          <div className="flex">
+            {/* ── 좌측 작업명 패널 (sticky left) ── */}
+            <div
+              className="sticky left-0 z-10 bg-card border-r border-border flex-shrink-0"
+              style={{ width: LEFT_PANEL_WIDTH }}
+            >
+              {tasks.map((task) => {
+                const hasConflict = conflictTaskIds.has(task.id);
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => onTaskClick?.(task)}
+                    className={`flex items-center gap-2 px-3 border-b border-border cursor-pointer transition-colors truncate ${
+                      hasConflict
+                        ? 'hover:bg-orange-50 dark:hover:bg-orange-900/10'
+                        : 'hover:bg-muted/50'
+                    }`}
+                    style={{ height: ROW_HEIGHT }}
+                    title={task.title}
+                  >
+                    {task.milestone && (
+                      <span className="text-yellow-500 flex-shrink-0 text-xs">◆</span>
+                    )}
+                    {hasConflict && (
+                      <span className="text-orange-500 flex-shrink-0 text-xs" title="일정 충돌">⚠</span>
+                    )}
+                    <span className="text-sm text-foreground truncate">{task.title}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── 타임라인 SVG ── */}
+            <div style={{ width: svgWidth, flexShrink: 0 }}>
+              <svg
+                ref={svgRef}
+                width={svgWidth}
+                height={svgBodyHeight}
+                style={{
+                  display: 'block',
+                  cursor: dragState ? 'grabbing' : 'default',
+                  userSelect: 'none',
+                }}
+                onMouseMove={handleSvgMouseMove}
+                onMouseUp={handleSvgMouseUp}
+                onMouseLeave={handleSvgMouseUp}
+              >
+                {/* 행 배경 교대 색상 */}
+                {tasks.map((task, i) => (
+                  <rect
+                    key={`row-bg-${task.id}`}
+                    x={0}
+                    y={i * ROW_HEIGHT}
+                    width={svgWidth}
+                    height={ROW_HEIGHT}
+                    style={{
+                      fill: i % 2 === 0 ? 'transparent' : 'var(--muted)',
+                      opacity: 0.3,
+                    }}
+                  />
+                ))}
+
+                {/* 행 구분선 */}
+                {tasks.map((_, i) => (
+                  <line
+                    key={`row-line-${i}`}
+                    x1={0}
+                    y1={(i + 1) * ROW_HEIGHT}
+                    x2={svgWidth}
+                    y2={(i + 1) * ROW_HEIGHT}
+                    style={{ stroke: 'var(--border)', strokeWidth: 0.5, opacity: 0.5 }}
+                  />
+                ))}
+
+                {/* 수직 그리드 선 */}
+                {gridLines.map((line, i) => (
+                  <line
+                    key={`grid-${i}`}
+                    x1={line.x}
+                    y1={0}
+                    x2={line.x}
+                    y2={svgBodyHeight}
+                    style={{
+                      stroke: 'var(--border)',
+                      strokeWidth: line.major ? 1 : 0.5,
+                      opacity: line.major ? 0.6 : 0.25,
+                    }}
+                  />
+                ))}
+
+                {/* 오늘 날짜 세로선 */}
+                {todayX >= 0 && todayX <= svgWidth && (
+                  <line
+                    x1={todayX}
+                    y1={0}
+                    x2={todayX}
+                    y2={svgBodyHeight}
+                    strokeDasharray="4 3"
+                    style={{ stroke: '#ef4444', strokeWidth: 1.5, opacity: 0.7 }}
+                  />
+                )}
+
+                {/* 의존관계 화살표 (바 아래에 렌더) */}
+                <GanttArrows tasks={tasks} positionMap={positionMap} />
+
+                {/* 작업 바 */}
+                {tasks.map((task, i) => {
+                  const bx = dateToX(new Date(task.startDate), timelineStart, pxPerDay);
+                  const ex = dateToX(new Date(task.endDate), timelineStart, pxPerDay);
+                  const bw = Math.max(ex - bx, 4);
+                  const isDraggingThis = dragState?.taskId === task.id;
+
+                  return (
+                    <GanttBar
+                      key={task.id}
+                      task={task}
+                      x={bx}
+                      rowY={i * ROW_HEIGHT}
+                      barWidth={bw}
+                      rowHeight={ROW_HEIGHT}
+                      barHeight={BAR_HEIGHT}
+                      hasConflict={conflictTaskIds.has(task.id)}
+                      dragOffsetPx={isDraggingThis ? dragDeltaDays * pxPerDay : 0}
+                      onBarMouseDown={(e) => handleBarMouseDown(e, task, 'move')}
+                      onResizeLeftMouseDown={(e) => handleBarMouseDown(e, task, 'resize-left')}
+                      onResizeRightMouseDown={(e) => handleBarMouseDown(e, task, 'resize-right')}
+                    />
+                  );
+                })}
+              </svg>
+            </div>
           </div>
         )}
       </div>
-
-      <style jsx global>{`
-        .gantt-chart-wrapper .gantt-task-react-header {
-          height: 120px !important;
-        }
-        
-        /* 월 구분 선 제거 */
-        .gantt-chart-wrapper g.calendarTop line {
-          display: none !important;
-        }
-        
-        /* 모든 작업 텍스트를 검은색으로 설정 */
-        .gantt-chart-wrapper svg text {
-          fill: currentColor !important;
-          font-weight: 500 !important;
-          text-anchor: middle !important;
-          dominant-baseline: central !important;
-        }
-        
-        /* 작업 바 내부 텍스트 - 위치 강제 설정 */
-        .gantt-chart-wrapper g[data-id] text {
-          text-anchor: middle !important;
-          dominant-baseline: central !important;
-          fill: currentColor !important;
-          font-weight: 500 !important;
-          font-size: 12px !important;
-          pointer-events: none !important;
-          x: auto !important;
-          y: auto !important;
-        }
-        
-        /* tspan 초기화 */
-        .gantt-chart-wrapper g[data-id] text tspan {
-          x: auto !important;
-          y: auto !important;
-          dx: 0 !important;
-          dy: 0 !important;
-        }
-        
-        .dark .gantt-chart-wrapper line {
-          stroke: #374151 !important;
-        }
-        
-        /* 텍스트 색상 - 다크모드 대응 */
-        .gantt-chart-wrapper text {
-            fill: #111827; /* gray-900 */
-        }
-        .dark .gantt-chart-wrapper text {
-            fill: #f3f4f6 !important; /* gray-100 */
-        }
-      `}</style>
     </div>
   );
 }
