@@ -129,7 +129,7 @@ export default function CommonCodeManager() {
   return (
     <div>
       {/* 그룹 탭 */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      <div className="flex gap-2 mb-6 border-b border-border">
         {GROUPS.map(({ group, groupName }) => (
           <button
             key={group}
@@ -137,7 +137,7 @@ export default function CommonCodeManager() {
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeGroup === group
                 ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             {groupName}
@@ -157,30 +157,30 @@ export default function CommonCodeManager() {
 
       {/* 추가 폼 */}
       {showAddForm && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3 flex-wrap items-end">
+        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-3 flex-wrap items-end">
           <div>
-            <label className="block text-xs text-gray-600 mb-1">코드 *</label>
+            <label className="block text-xs text-muted-foreground mb-1">코드 *</label>
             <input
-              className="border rounded px-2 py-1 text-sm w-24"
+              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-24"
               placeholder="예: 01"
               value={addForm.code}
               onChange={(e) => setAddForm((f) => ({ ...f, code: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-600 mb-1">레이블 *</label>
+            <label className="block text-xs text-muted-foreground mb-1">레이블 *</label>
             <input
-              className="border rounded px-2 py-1 text-sm w-36"
+              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-36"
               placeholder="예: 프론트엔드"
               value={addForm.label}
               onChange={(e) => setAddForm((f) => ({ ...f, label: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-600 mb-1">순서</label>
+            <label className="block text-xs text-muted-foreground mb-1">순서</label>
             <input
               type="number"
-              className="border rounded px-2 py-1 text-sm w-20"
+              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-20"
               value={addForm.order}
               onChange={(e) => setAddForm((f) => ({ ...f, order: parseInt(e.target.value) || 0 }))}
             />
@@ -196,11 +196,11 @@ export default function CommonCodeManager() {
 
       {/* 테이블 */}
       {loading ? (
-        <p className="text-gray-400 text-sm py-8 text-center">로딩 중...</p>
+        <p className="text-muted-foreground text-sm py-8 text-center">로딩 중...</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
+            <thead className="bg-muted/50 text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">코드</th>
                 <th className="px-4 py-3 text-left font-medium">레이블</th>
@@ -209,47 +209,47 @@ export default function CommonCodeManager() {
                 <th className="px-4 py-3 text-right font-medium">액션</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-border bg-card">
               {codes.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-400">
+                  <td colSpan={5} className="text-center py-8 text-muted-foreground">
                     코드가 없습니다.
                   </td>
                 </tr>
               )}
               {codes.map((code) => (
-                <tr key={code._id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-gray-700">{code.code}</td>
+                <tr key={code._id} className="hover:bg-muted/30">
+                  <td className="px-4 py-3 font-mono text-foreground">{code.code}</td>
                   <td className="px-4 py-3">
                     {editingId === code._id ? (
                       <input
-                        className="border rounded px-2 py-0.5 text-sm w-full max-w-xs"
+                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm w-full max-w-xs"
                         value={editForm.label ?? ''}
                         onChange={(e) => setEditForm((f) => ({ ...f, label: e.target.value }))}
                       />
                     ) : (
-                      <span>{code.label}</span>
+                      <span className="text-foreground">{code.label}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     {editingId === code._id ? (
                       <input
                         type="number"
-                        className="border rounded px-2 py-0.5 text-sm w-16"
+                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm w-16"
                         value={editForm.order ?? 0}
                         onChange={(e) =>
                           setEditForm((f) => ({ ...f, order: parseInt(e.target.value) || 0 }))
                         }
                       />
                     ) : (
-                      <span>{code.order}</span>
+                      <span className="text-foreground">{code.order}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleToggleActive(code)}
                       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                        code.isActive ? 'bg-blue-600' : 'bg-gray-300'
+                        code.isActive ? 'bg-blue-600' : 'bg-muted-foreground/40'
                       }`}
                     >
                       <span
@@ -271,7 +271,7 @@ export default function CommonCodeManager() {
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="text-xs px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                            className="text-xs px-3 py-1 bg-muted text-foreground rounded hover:bg-muted/70"
                           >
                             취소
                           </button>
@@ -280,13 +280,13 @@ export default function CommonCodeManager() {
                         <>
                           <button
                             onClick={() => handleEditStart(code)}
-                            className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                            className="text-xs px-3 py-1 bg-muted text-foreground rounded hover:bg-muted/70"
                           >
                             편집
                           </button>
                           <button
                             onClick={() => handleDelete(code)}
-                            className="text-xs px-3 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100"
+                            className="text-xs px-3 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 rounded hover:bg-red-100 dark:hover:bg-red-950/50"
                           >
                             삭제
                           </button>

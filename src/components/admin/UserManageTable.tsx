@@ -109,22 +109,22 @@ export default function UserManageTable() {
       {/* 검색 */}
       <div className="mb-4 flex gap-3 items-center">
         <input
-          className="border rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="border border-border bg-background text-foreground rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-300"
           placeholder="이름 또는 이메일 검색"
           value={inputValue}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
         {data && (
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             총 <strong>{data.total}</strong>명
           </span>
         )}
       </div>
 
       {/* 테이블 */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
+          <thead className="bg-muted/50 text-muted-foreground">
             <tr>
               <th className="px-4 py-3 text-left font-medium">UID</th>
               <th className="px-4 py-3 text-left font-medium">이름</th>
@@ -135,26 +135,26 @@ export default function UserManageTable() {
               <th className="px-4 py-3 text-right font-medium">액션</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 bg-white">
+          <tbody className="divide-y divide-border bg-card">
             {loading && (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-gray-400">
+                <td colSpan={7} className="text-center py-8 text-muted-foreground">
                   로딩 중...
                 </td>
               </tr>
             )}
             {!loading && data?.users.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-gray-400">
+                <td colSpan={7} className="text-center py-8 text-muted-foreground">
                   사용자가 없습니다.
                 </td>
               </tr>
             )}
             {!loading &&
               data?.users.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-400 font-mono text-xs">{user.uid}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">
+                <tr key={user._id} className="hover:bg-muted/30">
+                  <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{user.uid}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">
                     <Link
                       href={`/profile/${user._id}`}
                       target="_blank"
@@ -163,13 +163,13 @@ export default function UserManageTable() {
                       {user.nName || '(이름 없음)'}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{user.authorEmail}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{user.authorEmail}</td>
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                         user.memberType === 'admin'
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-gray-100 text-gray-600'
+                          ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
+                          : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {user.memberType === 'admin' ? '관리자' : '일반'}
@@ -179,14 +179,14 @@ export default function UserManageTable() {
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                         user.delYn
-                          ? 'bg-red-100 text-red-600'
-                          : 'bg-green-100 text-green-700'
+                          ? 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400'
+                          : 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400'
                       }`}
                     >
                       {user.delYn ? '비활성' : '활성'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">
+                  <td className="px-4 py-3 text-muted-foreground text-xs">
                     {new Date(user.createdAt).toLocaleDateString('ko-KR')}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -195,8 +195,8 @@ export default function UserManageTable() {
                         onClick={() => handleToggleActive(user)}
                         className={`text-xs px-3 py-1 rounded transition-colors ${
                           user.delYn
-                            ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                            : 'bg-red-50 text-red-600 hover:bg-red-100'
+                            ? 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-950/50'
+                            : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50'
                         }`}
                       >
                         {user.delYn ? '활성화' : '비활성화'}
@@ -205,8 +205,8 @@ export default function UserManageTable() {
                         onClick={() => handleToggleAdmin(user)}
                         className={`text-xs px-3 py-1 rounded transition-colors ${
                           user.memberType === 'admin'
-                            ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                            ? 'bg-muted text-muted-foreground hover:bg-muted/70'
+                            : 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-950/50'
                         }`}
                       >
                         {user.memberType === 'admin' ? '권한 해제' : '관리자 지정'}
@@ -225,17 +225,17 @@ export default function UserManageTable() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 disabled:opacity-40"
+            className="px-3 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
           >
             이전
           </button>
-          <span className="px-3 py-1.5 text-sm text-gray-600">
+          <span className="px-3 py-1.5 text-sm text-muted-foreground">
             {page} / {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50 disabled:opacity-40"
+            className="px-3 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
           >
             다음
           </button>
