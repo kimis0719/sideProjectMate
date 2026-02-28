@@ -229,47 +229,33 @@ app.prepare().then(() => {
         });
 
 
-        // ------------------------------------------------------------
-        // [Part 3] SPM 실시간 채팅 로직 (Phase 5)
-        // ------------------------------------------------------------
+        // [Part 3] 채팅 실시간 소켓 이벤트 핸들러
 
-        // 1. 채팅방 접속 (Room Join)
+        // 채팅방 접속
         socket.on('join-chat-room', ({ roomId, userId }) => {
-            // 채팅방 ID 전용 네임스페이스처럼 사용
             const chatRoomKey = `chat-${roomId}`;
             socket.join(chatRoomKey);
-            console.log(`[Chat] User ${userId} joined room: ${roomId}`);
         });
 
-        // 2. 채팅방 이탈 (Room Leave)
+        // 채팅방 이탈
         socket.on('leave-chat-room', ({ roomId, userId }) => {
             const chatRoomKey = `chat-${roomId}`;
             socket.leave(chatRoomKey);
-            console.log(`[Chat] User ${userId} left room: ${roomId}`);
         });
 
-        // 3. 메시지 송수신 흐름 (Phase 6.2)
+        // 메시지 브로드캐스트 (낙관적 업데이트 사용 중이므로 발신자 제외)
         socket.on('send_message', (messageData) => {
             const { roomId } = messageData;
             const chatRoomKey = `chat-${roomId}`;
-
-            // 나를 제외한 방 안에 있는 모든 유저에게 메시지 브로드캐스트
             socket.to(chatRoomKey).emit('receive_message', messageData);
-
-            // 필요하다면 나 자신에게도 에코(echo)를 보낼 수 있음.
-            // 클라이언트에서 낙관적 업데이트(Optimistic UI) 처리를 한다면 to()만 써도 무방.
         });
 
-        // 4. [Step 7.2] 메시지 읽음 처리 브로드캐스트 (READ_RECEIPT)
+        // 읽음 처리 브로드캐스트
         socket.on('mark-messages-read', ({ roomId, userId }) => {
             const chatRoomKey = `chat-${roomId}`;
-            // 나를 제외한 방 안의 다른 유저들에게 "내가 지금 네 메시지들 읽었어!" 라고 방송
             socket.to(chatRoomKey).emit('messages-read-receipt', { roomId, readByUserId: userId });
         });
-        // [Common] 연결 해제 처리 (공통)
-        // ------------------------------------------------------------
         socket.on('disconnect', () => {
-            console.log('Client disconnected:', socket.id);
 
             // 1. [기존] 이 소켓이 잠근 모든 리소스 해제
             resourceLocks.forEach((socketId, key) => {
@@ -289,7 +275,6 @@ app.prepare().then(() => {
 
                 // 퇴장 알림
                 io.to(`project-${projectId}`).emit('member-offline', { userId });
-                console.log(`User ${userId} left project: ${projectId}`);
             }
 
             // 3. [신규] 칸반보드 Presence 접속 해제 처리

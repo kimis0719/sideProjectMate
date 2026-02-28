@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getSocket, disconnectSocket } from '@/lib/socket';
+import { getSocket } from '@/lib/socket';
 import { Socket } from 'socket.io-client';
 
 export const useChatSocket = (roomId?: string) => {
@@ -21,26 +21,27 @@ export const useChatSocket = (roomId?: string) => {
 
         // 3. 특정 방(roomId)이 주어지면 방에 입장 (Join Room)
         if (roomId) {
-            // 임시로 userId를 넘겨주는 로직 (추후 session 객체 등에서 가져와 실제 ID 연동 필요)
-            // 현재 단계에선 단순히 소켓 서버에 '나 들어왔다'고 알림
-            const tempUserId = sessionStorage.getItem('spm_mock_userId') || '65f0a1b2c3d4e5f6a1b2c3d9';
-            socketInstance.emit('join-chat-room', { roomId, userId: tempUserId });
+            // TODO: Step 8.4 완료 후 실제 세션 userId로 교체 예정
+            // 현재는 ChatWindow에서 useSession으로 실제 userId를 사용하고 있으므로
+            // 소켓 join 시에도 sessionStorage fallback 대신 빈 값으로만 전달
+            const userId = sessionStorage.getItem('spm_mock_userId') ?? '';
+            socketInstance.emit('join-chat-room', { roomId, userId });
 
             // 📢 [Step 7.2] 방에 들어왔으니 "나 여기 있는 메시지 다 읽었음!" 신호 전송
-            socketInstance.emit('mark-messages-read', { roomId, userId: tempUserId });
+            socketInstance.emit('mark-messages-read', { roomId, userId });
         }
 
         // 4. 클린업 (컴포넌트 언마운트 시)
         return () => {
             if (roomId) {
-                const tempUserId = sessionStorage.getItem('spm_mock_userId') || '65f0a1b2c3d4e5f6a1b2c3d9';
-                socketInstance.emit('leave-chat-room', { roomId, userId: tempUserId });
+                const userId = sessionStorage.getItem('spm_mock_userId') ?? '';
+                socketInstance.emit('leave-chat-room', { roomId, userId });
             }
 
             socketInstance.off('connect', onConnect);
             socketInstance.off('disconnect', onDisconnect);
 
-            // 다른 곳(헤더나 보드 등)에서 소켓을 쓰고 있을 수 있으므로 
+            // 다른 곳(헤더나 보드 등)에서 소켓을 쓰고 있을 수 있으므로
             // 컴포넌트 언마운트 시 무조건 disconnectSocket()을 호출하면 안됨.
             // 필요하다면 전역 소켓 관리 로직을 더 정교하게 다듬어야 함.
         };
