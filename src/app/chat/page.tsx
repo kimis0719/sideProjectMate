@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import ChatRoomList, { MockChatRoom } from '@/components/chat/ChatRoomList';
 import ChatWindow from '@/components/chat/ChatWindow';
 import { getSocket } from '@/lib/socket';
 
-export default function ChatPage() {
+// useSearchParams()를 사용하는 실제 페이지 컨텐츠 컴포넌트
+// Next.js 규칙: useSearchParams()는 반드시 Suspense 경계 안에서만 사용 가능!
+function ChatPageContent() {
     // 현재 선택된 채팅방 ID 상태
     const [activeRoomId, setActiveRoomId] = useState<string>('');
 
@@ -188,5 +190,19 @@ export default function ChatPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+// 🔧 Next.js 빌드 오류 수정: useSearchParams()는 <Suspense>로 감싸야 정적 빌드 시 오류가 나지 않아!
+// Suspense가 없으면 서버 사이드 렌더링 단계에서 해당 훅을 처리 못해서 빌드가 터짐.
+export default function ChatPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-[calc(100vh-64px)] items-center justify-center">
+                <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+            </div>
+        }>
+            <ChatPageContent />
+        </Suspense>
     );
 }
