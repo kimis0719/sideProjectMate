@@ -287,18 +287,6 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
           const width = parseFloat(rect.getAttribute('width') || '0');
           const height = parseFloat(rect.getAttribute('height') || '0');
 
-          // 첫 3개 작업의 디버그 로그
-          if (index < 3) {
-            console.log(`[${index}] Task ${dataId}:`, {
-              rect: { x, y, width, height },
-              before: {
-                x: text.getAttribute('x'),
-                y: text.getAttribute('y'),
-                textContent: text.textContent,
-              }
-            });
-          }
-
           // 새로운 text 요소 생성 (라이브러리 간섭 제거)
           const newText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
           const textContent = text.textContent || '';
@@ -319,13 +307,6 @@ export default function GanttChart({ tasks, viewMode, onTaskClick, onDateChange,
 
           // 기존 text 요소 제거하고 새 요소 추가
           text.replaceWith(newText);
-
-          if (index < 3) {
-            console.log(`[${index}] Task ${dataId} after:`, {
-              newX: newText.getAttribute('x'),
-              newY: newText.getAttribute('y'),
-            });
-          }
         } catch (e) {
           console.error('Error adjusting text styling:', e);
         }

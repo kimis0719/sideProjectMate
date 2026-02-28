@@ -83,9 +83,10 @@ export const useWbsStore = create<WbsState>()(
                     const response = await fetch(`/api/wbs/tasks?pid=${pid}`);
                     if (!response.ok) throw new Error('작업 목록 조회 실패');
 
-                    const taskDocs = await response.json();
+                    const { success, data } = await response.json();
+                    if (!success) throw new Error('작업 목록 조회 실패');
                     // MongoDB 문서를 클라이언트용 Task 타입으로 변환
-                    const tasks = taskDocs.map(transformDoc);
+                    const tasks = data.map(transformDoc);
 
                     set({ tasks, isLoading: false });
                 } catch (error) {
@@ -121,13 +122,15 @@ export const useWbsStore = create<WbsState>()(
 
                     if (!response.ok) throw new Error('작업 추가 실패');
 
-                    const savedTaskDoc = await response.json();
-                    const savedTask = transformDoc(savedTaskDoc);
+                    const { success, data } = await response.json();
+                    if (!success) throw new Error('작업 추가 실패');
+                    const savedTask = transformDoc(data);
 
                     // 임시 작업을 실제 작업으로 교체
+                    // selectedTaskId가 임시 ID인 경우에만 갱신 (다른 작업 선택 중이면 유지)
                     set((state) => ({
                         tasks: state.tasks.map((t) => (t.id === optimisticTask.id ? savedTask : t)),
-                        selectedTaskId: savedTask.id,
+                        selectedTaskId: state.selectedTaskId === optimisticTask.id ? savedTask.id : state.selectedTaskId,
                     }));
                 } catch (error) {
                     console.error('작업 추가 실패:', error);
@@ -162,8 +165,9 @@ export const useWbsStore = create<WbsState>()(
 
                     if (!response.ok) throw new Error('작업 수정 실패');
 
-                    const updatedTaskDoc = await response.json();
-                    const updatedTask = transformDoc(updatedTaskDoc);
+                    const { success, data } = await response.json();
+                    if (!success) throw new Error('작업 수정 실패');
+                    const updatedTask = transformDoc(data);
 
                     // 서버 응답으로 최종 업데이트
                     set((state) => ({
@@ -229,8 +233,9 @@ export const useWbsStore = create<WbsState>()(
 
                     if (!response.ok) throw new Error('날짜 수정 실패');
 
-                    const updatedTaskDoc = await response.json();
-                    const updatedTask = transformDoc(updatedTaskDoc);
+                    const { success, data } = await response.json();
+                    if (!success) throw new Error('날짜 수정 실패');
+                    const updatedTask = transformDoc(data);
 
                     // 서버 응답으로 최종 업데이트
                     set((state) => ({

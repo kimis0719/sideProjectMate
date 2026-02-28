@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Task from '@/lib/models/wbs/TaskModel';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * PATCH /api/wbs/tasks/batch
  * 여러 작업을 한 번에 수정합니다.
@@ -91,9 +93,10 @@ export async function DELETE(request: NextRequest) {
         const result = await Task.deleteMany({ _id: { $in: ids } });
 
         // 삭제된 작업들을 선행 작업으로 참조하는 다른 작업들의 dependencies에서 제거
+        // dependencies는 [{ taskId, type }] 객체 배열이므로 taskId 필드로 조회해야 함
         await Task.updateMany(
-            { dependencies: { $in: ids } },
-            { $pull: { dependencies: { $in: ids } } }
+            { 'dependencies.taskId': { $in: ids } },
+            { $pull: { dependencies: { taskId: { $in: ids } } } }
         );
 
         return NextResponse.json(
