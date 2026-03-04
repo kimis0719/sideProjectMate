@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import React from 'react';
 import HeroSection from '@/components/HeroSection';
 import ProjectList from '@/components/projects/ProjectList';
+import AdBanner from '@/components/common/AdBanner';
 import dbConnect from '@/lib/mongodb';
 import CommonCode, { ICommonCode } from '@/lib/models/CommonCode';
 
@@ -35,6 +36,11 @@ export default async function Home() {
     <div className="bg-background min-h-screen">
       {/* Hero + 통계 + 기능 소개 섹션 */}
       <HeroSection />
+
+      {/* 광고 배너 — HeroSection과 프로젝트 목록 사이 */}
+      <div className="container mx-auto px-4">
+        <AdBanner slot="home-middle" className="py-4" />
+      </div>
 
       {/* 프로젝트 목록 */}
       <div className="container mx-auto px-4 py-10">

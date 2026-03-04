@@ -11,8 +11,8 @@ export default function Footer() {
   ];
 
   const resourceLinks = [
-    { label: '이용약관', href: '#' },
-    { label: '개인정보처리방침', href: '#' },
+    { label: '이용약관', href: '/terms' },
+    { label: '개인정보처리방침', href: '/privacy' },
     { label: '공지사항', href: '#' },
   ];
 
@@ -117,10 +117,10 @@ export default function Footer() {
             © {currentYear} Side Project Mate. All rights reserved.
           </p>
           <div className="flex gap-4">
-            <Link href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               이용약관
             </Link>
-            <Link href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
               개인정보처리방침
             </Link>
           </div>

@@ -7,6 +7,7 @@ import { headers } from 'next/headers';
 import ProjectMember from '@/lib/models/ProjectMember';
 import User from '@/lib/models/User';
 import TechStack from '@/lib/models/TechStack';
+import Notification from '@/lib/models/Notification';
 
 export const dynamic = 'force-dynamic';
 
@@ -168,11 +169,43 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: '변경할 데이터가 없습니다.' }, { status: 400 });
     }
 
+    const prevStatus = project.status;
+
     const updatedProject = await Project.findByIdAndUpdate(
       project._id,
       { $set: updateData },
       { new: true, runValidators: true }
     );
+
+    // 프로젝트 완료(→'03') 전환 시 팀원들에게 리뷰 요청 알림 발송
+    if (status === '03' && prevStatus !== '03') {
+      try {
+        const activeMembers = await ProjectMember.find({
+          projectId: project._id,
+          status: 'active',
+        }).lean();
+
+        // 팀원 userId 목록 (프로젝트 작성자 포함, 중복 제거)
+        const recipientIds = new Set<string>();
+        activeMembers.forEach((m) => recipientIds.add(m.userId.toString()));
+        recipientIds.add(project.author.toString());
+        // 알림 발신자(status 변경자) 본인은 제외
+        recipientIds.delete(session.user._id);
+
+        if (recipientIds.size > 0) {
+          const notifications = Array.from(recipientIds).map((recipientId) => ({
+            recipient: recipientId,
+            sender: session.user._id,
+            type: 'review_request' as const,
+            project: project._id,
+          }));
+          await Notification.insertMany(notifications, { ordered: false });
+        }
+      } catch (notifError) {
+        // 알림 발송 실패는 프로젝트 상태 변경에 영향을 주지 않음
+        console.error('[PATCH /api/projects] 리뷰 요청 알림 발송 오류:', notifError);
+      }
+    }
 
     return NextResponse.json({ success: true, data: updatedProject });
   } catch (error: any) {

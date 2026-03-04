@@ -10,6 +10,7 @@ import { useNotificationStore } from '@/lib/store/notificationStore';
 import DetailProfileCard from '@/components/profile/DetailProfileCard';
 import ProjectThumbnail from '@/components/projects/ProjectThumbnail';
 import { useModal } from '@/hooks/useModal';
+import ReviewModal from '@/components/projects/ReviewModal';
 
 // 동적 임포트를 사용하여 이미지 슬라이더 컴포넌트를 로드 (SSR 제외)
 const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider'), {
@@ -60,6 +61,10 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [statusLabel, setStatusLabel] = useState('');
   // 사용자의 지원 여부 상태
   const [hasApplied, setHasApplied] = useState(false);
+
+  // 리뷰 관련 상태
+  const [reviewTarget, setReviewTarget] = useState<{ _id: string; nName: string; avatarUrl?: string; position?: string } | null>(null);
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
 
   const { fetchNotifications } = useNotificationStore();
   const isOwner = session?.user?._id && typeof project?.author === 'object' && project.author._id === session.user._id;
@@ -139,6 +144,59 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     // ... (previous code)
     fetchData();
   }, [pid, session]);
+
+  // 프로젝트 완료 상태이고 팀원/작성자인 경우 기존 리뷰 여부 조회
+  useEffect(() => {
+    if (!project || project.status !== '03' || !session?.user?._id) return;
+    if (!isMember && !isOwner) return;
+
+    const reviewableUsers = getReviewableUsers();
+    if (reviewableUsers.length === 0) return;
+
+    Promise.all(
+      reviewableUsers.map((u) =>
+        fetch(`/api/reviews/check?projectId=${project._id}&revieweeId=${u._id}`)
+          .then((r) => r.json())
+          .then((data) => (data.data?.hasReviewed ? u._id : null))
+          .catch(() => null)
+      )
+    ).then((results) => {
+      const ids = results.filter(Boolean) as string[];
+      setReviewedIds(new Set(ids));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?._id, project?.status, session?.user?._id]);
+
+  /** 리뷰 가능한 팀원 목록 (자신 제외) */
+  const getReviewableUsers = () => {
+    if (!project || !session?.user?._id) return [];
+    const users: { _id: string; nName: string; avatarUrl?: string; position?: string }[] = [];
+
+    // 프로젝트 작성자
+    if (typeof project.author === 'object' && project.author._id !== session.user._id) {
+      users.push({
+        _id: project.author._id,
+        nName: (project.author as any).nName || '작성자',
+        avatarUrl: (project.author as any).avatarUrl,
+        position: (project.author as any).position,
+      });
+    }
+
+    // 활성 팀원
+    project.projectMembers?.forEach((m: any) => {
+      const userId = m.userId?._id || m.userId;
+      if (userId && userId !== session.user?._id && m.status === 'active') {
+        users.push({
+          _id: userId,
+          nName: m.userId?.nName || '팀원',
+          avatarUrl: m.userId?.avatarUrl,
+          position: m.userId?.position,
+        });
+      }
+    });
+
+    return users;
+  };
 
   // ✨ [채팅] 1:1 문의하기 핸들러
   const handleInquiry = async () => {
@@ -422,10 +480,63 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               >
                 {buttonText}
               </button>
+
+              {/* 팀원 리뷰 섹션 — 완료 프로젝트의 멤버/작성자에게만 표시 */}
+              {project.status === '03' && (isMember || isOwner) && (() => {
+                const reviewable = getReviewableUsers();
+                if (reviewable.length === 0) return null;
+                return (
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h4 className="text-sm font-semibold text-foreground mb-3">팀원 리뷰 작성</h4>
+                    <div className="space-y-2">
+                      {reviewable.map((u) => (
+                        <div key={u._id} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {u.avatarUrl ? (
+                              <img src={u.avatarUrl} alt={u.nName} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <span className="text-xs font-bold text-primary">{u.nName.charAt(0)}</span>
+                              </div>
+                            )}
+                            <span className="text-sm text-foreground truncate">{u.nName}</span>
+                          </div>
+                          {reviewedIds.has(u._id) ? (
+                            <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                              작성 완료
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setReviewTarget(u)}
+                              className="shrink-0 text-xs px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                            >
+                              리뷰 쓰기
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
       </div >
+      {/* 리뷰 작성 모달 */}
+      {reviewTarget && project && (
+        <ReviewModal
+          isOpen={!!reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          projectId={project._id as string}
+          reviewee={reviewTarget}
+          onSuccess={() => {
+            setReviewedIds((prev) => new Set([...prev, reviewTarget._id]));
+            setReviewTarget(null);
+          }}
+        />
+      )}
+
       {isApplyModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-card rounded-lg p-8 w-full max-w-md border border-border">
