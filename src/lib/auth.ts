@@ -1,10 +1,22 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GitHubProvider from 'next-auth/providers/github';
+import GoogleProvider from 'next-auth/providers/google';
 import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      // 비공개 이메일도 수집할 수 있도록 scope 명시
+      authorization: { params: { scope: 'read:user user:email' } },
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
@@ -42,19 +54,15 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      // 로그인 시 GitHub 통계 업데이트 (비동기 시도)
-      try {
-        if (!user.email) return true;
+      // ── Credentials 로그인: GitHub 통계 업데이트 (기존 로직)
+      if (account?.type === 'credentials') {
+        try {
+          if (!user.email) return true;
 
-        await dbConnect();
-        // user.email은 NextAuth User 객체의 email
-        // 실제 DB User 모델과 매칭 (provider: Credentials이므로 이미 DB에 존재)
-        // 하지만 여기서 한번 더 조회하여 업데이트 수행
-        const dbUser = await User.findOne({ authorEmail: user.email });
+          await dbConnect();
+          const dbUser = await User.findOne({ authorEmail: user.email });
 
-        if (dbUser) {
-          // GitHub 통계 업데이트 (Service 사용)
-          if (dbUser.socialLinks?.github) {
+          if (dbUser?.socialLinks?.github) {
             try {
               const { updateUserGithubStats } = await import('@/lib/github/service');
               await updateUserGithubStats(dbUser._id.toString(), dbUser.socialLinks.github);
@@ -62,14 +70,99 @@ export const authOptions: NextAuthOptions = {
               console.error('[NextAuth] GitHub Stats Service Error:', serviceError);
             }
           }
+        } catch (error) {
+          console.error('[NextAuth] Failed to update GitHub stats during sign-in:', error);
         }
-      } catch (error) {
-        console.error('[NextAuth] Failed to update GitHub stats during sign-in:', error);
-        // 통계 업데이트 실패해도 로그인은 성공시켜야 함
+        return true;
       }
+
+      // ── OAuth 로그인 (GitHub, Google)
+      if (account?.type === 'oauth') {
+        try {
+          await dbConnect();
+
+          // 이메일이 없으면 로그인 거부 (GitHub 이메일 비공개 + scope 미취득 등)
+          if (!user.email) {
+            console.error('[OAuth] 이메일 정보를 가져올 수 없습니다. provider:', account.provider);
+            return false;
+          }
+
+          const email = user.email.toLowerCase();
+          const existingUser = await User.findOne({ authorEmail: email });
+
+          if (!existingUser) {
+            // 신규 OAuth 사용자 생성
+            const Counter = (await import('@/lib/models/Counter')).default;
+            const counter = await Counter.findOneAndUpdate(
+              { _id: 'member_uid' },
+              { $inc: { seq: 1 } },
+              { new: true, upsert: true }
+            );
+
+            const newUserData: Record<string, unknown> = {
+              authorEmail: email,
+              password: '', // OAuth 사용자는 비밀번호 없음
+              nName: user.name || `user_${counter.seq}`,
+              uid: counter.seq,
+              memberType: 'user',
+              avatarUrl: user.image || '',
+              providers: [account.provider],
+            };
+
+            // GitHub 로그인: GitHub 사용자명 자동 연동
+            if (account.provider === 'github' && (profile as { login?: string })?.login) {
+              newUserData.socialLinks = {
+                github: (profile as { login: string }).login,
+              };
+            }
+
+            await User.create(newUserData);
+          } else {
+            // 기존 사용자: provider 추가 (중복 방지)
+            const updates: Record<string, unknown> = {
+              $addToSet: { providers: account.provider },
+            };
+
+            // GitHub 로그인 시 github 아이디가 없으면 자동 세팅
+            if (
+              account.provider === 'github' &&
+              (profile as { login?: string })?.login &&
+              !existingUser.socialLinks?.github
+            ) {
+              updates.$set = { 'socialLinks.github': (profile as { login: string }).login };
+            }
+
+            await User.updateOne({ _id: existingUser._id }, updates);
+          }
+
+          return true;
+        } catch (error) {
+          console.error('[OAuth] signIn 오류:', error);
+          return false;
+        }
+      }
+
       return true;
     },
-    async jwt({ token, user }) {
+
+    async jwt({ token, user, account }) {
+      // ── OAuth 첫 로그인: DB에서 _id·memberType 가져와 토큰에 주입
+      if (account?.type === 'oauth') {
+        await dbConnect();
+        const dbUser = await User.findOne({ authorEmail: token.email?.toLowerCase() });
+        if (dbUser) {
+          return {
+            ...token,
+            _id: dbUser._id.toString(),
+            memberType: dbUser.memberType,
+            name: dbUser.nName || token.name,
+            image: dbUser.avatarUrl || token.picture,
+          };
+        }
+        return token;
+      }
+
+      // ── Credentials 로그인 (기존 로직)
       if (user) {
         return {
           ...token,
@@ -78,6 +171,7 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+
     async session({ session, token }) {
       session.user = token as any;
       return session;

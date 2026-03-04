@@ -16,6 +16,7 @@ import SolvedAcCard from '@/components/profile/external/SolvedAcCard';
 import PortfolioCard from '@/components/profile/portfolio/PortfolioCard';
 import LinkInput from '@/components/profile/portfolio/LinkInput';
 import ImageEditModal from '@/components/profile/modals/ImageEditModal';
+import ReviewSection from '@/components/profile/ReviewSection';
 
 /**
  * @interface ProfileViewProps
@@ -403,6 +404,11 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
                     </div>
                 </div>
             </section>
+            {/* 6. 팀원 리뷰 섹션 */}
+            {userData._id && (
+                <ReviewSection userId={userData._id.toString()} />
+            )}
+
             {/* Image Edit Modal */}
             <ImageEditModal
                 isOpen={isAvatarModalOpen}

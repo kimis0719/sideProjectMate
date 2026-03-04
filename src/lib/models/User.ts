@@ -9,6 +9,7 @@ export interface IUser extends Document {
   memberType: 'user' | 'admin';
   delYn: boolean;
   uid: number;
+  providers?: string[]; // 인증 방식 ('credentials', 'github', 'google')
   // 프로필 확장 필드
   position?: string;
   career?: string;
@@ -51,7 +52,8 @@ const UserSchema: Schema = new Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
+      default: '',
     },
     nName: {
       type: String,
@@ -74,6 +76,11 @@ const UserSchema: Schema = new Schema(
       type: Number,
       required: true,
       unique: true,
+    },
+    // 인증 방식 ('credentials', 'github', 'google')
+    providers: {
+      type: [String],
+      default: [],
     },
     // 프로필 확장 필드 스키마
     position: { type: String, default: '' },
