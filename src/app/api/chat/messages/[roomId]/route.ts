@@ -21,9 +21,59 @@ export async function GET(
 
         // 📜 [Step 8.1] 무한 스크롤용 커서 (가장 오래된 메시지의 ID)
         const cursor = searchParams.get('cursor');
+        const q = searchParams.get('q');
 
         if (!mongoose.Types.ObjectId.isValid(roomId)) {
             return NextResponse.json({ success: false, message: '유효하지 않은 채팅방 ID입니다.' }, { status: 400 });
+        }
+
+        // ⚓ 앵커 모드: ?anchor=messageId — 앵커 앞뒤 메시지를 모두 포함해서 반환
+        const anchor = searchParams.get('anchor');
+        if (anchor && mongoose.Types.ObjectId.isValid(anchor)) {
+            const anchorId = new mongoose.Types.ObjectId(anchor);
+            const half = Math.floor(limit / 2); // 기본 limit=20 → 앞 10개, 뒤 10개
+
+            // 앵커 포함 이전 메시지 (내림차순 → 뒤집기)
+            const before = await ChatMessage.find({ roomId, _id: { $lte: anchorId } })
+                .sort({ _id: -1 })
+                .limit(half + 1) // +1로 더 이전 페이지 존재 여부 확인
+                .lean();
+
+            const hasNextPage = before.length > half;
+            if (hasNextPage) before.pop();
+            before.reverse(); // 오래된 순으로
+
+            // 앵커 이후 메시지 — 최신까지 전부 (limit 없음)
+            const after = await ChatMessage.find({ roomId, _id: { $gt: anchorId } })
+                .sort({ _id: 1 })
+                .lean();
+
+            const combined = [...before, ...after];
+            const nextCursor = combined.length > 0 ? combined[0]._id : null;
+
+            return NextResponse.json({
+                success: true,
+                data: combined,
+                pagination: { nextCursor, hasNextPage },
+                anchorId: anchor,
+            }, { status: 200 });
+        }
+
+        // 🔍 검색 모드: ?q= 파라미터가 있으면 전체 메시지 텍스트 검색 후 즉시 반환
+        if (q && q.trim()) {
+            const searchResults = await ChatMessage.find({
+                roomId,
+                content: { $regex: q.trim(), $options: 'i' },
+            })
+                .sort({ createdAt: 1 })
+                .limit(100)
+                .lean();
+
+            return NextResponse.json({
+                success: true,
+                data: searchResults,
+                isSearchResult: true,
+            }, { status: 200 });
         }
 
         // 1. 해당 방의 메시지 내역을 DB에서 조회 (최신순 정렬)
