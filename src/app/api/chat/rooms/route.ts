@@ -6,6 +6,9 @@ import dbConnect from '@/lib/mongodb';
 import ChatRoom from '@/lib/models/ChatRoom';
 import ChatMessage from '@/lib/models/ChatMessage';
 import User from '@/lib/models/User';
+import Project from '@/lib/models/Project';
+
+export const dynamic = 'force-dynamic';
 
 // Step 9.2: 내가 참여 중인 채팅방 목록 조회
 // 최신 메시지(updatedAt) 기준 정렬하여 반환
@@ -21,16 +24,48 @@ export async function GET() {
         }
         const currentUserId = session.user._id;
 
-        // 2. DB 연결 및 조회
+        // 2. DB 연결
         await dbConnect();
 
         // 3. 내가 participants 배열에 포함된 방만 조회, 최신 순 정렬
+        // participants를 _id/nickname/profileImage 필드만 populate
         const rooms = await ChatRoom.find({ participants: currentUserId })
-            .sort({ updatedAt: -1 }) // 마지막 메시지 기준 최신 순
-            .populate('participants', 'name nickname profileImage') // 참여자 정보 채우기
-            .lean(); // 성능 최적화: 순수 JS 객체로 반환
+            .sort({ updatedAt: -1 })
+            .populate('participants', '_id nName avatarUrl')
+            .lean();
 
-        return NextResponse.json({ success: true, data: rooms });
+        // 4. TEAM/INQUIRY 방의 projectId로 프로젝트명 일괄 조회 (N+1 방지)
+        const projectIds = rooms
+            .filter(r => (r.category === 'TEAM' || r.category === 'INQUIRY' || r.category === 'RECRUIT') && r.projectId)
+            .map(r => r.projectId);
+
+        const projectMap: Record<string, string> = {};
+        if (projectIds.length > 0) {
+            const projects = await Project.find({ _id: { $in: projectIds } })
+                .select('_id title')
+                .lean();
+            projects.forEach((p: any) => {
+                projectMap[p._id.toString()] = p.title;
+            });
+        }
+
+        // 5. 각 방에 myUnreadCount, projectName 추가 후 unreadCounts 제거
+        // .lean() 시 Mongoose Map은 plain object { [userId]: count } 로 직렬화됨
+        const enrichedRooms = rooms.map(room => {
+            const unreadCounts = (room.unreadCounts as Record<string, number>) || {};
+            const myUnreadCount = unreadCounts[currentUserId] ?? 0;
+
+            let projectName: string | undefined;
+            if ((room.category === 'TEAM' || room.category === 'INQUIRY' || room.category === 'RECRUIT') && room.projectId) {
+                projectName = projectMap[room.projectId.toString()];
+            }
+
+            // unreadCounts는 Map 전체를 클라이언트에 노출할 필요가 없으므로 제거
+            const { unreadCounts: _, ...rest } = room as any;
+            return { ...rest, myUnreadCount, projectName };
+        });
+
+        return NextResponse.json({ success: true, data: enrichedRooms });
 
     } catch (error: any) {
         return NextResponse.json(
@@ -92,20 +127,31 @@ export async function POST(request: Request) {
         // 5. DB 연결
         await dbConnect();
 
-        // 6. [중복 방지 로직 - 옵션]
-        // DM(1:1)이나 TEAM, RECRUIT의 경우 이미 동일한 멤버 구성의 방이 있는지 체크할 수 있음.
-        // 특히 DM은 보통 유니크해야 함.
-        if (category === 'DM' && participantList.length === 2) {
+        // 6. [중복 방지 로직] 카테고리별로 중복 룸 체크 후 기존 룸 반환
+        // DM/RECRUIT: 동일한 두 참여자 조합이면 기존 룸 반환
+        if ((category === 'DM' || category === 'RECRUIT') && participantList.length === 2) {
             const existingRoom = await ChatRoom.findOne({
-                category: 'DM',
+                category,
                 participants: { $all: participantList, $size: 2 }
             });
-
             if (existingRoom) {
                 return NextResponse.json({
                     success: true,
                     message: '이미 존재하는 대화방을 불러옵니다.',
-                    data: existingRoom
+                    data: existingRoom,
+                    alreadyExists: true,
+                });
+            }
+        }
+        // TEAM/INQUIRY: 동일한 projectId + category 조합이면 기존 룸 반환
+        if ((category === 'TEAM' || category === 'INQUIRY') && projectId) {
+            const existingRoom = await ChatRoom.findOne({ category, projectId });
+            if (existingRoom) {
+                return NextResponse.json({
+                    success: true,
+                    message: '이미 존재하는 대화방을 불러옵니다.',
+                    data: existingRoom,
+                    alreadyExists: true,
                 });
             }
         }
@@ -144,14 +190,16 @@ export async function POST(request: Request) {
         if (systemMessageContent) {
             await ChatMessage.create({
                 roomId: newRoom._id,
-                sender: currentUserId, // 시스템 메시지지만, 편의상 생성자를 sender로 두거나 어드민 봇 계정이 있다면 그 ID를 넣을 수 있음
+                sender: currentUserId,
                 content: systemMessageContent,
                 messageType: 'SYSTEM',
                 readBy: [currentUserId],
             });
 
-            // 🔥 방의 lastMessage 업데이트 (선택 사항)
-            // ChatRoom 모델에 lastMessage 필드가 있다면 여기서 트리거 업데이트 해주는 게 좋아!
+            // 🔥 Step 7: 방의 lastMessage 즉시 업데이트 (목록 미리보기에 표시)
+            await ChatRoom.findByIdAndUpdate(newRoom._id, {
+                $set: { lastMessage: systemMessageContent, updatedAt: new Date() }
+            });
         }
 
         return NextResponse.json(

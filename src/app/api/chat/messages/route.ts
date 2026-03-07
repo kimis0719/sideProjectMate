@@ -29,10 +29,20 @@ export async function POST(req: Request) {
             readBy: [currentUserId], // 보낸 사람은 기본적으로 읽음 처리
         });
 
-        // 2. 해당 채팅방(ChatRoom)의 lastMessage 필드 업데이트
+        // 2. 해당 채팅방(ChatRoom)의 lastMessage 업데이트 + 발신자 외 참여자 unreadCounts 증가
+        const room = await ChatRoom.findById(roomId).select('participants').lean();
+        const incFields: Record<string, 1> = {};
+        if (room) {
+            (room.participants as any[]).forEach((pid: any) => {
+                if (pid.toString() !== currentUserId) {
+                    incFields[`unreadCounts.${pid.toString()}`] = 1;
+                }
+            });
+        }
+
         await ChatRoom.findByIdAndUpdate(roomId, {
-            lastMessage: content,
-            updatedAt: new Date()
+            $set: { lastMessage: content, updatedAt: new Date() },
+            ...(Object.keys(incFields).length > 0 ? { $inc: incFields } : {}),
         });
 
         return NextResponse.json(

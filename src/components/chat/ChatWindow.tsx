@@ -4,15 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { getCategoryColor } from '@/constants/chat';
-import { MockChatRoom } from './ChatRoomList';
+import { IChatRoomClient, IChatMessageClient } from '@/types/chat';
 import { useChatSocket } from '@/hooks/useChatSocket';
 import { useModalStore } from '@/store/modalStore';
 
 interface ChatWindowProps {
-    room: MockChatRoom;
-    // 📱 [Step 8.3 - 모바일] 모바일에서 목록으로 돌아가는 콜백 함수 (PC에서는 사용 안 함)
+    room: IChatRoomClient;
     onBack?: () => void;
-    // 🚪 [Step 9.4] 채팅방 나가기 완료 후 부모에서 목록을 갱신하기 위한 콜백
     onLeaveRoom?: (roomId: string) => void;
 }
 
@@ -25,33 +23,22 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
     const { openConfirm } = useModalStore();
     const router = useRouter();
 
-    // Step 8.4 / Step 9.1: NextAuth 세션 우선. 없으면 sessionStorage 폴백 (실제 로그인 연동 후 제거 예정)
     const { data: session } = useSession();
     const [currentUserId, setCurrentUserId] = useState<string>('');
 
     useEffect(() => {
         if (session?.user?._id) {
-            // 실제 로그인 세션이 있으면 세션 ID 사용
             setCurrentUserId(session.user._id);
-        } else if (typeof window !== 'undefined') {
-            // 세션이 없으면 sessionStorage 임시 ID 사용 (추후 세션 연동 후 이 분기 제거)
-            let stored = sessionStorage.getItem('spm_mock_userId');
-            if (!stored) {
-                // MongoDB ObjectId 규격인 24자리 16진수 랜덤 생성
-                stored = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-                sessionStorage.setItem('spm_mock_userId', stored);
-            }
-            setCurrentUserId(stored);
         }
     }, [session]);
 
     // 🔌 Step 5.2 / Step 9.1: 해당 채팅방에 입장하면서 소켓 연결
-    // userId를 직접 주입해서 sessionStorage 의존 없이 실제 userId 사용!
+    // userId를 직접 주입해서 실제 userId 사용!
     const { isConnected, emit, subscribe } = useChatSocket({ roomId: room._id, userId: currentUserId });
 
     // 💬 Step 6.2: 메시지 상태 및 입력 관리
     const [messageInput, setMessageInput] = useState('');
-    const [messages, setMessages] = useState<any[]>([]);
+    const [messages, setMessages] = useState<IChatMessageClient[]>([]);
 
     // 📜 Step 8.1: 무한 스크롤(Pagination)을 위한 상태 관리
     const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -62,17 +49,16 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
 
     // ⬇️ Step 7.1: 자동 스크롤을 위한 Ref
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    // 메시지 목록 맨 아래 sentinel div — scrollIntoView로 정확히 하단 노출
+    const messagesEndRef = useRef<HTMLDivElement>(null);
     // 🔧 버그 1 수정: "실제 새 메시지가 온 경우"에만 스크롤 내리도록 shouldAutoScroll Ref 추가
     const shouldAutoScroll = useRef<boolean>(false);
 
     // ⬇️ Step 7.1: messages state가 바뀌었을 때 스크롤 로직 실행
     useEffect(() => {
-        const container = scrollContainerRef.current;
-        if (!container) return;
-
         if (shouldAutoScroll.current) {
-            // 실제 새 메시지 수신/전송 시에만 맨 아래로!
-            container.scrollTop = container.scrollHeight;
+            // sentinel div를 뷰포트 안으로 스크롤 (입력창 겹침 없이 정확하게!)
+            messagesEndRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
             shouldAutoScroll.current = false;
         }
         // isLoadMoreAction이 true일 때 (8.1 데이터 로드) 스크롤 유지도 이쪽에서 진행
@@ -81,6 +67,8 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
 
     // 🚪 Step 9.4: 채팅방 헤더 메뉴(점세개) 열기/닫기 상태
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    // 👥 Step 8: 참여자 목록 패널 열기/닫기 상태
+    const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
 
     // 🚪 Step 9.4: 채팅방 나가기 핸들러
     const handleLeaveRoom = async () => {
@@ -257,7 +245,10 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
             if (roomId === room._id) {
                 // shouldAutoScroll.current를 true로 만들지 않으면 스크롤 안 내려감!
                 setMessages(prev => prev.map(msg => {
-                    const isMine = msg.sender === currentUserId || msg.sender?._id === currentUserId;
+                    // sender가 populate된 객체일 수도, 순수 문자열 ID일 수도 있어서 타입 가드로 ID를 안전하게 추출!
+                    const getSenderId = (sender: any): string =>
+                        typeof sender === 'string' ? sender : sender?._id ?? '';
+                    const isMine = getSenderId(msg.sender) === currentUserId;
                     if (isMine && msg.readBy && !msg.readBy.includes(readByUserId)) {
                         return { ...msg, readBy: [...msg.readBy, readByUserId] };
                     }
@@ -320,7 +311,8 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
 
                 // 5. 서버에 브로드캐스트 요청 (Socket.io)
                 // DB의 _id가 담긴 완전한 data를 날려보내야 상대방도 Key 충돌을 겪지 않음
-                emit('send_message', data);
+                // participantIds 포함 → 서버가 헤더 뱃지용 message-received 이벤트를 개인 Room으로 전달
+                emit('send_message', { ...data, participantIds: room.participants.map(p => p._id) });
             }
         } catch (error) {
             // 전송 실패 시 오프라인 큐에 보관 (재연결 시 자동 재전송)
@@ -337,18 +329,18 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
     };
 
     return (
-        <div className="flex-1 min-h-0 flex flex-col bg-slate-50/50 relative">
+        <div className="flex-1 min-h-0 flex flex-col bg-background relative">
             {/*
               🌟 상단 헤더 영역 (Step 3.3 핵심 구현 부분)
               - top border 박스로 컬러 라인을 명확하게 줬어!
               - 배경색에도 살짝 투명도를 넣어서 대화방 성격을 은은하게 인지하도록 만들었지.
             */}
             <div
-                className="flex items-center justify-between p-4 bg-white shadow-sm z-10 border-t-4"
+                className="flex items-center justify-between p-4 shadow-sm z-10 border-t-4 flex-shrink-0"
                 style={{
                     borderTopColor: categoryColor,
                     // 배경에 아주 연하게(약 3% 불투명도) 카테고리 색상을 깔아서 분위기를 맞춤
-                    backgroundColor: `color-mix(in srgb, ${categoryColor} 3%, white)`
+                    backgroundColor: `color-mix(in srgb, ${categoryColor} 3%, var(--background))`
                 }}
             >
                 <div>
@@ -357,7 +349,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                         {onBack && (
                             <button
                                 onClick={onBack}
-                                className="md:hidden p-1.5 -ml-1 rounded-full hover:bg-slate-100 transition-colors text-slate-500"
+                                className="md:hidden p-1.5 -ml-1 rounded-full hover:bg-white/20 transition-colors text-white"
                                 title="목록으로"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,21 +367,64 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                         >
                             {room.category}
                         </span>
-                        <h2 className="text-lg font-bold text-slate-800">{room.title}</h2>
+                        {/* STEP 3에서 getRoomDisplayName() 유틸로 교체 예정 */}
+                        <h2 className="text-lg font-bold text-white">{room.projectName || room.metadata?.name || room.category}</h2>
                     </div>
+                    {/* 👥 Step 8: 참여자 수 부제목 */}
+                    <p className="text-xs text-white/60 pl-1">
+                        {room.participants.length === 2 ? '1:1 채팅' : `그룹 채팅 (${room.participants.length}명)`}
+                    </p>
                 </div>
 
                 {/* 우측 도구 모음 */}
-                <div className="flex items-center gap-3 text-slate-400">
-                    <button className="hover:text-slate-600 transition-colors">
+                <div className="flex items-center gap-3 text-white/70">
+                    <button className="hover:text-white transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </button>
+
+                    {/* 👥 Step 8: 참여자 목록 버튼 */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setIsParticipantsOpen(prev => !prev)}
+                            className="hover:text-white transition-colors"
+                            title="참여자 목록"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        </button>
+                        {isParticipantsOpen && (
+                            <>
+                                <div className="fixed inset-0 z-10" onClick={() => setIsParticipantsOpen(false)} />
+                                <div className="absolute right-0 top-8 z-20 bg-popover border border-border rounded-xl shadow-lg overflow-hidden min-w-[200px]">
+                                    <div className="px-4 py-2 border-b border-border">
+                                        <p className="text-xs font-semibold text-muted-foreground">참여자 {room.participants.length}명</p>
+                                    </div>
+                                    <ul className="py-1">
+                                        {room.participants.map(p => (
+                                            <li key={p._id} className="flex items-center gap-2.5 px-4 py-2">
+                                                {p.avatarUrl ? (
+                                                    <img src={p.avatarUrl} className="w-7 h-7 rounded-full object-cover" alt={p.nName} />
+                                                ) : (
+                                                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">
+                                                        {p.nName?.charAt(0)?.toUpperCase() ?? '?'}
+                                                    </div>
+                                                )}
+                                                <span className="text-sm text-foreground">{p.nName ?? '알 수 없음'}</span>
+                                                {p._id === currentUserId && (
+                                                    <span className="text-xs text-muted-foreground ml-1">(나)</span>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </>
+                        )}
+                    </div>
 
                     {/* 🚪 Step 9.4: 점세개 메뉴 버튼 (채팅방 나가기 옵션 포함) */}
                     <div className="relative">
                         <button
                             onClick={() => setIsMenuOpen(prev => !prev)}
-                            className="hover:text-slate-600 transition-colors"
+                            className="hover:text-white transition-colors"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
                         </button>
@@ -399,7 +434,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                             <>
                                 {/* 바깥 클릭 시 메뉴 닫기 */}
                                 <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)} />
-                                <div className="absolute right-0 top-8 z-20 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px]">
+                                <div className="absolute right-0 top-8 z-20 bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[140px]">
                                     <button
                                         onClick={handleLeaveRoom}
                                         className="w-full px-4 py-2.5 text-sm text-left text-red-500 hover:bg-red-50 transition-colors font-medium"
@@ -424,18 +459,18 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
             <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 scroll-smooth"
+                className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 scroll-smooth dark:[color-scheme:dark]"
             >
                 {/* 📜 Step 8.1: 무한스크롤 로딩 인디케이터 */}
                 {isLoadingMore && (
                     <div className="flex justify-center py-2">
-                        <span className="text-xs text-slate-400">이전 대화 불러오는 중...</span>
+                        <span className="text-xs text-muted-foreground">이전 대화 불러오는 중...</span>
                     </div>
                 )}
 
                 {!hasNextPage && messages.length > 0 && (
                     <div className="flex justify-center my-4">
-                        <span className="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                        <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
                             대화가 시작되었습니다.
                         </span>
                     </div>
@@ -443,27 +478,40 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
 
                 {/* 💬 저장/수신된 메시지 목록 맵핑 렌더링 */}
                 {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50">
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50">
                         <p className="text-sm">아직 아무런 대화가 없어요!</p>
                         <p className="text-xs mt-1">첫 인사를 건네보세요 👋</p>
                     </div>
                 ) : (
                     messages.map((msg, idx) => {
-                        // 내가 보낸 메시지인지 판별 (sender가 populate된 객체일 수도 있고 ID 문자열일 수도 있음)
-                        const isMine = msg.sender === currentUserId || msg.sender?._id === currentUserId;
+                        // sender가 populate된 객체일 수도, 순수 문자열 ID일 수도 있어서 타입 가드로 ID를 안전하게 추출!
+                        const getSenderId = (sender: any): string =>
+                            typeof sender === 'string' ? sender : sender?._id ?? '';
+                        const senderId = getSenderId(msg.sender);
+                        const isMine = senderId === currentUserId;
+                        // participants에서 발신자 정보 조회
+                        const senderInfo = room.participants.find(p => p._id === senderId);
+                        const senderName = senderInfo?.nName ?? (isMine ? '나' : '알 수 없음');
+                        const senderAvatar = senderInfo?.avatarUrl;
 
                         return (
                             <div key={idx} className={`flex items-start gap-3 ${isMine ? 'flex-row-reverse' : ''}`}>
-                                {/* 프로필 아바타 (임시 더미 - Phase 9에서 실제 프로필 이미지로 교체 예정) */}
-                                <div className={`w-8 h-8 rounded-full shrink-0 ${isMine ? 'bg-blue-200' : 'bg-slate-200'}`} />
+                                {/* 프로필 아바타 */}
+                                {senderAvatar ? (
+                                    <img src={senderAvatar} className="w-8 h-8 rounded-full shrink-0 object-cover" alt={senderName} />
+                                ) : (
+                                    <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold ${isMine ? 'bg-slate-700 text-white' : 'bg-muted text-foreground'}`}>
+                                        {senderName.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
                                 <div className={`flex flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
-                                    <span className="text-xs text-slate-500 mx-1">{isMine ? '나' : '상대방'}</span>
+                                    <span className="text-xs text-muted-foreground mx-1">{senderName}</span>
 
                                     <div className={`flex items-end gap-1 ${isMine ? 'flex-row-reverse' : ''}`}>
                                         <div
                                             className={`p-3 rounded-2xl shadow-sm border max-w-md ${isMine
                                                 ? 'bg-slate-800 text-white rounded-tr-sm border-slate-700'
-                                                : 'bg-white text-slate-700 rounded-tl-sm border-slate-100'
+                                                : 'bg-card text-card-foreground rounded-tl-sm border-border'
                                                 }`}
                                         >
                                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
@@ -475,7 +523,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                                             {isMine && (!msg.readBy || msg.readBy.length < 2) && (
                                                 <span className="text-[10px] text-yellow-500 font-bold mb-0.5">1</span>
                                             )}
-                                            <span className="text-[10px] text-slate-400 mx-1 min-w-fit" suppressHydrationWarning>
+                                            <span className="text-[10px] text-muted-foreground mx-1 min-w-fit" suppressHydrationWarning>
                                                 {new Date(msg.createdAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
@@ -485,12 +533,14 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                         );
                     })
                 )}
+                {/* 스크롤 sentinel — 새 메시지 도착 시 이 div로 scrollIntoView */}
+                <div ref={messagesEndRef} />
             </div>
 
             {/* 채팅 입력창 영역 */}
-            <div className="p-4 bg-white border-t border-slate-200">
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-4 py-2 focus-within:ring-1 focus-within:ring-slate-300 transition-shadow">
-                    <button className="text-slate-400 hover:text-slate-600 transition-colors p-1">
+            <div className="p-4 bg-background border-t border-border flex-shrink-0">
+                <div className="flex items-center gap-2 bg-muted border border-border rounded-full px-4 py-2 focus-within:ring-1 focus-within:ring-border transition-shadow">
+                    <button className="text-muted-foreground hover:text-foreground transition-colors p-1">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                     </button>
                     <input
@@ -499,7 +549,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                         onChange={(e) => setMessageInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="메시지를 입력하세요..."
-                        className="flex-1 bg-transparent border-none focus:outline-none text-sm text-slate-700 px-2"
+                        className="flex-1 bg-transparent border-none focus:outline-none text-sm text-foreground px-2"
                     />
                     <button
                         onClick={handleSendMessage}
