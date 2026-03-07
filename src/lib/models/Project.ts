@@ -27,6 +27,7 @@ export interface IProject extends Document {
   images: string[];
   content: string;
   status: '01' | '02' | '03'; // 01: 모집중, 02: 진행중, 03: 완료
+  delYn: boolean; // 비활성화 여부 (어드민 소프트 삭제)
   overview?: string; // ✨ [추가] 프로젝트 개요 (PM 전용 관리 필드)
   resources: IResource[]; // ✨ [추가] 프로젝트 공유 자원 리스트
   deadline?: Date;
@@ -60,6 +61,7 @@ const ProjectSchema: Schema = new Schema(
       enum: ['01', '02', '03'], // 01: 모집중, 02: 진행중, 03: 완료
       default: '01',
     },
+    delYn: { type: Boolean, default: false },
     overview: { type: String }, // ✨ [추가] 프로젝트 개요
     // ✨ [리소스 필드 스키마]
     resources: [

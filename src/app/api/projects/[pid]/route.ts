@@ -19,13 +19,14 @@ export async function GET(
   try {
     await dbConnect();
     const { pid } = params;
+    const pidNum = Number(pid);
 
-    if (!pid) {
-      return NextResponse.json({ success: false, message: 'Project ID가 필요합니다.' }, { status: 400 });
+    if (!pid || isNaN(pidNum)) {
+      return NextResponse.json({ success: false, message: '유효하지 않은 프로젝트 ID입니다.' }, { status: 400 });
     }
 
     const project = await Project.findOneAndUpdate(
-      { pid: Number(pid) },
+      { pid: pidNum },
       { $inc: { views: 1 } },
       { new: true }
     )
@@ -67,7 +68,11 @@ export async function PUT(
 
     await dbConnect();
     const { pid } = params;
-    const project = await Project.findOne({ pid: Number(pid) });
+    const pidNum = Number(pid);
+    if (isNaN(pidNum)) {
+      return NextResponse.json({ success: false, message: '유효하지 않은 프로젝트 ID입니다.' }, { status: 400 });
+    }
+    const project = await Project.findOne({ pid: pidNum });
 
     if (!project) {
       return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
@@ -106,7 +111,11 @@ export async function DELETE(
 
     await dbConnect();
     const { pid } = params;
-    const project = await Project.findOne({ pid: Number(pid) });
+    const pidNum = Number(pid);
+    if (isNaN(pidNum)) {
+      return NextResponse.json({ success: false, message: '유효하지 않은 프로젝트 ID입니다.' }, { status: 400 });
+    }
+    const project = await Project.findOne({ pid: pidNum });
 
     if (!project) {
       return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
@@ -141,7 +150,11 @@ export async function PATCH(
 
     await dbConnect();
     const { pid } = params;
-    const project = await Project.findOne({ pid: Number(pid) });
+    const pidNum = Number(pid);
+    if (isNaN(pidNum)) {
+      return NextResponse.json({ success: false, message: '유효하지 않은 프로젝트 ID입니다.' }, { status: 400 });
+    }
+    const project = await Project.findOne({ pid: pidNum });
 
     if (!project) {
       return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });

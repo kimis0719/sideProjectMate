@@ -5,6 +5,28 @@ import { requireAdmin } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
+// GET /api/admin/users/[id] — 사용자 상세 조회
+export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  try {
+    await dbConnect();
+    const user = await User.findById(params.id).select('-password');
+
+    if (!user) {
+      return NextResponse.json({ success: false, message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, data: user });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: '사용자 정보 조회 중 오류가 발생했습니다.', error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 // PATCH /api/admin/users/[id] — 사용자 상태 변경 (delYn, memberType)
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const { session, error } = await requireAdmin();
