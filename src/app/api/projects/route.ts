@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'latest';
     const authorId = searchParams.get('authorId');
 
-    const query: any = {};
+    const query: any = { delYn: { $ne: true } };
     if (searchTerm) {
       query.$or = [
         { title: { $regex: searchTerm, $options: 'i' } },

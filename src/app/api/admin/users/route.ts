@@ -43,3 +43,35 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// PATCH /api/admin/users — 사용자 일괄 상태 변경 (delYn)
+export async function PATCH(request: NextRequest) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  try {
+    await dbConnect();
+    const body = await request.json();
+    const { ids, delYn } = body;
+
+    if (!Array.isArray(ids) || ids.length === 0 || typeof delYn !== 'boolean') {
+      return NextResponse.json(
+        { success: false, message: '유효하지 않은 요청입니다. (ids 배열과 delYn 필수)' },
+        { status: 400 }
+      );
+    }
+
+    const result = await User.updateMany({ _id: { $in: ids } }, { $set: { delYn } });
+
+    return NextResponse.json({
+      success: true,
+      message: `${result.modifiedCount}명의 상태가 변경되었습니다.`,
+      data: { modifiedCount: result.modifiedCount },
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: '사용자 일괄 처리 중 오류가 발생했습니다.', error: error.message },
+      { status: 500 }
+    );
+  }
+}

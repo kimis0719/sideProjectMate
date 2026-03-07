@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
     const [projects, total] = await Promise.all([
       Project.find(query)
-        .select('pid title status views likes createdAt author members')
+        .select('pid title status delYn views likes createdAt author members')
         .populate('author', 'nName authorEmail')
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -37,6 +37,70 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: '프로젝트 목록을 불러오는 중 오류가 발생했습니다.', error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/admin/projects — 프로젝트 일괄 비활성화/재활성화 (delYn)
+export async function PATCH(request: NextRequest) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  try {
+    await dbConnect();
+    const body = await request.json();
+    const { pids, delYn } = body;
+
+    if (!Array.isArray(pids) || pids.length === 0 || typeof delYn !== 'boolean') {
+      return NextResponse.json(
+        { success: false, message: '유효하지 않은 요청입니다. (pids 배열과 delYn 필수)' },
+        { status: 400 }
+      );
+    }
+
+    const result = await Project.updateMany({ pid: { $in: pids } }, { $set: { delYn } });
+
+    return NextResponse.json({
+      success: true,
+      message: `${result.modifiedCount}개 프로젝트의 상태가 변경되었습니다.`,
+      data: { modifiedCount: result.modifiedCount },
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: '프로젝트 일괄 처리 중 오류가 발생했습니다.', error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/admin/projects — 프로젝트 일괄 영구 삭제
+export async function DELETE(request: NextRequest) {
+  const { error } = await requireAdmin();
+  if (error) return error;
+
+  try {
+    await dbConnect();
+    const body = await request.json();
+    const { pids } = body;
+
+    if (!Array.isArray(pids) || pids.length === 0) {
+      return NextResponse.json(
+        { success: false, message: '유효하지 않은 요청입니다. (pids 배열 필수)' },
+        { status: 400 }
+      );
+    }
+
+    const result = await Project.deleteMany({ pid: { $in: pids } });
+
+    return NextResponse.json({
+      success: true,
+      message: `${result.deletedCount}개 프로젝트가 삭제되었습니다.`,
+      data: { deletedCount: result.deletedCount },
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, message: '프로젝트 일괄 삭제 중 오류가 발생했습니다.', error: error.message },
       { status: 500 }
     );
   }
