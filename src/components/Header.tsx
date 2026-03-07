@@ -34,6 +34,8 @@ export default function Header() {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    // 💬 Step 5: 읽지 않은 채팅 메시지 총합 상태
+    const [totalUnreadChat, setTotalUnreadChat] = useState(0);
 
     // 외부 클릭 감지용 ref
     const notificationRef = useRef<HTMLDivElement>(null);
@@ -44,17 +46,27 @@ export default function Header() {
             fetchNotifications();
 
             const socket = socketClient.connect();
-            socket.emit('join-user', session.user._id);
+            // 개인 소켓 Room 입장 (new-room, message-received 등 개인 이벤트 수신용)
+            socket.emit('join-user-room', { userId: session.user._id });
 
             const handleNewNotification = () => {
                 fetchNotifications();
                 useToastStore.getState().show('새로운 알림이 도착했습니다.', 'default');
             };
+            // 💬 Step 5: 채팅 메시지 수신 시 헤더 뱃지 카운터 증가
+            // /chat 페이지에 있거나 내가 보낸 메시지면 증가 안 함
+            const handleChatMessage = (message: any) => {
+                if (pathname?.startsWith('/chat')) return;
+                if (session?.user?._id && message.sender === session.user._id) return;
+                setTotalUnreadChat(prev => prev + 1);
+            };
 
             socket.on('new-notification', handleNewNotification);
+            socket.on('message-received', handleChatMessage);
 
             return () => {
                 socket.off('new-notification', handleNewNotification);
+                socket.off('message-received', handleChatMessage);
             };
         }
     }, [status, pathname, fetchNotifications, session]);
@@ -98,6 +110,27 @@ export default function Header() {
         }
         return () => { document.body.style.overflow = ''; };
     }, [isMobileMenuOpen]);
+
+    // 💬 Step 5: 앱 초기 로드 시 읽지 않은 채팅 메시지 총합 계산
+    useEffect(() => {
+        if (status !== 'authenticated' || !session?.user?._id) return;
+        fetch('/api/chat/rooms')
+            .then(res => res.json())
+            .then(({ success, data }) => {
+                if (success && data) {
+                    const total = (data as any[]).reduce((sum, r) => sum + (r.myUnreadCount ?? 0), 0);
+                    setTotalUnreadChat(total);
+                }
+            })
+            .catch(() => {});
+    }, [status, session?.user?._id]);
+
+    // 💬 Step 5: /chat 경로 진입 시 채팅 뱃지 초기화
+    useEffect(() => {
+        if (pathname?.startsWith('/chat')) {
+            setTotalUnreadChat(0);
+        }
+    }, [pathname]);
 
     const handleNotificationClick = async (notification: Notification) => {
         if (!notification.read) {
@@ -251,6 +284,20 @@ export default function Header() {
                             <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
                         ) : session ? (
                             <>
+                                {/* 💬 Step 5: 채팅 숏컷 버튼 */}
+                                <button
+                                    onClick={() => router.push('/chat')}
+                                    className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                                    aria-label="채팅"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
+                                    {totalUnreadChat > 0 && (
+                                        <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" />
+                                    )}
+                                </button>
+
                                 {/* 알림 버튼 */}
                                 <div className="relative" ref={notificationRef}>
                                     <button

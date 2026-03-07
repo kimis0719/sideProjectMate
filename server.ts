@@ -282,9 +282,17 @@ app.prepare().then(() => {
 
         // 메시지 브로드캐스트 (낙관적 업데이트 사용 중이므로 발신자 제외)
         socket.on('send_message', (messageData) => {
-            const { roomId } = messageData;
+            const { roomId, participantIds, sender } = messageData;
             const chatRoomKey = `chat-${roomId}`;
             socket.to(chatRoomKey).emit('receive_message', messageData);
+
+            // 💬 Step 5/7: 모든 참여자(발신자 포함)의 개인 소켓 Room으로 알림 전송
+            // io.to() 사용 → 발신자 본인 소켓도 포함 (발신자 목록 갱신 + 비활성방 갱신 모두 커버)
+            if (participantIds) {
+                participantIds.forEach((pid: string) => {
+                    io.to(`user-${pid}`).emit('message-received', messageData);
+                });
+            }
         });
 
         // 읽음 처리 브로드캐스트
@@ -363,4 +371,17 @@ app.prepare().then(() => {
     httpServer.listen(port, () => {
         console.log(`> Ready on http://${hostname}:${port}`);
     });
+
+    // Step 10: Render.com Free Plan 슬립 방지 — 프로덕션에서 10분마다 self-ping
+    if (process.env.NODE_ENV === 'production') {
+        const PING_INTERVAL_MS = 10 * 60 * 1000; // 10분
+        setInterval(async () => {
+            try {
+                await fetch(`${process.env.NEXTAUTH_URL}/api/status`);
+                console.log('[Keep-Alive] ping sent');
+            } catch (e) {
+                console.warn('[Keep-Alive] ping failed', e);
+            }
+        }, PING_INTERVAL_MS);
+    }
 });

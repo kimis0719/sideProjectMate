@@ -1,21 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
-import ChatRoomList, { MockChatRoom } from '@/components/chat/ChatRoomList';
+import ChatRoomList from '@/components/chat/ChatRoomList';
 import ChatWindow from '@/components/chat/ChatWindow';
 import { getSocket } from '@/lib/socket';
+import { IChatRoomClient } from '@/types/chat';
 
 // useSearchParams()를 사용하는 실제 페이지 컨텐츠 컴포넌트
 // Next.js 규칙: useSearchParams()는 반드시 Suspense 경계 안에서만 사용 가능!
 function ChatPageContent() {
     // 현재 선택된 채팅방 ID 상태
     const [activeRoomId, setActiveRoomId] = useState<string>('');
+    // message-received 핸들러 내 stale closure 방지용 ref (useEffect deps 없이 최신값 참조)
+    const activeRoomIdRef = useRef<string>('');
 
     // 📋 Step 9.2: 실제 DB에서 불러온 채팅방 목록을 저장하는 상태야.
-    // 이전의 MOCK_ROOMS 하드코딩을 완전히 대체함!
-    const [rooms, setRooms] = useState<MockChatRoom[]>([]);
+    const [rooms, setRooms] = useState<IChatRoomClient[]>([]);
     const [isLoadingRooms, setIsLoadingRooms] = useState<boolean>(true);
 
     // 📱 [모바일 반응형] 채팅방 목록을 보여줄지 여부를 관리하는 상태야.
@@ -32,16 +34,7 @@ function ChatPageContent() {
             const res = await fetch('/api/chat/rooms');
             const { success, data } = await res.json();
             if (success && data) {
-                // API에서 온 데이터를 MockChatRoom 인터페이스 구조에 맞게 변환!
-                // title → 상대방 닉네임(DM) 또는 방 metadata.name 활용
-                const mapped: MockChatRoom[] = data.map((room: any) => ({
-                    _id: room._id,
-                    category: room.category,
-                    title: room.metadata?.name || room.category,
-                    lastMessage: room.lastMessage || '',
-                    updatedAt: room.updatedAt,
-                }));
-                setRooms(mapped);
+                setRooms(data as IChatRoomClient[]);
             }
         } catch {
             // 목록 로드 실패 시 빈 목록 유지
@@ -65,21 +58,56 @@ function ChatPageContent() {
         }
     }, [searchParams]);
 
+    // activeRoomId 변경 시 ref도 동기화 (소켓 핸들러 stale closure 방지)
+    useEffect(() => {
+        activeRoomIdRef.current = activeRoomId;
+    }, [activeRoomId]);
+
     // Step 9.5: 실시간 채팅방 목록 동기화
-    // receive_message 소켓 이벤트를 받으면 lastMessage와 updatedAt을 실시간으로 갱신!
     useEffect(() => {
         const socket = getSocket();
+        // 개인 소켓 Room 입장 보장 — message-received 수신을 위해 반드시 필요!
+        // (Header도 join-user-room을 emit하지만, 타이밍 의존 없이 여기서도 emit)
+        if (session?.user?._id) {
+            socket.emit('join-user-room', { userId: session.user._id });
+        }
 
+        // receive_message: 소켓이 join한 방(활성 채팅방)에서만 수신됨
+        // → lastMessage/updatedAt 갱신만. unreadCount는 올리지 않음 (보고 있는 방이므로)
         const handleReceiveMessage = (message: any) => {
             setRooms(prev => {
                 const updated = prev.map(room => {
                     if (room._id === message.roomId) {
-                        // 해당 방의 마지막 메시지 및 시간 갱신
                         return { ...room, lastMessage: message.content, updatedAt: message.createdAt };
                     }
                     return room;
                 });
-                // 갱신된 방을 목록 최상단으로 이동 (최신 메시지 기준 정렬)
+                return [...updated].sort((a, b) =>
+                    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+                );
+            });
+        };
+
+        // Step 7: message-received: 개인 소켓 Room(user-{id})으로 수신
+        // 발신자 포함 전체 참여자가 받음 (io.to 사용) → 모든 방의 lastMessage 갱신 커버
+        const handleMessageReceived = (message: any) => {
+            const isActive = message.roomId === activeRoomIdRef.current;
+            const isSender = message.sender === session?.user?._id;
+            setRooms(prev => {
+                const updated = prev.map(room => {
+                    if (room._id === message.roomId) {
+                        return {
+                            ...room,
+                            lastMessage: message.content,
+                            updatedAt: message.createdAt,
+                            // 보고 있는 방이거나 내가 보낸 메시지면 unread 증가 안 함
+                            myUnreadCount: (isActive || isSender)
+                                ? room.myUnreadCount
+                                : (room.myUnreadCount ?? 0) + 1,
+                        };
+                    }
+                    return room;
+                });
                 return [...updated].sort((a, b) =>
                     new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
                 );
@@ -87,34 +115,31 @@ function ChatPageContent() {
         };
 
         // Step 9.5: 새 채팅방이 생성되면 목록에 즉시 추가 (상대방이 DM을 시작했을 때!)
-        const handleNewRoom = (newRoom: any) => {
+        const handleNewRoom = (newRoom: IChatRoomClient) => {
             setRooms(prev => {
                 const exists = prev.some(r => r._id === newRoom._id);
                 if (exists) return prev;
-                const mapped: MockChatRoom = {
-                    _id: newRoom._id,
-                    category: newRoom.category,
-                    title: newRoom.metadata?.name || newRoom.category,
-                    lastMessage: newRoom.lastMessage || '',
-                    updatedAt: newRoom.updatedAt,
-                };
-                return [mapped, ...prev];
+                return [newRoom, ...prev];
             });
         };
 
         socket.on('receive_message', handleReceiveMessage);
+        socket.on('message-received', handleMessageReceived);
         socket.on('new-room', handleNewRoom);
 
         return () => {
             socket.off('receive_message', handleReceiveMessage);
+            socket.off('message-received', handleMessageReceived);
             socket.off('new-room', handleNewRoom);
         };
-    }, []);
+    }, [session?.user?._id]);
 
     const handleRoomClick = (id: string) => {
         setActiveRoomId(id);
         // 모바일에서 채팅방 클릭 시 목록을 숨기고 채팅창만 보여줌
         setShowListOnMobile(false);
+        // 클릭한 방의 읽지 않은 메시지 카운트 즉시 초기화
+        setRooms(prev => prev.map(r => r._id === id ? { ...r, myUnreadCount: 0 } : r));
     };
 
     const handleBackToList = () => {
@@ -137,28 +162,29 @@ function ChatPageContent() {
     const activeRoom = rooms.find(r => r._id === activeRoomId);
 
     return (
-        <div className="flex h-[calc(100vh-64px)] bg-slate-100 overflow-hidden">
+        <div className="flex h-[calc(100vh-64px)] bg-muted overflow-hidden">
             {/* 좌측 사이드바: 채팅방 리스트 영역
                 - PC(md 이상): 항상 표시 (block)
                 - 모바일: showListOnMobile 상태에 따라 표시/숨김 */}
             <div className={`
-                w-full md:w-80 bg-white border-r border-slate-200 flex flex-col shadow-sm z-10
+                w-full md:w-80 bg-background border-r border-border flex flex-col shadow-sm z-10 min-h-0 overflow-hidden
                 ${showListOnMobile ? 'flex' : 'hidden'} md:flex
             `}>
-                <div className="p-4 border-b border-slate-100">
-                    <h2 className="text-lg font-bold text-slate-800">메시지</h2>
+                <div className="p-4 border-b border-border">
+                    <h2 className="text-lg font-bold text-foreground">메시지</h2>
                 </div>
 
                 {/* Step 9.2: 로딩 상태 처리 */}
                 {isLoadingRooms ? (
-                    <div className="flex flex-col items-center justify-center flex-1 text-slate-400 gap-2">
-                        <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin" />
+                    <div className="flex flex-col items-center justify-center flex-1 text-muted-foreground gap-2">
+                        <div className="w-5 h-5 border-2 border-border border-t-muted-foreground rounded-full animate-spin" />
                         <p className="text-xs">채팅방 목록 불러오는 중...</p>
                     </div>
                 ) : (
                     <ChatRoomList
                         rooms={rooms}
                         activeRoomId={activeRoomId}
+                        currentUserId={session?.user?._id || ''}
                         onRoomClick={handleRoomClick}
                     />
                 )}
@@ -180,10 +206,10 @@ function ChatPageContent() {
                         onLeaveRoom={handleLeaveRoom}
                     />
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50">
-                        <div className="text-center text-slate-400">
-                            <svg className="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                            <p className="text-lg font-medium text-slate-600 mb-1">선택된 대화가 없습니다.</p>
+                    <div className="flex-1 flex flex-col items-center justify-center bg-muted/50">
+                        <div className="text-center text-muted-foreground">
+                            <svg className="w-16 h-16 mx-auto mb-4 text-muted-foreground/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                            <p className="text-lg font-medium text-muted-foreground mb-1">선택된 대화가 없습니다.</p>
                             <p className="text-sm">왼쪽에서 채팅방을 선택해 주세요.</p>
                         </div>
                     </div>
@@ -199,7 +225,7 @@ export default function ChatPage() {
     return (
         <Suspense fallback={
             <div className="flex h-[calc(100vh-64px)] items-center justify-center">
-                <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-border border-t-muted-foreground rounded-full animate-spin" />
             </div>
         }>
             <ChatPageContent />

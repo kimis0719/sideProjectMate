@@ -16,3 +16,4 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
     plan: free
+    healthCheckPath: /api/status

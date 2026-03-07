@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import ChatMessage from '@/lib/models/ChatMessage';
+import ChatRoom from '@/lib/models/ChatRoom';
 import mongoose from 'mongoose';
 
 export async function GET(
@@ -61,6 +62,11 @@ export async function GET(
                     $addToSet: { readBy: currentUserId } // 내 ID를 배열에 중복 없이 쏙 추가!
                 }
             );
+
+            // ChatRoom의 unreadCounts에서 현재 유저 카운트 0으로 초기화
+            await ChatRoom.findByIdAndUpdate(roomId, {
+                $set: { [`unreadCounts.${currentUserId}`]: 0 },
+            });
         }
 
         // 배열 순서를 다시 과거 -> 최신(보여질 순서)으로 뒤집기
