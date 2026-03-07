@@ -3,35 +3,13 @@
 import { useState } from 'react';
 import { getCategoryColor, ChatCategory } from '@/constants/chat';
 import { IChatRoomClient } from '@/types/chat';
+import { getRoomDisplayName } from '@/lib/utils/chat/chatUtils';
 
 interface ChatRoomListProps {
     rooms: IChatRoomClient[];
     activeRoomId?: string;
     currentUserId: string;
     onRoomClick: (roomId: string) => void;
-}
-
-/**
- * 💡 Step 10 (STEP 3): 채팅방 표시명 결정 유틸 함수
- * - TEAM/INQUIRY: 프로젝트명 (API에서 채워진 projectName)
- * - DM/RECRUIT: 상대방 닉네임 (participants 중 현재 유저가 아닌 쪽)
- * - SYSTEM: 고정 문자열 '시스템 알림'
- */
-function getRoomDisplayName(room: IChatRoomClient, currentUserId: string): string {
-    switch (room.category) {
-        case 'TEAM':
-        case 'INQUIRY':
-            return room.projectName || room.metadata?.name || room.category;
-        case 'DM':
-        case 'RECRUIT': {
-            const other = room.participants.find(p => p._id !== currentUserId);
-            return other?.nName || room.projectName || room.category;
-        }
-        case 'SYSTEM':
-            return '시스템 알림';
-        default:
-            return room.category;
-    }
 }
 
 /**
