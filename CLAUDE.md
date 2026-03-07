@@ -542,3 +542,79 @@ chore: 빌드/설정 변경
 - [ ] Zustand 스토어에 `devtools` 미들웨어가 있는가?
 - [ ] 소켓 구독이 cleanup 함수에서 해제되는가?
 - [ ] `@/` 경로 별칭을 사용하는가?
+
+---
+
+## 11. 테스트 작성 규칙 (Vitest — Phase 1 적용 중)
+
+### 테스트 환경
+- **테스트 러너**: Vitest (`npm run test:run` / `test:watch` / `test:coverage`)
+- **설정 파일**: `vitest.config.ts` (루트), `@/` 별칭 사용 가능
+- **전역 setup**: `src/__tests__/setup.ts` (afterEach vi.restoreAllMocks 자동 적용)
+- **자세한 사용법**: `TESTING_PHASE1_GUIDE.md` 참조
+
+### 테스트 파일 위치 규칙
+테스트 파일은 **원본 파일 바로 옆**에 배치합니다. 별도 폴더 금지.
+
+src/lib/utils/wbs/taskDependency.ts
+src/lib/utils/wbs/taskDependency.test.ts  ← 여기
+
+### 언제 테스트를 작성해야 하는가 (Phase 1 기준)
+
+아래 위치에 **순수 함수**(DB·네트워크·소켓 의존성 없음)를 추가하거나 수정할 때
+반드시 `*.test.ts` 파일을 함께 작성합니다.
+
+- `src/lib/utils/**/*.ts`
+- `src/lib/iconUtils.ts`, `src/lib/profileUtils.ts`
+- `src/constants/**/*.ts`
+
+### 테스트 작성 필수 패턴
+
+  ```typescript
+  import { describe, it, expect } from 'vitest';
+  import { myFunction } from './myFile';
+
+  describe('myFunction', () => {
+    // 정상 케이스 3개 이상
+    it('한국어로 테스트 의도를 명확히 설명한다', () => {
+      // Arrange
+      const input = ...;
+      // Act
+      const result = myFunction(input);
+      // Assert
+      expect(result).toBe(expected);
+    });
+
+    // 엣지 케이스 2개 이상 (빈 배열, 빈 문자열, 경계값)
+    it('입력이 빈 배열이면 빈 배열을 반환한다', () => { ... });
+
+    // 에러/실패 케이스 1개 이상
+    it('잘못된 입력이면 false를 반환한다', () => { ... });
+  });
+  ```
+### Fixture 재사용
+
+테스트용 Mock 데이터는 새로 만들지 말고 기존 fixture를 우선 사용합니다.
+
+// ✅ 올바른 방식
+```
+import { mockUserAlice } from '@/__tests__/fixtures/users';
+import { linearChainTasks } from '@/__tests__/fixtures/tasks';
+```
+// 기존 fixture를 변형해서 사용                  
+```
+const customTask = { ...linearChainTasks[0], title: '변경된 제목' };
+```
+
+새 도메인이 생기면 src/__tests__/fixtures/ 에 파일을 추가하고
+index.ts에 export *를 등록합니다.
+
+코드 생성 시 체크리스트 (테스트 추가)
+
+- 순수 함수 추가/수정 시 *.test.ts 파일이 함께 생성되었는가?
+- 테스트 이름이 한국어로 의도를 명확히 설명하는가?
+- 정상 케이스 3개 + 엣지 케이스 2개 + 실패 케이스 1개 이상인가?
+- npm run test:run 실행 시 전부 통과하는가?
+- 기존 fixture를 활용했는가? (중복 Mock 데이터 생성 금지)
+
+---
