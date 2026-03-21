@@ -39,7 +39,12 @@ export default async function Home() {
 
       {/* 광고 배너 — HeroSection과 프로젝트 목록 사이 */}
       <div className="container mx-auto px-4">
-        <AdBanner slot="home-middle" className="py-4" />
+        <AdBanner
+          unitId={process.env.NEXT_PUBLIC_ADFIT_HOME_PC}
+          unitIdMobile={process.env.NEXT_PUBLIC_ADFIT_HOME_MOBILE}
+          size="auto"
+          className="py-4"
+        />
       </div>
 
       {/* 프로젝트 목록 */}
