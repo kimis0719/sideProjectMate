@@ -73,6 +73,9 @@ sideProjectMate/
 ├── tailwind.config.js
 ├── tsconfig.json                # Next.js용 TS 설정
 ├── tsconfig.server.json         # server.ts 컴파일 전용 TS 설정
+├── docs/                        # 프로젝트 문서
+│   ├── testing/                 # 테스트 가이드 (Phase 1~3)
+│   └── plans/                   # 기능 개발 계획서
 └── src/
     ├── app/                     # Next.js App Router
     │   ├── api/                 # API Route Handlers
@@ -553,7 +556,7 @@ chore: 빌드/설정 변경
 - **전역 setup**: `src/__tests__/setup.ts` (afterEach vi.restoreAllMocks 자동 적용)
 - **인메모리 DB**: `mongodb-memory-server` (API 통합 테스트용)
 - **현재 테스트 수**: 457개 (Phase 1: 203개, Phase 2: 161개, Phase 3: 93개)
-- **자세한 사용법**: `TESTING_PHASE1_GUIDE.md`, `TESTING_PHASE2_GUIDE.md`, `TESTING_PHASE3_GUIDE.md` 참조
+- **자세한 사용법**: `docs/testing/TESTING_PHASE1_GUIDE.md`, `docs/testing/TESTING_PHASE2_GUIDE.md`, `docs/testing/TESTING_PHASE3_GUIDE.md` 참조
 
 ### 테스트 파일 위치 규칙
 테스트 파일은 **원본 파일 바로 옆**에 배치합니다. 별도 폴더 금지.
