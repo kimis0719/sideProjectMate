@@ -545,14 +545,15 @@ chore: 빌드/설정 변경
 
 ---
 
-## 11. 테스트 작성 규칙 (Vitest — Phase 2 적용 완료)
+## 11. 테스트 작성 규칙 (Vitest — Phase 3 적용 완료)
 
 ### 테스트 환경
 - **테스트 러너**: Vitest (`npm run test:run` / `test:watch` / `test:coverage`)
 - **설정 파일**: `vitest.config.ts` (루트), `@/` 별칭 사용 가능
 - **전역 setup**: `src/__tests__/setup.ts` (afterEach vi.restoreAllMocks 자동 적용)
-- **현재 테스트 수**: 364개 (Phase 1: 203개, Phase 2: 161개)
-- **자세한 사용법**: `TESTING_PHASE1_GUIDE.md`, `TESTING_PHASE2_GUIDE.md` 참조
+- **인메모리 DB**: `mongodb-memory-server` (API 통합 테스트용)
+- **현재 테스트 수**: 457개 (Phase 1: 203개, Phase 2: 161개, Phase 3: 93개)
+- **자세한 사용법**: `TESTING_PHASE1_GUIDE.md`, `TESTING_PHASE2_GUIDE.md`, `TESTING_PHASE3_GUIDE.md` 참조
 
 ### 테스트 파일 위치 규칙
 테스트 파일은 **원본 파일 바로 옆**에 배치합니다. 별도 폴더 금지.
@@ -562,6 +563,8 @@ src/lib/utils/wbs/taskDependency.ts
 src/lib/utils/wbs/taskDependency.test.ts  ← 여기
 src/store/wbsStore.ts
 src/store/wbsStore.test.ts                ← 여기
+src/app/api/wbs/tasks/route.ts
+src/app/api/wbs/tasks/route.test.ts       ← 여기
 ```
 
 ### 테스트 인프라 구조
@@ -578,6 +581,8 @@ src/__tests__/
 └── helpers/                # 테스트 헬퍼 유틸
     ├── mockSession.ts      # createMockSession, mockGetServerSession
     ├── mockSocket.ts       # createMockSocket, emitFromServer
+    ├── mockDb.ts           # setupTestDB, clearTestDB, teardownTestDB (Phase 3)
+    ├── apiTestHelper.ts    # createMockNextRequest (Phase 3)
     └── index.ts            # 통합 export
 ```
 
@@ -729,6 +734,56 @@ const customTask = { ...linearChainTasks[0], title: '변경된 제목' };
 새 도메인이 생기면 `src/__tests__/fixtures/`에 파일을 추가하고
 `index.ts`에 `export *`를 등록합니다.
 
+### 11-3. Phase 3 — API Route 통합 테스트
+
+`src/app/api/**/*.ts`에 API Route를 추가하거나 수정할 때
+반드시 `route.test.ts` 파일을 함께 작성합니다.
+
+#### 필수 Mock 설정
+
+```typescript
+// 모든 API 테스트 파일 최상단에 선언
+vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }));           // 인메모리 DB 사용
+vi.mock('next/headers', () => ({ headers: vi.fn() }));            // headers() 무시
+const mockGetServerSession = vi.fn();
+vi.mock('next-auth', () => ({
+  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+}));
+vi.mock('@/lib/auth', () => ({ authOptions: {} }));
+```
+
+#### 인메모리 DB 생명주기
+
+```typescript
+import { setupTestDB, clearTestDB, teardownTestDB } from '@/__tests__/helpers/mockDb';
+
+beforeAll(async () => await setupTestDB());     // DB 시작
+afterEach(async () => {
+  await clearTestDB();                           // 데이터 격리
+  vi.restoreAllMocks();                          // 세션 Mock 초기화
+});
+afterAll(async () => await teardownTestDB());   // DB 종료
+```
+
+#### NextRequest 생성
+
+```typescript
+import { createMockNextRequest } from '@/__tests__/helpers/apiTestHelper';
+const request = createMockNextRequest('http://localhost:3000/api/wbs/tasks?pid=1');
+const request = createMockNextRequest(url, { method: 'POST', body: { title: '작업' } });
+```
+
+#### API 테스트 시 반드시 검증할 항목
+
+| 확인 항목 | 설명 |
+|----------|------|
+| 미인증 → 401 | `mockGetServerSession.mockResolvedValue(null)` |
+| 권한 없음 → 403 | 작성자가 아닌 유저, 비관리자 |
+| 필수 필드 누락 → 400 | 각 필수 필드별 |
+| 없는 리소스 → 404 | 존재하지 않는 ID |
+| 정상 생성 → 201 | DB 실제 저장 확인 |
+| 삭제 후 정리 | 연관 데이터(dependencies 등) 정리 확인 |
+
 ### 코드 생성 시 체크리스트 (테스트)
 
 **Phase 1 (순수 함수)**
@@ -742,6 +797,15 @@ const customTask = { ...linearChainTasks[0], title: '변경된 제목' };
 - [ ] API 실패 시 롤백 동작을 검증했는가?
 - [ ] 소켓 이벤트 emit/수신을 검증했는가?
 - [ ] `vi.hoisted()` + `vi.mock()` 패턴을 올바르게 사용했는가?
+
+**Phase 3 (API Route)**
+- [ ] API Route 추가/수정 시 `route.test.ts` 파일이 함께 생성되었는가?
+- [ ] `vi.mock('@/lib/mongodb')`로 dbConnect를 무시했는가?
+- [ ] 인증 필요 라우트에서 미인증 401, 권한 없음 403을 테스트했는가?
+- [ ] 필수 필드 누락 시 400 반환을 테스트했는가?
+- [ ] 존재하지 않는 리소스 접근 시 404 반환을 테스트했는가?
+- [ ] DB에 실제 저장/삭제되었는지 `Model.findById()`로 확인했는가?
+- [ ] `afterEach`에서 `clearTestDB()` + `vi.restoreAllMocks()`를 호출하는가?
 
 **공통**
 - [ ] 테스트 이름이 한국어로 의도를 명확히 설명하는가?

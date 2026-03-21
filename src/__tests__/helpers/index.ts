@@ -6,3 +6,5 @@
  */
 export * from './mockSession';
 export * from './mockSocket';
+export * from './mockDb';
+export * from './apiTestHelper';
