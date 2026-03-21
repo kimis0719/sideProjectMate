@@ -545,21 +545,43 @@ chore: 빌드/설정 변경
 
 ---
 
-## 11. 테스트 작성 규칙 (Vitest — Phase 1 적용 중)
+## 11. 테스트 작성 규칙 (Vitest — Phase 2 적용 완료)
 
 ### 테스트 환경
 - **테스트 러너**: Vitest (`npm run test:run` / `test:watch` / `test:coverage`)
 - **설정 파일**: `vitest.config.ts` (루트), `@/` 별칭 사용 가능
 - **전역 setup**: `src/__tests__/setup.ts` (afterEach vi.restoreAllMocks 자동 적용)
-- **자세한 사용법**: `TESTING_PHASE1_GUIDE.md` 참조
+- **현재 테스트 수**: 364개 (Phase 1: 203개, Phase 2: 161개)
+- **자세한 사용법**: `TESTING_PHASE1_GUIDE.md`, `TESTING_PHASE2_GUIDE.md` 참조
 
 ### 테스트 파일 위치 규칙
 테스트 파일은 **원본 파일 바로 옆**에 배치합니다. 별도 폴더 금지.
 
+```
 src/lib/utils/wbs/taskDependency.ts
 src/lib/utils/wbs/taskDependency.test.ts  ← 여기
+src/store/wbsStore.ts
+src/store/wbsStore.test.ts                ← 여기
+```
 
-### 언제 테스트를 작성해야 하는가 (Phase 1 기준)
+### 테스트 인프라 구조
+
+```
+src/__tests__/
+├── setup.ts                # Vitest 전역 설정 (afterEach vi.restoreAllMocks)
+├── fixtures/               # 테스트용 Mock 데이터
+│   ├── users.ts            # mockUserAlice, mockUserBob 등
+│   ├── projects.ts         # Mock 프로젝트 데이터
+│   ├── tasks.ts            # linearChainTasks, parallelTasks 등
+│   ├── chat.ts             # Mock 채팅 데이터
+│   └── index.ts            # 통합 export
+└── helpers/                # 테스트 헬퍼 유틸
+    ├── mockSession.ts      # createMockSession, mockGetServerSession
+    ├── mockSocket.ts       # createMockSocket, emitFromServer
+    └── index.ts            # 통합 export
+```
+
+### 11-1. Phase 1 — 순수 함수 테스트
 
 아래 위치에 **순수 함수**(DB·네트워크·소켓 의존성 없음)를 추가하거나 수정할 때
 반드시 `*.test.ts` 파일을 함께 작성합니다.
@@ -568,53 +590,162 @@ src/lib/utils/wbs/taskDependency.test.ts  ← 여기
 - `src/lib/iconUtils.ts`, `src/lib/profileUtils.ts`
 - `src/constants/**/*.ts`
 
-### 테스트 작성 필수 패턴
+#### 테스트 작성 필수 패턴
 
-  ```typescript
-  import { describe, it, expect } from 'vitest';
-  import { myFunction } from './myFile';
+```typescript
+import { describe, it, expect } from 'vitest';
+import { myFunction } from './myFile';
 
-  describe('myFunction', () => {
-    // 정상 케이스 3개 이상
-    it('한국어로 테스트 의도를 명확히 설명한다', () => {
-      // Arrange
-      const input = ...;
-      // Act
-      const result = myFunction(input);
-      // Assert
-      expect(result).toBe(expected);
-    });
-
-    // 엣지 케이스 2개 이상 (빈 배열, 빈 문자열, 경계값)
-    it('입력이 빈 배열이면 빈 배열을 반환한다', () => { ... });
-
-    // 에러/실패 케이스 1개 이상
-    it('잘못된 입력이면 false를 반환한다', () => { ... });
+describe('myFunction', () => {
+  // 정상 케이스 3개 이상
+  it('한국어로 테스트 의도를 명확히 설명한다', () => {
+    // Arrange
+    const input = ...;
+    // Act
+    const result = myFunction(input);
+    // Assert
+    expect(result).toBe(expected);
   });
-  ```
+
+  // 엣지 케이스 2개 이상 (빈 배열, 빈 문자열, 경계값)
+  it('입력이 빈 배열이면 빈 배열을 반환한다', () => { ... });
+
+  // 에러/실패 케이스 1개 이상
+  it('잘못된 입력이면 false를 반환한다', () => { ... });
+});
+```
+
+### 11-2. Phase 2 — Zustand 스토어 + 훅 테스트
+
+`src/store/**/*.ts` 또는 `src/hooks/**/*.ts`를 추가하거나 수정할 때
+반드시 `*.test.ts` 파일을 함께 작성합니다.
+
+#### fetch Mock 패턴
+
+```typescript
+// 성공 응답
+global.fetch = vi.fn().mockResolvedValue({
+  ok: true,
+  json: () => Promise.resolve({ success: true, data: { _id: 'task-001', title: '작업' } }),
+});
+
+// 실패 응답
+global.fetch = vi.fn().mockResolvedValue({
+  ok: false,
+  json: () => Promise.resolve({ success: false, message: '에러' }),
+});
+```
+
+#### Socket Mock 패턴 (vi.hoisted 필수)
+
+`vi.mock()`은 파일 최상단으로 호이스팅되므로, 외부 변수 참조 시 `vi.hoisted()`를 사용합니다.
+
+```typescript
+// ✅ 올바른 방법
+const { mockSocket, emitFromServer, clearListeners } = vi.hoisted(() => {
+  const listeners = new Map();
+  return {
+    mockSocket: {
+      emit: vi.fn(),
+      on: vi.fn((event, handler) => { /* ... */ }),
+      off: vi.fn(),
+      disconnect: vi.fn(),
+    },
+    emitFromServer: (event, ...args) => { /* ... */ },
+    clearListeners: () => listeners.clear(),
+  };
+});
+vi.mock('@/lib/socket', () => ({
+  getSocket: () => mockSocket,
+  socketClient: { connect: () => mockSocket, disconnect: vi.fn(), socket: mockSocket },
+}));
+
+// ❌ 에러 — mockSocket이 호이스팅 시점에 초기화되지 않음
+const { mockSocket } = createMockSocket();
+vi.mock('@/lib/socket', () => ({ getSocket: () => mockSocket })); // ReferenceError!
+```
+
+#### Zustand 스토어 직접 테스트 패턴
+
+React 렌더링 없이 스토어를 직접 조작합니다.
+
+```typescript
+import { useWbsStore } from './wbsStore';
+
+// 각 테스트 전 초기화
+beforeEach(() => {
+  useWbsStore.setState({ tasks: [], selectedTaskId: null, isLoading: false });
+  vi.restoreAllMocks();
+  mockSocket.emit.mockClear();
+});
+
+// 상태 읽기
+const state = useWbsStore.getState();
+
+// 상태 직접 설정 (테스트 준비용)
+useWbsStore.setState({ tasks: [mockTask], selectedTaskId: 'task-001' });
+
+// 액션 호출
+await useWbsStore.getState().fetchTasks(1);
+```
+
+#### 스토어 테스트 시 반드시 검증할 항목
+
+| 확인 항목 | 설명 |
+|----------|------|
+| API 성공 시 상태 업데이트 | `expect(state.tasks).toHaveLength(2)` |
+| API 호출 URL/method | `expect(fetch).toHaveBeenCalledWith('/api/...', { method: 'POST' })` |
+| Optimistic Update | fetch를 지연시켜 서버 응답 전 상태 반영 확인 |
+| API 실패 시 롤백 | `mockFetchFailure()` → 원래 상태 유지 |
+| 소켓 브로드캐스트 | `expect(mockSocket.emit).toHaveBeenCalledWith(...)` |
+| 소켓 조건 미충족 | `currentPid: null` → `emit` 미호출 |
+
+#### 테스트 헬퍼 사용법
+
+```typescript
+// mockSession — next-auth 세션 Mock
+import { createMockSession } from '@/__tests__/helpers';
+const session = createMockSession();                                    // 기본 (Alice)
+const admin = createMockSession({ user: { _id: 'admin-001', memberType: 'ADM' } });
+
+// mockSocket — Socket.io 클라이언트 Mock
+import { createMockSocket } from '@/__tests__/helpers';
+const { mockSocket, emitFromServer, clearListeners } = createMockSocket();
+```
+
 ### Fixture 재사용
 
 테스트용 Mock 데이터는 새로 만들지 말고 기존 fixture를 우선 사용합니다.
 
+```typescript
 // ✅ 올바른 방식
-```
 import { mockUserAlice } from '@/__tests__/fixtures/users';
 import { linearChainTasks } from '@/__tests__/fixtures/tasks';
-```
-// 기존 fixture를 변형해서 사용                  
-```
+
+// 기존 fixture를 변형해서 사용
 const customTask = { ...linearChainTasks[0], title: '변경된 제목' };
 ```
 
-새 도메인이 생기면 src/__tests__/fixtures/ 에 파일을 추가하고
-index.ts에 export *를 등록합니다.
+새 도메인이 생기면 `src/__tests__/fixtures/`에 파일을 추가하고
+`index.ts`에 `export *`를 등록합니다.
 
-코드 생성 시 체크리스트 (테스트 추가)
+### 코드 생성 시 체크리스트 (테스트)
 
-- 순수 함수 추가/수정 시 *.test.ts 파일이 함께 생성되었는가?
-- 테스트 이름이 한국어로 의도를 명확히 설명하는가?
-- 정상 케이스 3개 + 엣지 케이스 2개 + 실패 케이스 1개 이상인가?
-- npm run test:run 실행 시 전부 통과하는가?
-- 기존 fixture를 활용했는가? (중복 Mock 데이터 생성 금지)
+**Phase 1 (순수 함수)**
+- [ ] 순수 함수 추가/수정 시 `*.test.ts` 파일이 함께 생성되었는가?
+- [ ] 정상 케이스 3개 + 엣지 케이스 2개 + 실패 케이스 1개 이상인가?
+
+**Phase 2 (스토어/훅)**
+- [ ] Zustand 스토어 추가/수정 시 `*.test.ts` 파일이 함께 생성되었는가?
+- [ ] `fetch` Mock으로 API 성공/실패 케이스를 모두 테스트했는가?
+- [ ] Optimistic Update가 있다면 서버 응답 전후 상태를 모두 검증했는가?
+- [ ] API 실패 시 롤백 동작을 검증했는가?
+- [ ] 소켓 이벤트 emit/수신을 검증했는가?
+- [ ] `vi.hoisted()` + `vi.mock()` 패턴을 올바르게 사용했는가?
+
+**공통**
+- [ ] 테스트 이름이 한국어로 의도를 명확히 설명하는가?
+- [ ] `npm run test:run` 실행 시 전부 통과하는가?
+- [ ] 기존 fixture를 활용했는가? (중복 Mock 데이터 생성 금지)
 
 ---
