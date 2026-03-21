@@ -408,4 +408,4 @@
 ---
 
 > **Note**: 이 문서는 코드 리뷰 및 실제 소스 확인을 바탕으로 작성되었습니다.  
-> 각 항목 구현 전 기존 코드 패턴([CLAUDE.md](file:///c:/Users/PC/projects/sideProjectMate/CLAUDE.md) 섹션 6 참조)을 반드시 준수하세요.
+> 각 항목 구현 전 기존 코드 패턴(CLAUDE.md 섹션 6 참조)을 반드시 준수하세요.
