@@ -30,36 +30,9 @@ import User from '../../lib/models/User';
 
 ---
 
-## 2. 폴더 구조 (핵심)
+## 2. 코딩 컨벤션
 
-```
-sideProjectMate/
-├── server.ts              # Express + Socket.io 진입점
-├── docs/                  # 프로젝트 문서
-│   ├── testing/           # 테스트 가이드 (Phase 1~3)
-│   └── plans/             # 기능 개발 계획서
-└── src/
-    ├── app/               # Next.js App Router
-    │   ├── api/            # API Route Handlers
-    │   └── ...             # 페이지 컴포넌트
-    ├── components/        # 재사용 UI 컴포넌트
-    ├── store/             # Zustand 스토어 (boardStore, wbsStore, modalStore)
-    ├── hooks/             # 커스텀 훅 (useModal, useChatSocket)
-    ├── constants/         # 상수 및 타입 매핑
-    ├── types/             # 전역 TypeScript 타입 선언
-    └── lib/               # 서버/공통 유틸리티
-        ├── models/        # Mongoose 모델 (User, Project, Application 등)
-        ├── utils/         # 헬퍼 함수
-        └── socket.ts      # Socket.io 클라이언트 싱글톤
-```
-
-> 상세 기술 스택은 `package.json`, 컴포넌트 역할은 각 파일의 코드를 참조하세요.
-
----
-
-## 3. 코딩 컨벤션
-
-### 3-1. 파일 네이밍
+### 2-1. 파일 네이밍
 
 | 대상 | 규칙 | 예시 |
 |------|------|------|
@@ -69,11 +42,11 @@ sideProjectMate/
 | 유틸/라이브러리 | camelCase | `iconUtils.ts`, `profileUtils.ts` |
 | Mongoose 모델 | PascalCase, 단수형 | `User.ts`, `Project.ts` |
 
-### 3-2. 클라이언트 / 서버 컴포넌트 구분
+### 2-2. 클라이언트 / 서버 컴포넌트 구분
 
 `useState`, `useEffect`, `useSession` 등 클라이언트 전용 API를 사용하면 **파일 최상단에 반드시 `'use client'`를 선언**하세요.
 
-### 3-3. API Route 응답 형식
+### 2-3. API Route 응답 형식
 
 ```ts
 // 성공
@@ -85,7 +58,7 @@ return NextResponse.json(
 );
 ```
 
-### 3-4. API Route 필수 패턴
+### 2-4. API Route 필수 패턴
 
 ```ts
 export const dynamic = 'force-dynamic';     // 캐시 방지
@@ -97,7 +70,7 @@ if (!session || !session.user?._id) {
 }
 ```
 
-### 3-5. Mongoose 모델 정의 패턴
+### 2-5. Mongoose 모델 정의 패턴
 
 ```ts
 import mongoose, { Document, Schema } from 'mongoose';
@@ -108,19 +81,19 @@ const FooSchema: Schema = new Schema({ name: { type: String, required: true } },
 export default mongoose.models.Foo || mongoose.model<IFoo>('Foo', FooSchema);
 ```
 
-### 3-6. Zustand 스토어 패턴
+### 2-6. Zustand 스토어 패턴
 
 - 상태(State)와 액션(Actions)을 분리하여 타입 정의
 - `devtools` 미들웨어 필수 사용
 - `window.alert()`/`window.confirm()` 대신 `useModal` 훅 사용
 
-### 3-7. Socket.io 사용
+### 2-7. Socket.io 사용
 
 - `src/lib/socket.ts`의 `getSocket()` 싱글톤 사용
 - 컴포넌트 언마운트 시 `socket.off()` 필수
 - 서버 경로: `/api/socket/io` (`server.ts`와 `src/lib/socket.ts` 양쪽 일치 필수)
 
-### 3-8. 코드 스타일
+### 2-8. 코드 스타일
 
 - **들여쓰기**: 2 spaces / **세미콜론**: 있음
 - **따옴표**: 문자열 `'`, JSX attribute `"`
@@ -129,7 +102,7 @@ export default mongoose.models.Foo || mongoose.model<IFoo>('Foo', FooSchema);
 
 ---
 
-## 4. 환경별 주의사항
+## 3. 환경별 주의사항
 
 - **TypeScript/ESLint**: `next.config.js`에서 `ignoreBuildErrors`, `ignoreDuringBuilds` 활성화 중 (임시). 타입 에러는 방치하지 마세요.
 - **next-auth Session 확장**: `src/types/next-auth.d.ts`에서 `session.user._id` 필드 확장됨
@@ -139,17 +112,7 @@ export default mongoose.models.Foo || mongoose.model<IFoo>('Foo', FooSchema);
 
 ---
 
-## 5. 작업 중인 기능 (In Progress)
-
-| 기능 | 상태 | 비고 |
-|------|------|------|
-| 채팅 (Chat) | 🚧 UI 프로토타입 | Mock 데이터 사용 중. 실시간 DB 연동 미완성 |
-| 댓글 (Comment) | 🚧 모델만 존재 | `Comment.ts` 정의됨, API/UI 미구현 |
-| Post | 🚧 모델만 존재 | `Post.ts` 정의됨, API/UI 미구현 |
-
----
-
-## 6. Git 브랜치 & 커밋 전략
+## 4. Git 브랜치 & 커밋 전략
 
 ```
 main          ← 배포 브랜치 (Render 자동 배포)
@@ -162,7 +125,7 @@ refactor/*    ← 리팩토링
 
 ---
 
-## 7. 코드 생성 시 체크리스트
+## 5. 코드 생성 시 체크리스트
 
 - [ ] `'use client'` 선언 (클라이언트 컴포넌트)
 - [ ] API Route에 `dynamic = 'force-dynamic'` + `dbConnect()` 호출
@@ -176,7 +139,7 @@ refactor/*    ← 리팩토링
 
 ---
 
-## 8. 테스트 작성 규칙 (Vitest — Phase 3 적용 완료)
+## 6. 테스트 작성 규칙 (Vitest — Phase 3 적용 완료)
 
 - **현재 테스트 수**: 457개 (Phase 1: 203개, Phase 2: 161개, Phase 3: 93개)
 - **명령어**: `npm run test:run` / `test:watch` / `test:coverage`
