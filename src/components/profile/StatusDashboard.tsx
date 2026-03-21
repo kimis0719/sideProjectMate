@@ -2,6 +2,7 @@
 
 // StatusDashboard.tsx
 import { useEffect, useState } from 'react';
+import AdBanner from '@/components/common/AdBanner';
 import { calculateProfileCompleteness } from '@/lib/profileUtils';
 
 interface StatusDashboardProps {
@@ -65,9 +66,12 @@ export default function StatusDashboard({ status = '구직중', user, isEditing,
                         </p>
                     </>
                 ) : (
-                    <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                        {/* 타인 프로필일 때 보여줄 간단한 문구 또는 공란 */}
-                        <p>함께 성장하는 동료입니다 👋</p>
+                    <div className="flex flex-col items-center gap-4">
+                        <p className="text-sm text-muted-foreground">함께 성장하는 동료입니다 👋</p>
+                        <AdBanner
+                            unitId={process.env.NEXT_PUBLIC_ADFIT_PROFILE}
+                            size="rectangle"
+                        />
                     </div>
                 )}
             </div>

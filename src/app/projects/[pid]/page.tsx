@@ -11,6 +11,7 @@ import DetailProfileCard from '@/components/profile/DetailProfileCard';
 import ProjectThumbnail from '@/components/projects/ProjectThumbnail';
 import { useModal } from '@/hooks/useModal';
 import ReviewModal from '@/components/projects/ReviewModal';
+import AdBanner from '@/components/common/AdBanner';
 
 // 동적 임포트를 사용하여 이미지 슬라이더 컴포넌트를 로드 (SSR 제외)
 const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider'), {
@@ -519,6 +520,14 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   </div>
                 );
               })()}
+              {/* 광고 배너 — 프로젝트 요약 카드 하단 (sticky 내부) */}
+              <div className="mt-4 pt-4 border-t border-border">
+                <AdBanner
+                  unitId={process.env.NEXT_PUBLIC_ADFIT_PROJECT_DETAIL}
+                  size="rectangle"
+                  className="py-1"
+                />
+              </div>
             </div>
           </div>
         </div>
