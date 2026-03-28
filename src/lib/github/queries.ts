@@ -45,7 +45,7 @@ export const GET_USER_STATS = gql`
           }
         }
       }
-      pullRequests(first: 100, states: MERGED, orderBy: {field: CREATED_AT, direction: DESC}) {
+      pullRequests(first: 100, states: MERGED, orderBy: { field: CREATED_AT, direction: DESC }) {
         nodes {
           additions
           deletions

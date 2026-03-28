@@ -56,9 +56,7 @@ describe('GET /api/kanban/sections', () => {
   });
 
   it('boardId가 없으면 400을 반환한다', async () => {
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/kanban/sections'
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/kanban/sections');
     const res = await GET(req);
     const json = await res.json();
 
@@ -83,20 +81,17 @@ describe('POST /api/kanban/sections', () => {
   });
 
   it('새 섹션을 생성한다', async () => {
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/kanban/sections',
-      {
-        method: 'POST',
-        body: {
-          boardId: boardId.toString(),
-          title: 'New Section',
-          x: 0,
-          y: 0,
-          width: 300,
-          height: 400,
-        },
-      }
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/kanban/sections', {
+      method: 'POST',
+      body: {
+        boardId: boardId.toString(),
+        title: 'New Section',
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 400,
+      },
+    });
     const res = await POST(req);
     const json = await res.json();
 

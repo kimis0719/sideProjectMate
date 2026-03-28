@@ -1,14 +1,14 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
-import { ThemeProvider } from '@/components/ThemeProvider'
-import AuthSessionProvider from '@/components/AuthSessionProvider'
-import GlobalModal from '@/components/common/GlobalModal'
-import Toast from '@/components/common/Toast'
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import AuthSessionProvider from '@/components/AuthSessionProvider';
+import GlobalModal from '@/components/common/GlobalModal';
+import Toast from '@/components/common/Toast';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
@@ -23,13 +23,9 @@ export const metadata: Metadata = {
     locale: 'ko_KR',
     type: 'website',
   },
-}
+};
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
@@ -54,5 +50,5 @@ export default function RootLayout({
         </AuthSessionProvider>
       </body>
     </html>
-  )
+  );
 }

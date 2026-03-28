@@ -8,10 +8,7 @@ import User from '@/lib/models/User';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { pid: string } }
-) {
+export async function GET(request: Request, { params }: { params: { pid: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
@@ -24,7 +21,10 @@ export async function GET(
     // pid로 프로젝트 조회 후 해당 projectId(ObjectId)로 지원자 목록 조회
     const project = await Project.findOne({ pid: Number(pid) });
     if (!project) {
-      return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '프로젝트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     const applications = await Application.find({ projectId: project._id })
@@ -47,7 +47,11 @@ export async function GET(
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: '프로젝트 지원자 조회 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 지원자 조회 중 오류가 발생했습니다.',
+        error: error.message,
+      },
       { status: 500 }
     );
   }

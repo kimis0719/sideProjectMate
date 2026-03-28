@@ -8,18 +8,18 @@ import type { IChatRoomClient } from '@/types/chat';
  * - 알 수 없는 카테고리: category 문자열 그대로 반환
  */
 export function getRoomDisplayName(room: IChatRoomClient, currentUserId: string): string {
-    switch (room.category) {
-        case 'TEAM':
-        case 'INQUIRY':
-            return room.projectName || room.metadata?.name || room.category;
-        case 'DM':
-        case 'RECRUIT': {
-            const other = room.participants.find(p => p._id !== currentUserId);
-            return other?.nName || room.projectName || room.category;
-        }
-        case 'SYSTEM':
-            return '시스템 알림';
-        default:
-            return room.category;
+  switch (room.category) {
+    case 'TEAM':
+    case 'INQUIRY':
+      return room.projectName || room.metadata?.name || room.category;
+    case 'DM':
+    case 'RECRUIT': {
+      const other = room.participants.find((p) => p._id !== currentUserId);
+      return other?.nName || room.projectName || room.category;
     }
+    case 'SYSTEM':
+      return '시스템 알림';
+    default:
+      return room.category;
+  }
 }

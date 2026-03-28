@@ -128,7 +128,8 @@ export default function ManageApplicantsPage() {
     }
   };
 
-  if (isLoading || sessionStatus === 'loading') return <div className="text-center py-20 text-foreground">로딩 중...</div>;
+  if (isLoading || sessionStatus === 'loading')
+    return <div className="text-center py-20 text-foreground">로딩 중...</div>;
   if (error) return <div className="text-center py-20 text-destructive">{error}</div>;
 
   return (
@@ -138,7 +139,9 @@ export default function ManageApplicantsPage() {
       {/* 1. 현재 참여 멤버 섹션 */}
       {project && project.projectMembers && project.projectMembers.length > 0 && (
         <div className="mb-12">
-          <h2 className="text-xl font-bold mb-4 text-foreground">현재 참여 멤버 ({project.projectMembers.length}명)</h2>
+          <h2 className="text-xl font-bold mb-4 text-foreground">
+            현재 참여 멤버 ({project.projectMembers.length}명)
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {project.projectMembers.map((pm: any) => {
               const user = pm.userId;
@@ -153,7 +156,7 @@ export default function ManageApplicantsPage() {
                     career: user.career || '신입',
                     level: user.level || 1,
                     techTags: user.techTags || [],
-                    avatarUrl: user.avatarUrl
+                    avatarUrl: user.avatarUrl,
                   }}
                   onClick={() => router.push(`/profile/${user._id}`)}
                 />
@@ -169,21 +172,34 @@ export default function ManageApplicantsPage() {
         <p className="text-muted-foreground">아직 지원자가 없습니다.</p>
       ) : (
         <div className="space-y-6">
-          {applications.map(app => (
+          {applications.map((app) => (
             <div key={app._id} className="bg-card p-6 rounded-lg shadow-sm border border-border">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-bold text-lg text-foreground">{app.applicantId.nName} <span className="text-sm font-normal text-muted-foreground">({app.applicantId.authorEmail})</span></p>
+                  <p className="font-bold text-lg text-foreground">
+                    {app.applicantId.nName}{' '}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      ({app.applicantId.authorEmail})
+                    </span>
+                  </p>
                   <p className="text-blue-600 font-semibold">{app.role} 역할 지원</p>
                   <p className="mt-4 text-foreground">{app.message}</p>
                 </div>
                 <div className="text-right">
-                  <p className={`font-bold ${app.status === 'accepted' ? 'text-green-500' :
-                    app.status === 'rejected' ? 'text-red-500' : 'text-yellow-500'
-                    }`}>
+                  <p
+                    className={`font-bold ${
+                      app.status === 'accepted'
+                        ? 'text-green-500'
+                        : app.status === 'rejected'
+                          ? 'text-red-500'
+                          : 'text-yellow-500'
+                    }`}
+                  >
                     {app.status}
                   </p>
-                  <p className="text-xs text-muted-foreground">{new Date(app.createdAt).toLocaleString('ko-KR')}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(app.createdAt).toLocaleString('ko-KR')}
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
@@ -205,7 +221,9 @@ export default function ManageApplicantsPage() {
                       if (data.success) {
                         router.push(`/chat?roomId=${data.data._id}`);
                       } else {
-                        const errorMsg = data.error ? `${data.message}\n(${data.error})` : (data.message || '채팅방 생성 실패');
+                        const errorMsg = data.error
+                          ? `${data.message}\n(${data.error})`
+                          : data.message || '채팅방 생성 실패';
                         await alert('오류', errorMsg);
                       }
                     } catch (e: any) {
@@ -214,18 +232,40 @@ export default function ManageApplicantsPage() {
                   }}
                   className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
                   대화하기
                 </button>
 
                 {app.status === 'pending' && (
                   <>
-                    <button onClick={() => handleStatusChange(app._id, 'accepted')} className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors">수락</button>
-                    <button onClick={() => handleStatusChange(app._id, 'rejected')} className="px-3 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors">거절</button>
+                    <button
+                      onClick={() => handleStatusChange(app._id, 'accepted')}
+                      className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                    >
+                      수락
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(app._id, 'rejected')}
+                      className="px-3 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                    >
+                      거절
+                    </button>
                   </>
                 )}
                 {app.status !== 'accepted' && (
-                  <button onClick={() => handleDeleteApplication(app._id)} className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors">삭제</button>
+                  <button
+                    onClick={() => handleDeleteApplication(app._id)}
+                    className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  >
+                    삭제
+                  </button>
                 )}
               </div>
             </div>

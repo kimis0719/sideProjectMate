@@ -25,14 +25,14 @@ import {
 const d = (dateStr: string) => new Date(dateStr);
 
 /** id로 linearChainTasks에서 작업을 찾는 헬퍼 */
-const findLinear = (id: string) => linearChainTasks.find(t => t.id === id)!;
-const findParallel = (id: string) => parallelTasks.find(t => t.id === id)!;
-const findCritical = (id: string) => criticalPathTasks.find(t => t.id === id)!;
-const findCircular = (id: string) => circularTasks.find(t => t.id === id)!;
+const findLinear = (id: string) => linearChainTasks.find((t) => t.id === id)!;
+const findParallel = (id: string) => parallelTasks.find((t) => t.id === id)!;
+const findCritical = (id: string) => criticalPathTasks.find((t) => t.id === id)!;
+const findCircular = (id: string) => circularTasks.find((t) => t.id === id)!;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('getPredecessorTasks', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('의존관계 없는 작업의 선행 작업 목록은 빈 배열이다', () => {
     const result = getPredecessorTasks(singleTask, [singleTask]);
@@ -79,7 +79,7 @@ describe('getPredecessorTasks', () => {
     const result = getPredecessorTasks(cp4, criticalPathTasks);
 
     expect(result).toHaveLength(2);
-    const ids = result.map(r => r.task.id);
+    const ids = result.map((r) => r.task.id);
     expect(ids).toContain('cp-2');
     expect(ids).toContain('cp-3');
   });
@@ -100,7 +100,7 @@ describe('getPredecessorTasks', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('getSuccessorTasks', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('후행 작업이 없으면 빈 배열을 반환한다', () => {
     const result = getSuccessorTasks(singleTask, [singleTask]);
@@ -131,7 +131,7 @@ describe('getSuccessorTasks', () => {
     const taskMain = findParallel('task-main');
     const result = getSuccessorTasks(taskMain, parallelTasks);
 
-    const types = result.map(r => r.type);
+    const types = result.map((r) => r.type);
     expect(types).toContain('SS');
     expect(types).toContain('FF');
   });
@@ -141,7 +141,7 @@ describe('getSuccessorTasks', () => {
     const result = getSuccessorTasks(cp1, criticalPathTasks);
 
     expect(result).toHaveLength(2);
-    const ids = result.map(r => r.task.id);
+    const ids = result.map((r) => r.task.id);
     expect(ids).toContain('cp-2');
     expect(ids).toContain('cp-3');
   });
@@ -149,15 +149,23 @@ describe('getSuccessorTasks', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('validateDependencyConstraint', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   describe('FS (Finish-to-Start)', () => {
     it('선행 작업 종료 후 시작하면 유효하다', () => {
       const pred: TaskDependency = {
-        id: 'p', title: '선행', startDate: d('2024-01-01'), endDate: d('2024-01-10'), dependencies: [],
+        id: 'p',
+        title: '선행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-10'),
+        dependencies: [],
       };
       const succ: TaskDependency = {
-        id: 's', title: '후행', startDate: d('2024-01-11'), endDate: d('2024-01-20'), dependencies: [],
+        id: 's',
+        title: '후행',
+        startDate: d('2024-01-11'),
+        endDate: d('2024-01-20'),
+        dependencies: [],
       };
       const result = validateDependencyConstraint(succ, pred, 'FS');
       expect(result.valid).toBe(true);
@@ -168,7 +176,7 @@ describe('validateDependencyConstraint', () => {
       const result = validateDependencyConstraint(
         fsViolationPair.task,
         fsViolationPair.predecessor,
-        'FS',
+        'FS'
       );
       expect(result.valid).toBe(false);
       expect(result.message).toContain('FS');
@@ -176,10 +184,18 @@ describe('validateDependencyConstraint', () => {
 
     it('경계값: taskStart === predEnd이면 유효하다', () => {
       const pred: TaskDependency = {
-        id: 'p', title: '선행', startDate: d('2024-01-01'), endDate: d('2024-01-10'), dependencies: [],
+        id: 'p',
+        title: '선행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-10'),
+        dependencies: [],
       };
       const succ: TaskDependency = {
-        id: 's', title: '후행', startDate: d('2024-01-10'), endDate: d('2024-01-20'), dependencies: [],
+        id: 's',
+        title: '후행',
+        startDate: d('2024-01-10'),
+        endDate: d('2024-01-20'),
+        dependencies: [],
       };
       const result = validateDependencyConstraint(succ, pred, 'FS');
       expect(result.valid).toBe(true);
@@ -188,20 +204,24 @@ describe('validateDependencyConstraint', () => {
 
   describe('SS (Start-to-Start)', () => {
     it('선행 작업과 동시에 시작하면 유효하다', () => {
-      const result = validateDependencyConstraint(
-        ssValidPair.task,
-        ssValidPair.predecessor,
-        'SS',
-      );
+      const result = validateDependencyConstraint(ssValidPair.task, ssValidPair.predecessor, 'SS');
       expect(result.valid).toBe(true);
     });
 
     it('선행 작업 이후에 시작해도 유효하다', () => {
       const pred: TaskDependency = {
-        id: 'p', title: '선행', startDate: d('2024-01-01'), endDate: d('2024-01-10'), dependencies: [],
+        id: 'p',
+        title: '선행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-10'),
+        dependencies: [],
       };
       const succ: TaskDependency = {
-        id: 's', title: '후행', startDate: d('2024-01-05'), endDate: d('2024-01-15'), dependencies: [],
+        id: 's',
+        title: '후행',
+        startDate: d('2024-01-05'),
+        endDate: d('2024-01-15'),
+        dependencies: [],
       };
       const result = validateDependencyConstraint(succ, pred, 'SS');
       expect(result.valid).toBe(true);
@@ -209,10 +229,18 @@ describe('validateDependencyConstraint', () => {
 
     it('선행 작업보다 먼저 시작하면 유효하지 않다', () => {
       const pred: TaskDependency = {
-        id: 'p', title: '선행', startDate: d('2024-01-05'), endDate: d('2024-01-10'), dependencies: [],
+        id: 'p',
+        title: '선행',
+        startDate: d('2024-01-05'),
+        endDate: d('2024-01-10'),
+        dependencies: [],
       };
       const succ: TaskDependency = {
-        id: 's', title: '후행', startDate: d('2024-01-01'), endDate: d('2024-01-15'), dependencies: [],
+        id: 's',
+        title: '후행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-15'),
+        dependencies: [],
       };
       const result = validateDependencyConstraint(succ, pred, 'SS');
       expect(result.valid).toBe(false);
@@ -223,10 +251,18 @@ describe('validateDependencyConstraint', () => {
   describe('FF (Finish-to-Finish)', () => {
     it('선행 작업과 동시에 종료하면 유효하다', () => {
       const pred: TaskDependency = {
-        id: 'p', title: '선행', startDate: d('2024-01-01'), endDate: d('2024-01-10'), dependencies: [],
+        id: 'p',
+        title: '선행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-10'),
+        dependencies: [],
       };
       const succ: TaskDependency = {
-        id: 's', title: '후행', startDate: d('2024-01-01'), endDate: d('2024-01-10'), dependencies: [],
+        id: 's',
+        title: '후행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-10'),
+        dependencies: [],
       };
       const result = validateDependencyConstraint(succ, pred, 'FF');
       expect(result.valid).toBe(true);
@@ -234,10 +270,18 @@ describe('validateDependencyConstraint', () => {
 
     it('선행 작업보다 늦게 종료하면 유효하다', () => {
       const pred: TaskDependency = {
-        id: 'p', title: '선행', startDate: d('2024-01-01'), endDate: d('2024-01-10'), dependencies: [],
+        id: 'p',
+        title: '선행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-10'),
+        dependencies: [],
       };
       const succ: TaskDependency = {
-        id: 's', title: '후행', startDate: d('2024-01-01'), endDate: d('2024-01-15'), dependencies: [],
+        id: 's',
+        title: '후행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-15'),
+        dependencies: [],
       };
       const result = validateDependencyConstraint(succ, pred, 'FF');
       expect(result.valid).toBe(true);
@@ -245,10 +289,18 @@ describe('validateDependencyConstraint', () => {
 
     it('선행 작업보다 일찍 종료하면 유효하지 않다', () => {
       const pred: TaskDependency = {
-        id: 'p', title: '선행', startDate: d('2024-01-01'), endDate: d('2024-01-15'), dependencies: [],
+        id: 'p',
+        title: '선행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-15'),
+        dependencies: [],
       };
       const succ: TaskDependency = {
-        id: 's', title: '후행', startDate: d('2024-01-01'), endDate: d('2024-01-10'), dependencies: [],
+        id: 's',
+        title: '후행',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-10'),
+        dependencies: [],
       };
       const result = validateDependencyConstraint(succ, pred, 'FF');
       expect(result.valid).toBe(false);
@@ -259,7 +311,7 @@ describe('validateDependencyConstraint', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('validateAllDependencies', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('의존관계 없는 작업의 결과는 빈 배열이다', () => {
     const result = validateAllDependencies(singleTask, [singleTask]);
@@ -288,12 +340,15 @@ describe('validateAllDependencies', () => {
     const result = validateAllDependencies(cp4, criticalPathTasks);
 
     expect(result).toHaveLength(2);
-    result.forEach(r => expect(r.valid).toBe(true));
+    result.forEach((r) => expect(r.valid).toBe(true));
   });
 
   it('전체 작업 목록이 빈 배열이면 빈 배열을 반환한다', () => {
     const task: TaskDependency = {
-      id: 't', title: '작업', startDate: d('2024-01-05'), endDate: d('2024-01-10'),
+      id: 't',
+      title: '작업',
+      startDate: d('2024-01-05'),
+      endDate: d('2024-01-10'),
       dependencies: [{ taskId: 'non-existent', type: 'FS' }],
     };
     const result = validateAllDependencies(task, []);
@@ -303,7 +358,7 @@ describe('validateAllDependencies', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('detectCircularDependency', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('의존관계 없는 단일 작업 → 순환 없음', () => {
     const result = detectCircularDependency(singleTask, [singleTask]);
@@ -342,11 +397,17 @@ describe('detectCircularDependency', () => {
 
   it('2단계 순환 (A→B→A) → 순환 감지', () => {
     const taskA: TaskDependency = {
-      id: 'two-A', title: 'A', startDate: d('2024-01-01'), endDate: d('2024-01-05'),
+      id: 'two-A',
+      title: 'A',
+      startDate: d('2024-01-01'),
+      endDate: d('2024-01-05'),
       dependencies: [{ taskId: 'two-B', type: 'FS' }], // A depends on B
     };
     const taskB: TaskDependency = {
-      id: 'two-B', title: 'B', startDate: d('2024-01-06'), endDate: d('2024-01-10'),
+      id: 'two-B',
+      title: 'B',
+      startDate: d('2024-01-06'),
+      endDate: d('2024-01-10'),
       dependencies: [{ taskId: 'two-A', type: 'FS' }], // B depends on A
     };
 
@@ -359,7 +420,10 @@ describe('detectCircularDependency', () => {
 
   it('자기 자신을 참조하는 작업 → 순환 감지', () => {
     const selfRefTask: TaskDependency = {
-      id: 'self', title: '자기 참조', startDate: d('2024-01-01'), endDate: d('2024-01-05'),
+      id: 'self',
+      title: '자기 참조',
+      startDate: d('2024-01-01'),
+      endDate: d('2024-01-05'),
       dependencies: [{ taskId: 'self', type: 'FS' }],
     };
 
@@ -376,7 +440,7 @@ describe('detectCircularDependency', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('calculateCriticalPath', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('빈 배열 → 빈 배열', () => {
     expect(calculateCriticalPath([])).toEqual([]);
@@ -385,7 +449,7 @@ describe('calculateCriticalPath', () => {
   it('반환값은 TaskDependency 배열이다', () => {
     const result = calculateCriticalPath(linearChainTasks);
     expect(Array.isArray(result)).toBe(true);
-    result.forEach(task => {
+    result.forEach((task) => {
       expect(task).toHaveProperty('id');
       expect(task).toHaveProperty('startDate');
       expect(task).toHaveProperty('endDate');
@@ -397,7 +461,10 @@ describe('calculateCriticalPath', () => {
     // 알고리즘: earliest === latest인 작업이 크리티컬 패스
     // 마일스톤: latestStart=endDate, earliestStart=startDate → startDate=endDate면 equal
     const milestone: TaskDependency = {
-      id: 'ms', title: '마일스톤', startDate: d('2024-01-25'), endDate: d('2024-01-25'),
+      id: 'ms',
+      title: '마일스톤',
+      startDate: d('2024-01-25'),
+      endDate: d('2024-01-25'),
       dependencies: [],
     };
 
@@ -414,15 +481,15 @@ describe('calculateCriticalPath', () => {
   it('크리티컬 패스에 포함된 작업은 원본 tasks 목록 내의 객체이다', () => {
     const tasks = [...linearChainTasks];
     const result = calculateCriticalPath(tasks);
-    result.forEach(cpTask => {
-      expect(tasks.some(t => t.id === cpTask.id)).toBe(true);
+    result.forEach((cpTask) => {
+      expect(tasks.some((t) => t.id === cpTask.id)).toBe(true);
     });
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('identifyParallelTasks', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('빈 배열 → 빈 Map', () => {
     const result = identifyParallelTasks([]);
@@ -448,18 +515,18 @@ describe('identifyParallelTasks', () => {
     const result = identifyParallelTasks(parallelTasks);
     const group = result.get('task-main');
     expect(group).toBeDefined();
-    const ids = group!.map(t => t.id);
+    const ids = group!.map((t) => t.id);
     expect(ids).toContain('task-parallel-b'); // FF 의존관계
   });
 
   it('SS/FF 혼합: 그룹에 선행 작업 + 모든 병렬 후행 작업이 포함된다', () => {
     const result = identifyParallelTasks(parallelTasks);
     const group = result.get('task-main')!;
-    const ids = group.map(t => t.id);
+    const ids = group.map((t) => t.id);
 
-    expect(ids).toContain('task-main');        // 선행 작업 (그룹 키)
-    expect(ids).toContain('task-parallel-a');  // SS
-    expect(ids).toContain('task-parallel-b');  // FF
+    expect(ids).toContain('task-main'); // 선행 작업 (그룹 키)
+    expect(ids).toContain('task-parallel-a'); // SS
+    expect(ids).toContain('task-parallel-b'); // FF
   });
 
   it('그룹의 첫 번째 요소는 선행 작업(그룹 키)이다', () => {
@@ -471,7 +538,7 @@ describe('identifyParallelTasks', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('identifySerialTasks', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('빈 배열 → 빈 배열', () => {
     expect(identifySerialTasks([])).toEqual([]);
@@ -505,11 +572,17 @@ describe('identifySerialTasks', () => {
     // task-main → task-parallel-a (SS), task-parallel-b (FF) 만 있는 경우
     const onlySsAndFf: TaskDependency[] = [
       {
-        id: 'root', title: '루트', startDate: d('2024-01-01'), endDate: d('2024-01-10'),
+        id: 'root',
+        title: '루트',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-10'),
         dependencies: [],
       },
       {
-        id: 'child', title: '자식', startDate: d('2024-01-01'), endDate: d('2024-01-08'),
+        id: 'child',
+        title: '자식',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-08'),
         dependencies: [{ taskId: 'root', type: 'SS' }],
       },
     ];
@@ -519,8 +592,20 @@ describe('identifySerialTasks', () => {
 
   it('의존관계 없는 여러 독립 작업 → 빈 배열', () => {
     const independentTasks: TaskDependency[] = [
-      { id: 'i1', title: '작업1', startDate: d('2024-01-01'), endDate: d('2024-01-05'), dependencies: [] },
-      { id: 'i2', title: '작업2', startDate: d('2024-01-01'), endDate: d('2024-01-05'), dependencies: [] },
+      {
+        id: 'i1',
+        title: '작업1',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-05'),
+        dependencies: [],
+      },
+      {
+        id: 'i2',
+        title: '작업2',
+        startDate: d('2024-01-01'),
+        endDate: d('2024-01-05'),
+        dependencies: [],
+      },
     ];
     const result = identifySerialTasks(independentTasks);
     expect(result).toEqual([]);
@@ -531,13 +616,13 @@ describe('identifySerialTasks', () => {
     const result = identifySerialTasks(criticalPathTasks);
     expect(result.length).toBeGreaterThan(0);
     // 모든 체인은 2개 이상의 작업을 포함한다
-    result.forEach(chain => expect(chain.length).toBeGreaterThanOrEqual(2));
+    result.forEach((chain) => expect(chain.length).toBeGreaterThanOrEqual(2));
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('getDependencyTypeDescription', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('FS 타입의 설명 문자열을 반환한다', () => {
     const result = getDependencyTypeDescription('FS');

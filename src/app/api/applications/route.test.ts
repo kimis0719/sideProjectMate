@@ -36,11 +36,19 @@ describe('GET /api/applications', () => {
   it('현재 로그인한 유저의 지원 내역을 반환한다', async () => {
     const user = await createTestUser();
     const project = await Project.create({
-      pid: 1, title: '프로젝트', category: 'WEB', author: user._id,
-      members: [{ role: '개발자', current: 0, max: 1 }], content: '내용', status: '01',
+      pid: 1,
+      title: '프로젝트',
+      category: 'WEB',
+      author: user._id,
+      members: [{ role: '개발자', current: 0, max: 1 }],
+      content: '내용',
+      status: '01',
     });
     await Application.create({
-      projectId: project._id, applicantId: user._id, role: '개발자', message: '지원합니다',
+      projectId: project._id,
+      applicantId: user._id,
+      role: '개발자',
+      message: '지원합니다',
     });
 
     mockGetServerSession.mockResolvedValue({
@@ -62,11 +70,26 @@ describe('GET /api/applications', () => {
     const user1 = await createTestUser();
     const user2 = await createTestUser();
     const project = await Project.create({
-      pid: 2, title: '프로젝트', category: 'WEB', author: user1._id,
-      members: [{ role: '개발자', current: 0, max: 2 }], content: '내용', status: '01',
+      pid: 2,
+      title: '프로젝트',
+      category: 'WEB',
+      author: user1._id,
+      members: [{ role: '개발자', current: 0, max: 2 }],
+      content: '내용',
+      status: '01',
     });
-    await Application.create({ projectId: project._id, applicantId: user1._id, role: '개발자', message: '지원1' });
-    await Application.create({ projectId: project._id, applicantId: user2._id, role: '개발자', message: '지원2' });
+    await Application.create({
+      projectId: project._id,
+      applicantId: user1._id,
+      role: '개발자',
+      message: '지원1',
+    });
+    await Application.create({
+      projectId: project._id,
+      applicantId: user2._id,
+      role: '개발자',
+      message: '지원2',
+    });
 
     mockGetServerSession.mockResolvedValue({
       user: { _id: user1._id.toString() },
@@ -97,19 +120,35 @@ describe('GET /api/applications', () => {
   it('최신 지원이 먼저 오도록 정렬된다', async () => {
     const user = await createTestUser();
     const project1 = await Project.create({
-      pid: 3, title: '프로젝트1', category: 'WEB', author: user._id,
-      members: [{ role: '백엔드', current: 0, max: 1 }], content: '내용', status: '01',
+      pid: 3,
+      title: '프로젝트1',
+      category: 'WEB',
+      author: user._id,
+      members: [{ role: '백엔드', current: 0, max: 1 }],
+      content: '내용',
+      status: '01',
     });
     const project2 = await Project.create({
-      pid: 4, title: '프로젝트2', category: 'APP', author: user._id,
-      members: [{ role: '프론트엔드', current: 0, max: 1 }], content: '내용', status: '01',
+      pid: 4,
+      title: '프로젝트2',
+      category: 'APP',
+      author: user._id,
+      members: [{ role: '프론트엔드', current: 0, max: 1 }],
+      content: '내용',
+      status: '01',
     });
     await Application.create({
-      projectId: project1._id, applicantId: user._id, role: '백엔드', message: '먼저',
+      projectId: project1._id,
+      applicantId: user._id,
+      role: '백엔드',
+      message: '먼저',
       createdAt: new Date('2024-01-01'),
     });
     await Application.create({
-      projectId: project2._id, applicantId: user._id, role: '프론트엔드', message: '나중에',
+      projectId: project2._id,
+      applicantId: user._id,
+      role: '프론트엔드',
+      message: '나중에',
       createdAt: new Date('2024-02-01'),
     });
 
@@ -124,8 +163,9 @@ describe('GET /api/applications', () => {
 
     expect(body.data).toHaveLength(2);
     // 최신순 정렬
-    expect(new Date(body.data[0].createdAt).getTime())
-      .toBeGreaterThanOrEqual(new Date(body.data[1].createdAt).getTime());
+    expect(new Date(body.data[0].createdAt).getTime()).toBeGreaterThanOrEqual(
+      new Date(body.data[1].createdAt).getTime()
+    );
   });
 
   it('미인증 시 401을 반환한다', async () => {
@@ -142,11 +182,19 @@ describe('GET /api/applications', () => {
   it('projectId가 populate되어 title과 pid를 포함한다', async () => {
     const user = await createTestUser();
     const project = await Project.create({
-      pid: 5, title: '팝테스트', category: 'WEB', author: user._id,
-      members: [{ role: '개발자', current: 0, max: 1 }], content: '내용', status: '01',
+      pid: 5,
+      title: '팝테스트',
+      category: 'WEB',
+      author: user._id,
+      members: [{ role: '개발자', current: 0, max: 1 }],
+      content: '내용',
+      status: '01',
     });
     await Application.create({
-      projectId: project._id, applicantId: user._id, role: '개발자', message: '지원',
+      projectId: project._id,
+      applicantId: user._id,
+      role: '개발자',
+      message: '지원',
     });
 
     mockGetServerSession.mockResolvedValue({

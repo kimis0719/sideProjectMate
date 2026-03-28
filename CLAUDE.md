@@ -34,13 +34,13 @@ import User from '../../lib/models/User';
 
 ### 2-1. 파일 네이밍
 
-| 대상 | 규칙 | 예시 |
-|------|------|------|
-| React 컴포넌트 | PascalCase | `BoardShell.tsx`, `NoteItem.tsx` |
-| 훅 | camelCase, `use` 접두어 | `useModal.ts`, `useChatSocket.ts` |
-| 스토어 | camelCase, `Store` 접미어 | `boardStore.ts`, `wbsStore.ts` |
-| 유틸/라이브러리 | camelCase | `iconUtils.ts`, `profileUtils.ts` |
-| Mongoose 모델 | PascalCase, 단수형 | `User.ts`, `Project.ts` |
+| 대상            | 규칙                      | 예시                              |
+| --------------- | ------------------------- | --------------------------------- |
+| React 컴포넌트  | PascalCase                | `BoardShell.tsx`, `NoteItem.tsx`  |
+| 훅              | camelCase, `use` 접두어   | `useModal.ts`, `useChatSocket.ts` |
+| 스토어          | camelCase, `Store` 접미어 | `boardStore.ts`, `wbsStore.ts`    |
+| 유틸/라이브러리 | camelCase                 | `iconUtils.ts`, `profileUtils.ts` |
+| Mongoose 모델   | PascalCase, 단수형        | `User.ts`, `Project.ts`           |
 
 ### 2-2. 클라이언트 / 서버 컴포넌트 구분
 
@@ -61,8 +61,8 @@ return NextResponse.json(
 ### 2-4. API Route 필수 패턴
 
 ```ts
-export const dynamic = 'force-dynamic';     // 캐시 방지
-await dbConnect();                           // DB 연결 필수
+export const dynamic = 'force-dynamic'; // 캐시 방지
+await dbConnect(); // DB 연결 필수
 // 인증이 필요한 엔드포인트:
 const session = await getServerSession(authOptions);
 if (!session || !session.user?._id) {
@@ -75,8 +75,13 @@ if (!session || !session.user?._id) {
 ```ts
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IFoo extends Document { name: string; }
-const FooSchema: Schema = new Schema({ name: { type: String, required: true } }, { timestamps: true });
+export interface IFoo extends Document {
+  name: string;
+}
+const FooSchema: Schema = new Schema(
+  { name: { type: String, required: true } },
+  { timestamps: true }
+);
 // Hot Reload 대비 중복 등록 방지
 export default mongoose.models.Foo || mongoose.model<IFoo>('Foo', FooSchema);
 ```
@@ -157,11 +162,11 @@ src/app/api/wbs/tasks/route.test.ts        ← API Route (Phase 3)
 
 ### 테스트 작성 기준
 
-| Phase | 대상 | 필수 커버리지 |
-|-------|------|-------------|
-| 1 | `src/lib/utils/**`, `src/constants/**` 순수 함수 | 정상 3개 + 엣지 2개 + 실패 1개 이상 |
-| 2 | `src/store/**`, `src/hooks/**` | fetch 성공/실패, Optimistic Update, 소켓 emit, 롤백 |
-| 3 | `src/app/api/**` Route Handler | 401/403/400/404/201, DB 실제 저장 확인 |
+| Phase | 대상                                             | 필수 커버리지                                       |
+| ----- | ------------------------------------------------ | --------------------------------------------------- |
+| 1     | `src/lib/utils/**`, `src/constants/**` 순수 함수 | 정상 3개 + 엣지 2개 + 실패 1개 이상                 |
+| 2     | `src/store/**`, `src/hooks/**`                   | fetch 성공/실패, Optimistic Update, 소켓 emit, 롤백 |
+| 3     | `src/app/api/**` Route Handler                   | 401/403/400/404/201, DB 실제 저장 확인              |
 
 ### 핵심 패턴 요약
 

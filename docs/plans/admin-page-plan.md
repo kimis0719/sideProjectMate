@@ -11,13 +11,13 @@
 
 코드베이스를 전체적으로 분석한 결과, 현재 프로젝트에는 아래와 같은 구조적 공백이 있습니다.
 
-| 영역 | 현황 | 문제 |
-|------|------|------|
-| **공통 코드(CommonCode)** | DB에 존재하나 관리 UI 없음 | 새 카테고리/직군 추가 시 직접 DB 접근 필요 |
-| **기술 스택(TechStack)** | DB에 존재하나 관리 UI 없음 | 새 기술 추가 시 직접 DB 접근 필요 |
-| **사용자 관리** | `memberType: 'user'` 필드만 존재 | 악성 유저 비활성화, 관리자 지정 수단 없음 |
-| **프로젝트 모더레이션** | 프로젝트 작성자만 자체 삭제 가능 | 불건전 게시물 운영자 삭제 수단 없음 |
-| **플랫폼 통계** | 없음 | 서비스 현황 파악 불가 |
+| 영역                      | 현황                             | 문제                                       |
+| ------------------------- | -------------------------------- | ------------------------------------------ |
+| **공통 코드(CommonCode)** | DB에 존재하나 관리 UI 없음       | 새 카테고리/직군 추가 시 직접 DB 접근 필요 |
+| **기술 스택(TechStack)**  | DB에 존재하나 관리 UI 없음       | 새 기술 추가 시 직접 DB 접근 필요          |
+| **사용자 관리**           | `memberType: 'user'` 필드만 존재 | 악성 유저 비활성화, 관리자 지정 수단 없음  |
+| **프로젝트 모더레이션**   | 프로젝트 작성자만 자체 삭제 가능 | 불건전 게시물 운영자 삭제 수단 없음        |
+| **플랫폼 통계**           | 없음                             | 서비스 현황 파악 불가                      |
 
 ### 판단 근거
 
@@ -115,10 +115,20 @@ import { NextResponse } from 'next/server';
 export async function requireAdmin() {
   const session = await getServerSession(authOptions);
   if (!session?.user?._id) {
-    return { error: NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 }) };
+    return {
+      error: NextResponse.json(
+        { success: false, message: '로그인이 필요합니다.' },
+        { status: 401 }
+      ),
+    };
   }
   if (session.user.memberType !== 'admin') {
-    return { error: NextResponse.json({ success: false, message: '관리자 권한이 필요합니다.' }, { status: 403 }) };
+    return {
+      error: NextResponse.json(
+        { success: false, message: '관리자 권한이 필요합니다.' },
+        { status: 403 }
+      ),
+    };
   }
   return { session };
 }
@@ -175,6 +185,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 **신규 API**: `src/app/api/admin/common-codes/route.ts`
 
 구현할 엔드포인트:
+
 - `GET /api/admin/common-codes` — 전체 목록 (그룹별 페이지네이션)
 - `POST /api/admin/common-codes` — 새 코드 추가
 - `PUT /api/admin/common-codes/[id]` — 코드 수정 (label, order, isActive)
@@ -188,6 +199,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 | `CAREER` | 경력 단계 |
 
 **UI 컴포넌트**: `src/components/admin/CommonCodeManager.tsx`
+
 - 그룹별 탭 전환
 - 인라인 편집 (label, order 수정)
 - isActive 토글 스위치
@@ -200,12 +212,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 **신규 API**: `src/app/api/admin/tech-stacks/route.ts`
 
 구현할 엔드포인트:
+
 - `GET /api/admin/tech-stacks` — 전체 목록 (카테고리 필터, 페이지네이션)
 - `POST /api/admin/tech-stacks` — 새 기술 추가
 - `PUT /api/admin/tech-stacks/[id]` — 기술 수정
 - `DELETE /api/admin/tech-stacks/[id]` — 기술 삭제
 
 **UI 컴포넌트**: `src/components/admin/TechStackManager.tsx`
+
 - 카테고리별 필터 (frontend / backend / database / devops / mobile / other)
 - skillicons.dev 아이콘 미리보기 (`iconUtils.ts` 활용)
 - 기술명 + 카테고리 + logoUrl 편집 폼
@@ -215,10 +229,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 **신규 API**: `src/app/api/admin/users/route.ts`
 
 구현할 엔드포인트:
+
 - `GET /api/admin/users` — 전체 사용자 목록 (검색, 정렬, 페이지네이션)
 - `PATCH /api/admin/users/[id]` — 상태 변경 (`delYn`, `memberType`)
 
 **UI 기능**:
+
 - 사용자 테이블 (이름, 이메일, 가입일, 프로젝트 수, 상태)
 - 검색 (이름/이메일)
 - 계정 비활성화 (`delYn: 'Y'` 설정)
@@ -239,10 +255,12 @@ if (user.delYn === 'Y') {
 **신규 API**: `src/app/api/admin/projects/route.ts`
 
 구현할 엔드포인트:
+
 - `GET /api/admin/projects` — 전체 프로젝트 목록 (상태 필터, 페이지네이션)
 - `DELETE /api/admin/projects/[pid]` — 프로젝트 강제 삭제
 
 **UI 기능**:
+
 - 프로젝트 테이블 (제목, 작성자, 상태, 조회수, 지원자 수, 생성일)
 - 상태 필터 (모집중 / 진행중 / 완료)
 - 프로젝트 상세 페이지 바로가기 링크
@@ -289,6 +307,7 @@ MongoDB Aggregation Pipeline을 활용한 플랫폼 현황 통계:
 **파일**: `src/app/admin/page.tsx`
 
 표시할 위젯:
+
 - KPI 카드 4개 (전체 유저 / 프로젝트 / 대기 지원 / 수락률)
 - 인기 기술 스택 순위 (간단한 bar 차트 또는 순위 리스트)
 - 최근 가입 사용자 5명
@@ -315,17 +334,17 @@ src/components/admin/
 
 ## 5. 구현 순서 & 예상 일정
 
-| 순서 | 작업 | 예상 소요 | 의존성 |
-|------|------|-----------|--------|
-| 1 | `memberType` 역할 확장 + `adminAuth.ts` 작성 | 0.5일 | - |
-| 2 | `auth.ts` 세션 확장 + `delYn` 로그인 체크 | 0.5일 | 1 |
-| 3 | 관리자 레이아웃 + 인증 가드 | 0.5일 | 1, 2 |
-| 4 | CommonCode 관리 API + UI | 1일 | 3 |
-| 5 | TechStack 관리 API + UI | 1일 | 3 |
-| 6 | 사용자 관리 API + UI | 1.5일 | 3 |
-| 7 | 프로젝트 모더레이션 API + UI | 1일 | 3 |
-| 8 | 통계 집계 API + 대시보드 UI | 1.5일 | 4~7 |
-| 9 | 테스트 & 첫 관리자 계정 생성 | 0.5일 | 전체 |
+| 순서 | 작업                                         | 예상 소요 | 의존성 |
+| ---- | -------------------------------------------- | --------- | ------ |
+| 1    | `memberType` 역할 확장 + `adminAuth.ts` 작성 | 0.5일     | -      |
+| 2    | `auth.ts` 세션 확장 + `delYn` 로그인 체크    | 0.5일     | 1      |
+| 3    | 관리자 레이아웃 + 인증 가드                  | 0.5일     | 1, 2   |
+| 4    | CommonCode 관리 API + UI                     | 1일       | 3      |
+| 5    | TechStack 관리 API + UI                      | 1일       | 3      |
+| 6    | 사용자 관리 API + UI                         | 1.5일     | 3      |
+| 7    | 프로젝트 모더레이션 API + UI                 | 1일       | 3      |
+| 8    | 통계 집계 API + 대시보드 UI                  | 1.5일     | 4~7    |
+| 9    | 테스트 & 첫 관리자 계정 생성                 | 0.5일     | 전체   |
 
 **총 예상 기간: 8~10일 (1인 기준)**
 
@@ -377,16 +396,16 @@ main();
 
 이 계획은 **기존 코드를 최대한 건드리지 않고** 새 기능을 추가하는 방향으로 설계되었습니다.
 
-| 파일 | 변경 유형 | 내용 |
-|------|-----------|------|
-| `src/lib/models/User.ts` | 수정 | `memberType` enum 추가 |
-| `src/lib/auth.ts` | 수정 | JWT/세션 콜백에 `memberType` 추가, `delYn` 로그인 체크 |
-| `src/types/next-auth.d.ts` | 수정 | `memberType` 타입 선언 추가 |
-| `src/app/admin/**` | 신규 | 관리자 페이지 전체 |
-| `src/app/api/admin/**` | 신규 | 관리자 API 전체 |
-| `src/components/admin/**` | 신규 | 관리자 UI 컴포넌트 전체 |
-| `src/lib/adminAuth.ts` | 신규 | 관리자 인증 유틸 |
-| `scripts/create-admin.ts` | 신규 | 최초 관리자 계정 생성 스크립트 |
+| 파일                       | 변경 유형 | 내용                                                   |
+| -------------------------- | --------- | ------------------------------------------------------ |
+| `src/lib/models/User.ts`   | 수정      | `memberType` enum 추가                                 |
+| `src/lib/auth.ts`          | 수정      | JWT/세션 콜백에 `memberType` 추가, `delYn` 로그인 체크 |
+| `src/types/next-auth.d.ts` | 수정      | `memberType` 타입 선언 추가                            |
+| `src/app/admin/**`         | 신규      | 관리자 페이지 전체                                     |
+| `src/app/api/admin/**`     | 신규      | 관리자 API 전체                                        |
+| `src/components/admin/**`  | 신규      | 관리자 UI 컴포넌트 전체                                |
+| `src/lib/adminAuth.ts`     | 신규      | 관리자 인증 유틸                                       |
+| `scripts/create-admin.ts`  | 신규      | 최초 관리자 계정 생성 스크립트                         |
 
 **기존 사용자 기능, 프로젝트 기능, 칸반/WBS 기능에는 영향 없음.**
 

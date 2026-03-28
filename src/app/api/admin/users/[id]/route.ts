@@ -15,7 +15,10 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
     const user = await User.findById(params.id).select('-password');
 
     if (!user) {
-      return NextResponse.json({ success: false, message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true, data: user });
@@ -63,7 +66,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     ).select('nName authorEmail memberType delYn createdAt uid');
 
     if (!updated) {
-      return NextResponse.json({ success: false, message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true, data: updated });

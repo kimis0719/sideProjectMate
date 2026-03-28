@@ -14,7 +14,7 @@ const d = (dateStr: string): Date => new Date(dateStr);
 // ─── 담당자 상수 (ConflictTask용) ─────────────────────────────────────────────
 export const ASSIGNEES = {
   alice: { _id: 'user-alice', nName: '앨리스' },
-  bob:   { _id: 'user-bob',   nName: '밥' },
+  bob: { _id: 'user-bob', nName: '밥' },
   carol: { _id: 'user-carol', nName: '캐롤' },
 } as const;
 

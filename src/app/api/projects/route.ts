@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Counter from '@/lib/models/Counter';
@@ -48,7 +48,10 @@ export async function GET(request: NextRequest) {
 
     const memberId = searchParams.get('memberId');
     if (memberId) {
-      const memberProjects = await ProjectMember.find({ userId: memberId, status: 'active' }).distinct('projectId');
+      const memberProjects = await ProjectMember.find({
+        userId: memberId,
+        status: 'active',
+      }).distinct('projectId');
       query._id = { $in: memberProjects };
     }
 
@@ -77,7 +80,11 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: '프로젝트를 불러오는 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트를 불러오는 중 오류가 발생했습니다.',
+        error: error.message,
+      },
       { status: 500 }
     );
   }
@@ -88,7 +95,10 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
-      return NextResponse.json({ success: false, message: '인증되지 않은 사용자입니다.' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: '인증되지 않은 사용자입니다.' },
+        { status: 401 }
+      );
     }
 
     await dbConnect();
@@ -96,7 +106,10 @@ export async function POST(request: Request) {
     const { title, category, content, members, deadline, images, tags } = body;
 
     if (!title || !content || !category || !members || members.length === 0) {
-      return NextResponse.json({ success: false, message: '필수 입력 항목이 누락되었습니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '필수 입력 항목이 누락되었습니다.' },
+        { status: 400 }
+      );
     }
 
     const authorId = session.user._id;
@@ -141,7 +154,6 @@ export async function POST(request: Request) {
       { success: true, message: '프로젝트가 성공적으로 생성되었습니다.', data: populatedProject },
       { status: 201 }
     );
-
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: '프로젝트 생성 중 오류가 발생했습니다.', error: error.message },

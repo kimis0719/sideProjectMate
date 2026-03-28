@@ -1,0 +1,1555 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Side Project Mate — 비즈니스 모델 심사 보고서</title>
+    <style>
+      :root {
+        --brand: #4f46e5;
+        --brand-light: #e0e7ff;
+        --success: #16a34a;
+        --warning: #d97706;
+        --danger: #dc2626;
+        --neutral: #6b7280;
+        --bg: #f9fafb;
+        --card: #ffffff;
+        --text: #111827;
+        --text-muted: #6b7280;
+        --border: #e5e7eb;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Segoe UI', 'Apple SD Gothic Neo', Pretendard, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.7;
+      }
+
+      /* ── Cover ── */
+      .cover {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+        color: #fff;
+        padding: 72px 48px 60px;
+        position: relative;
+        overflow: hidden;
+      }
+      .cover::before {
+        content: '';
+        position: absolute;
+        top: -80px;
+        right: -80px;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .cover::after {
+        content: '';
+        position: absolute;
+        bottom: -40px;
+        left: 10%;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .cover-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #c7d2fe;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 20px;
+        margin-bottom: 24px;
+      }
+      .cover h1 {
+        font-size: 36px;
+        font-weight: 800;
+        margin-bottom: 10px;
+        letter-spacing: -0.5px;
+      }
+      .cover .subtitle {
+        font-size: 18px;
+        color: #a5b4fc;
+        margin-bottom: 40px;
+      }
+      .cover-meta {
+        display: flex;
+        gap: 32px;
+        flex-wrap: wrap;
+        font-size: 13px;
+        color: #c7d2fe;
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        padding-top: 24px;
+      }
+      .cover-meta span strong {
+        color: #fff;
+        display: block;
+        font-size: 15px;
+      }
+
+      /* ── Layout ── */
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 32px 80px;
+      }
+
+      /* ── Overall Score Dashboard ── */
+      .score-dashboard {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 40px;
+        margin: 48px 0 36px;
+        box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
+      }
+      .score-dashboard h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 32px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .score-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 40px;
+        align-items: center;
+      }
+      .total-score-box {
+        text-align: center;
+      }
+      .total-score-circle {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: conic-gradient(var(--brand) 0% 46%, #e5e7eb 46% 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        position: relative;
+      }
+      .total-score-inner {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .total-score-num {
+        font-size: 36px;
+        font-weight: 800;
+        color: var(--brand);
+        line-height: 1;
+      }
+      .total-score-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .total-grade {
+        display: inline-block;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 4px 14px;
+        border-radius: 20px;
+        margin-top: 8px;
+      }
+      .score-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .score-bar-row {
+        display: grid;
+        grid-template-columns: 140px 1fr 50px;
+        align-items: center;
+        gap: 12px;
+      }
+      .score-bar-label {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .score-bar-track {
+        height: 8px;
+        border-radius: 4px;
+        background: #e5e7eb;
+        overflow: hidden;
+      }
+      .score-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.6s ease;
+      }
+      .score-bar-value {
+        font-size: 13px;
+        font-weight: 700;
+        text-align: right;
+      }
+      .fill-high {
+        background: var(--success);
+      }
+      .fill-mid {
+        background: var(--warning);
+      }
+      .fill-low {
+        background: var(--danger);
+      }
+
+      /* ── Sections ── */
+      .section {
+        margin: 48px 0;
+      }
+      .section-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .section-title .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--brand);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      /* ── Cards ── */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      }
+      .card-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* ── Status badges ── */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .badge-done {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .badge-partial {
+        background: #fef9c3;
+        color: #92400e;
+      }
+      .badge-missing {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .badge-planned {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+      .badge-info {
+        background: #f0f9ff;
+        color: #0369a1;
+      }
+
+      /* ── Competitor Table ── */
+      .competitor-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .competitor-table th {
+        background: #f3f4f6;
+        padding: 10px 14px;
+        text-align: left;
+        font-weight: 700;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border);
+      }
+      .competitor-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: top;
+      }
+      .competitor-table tr:hover td {
+        background: #fafafa;
+      }
+      .competitor-table .spm {
+        font-weight: 700;
+        color: var(--brand);
+      }
+
+      /* ── Feature Grid ── */
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      .feature-item {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 18px 20px;
+      }
+      .feature-item-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+      }
+      .feature-name {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .feature-desc {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+
+      /* ── Progress Meter ── */
+      .progress-meter {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .meter-track {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: #e5e7eb;
+      }
+      .meter-fill {
+        height: 100%;
+        border-radius: 3px;
+      }
+      .meter-pct {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-muted);
+      }
+
+      /* ── Recommendation Cards ── */
+      .rec-card {
+        border-left: 4px solid;
+        background: var(--card);
+        border-radius: 0 10px 10px 0;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      }
+      .rec-card.p0 {
+        border-color: #dc2626;
+      }
+      .rec-card.p1 {
+        border-color: #d97706;
+      }
+      .rec-card.p2 {
+        border-color: #2563eb;
+      }
+      .rec-card.p3 {
+        border-color: #16a34a;
+      }
+      .rec-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .rec-card-body {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.6;
+      }
+      .priority-tag {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+      .p0-tag {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .p1-tag {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .p2-tag {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .p3-tag {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      /* ── Risk Table ── */
+      .risk-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .risk-table th {
+        background: #f3f4f6;
+        padding: 10px 14px;
+        text-align: left;
+        font-weight: 700;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border);
+      }
+      .risk-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f3f4f6;
+      }
+      .risk-high {
+        color: #dc2626;
+        font-weight: 700;
+      }
+      .risk-medium {
+        color: #d97706;
+        font-weight: 700;
+      }
+      .risk-low {
+        color: #16a34a;
+        font-weight: 700;
+      }
+
+      /* ── Verdict ── */
+      .verdict {
+        background: linear-gradient(135deg, #1e1b4b, #312e81);
+        color: #fff;
+        border-radius: 16px;
+        padding: 48px;
+        margin: 48px 0;
+        text-align: center;
+      }
+      .verdict-grade {
+        font-size: 64px;
+        font-weight: 900;
+        letter-spacing: -2px;
+        background: linear-gradient(90deg, #a5b4fc, #c7d2fe);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .verdict-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 12px 0 16px;
+      }
+      .verdict-body {
+        font-size: 15px;
+        color: #a5b4fc;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.8;
+      }
+
+      /* ── Divider ── */
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 40px 0;
+      }
+
+      /* ── Quote ── */
+      blockquote {
+        border-left: 3px solid var(--brand);
+        padding: 12px 20px;
+        background: var(--brand-light);
+        border-radius: 0 8px 8px 0;
+        font-size: 14px;
+        color: #3730a3;
+        margin: 16px 0;
+      }
+
+      p {
+        margin-bottom: 12px;
+        font-size: 14px;
+      }
+
+      .text-muted {
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+
+      ul {
+        padding-left: 20px;
+      }
+      ul li {
+        font-size: 13px;
+        margin-bottom: 6px;
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .three-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+      }
+
+      .highlight-box {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        padding: 16px 20px;
+        font-size: 13px;
+        color: #92400e;
+        margin: 16px 0;
+      }
+
+      .tag {
+        display: inline-block;
+        background: var(--brand-light);
+        color: var(--brand);
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin: 2px;
+      }
+
+      @media (max-width: 640px) {
+        .score-grid {
+          grid-template-columns: 1fr;
+        }
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+        .three-col {
+          grid-template-columns: 1fr;
+        }
+        .cover {
+          padding: 40px 24px;
+        }
+        .container {
+          padding: 0 16px 60px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ════════════════════ COVER ════════════════════ -->
+    <div class="cover">
+      <div class="cover-badge">IT 비즈니스 모델 심사 보고서</div>
+      <h1>Side Project Mate</h1>
+      <p class="subtitle">사이드 프로젝트 팀 매칭 및 협업 플랫폼 — 상업적 완성도 평가</p>
+      <div class="cover-meta">
+        <span><strong>심사일</strong>2026년 3월 3일</span>
+        <span><strong>심사 대상</strong>Side Project Mate v0.x (MVP)</span>
+        <span><strong>비교 기준</strong>국내외 유사 상용 서비스 5종</span>
+        <span><strong>종합 등급</strong>C+ / MVP 진입 수준</span>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- ════ OVERALL SCORE ════ -->
+      <div class="score-dashboard">
+        <h2>📊 종합 평가 스코어카드</h2>
+        <div class="score-grid">
+          <div class="total-score-box">
+            <div class="total-score-circle">
+              <div class="total-score-inner">
+                <div class="total-score-num">46</div>
+                <div class="total-score-label">/ 100점</div>
+              </div>
+            </div>
+            <div class="total-grade">🏷 C+ 등급 · MVP 초기 단계</div>
+          </div>
+          <div class="score-bars">
+            <div class="score-bar-row">
+              <span class="score-bar-label">핵심 기능 완성도</span>
+              <div class="score-bar-track">
+                <div class="score-bar-fill fill-mid" style="width: 62%"></div>
+              </div>
+              <span class="score-bar-value fill-mid" style="color: #d97706">62점</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-bar-label">비즈니스 모델</span>
+              <div class="score-bar-track">
+                <div class="score-bar-fill fill-low" style="width: 5%"></div>
+              </div>
+              <span class="score-bar-value" style="color: #dc2626">5점</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-bar-label">UI/UX 완성도</span>
+              <div class="score-bar-track">
+                <div class="score-bar-fill fill-mid" style="width: 45%"></div>
+              </div>
+              <span class="score-bar-value" style="color: #d97706">45점</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-bar-label">확장성 / 기술 아키텍처</span>
+              <div class="score-bar-track">
+                <div class="score-bar-fill fill-high" style="width: 72%"></div>
+              </div>
+              <span class="score-bar-value" style="color: #16a34a">72점</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-bar-label">성장·운영 준비도</span>
+              <div class="score-bar-track">
+                <div class="score-bar-fill fill-low" style="width: 20%"></div>
+              </div>
+              <span class="score-bar-value" style="color: #dc2626">20점</span>
+            </div>
+            <div class="score-bar-row">
+              <span class="score-bar-label">보안·신뢰 시스템</span>
+              <div class="score-bar-track">
+                <div class="score-bar-fill fill-low" style="width: 30%"></div>
+              </div>
+              <span class="score-bar-value" style="color: #dc2626">30점</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 1. 프로젝트 개요 ════ -->
+      <div class="section">
+        <div class="section-title"><span class="num">1</span>프로젝트 개요 및 포지셔닝</div>
+
+        <div class="card">
+          <div class="card-title">📌 서비스 정의</div>
+          <p>
+            Side Project Mate는
+            <strong
+              >개발자를 중심으로 한 사이드 프로젝트 팀 매칭 + 내장 협업 도구(칸반/WBS)
+              플랫폼</strong
+            >입니다. 단순 팀원 매칭을 넘어, 찾은 팀원들과 프로젝트를 직접 관리할 수 있는 All-in-One
+            도구를 지향합니다.
+          </p>
+          <p>
+            타겟 유저는
+            <strong
+              >사이드 프로젝트를 진행하고 싶지만 혼자이거나 팀이 부족한 국내
+              개발자·디자이너·기획자</strong
+            >이며, GitHub 연동, Solved.ac 연동, Tech Blog RSS 수집 등 개발자 특화 기능을 전면에
+            내세웁니다.
+          </p>
+
+          <div style="margin-top: 16px">
+            <span class="tag">팀 매칭</span>
+            <span class="tag">칸반 보드</span>
+            <span class="tag">WBS·간트</span>
+            <span class="tag">실시간 협업</span>
+            <span class="tag">개발자 프로필</span>
+            <span class="tag">GitHub 연동</span>
+            <span class="tag">채팅</span>
+            <span class="tag">Solved.ac</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🎯 경쟁 포지셔닝 맵</div>
+          <p class="text-muted" style="margin-bottom: 16px">
+            주요 유사 서비스와의 기능·시장 포지션 비교
+          </p>
+          <table class="competitor-table">
+            <thead>
+              <tr>
+                <th>서비스</th>
+                <th>팀 매칭</th>
+                <th>협업 도구</th>
+                <th>개발자 특화</th>
+                <th>수익 모델</th>
+                <th>국내 MAU 규모</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong class="spm">Side Project Mate</strong></td>
+                <td><span class="badge badge-partial">▲ 구현 중</span></td>
+                <td><span class="badge badge-done">✔ 내장</span></td>
+                <td><span class="badge badge-done">✔ 강점</span></td>
+                <td><span class="badge badge-missing">✖ 없음</span></td>
+                <td>–</td>
+              </tr>
+              <tr>
+                <td>Wishket (위시켓)</td>
+                <td><span class="badge badge-done">✔ 성숙</span></td>
+                <td><span class="badge badge-missing">✖ 없음</span></td>
+                <td><span class="badge badge-partial">▲ 일부</span></td>
+                <td><span class="badge badge-done">✔ 중개수수료</span></td>
+                <td>~100만+</td>
+              </tr>
+              <tr>
+                <td>Wanted (원티드)</td>
+                <td><span class="badge badge-done">✔ 성숙</span></td>
+                <td><span class="badge badge-missing">✖ 없음</span></td>
+                <td><span class="badge badge-partial">▲ 일부</span></td>
+                <td><span class="badge badge-done">✔ 채용 수수료</span></td>
+                <td>~500만+</td>
+              </tr>
+              <tr>
+                <td>Indie Hackers</td>
+                <td><span class="badge badge-partial">▲ 커뮤니티</span></td>
+                <td><span class="badge badge-missing">✖ 없음</span></td>
+                <td><span class="badge badge-done">✔ 강점</span></td>
+                <td><span class="badge badge-partial">▲ 광고</span></td>
+                <td>글로벌</td>
+              </tr>
+              <tr>
+                <td>Cofounders Lab</td>
+                <td><span class="badge badge-done">✔ 특화</span></td>
+                <td><span class="badge badge-missing">✖ 없음</span></td>
+                <td><span class="badge badge-partial">▲ 일부</span></td>
+                <td><span class="badge badge-done">✔ 프리미엄</span></td>
+                <td>글로벌</td>
+              </tr>
+              <tr>
+                <td>Notion / Linear</td>
+                <td><span class="badge badge-missing">✖ 없음</span></td>
+                <td><span class="badge badge-done">✔ 핵심</span></td>
+                <td><span class="badge badge-partial">▲ 일부</span></td>
+                <td><span class="badge badge-done">✔ SaaS 구독</span></td>
+                <td>글로벌</td>
+              </tr>
+            </tbody>
+          </table>
+          <blockquote style="margin-top: 16px">
+            <strong>심사 의견:</strong> Side Project Mate의 포지셔닝은 "팀 매칭 + 협업 도구의
+            통합"이라는 점에서 독특합니다. 그러나 양쪽 다 절반의 완성도에 그쳐, 두 마리 토끼를 모두
+            잡으려다 어느 쪽에도 우위를 갖추지 못하는 위험성이 있습니다.
+          </blockquote>
+        </div>
+      </div>
+
+      <!-- ════ 2. 기능 완성도 ════ -->
+      <div class="section">
+        <div class="section-title"><span class="num">2</span>기능별 완성도 심사</div>
+
+        <div class="feature-grid">
+          <!-- 인증 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">🔐 인증 시스템</span>
+              <span class="badge badge-done">완성</span>
+            </div>
+            <p class="feature-desc">
+              이메일/비밀번호 기반 JWT 인증, bcrypt 해싱, next-auth 세션 관리
+            </p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-high" style="width: 85%"></div>
+              </div>
+              <span class="meter-pct">85%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              소셜 로그인(Google/GitHub OAuth) 부재. 상업 서비스에서는 필수 전환 요소.
+            </p>
+          </div>
+
+          <!-- 프로젝트 관리 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">📁 프로젝트 게시판</span>
+              <span class="badge badge-done">완성</span>
+            </div>
+            <p class="feature-desc">CRUD, 썸네일 업로드, Tiptap 에디터, 필터·검색, 좋아요</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-high" style="width: 80%"></div>
+              </div>
+              <span class="meter-pct">80%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              추천 알고리즘·랭킹 로직 없음. 검색 인덱싱 미지원.
+            </p>
+          </div>
+
+          <!-- 지원 시스템 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">🤝 지원·채용 시스템</span>
+              <span class="badge badge-done">완성</span>
+            </div>
+            <p class="feature-desc">역할 선택 지원, 수락/거절, 지원 상태 조회</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-high" style="width: 82%"></div>
+              </div>
+              <span class="meter-pct">82%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              인터뷰 스케줄링, 합격 후 온보딩 플로우 없음.
+            </p>
+          </div>
+
+          <!-- 프로필 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">👤 개발자 프로필</span>
+              <span class="badge badge-done">완성</span>
+            </div>
+            <p class="feature-desc">GitHub 연동, Solved.ac, 블로그 RSS, 기술 스택, 가용 스케줄</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-high" style="width: 78%"></div>
+              </div>
+              <span class="meter-pct">78%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              포트폴리오 첨부(PDF/링크), 경력 인증, 평판(리뷰) 기능 없음.
+            </p>
+          </div>
+
+          <!-- 칸반 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">📊 칸반 보드</span>
+              <span class="badge badge-partial">부분 완성</span>
+            </div>
+            <p class="feature-desc">
+              dnd-kit 드래그&드롭, 실시간 Socket.io 동기화, Undo/Redo, Presence
+            </p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-mid" style="width: 72%"></div>
+              </div>
+              <span class="meter-pct">72%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              레이블·우선순위·마감일 설정 없음. 코멘트·파일 첨부 미지원.
+            </p>
+          </div>
+
+          <!-- WBS -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">📅 WBS / 간트 차트</span>
+              <span class="badge badge-partial">부분 완성</span>
+            </div>
+            <p class="feature-desc">gantt-task-react 기반, 의존성 설정, 충돌 감지</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-mid" style="width: 55%"></div>
+              </div>
+              <span class="meter-pct">55%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              DOM 직접 조작 버그 다수, 실시간 동기화 없음, UX 개선 필요 (WBS_REDESIGN.md 참조).
+            </p>
+          </div>
+
+          <!-- 채팅 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">💬 채팅</span>
+              <span class="badge badge-missing">미완성</span>
+            </div>
+            <p class="feature-desc">UI 프로토타입 + 모델/API 설계 완료, 실시간 연동 미완성</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-low" style="width: 30%"></div>
+              </div>
+              <span class="meter-pct">30%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              팀 매칭 플랫폼에서 채팅은 핵심 기능. 미완성 상태로 출시 시 이탈 요인.
+            </p>
+          </div>
+
+          <!-- 알림 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">🔔 알림 시스템</span>
+              <span class="badge badge-partial">부분 완성</span>
+            </div>
+            <p class="feature-desc">실시간 Socket 알림, Zustand 기반 알림 스토어</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-mid" style="width: 65%"></div>
+              </div>
+              <span class="meter-pct">65%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              이메일 알림, 푸시 알림(PWA) 없음. 알림 설정 페이지 부재.
+            </p>
+          </div>
+
+          <!-- 관리자 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">🛡 관리자 패널</span>
+              <span class="badge badge-missing">미구현</span>
+            </div>
+            <p class="feature-desc">계획서(admin-page-plan.md)만 존재, 실 구현 없음</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-low" style="width: 0%"></div>
+              </div>
+              <span class="meter-pct">0%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              콘텐츠 모더레이션, 공통 코드 관리, 플랫폼 통계가 없으면 운영 불가.
+            </p>
+          </div>
+
+          <!-- 커뮤니티 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">📝 커뮤니티 / 댓글</span>
+              <span class="badge badge-missing">미구현</span>
+            </div>
+            <p class="feature-desc">Comment, Post 모델만 정의됨. API/UI 없음</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-low" style="width: 5%"></div>
+              </div>
+              <span class="meter-pct">5%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              유저 리텐션의 핵심 요소. 커뮤니티 없이는 재방문 유인 약함.
+            </p>
+          </div>
+
+          <!-- 결제 -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">💳 결제 / 수익 모델</span>
+              <span class="badge badge-missing">미구현</span>
+            </div>
+            <p class="feature-desc">어떠한 결제·수익화 구조도 없음</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-low" style="width: 0%"></div>
+              </div>
+              <span class="meter-pct">0%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              상업화 전 단계. 투자 유치 없이는 지속 운영 불가.
+            </p>
+          </div>
+
+          <!-- SEO -->
+          <div class="feature-item">
+            <div class="feature-item-head">
+              <span class="feature-name">🔍 SEO / 마케팅 준비도</span>
+              <span class="badge badge-missing">미흡</span>
+            </div>
+            <p class="feature-desc">OG 태그, robots.txt, sitemap 없음. 검색 유입 불가</p>
+            <div class="progress-meter">
+              <div class="meter-track">
+                <div class="meter-fill fill-low" style="width: 15%"></div>
+              </div>
+              <span class="meter-pct">15%</span>
+            </div>
+            <p class="text-muted" style="margin-top: 8px">
+              유기적 사용자 획득(SEO 유입)이 사실상 불가능한 상태.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 3. 비즈니스 모델 심사 ════ -->
+      <div class="section">
+        <div class="section-title"><span class="num">3</span>비즈니스 모델 심사 — 치명적 공백</div>
+
+        <div class="highlight-box">
+          ⚠️ <strong>핵심 경고:</strong> 현재 Side Project Mate에는 수익화 전략, 운영 지속성 계획,
+          성장 지표(KPI) 정의가 전혀 없습니다. 기술적 완성도와 무관하게, 비즈니스 관점에서는 "아직
+          제품이 아닌 프로토타입"입니다.
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title">💡 가능한 수익 모델 (미도입)</div>
+            <ul>
+              <li>
+                <strong>Freemium SaaS:</strong> 무료(팀 3인, 프로젝트 2개) + 유료(무제한 + 고급
+                협업툴) 구독
+              </li>
+              <li><strong>프리미엄 프로필:</strong> 구직 플랫폼처럼 프로필 상단 노출 과금</li>
+              <li><strong>팀 매칭 수수료:</strong> 프로젝트 성사 시 수수료 (Wishket 모델)</li>
+              <li><strong>B2B 채용 연동:</strong> 기업 대상 개발자 채용 채널 판매</li>
+              <li><strong>광고:</strong> 개발 교육, SaaS 도구 광고</li>
+              <li><strong>부트스트랩 이벤트:</strong> 해커톤·프로젝트 대회 스폰서십</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">📉 현재 운영 지속성 리스크</div>
+            <ul>
+              <li>Render.com <strong>Free Plan</strong> 배포 → 상시 서비스 불가(슬립 모드)</li>
+              <li>MongoDB Atlas 무료 티어 → 512MB 데이터 제한</li>
+              <li>Cloudinary 무료 플랜 → 월 25크레딧 제한</li>
+              <li>운영 비용 $0이지만 사용자 100명 이상 시 즉시 한계</li>
+              <li>서버 Down-time 모니터링·알림 시스템 없음</li>
+              <li>백업·재해복구(DR) 전략 없음</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 상업 서비스와의 TAM/SAM 분석 비교</div>
+          <p>국내 개발자 커뮤니티 규모를 기준으로 추정합니다:</p>
+          <div class="three-col" style="margin-top: 16px">
+            <div
+              style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 10px"
+            >
+              <div style="font-size: 28px; font-weight: 800; color: var(--brand)">~85만</div>
+              <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px">
+                TAM (국내 IT 종사자)
+              </div>
+            </div>
+            <div
+              style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 10px"
+            >
+              <div style="font-size: 28px; font-weight: 800; color: var(--brand)">~15만</div>
+              <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px">
+                SAM (사이드 프로젝트 관심 개발자)
+              </div>
+            </div>
+            <div
+              style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 10px"
+            >
+              <div style="font-size: 28px; font-weight: 800; color: #d97706);">~5,000</div>
+              <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px">
+                SOM (현실적 초기 목표 MAU)
+              </div>
+            </div>
+          </div>
+          <p class="text-muted" style="margin-top: 12px">
+            시장 잠재력은 충분하나, 해당 시장에서 경쟁하려면 차별화된 네트워크 효과와 신뢰 시스템이
+            필수입니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- ════ 4. 기술 아키텍처 ════ -->
+      <div class="section">
+        <div class="section-title"><span class="num">4</span>기술 아키텍처 및 확장성 평가</div>
+
+        <div class="two-col">
+          <div class="card" style="border-top: 3px solid var(--success)">
+            <div class="card-title" style="color: var(--success)">✅ 강점</div>
+            <ul>
+              <li><strong>Next.js 14 App Router:</strong> 최신 React 서버 컴포넌트 패턴 적용</li>
+              <li><strong>TypeScript 전면 사용:</strong> 타입 안전성과 유지보수성 확보</li>
+              <li>
+                <strong>Socket.io 실시간 협업:</strong> 칸반 보드에서 Presence, Lock, Sync 구현
+              </li>
+              <li><strong>Cloudinary 이미지 관리:</strong> CDN 기반, 서버 부담 없음</li>
+              <li><strong>MongoDB Atlas:</strong> 클라우드 관리형 DB, 스케일 유연</li>
+              <li><strong>Zustand + Zundo:</strong> 경량 상태 관리 + Undo/Redo</li>
+              <li><strong>코드 컨벤션 문서화:</strong> CLAUDE.md로 팀 기준 명확</li>
+              <li><strong>컴포넌트 분리:</strong> 명확한 폴더 구조와 역할 정의</li>
+            </ul>
+          </div>
+          <div class="card" style="border-top: 3px solid var(--danger)">
+            <div class="card-title" style="color: var(--danger)">❌ 약점</div>
+            <ul>
+              <li><strong>WBS API 응답 형식 불일치:</strong> 컨벤션 미준수 버그 3종</li>
+              <li>
+                <strong>GanttChart DOM 직접 조작:</strong> setInterval 메모리 누수, 라이브러리 내부
+                의존
+              </li>
+              <li><strong>테스트 코드 전무:</strong> 단위/E2E 테스트 없음 → 리그레션 위험</li>
+              <li><strong>any 타입 사용:</strong> session.user as any 등 타입 안전성 훼손</li>
+              <li>
+                <strong>React Hook 규칙 위반:</strong> mypage 조건문 이후 useState (런타임 에러
+                가능)
+              </li>
+              <li><strong>WBS 실시간 동기화 없음:</strong> 칸반과 달리 Socket 미적용</li>
+              <li><strong>ESLint/빌드 에러 무시:</strong> ignoreBuildErrors: true 설정</li>
+              <li><strong>배치 삭제 쿼리 버그:</strong> MongoDB $pull 쿼리 오류</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⚡ 성능·확장성 주요 리스크</div>
+          <table class="risk-table">
+            <thead>
+              <tr>
+                <th>항목</th>
+                <th>현재 상태</th>
+                <th>위험도</th>
+                <th>영향</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Render.com Free Plan</td>
+                <td>비활성 15분 후 슬립, 재시작 30~60초</td>
+                <td class="risk-high">높음</td>
+                <td>첫 방문자 이탈, 실시간 기능 단절</td>
+              </tr>
+              <tr>
+                <td>Socket.io 단일 서버</td>
+                <td>Express + Socket.io 단일 인스턴스</td>
+                <td class="risk-medium">중간</td>
+                <td>수평 확장 불가, 서버 재시작 시 모든 연결 끊김</td>
+              </tr>
+              <tr>
+                <td>Mongoose 연결 풀</td>
+                <td>싱글톤 캐싱으로 처리</td>
+                <td class="risk-low">낮음</td>
+                <td>현재 수준에서는 안정적</td>
+              </tr>
+              <tr>
+                <td>이미지 최적화</td>
+                <td>Cloudinary CDN 사용</td>
+                <td class="risk-low">낮음</td>
+                <td>현재 수준에서는 안정적</td>
+              </tr>
+              <tr>
+                <td>API Rate Limiting</td>
+                <td>없음</td>
+                <td class="risk-high">높음</td>
+                <td>DDoS, 스팸 지원 공격에 무방비</td>
+              </tr>
+              <tr>
+                <td>검색 성능</td>
+                <td>MongoDB 텍스트 검색 (풀스캔 가능성)</td>
+                <td class="risk-medium">중간</td>
+                <td>데이터 증가 시 검색 속도 저하</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════ 5. UI/UX 평가 ════ -->
+      <div class="section">
+        <div class="section-title"><span class="num">5</span>UI/UX 완성도 평가</div>
+
+        <div class="card">
+          <div class="card-title">🎨 현재 UI/UX의 주요 문제점</div>
+          <p>
+            UI_UX_IMPROVEMENT_PLAN.md에 상세히 문서화되어 있으며, 다음 항목들이 상업화를 막는 핵심
+            장애물입니다.
+          </p>
+          <div class="three-col" style="margin-top: 20px">
+            <div>
+              <p style="font-weight: 700; margin-bottom: 8px; color: #dc2626">🔴 즉시 수정 필요</p>
+              <ul>
+                <li>푸터 더미 데이터 (홍길동, 가짜 사업자번호)</li>
+                <li>동작하지 않는 찜/채팅 버튼 노출</li>
+                <li>알림 드롭다운 외부 클릭 미감지</li>
+                <li>React Hook 규칙 위반 (mypage)</li>
+              </ul>
+            </div>
+            <div>
+              <p style="font-weight: 700; margin-bottom: 8px; color: #d97706">🟠 단기 개선</p>
+              <ul>
+                <li>브랜드 컬러 전무 (무채색 전체)</li>
+                <li>로고 부재 ("SPM" 텍스트만)</li>
+                <li>로그인 폼 라벨 숨김 처리</li>
+                <li>Skeleton UI 전무</li>
+                <li>빈 상태(Empty State) 미흡</li>
+              </ul>
+            </div>
+            <div>
+              <p style="font-weight: 700; margin-bottom: 8px; color: #2563eb">🔵 중기 개선</p>
+              <ul>
+                <li>랜딩 페이지 설득력 없음 (통계·소개 섹션 없음)</li>
+                <li>SEO 메타데이터 전무</li>
+                <li>모바일 반응형 미검증</li>
+                <li>접근성(ARIA) 부재</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔄 사용자 여정(User Journey) 단절 분석</div>
+          <table class="risk-table">
+            <thead>
+              <tr>
+                <th>여정 단계</th>
+                <th>현재 경험</th>
+                <th>이탈 위험도</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>첫 방문 (랜딩)</td>
+                <td>브랜드 설명 없이 바로 프로젝트 목록 노출. CTA 1개만</td>
+                <td class="risk-high">높음 — 가치 전달 실패</td>
+              </tr>
+              <tr>
+                <td>회원가입</td>
+                <td>소셜 로그인 없음, 폼 순서 비직관적, 라벨 숨김</td>
+                <td class="risk-high">높음 — 전환율 저하</td>
+              </tr>
+              <tr>
+                <td>첫 로그인 후</td>
+                <td>온보딩 위저드 있음 (강점)</td>
+                <td class="risk-low">낮음</td>
+              </tr>
+              <tr>
+                <td>팀원 찾기</td>
+                <td>프로젝트 목록 + 지원 기능 (기본 동작)</td>
+                <td class="risk-medium">중간 — 추천/매칭 알고리즘 없음</td>
+              </tr>
+              <tr>
+                <td>팀 구성 후 협업</td>
+                <td>칸반: 사용 가능 / 채팅: Mock 데이터 (사실상 불가)</td>
+                <td class="risk-high">높음 — 핵심 기능 미완성</td>
+              </tr>
+              <tr>
+                <td>장기 재방문</td>
+                <td>커뮤니티, 피드, 팔로우 등 리텐션 기제 없음</td>
+                <td class="risk-high">매우 높음 — 재방문 유인 없음</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════ 6. 신뢰·안전성 ════ -->
+      <div class="section">
+        <div class="section-title"><span class="num">6</span>신뢰 시스템 및 안전성 평가</div>
+
+        <div class="card">
+          <p>
+            팀 매칭 플랫폼에서 <strong>신뢰 시스템은 핵심 자산</strong>입니다. 낯선 사람과
+            프로젝트를 함께 하는 만큼, 유저는 상대방을 검증할 수 있는 장치를 요구합니다.
+          </p>
+          <div class="two-col" style="margin-top: 16px">
+            <div>
+              <p style="font-weight: 700; margin-bottom: 8px">현재 구현된 신뢰 요소</p>
+              <ul>
+                <li>✅ GitHub 활동 지표 연동</li>
+                <li>✅ Solved.ac 티어 표시</li>
+                <li>✅ 기술 스택 아이콘</li>
+                <li>✅ 가용 시간 스케줄</li>
+              </ul>
+            </div>
+            <div>
+              <p style="font-weight: 700; margin-bottom: 8px; color: #dc2626">부재한 신뢰 요소</p>
+              <ul>
+                <li>❌ 팀원 리뷰·평점 시스템</li>
+                <li>❌ 프로젝트 완료 인증·배지</li>
+                <li>❌ 신원 확인(휴대폰 인증 등)</li>
+                <li>❌ 스팸·악성 게시물 신고 기능</li>
+                <li>❌ 관리자 콘텐츠 모더레이션</li>
+                <li>❌ 개인정보처리방침 / 이용약관 페이지</li>
+              </ul>
+            </div>
+          </div>
+          <blockquote style="margin-top: 16px">
+            특히 <strong>개인정보처리방침과 이용약관이 없는 상태</strong>에서는 개인정보보호법(PIPA)
+            위반으로 서비스 운영 자체가 법적 리스크에 노출됩니다. 출시 전 반드시 해결해야 할
+            사항입니다.
+          </blockquote>
+        </div>
+      </div>
+
+      <!-- ════ 7. 개선 권고 ════ -->
+      <div class="section">
+        <div class="section-title"><span class="num">7</span>개선 권고 및 로드맵</div>
+
+        <p style="margin-bottom: 24px; font-size: 14px; color: var(--text-muted)">
+          상업적 출시 가능 수준(B+ 등급)까지 올리기 위한 우선순위별 개선 권고사항입니다.
+        </p>
+
+        <p style="font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #dc2626">
+          🔴 P0 — 출시 전 필수 (1~2주)
+        </p>
+
+        <div class="rec-card p0">
+          <div class="rec-card-title">
+            <span class="priority-tag p0-tag">P0</span> 채팅 기능 완성
+          </div>
+          <div class="rec-card-body">
+            UI 프로토타입 → 실제 Socket.io 연동 완성. 팀 매칭 플랫폼에서 커뮤니케이션 수단 없이는
+            서비스 의미 없음. 이미 ChatRoom, ChatMessage 모델과 서버 이벤트(join-chat-room 등)가
+            설계되어 있어 연동 비용은 낮음.
+          </div>
+        </div>
+
+        <div class="rec-card p0">
+          <div class="rec-card-title">
+            <span class="priority-tag p0-tag">P0</span> 개인정보처리방침 · 이용약관 페이지 신설
+          </div>
+          <div class="rec-card-body">
+            법적 필수 요건. 현재 더미 데이터(홍길동 등)가 있는 푸터 대신 실제 법적 정보를 등록해야
+            합니다. 개인정보보호위원회 고시 기준에 맞춰 작성 필요.
+          </div>
+        </div>
+
+        <div class="rec-card p0">
+          <div class="rec-card-title">
+            <span class="priority-tag p0-tag">P0</span> WBS 핵심 버그 수정 (3종)
+          </div>
+          <div class="rec-card-body">
+            ① 배치 삭제 의존관계 쿼리 버그($pull 오류), ② API 응답 형식 불일치, ③ GanttChart
+            setInterval 메모리 누수. 현재 상태는 데이터 손상 가능성이 있어 프로덕션 불가.
+          </div>
+        </div>
+
+        <div class="rec-card p0">
+          <div class="rec-card-title">
+            <span class="priority-tag p0-tag">P0</span> 관리자 패널 구현
+          </div>
+          <div class="rec-card-body">
+            admin-page-plan.md에 상세 계획이 이미 있음. DB 직접 접근 없이 공통 코드·기술 스택 관리,
+            악성 유저 차단, 콘텐츠 모더레이션이 가능해야 서비스 운영 가능.
+          </div>
+        </div>
+
+        <p
+          style="
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            margin-top: 28px;
+            color: #d97706;
+          "
+        >
+          🟠 P1 — 출시 직후 (1~4주)
+        </p>
+
+        <div class="rec-card p1">
+          <div class="rec-card-title">
+            <span class="priority-tag p1-tag">P1</span> 소셜 로그인 추가 (Google / GitHub OAuth)
+          </div>
+          <div class="rec-card-body">
+            개발자 타겟 서비스에서 GitHub OAuth는 사실상 필수. 회원가입 마찰을 80% 이상 줄여
+            전환율을 크게 향상시킵니다. next-auth에 Provider만 추가하면 되어 구현 비용이 낮습니다.
+          </div>
+        </div>
+
+        <div class="rec-card p1">
+          <div class="rec-card-title">
+            <span class="priority-tag p1-tag">P1</span> 랜딩 페이지 전면 개편
+          </div>
+          <div class="rec-card-body">
+            Hero Section(가치 제안), 서비스 통계(프로젝트 수·멤버 수), 핵심 기능 소개 카드 3개 추가.
+            비로그인 유저에게 서비스 가치를 60초 내에 전달해야 합니다. CTA도 로그인 여부에 따라 분기
+            처리.
+          </div>
+        </div>
+
+        <div class="rec-card p1">
+          <div class="rec-card-title">
+            <span class="priority-tag p1-tag">P1</span> SEO 기반 구축
+          </div>
+          <div class="rec-card-body">
+            OG 태그, robots.txt, sitemap.ts, 프로젝트 상세 generateMetadata 적용. 현재는 검색 엔진에
+            사실상 노출되지 않아 유기적 성장이 불가능합니다.
+          </div>
+        </div>
+
+        <div class="rec-card p1">
+          <div class="rec-card-title">
+            <span class="priority-tag p1-tag">P1</span> 팀원 리뷰 · 평점 시스템
+          </div>
+          <div class="rec-card-body">
+            프로젝트 완료 후 팀원 간 리뷰를 남기는 기능. 이미 Comment, Post 모델이 있어 확장 용이.
+            신뢰 시스템의 핵심으로 재방문율과 매칭 품질을 동시에 높임.
+          </div>
+        </div>
+
+        <div class="rec-card p1">
+          <div class="rec-card-title">
+            <span class="priority-tag p1-tag">P1</span> 배포 인프라 업그레이드
+          </div>
+          <div class="rec-card-body">
+            Render.com Free → Starter Plan($7/월) 업그레이드 또는 Railway·Fly.io 이전. 슬립 모드
+            없이 상시 가동이 가능해야 실사용이 가능합니다. Socket.io 사용으로 상시 연결 유지가
+            필수입니다.
+          </div>
+        </div>
+
+        <p
+          style="
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            margin-top: 28px;
+            color: #2563eb;
+          "
+        >
+          🔵 P2 — 성장 단계 (1~3개월)
+        </p>
+
+        <div class="rec-card p2">
+          <div class="rec-card-title">
+            <span class="priority-tag p2-tag">P2</span> 수익화 모델 도입 (Freemium)
+          </div>
+          <div class="rec-card-body">
+            무료: 프로젝트 2개, 팀원 5명, 기본 칸반. 유료(월 9,900원): 무제한 프로젝트, WBS/간트
+            고급 기능, 파일 첨부, 우선 매칭 노출. 초기 MAU 1,000명 돌파 후 Freemium 전환이 적합한
+            타이밍입니다.
+          </div>
+        </div>
+
+        <div class="rec-card p2">
+          <div class="rec-card-title">
+            <span class="priority-tag p2-tag">P2</span> 추천 알고리즘 및 매칭 점수 도입
+          </div>
+          <div class="rec-card-body">
+            유저의 기술 스택, 가용 시간, MBTI 성향을 기반으로 프로젝트·팀원 추천 점수 계산.
+            LinkedIn의 "당신이 알 수도 있는 사람" 방식. 매칭 플랫폼의 핵심 차별화 요소입니다.
+          </div>
+        </div>
+
+        <div class="rec-card p2">
+          <div class="rec-card-title">
+            <span class="priority-tag p2-tag">P2</span> 커뮤니티 / 게시판 기능 구현
+          </div>
+          <div class="rec-card-body">
+            이미 Post, Comment 모델이 있음. Q&A, 프로젝트 후기, 팁 공유 게시판을 추가하면 리텐션을
+            높이고 SEO 콘텐츠를 동시에 생산할 수 있습니다. 개발자 커뮤니티로의 진화가 핵심
+            해자(Moat).
+          </div>
+        </div>
+
+        <div class="rec-card p2">
+          <div class="rec-card-title">
+            <span class="priority-tag p2-tag">P2</span> 모바일 앱 또는 PWA
+          </div>
+          <div class="rec-card-body">
+            알림 푸시, 채팅 응답속도가 모바일에서 결정됩니다. Next.js 기반이므로 PWA 변환이
+            상대적으로 쉬움. 팀 협업 도구는 모바일 접근성이 MAU 유지에 직결됩니다.
+          </div>
+        </div>
+
+        <p
+          style="
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            margin-top: 28px;
+            color: #16a34a;
+          "
+        >
+          🟢 P3 — 확장 단계 (3개월+)
+        </p>
+
+        <div class="rec-card p3">
+          <div class="rec-card-title">
+            <span class="priority-tag p3-tag">P3</span> B2B 기업 채용 연계
+          </div>
+          <div class="rec-card-body">
+            사이드 프로젝트 우수 팀을 기업 채용으로 연결하는 파이프라인. Wishket의 프리랜서 채용과
+            유사하지만 팀 단위 매칭이라는 차별점이 있습니다. MAU 5,000명 이상에서 타당성 검토.
+          </div>
+        </div>
+
+        <div class="rec-card p3">
+          <div class="rec-card-title">
+            <span class="priority-tag p3-tag">P3</span> AI 기반 프로젝트 어시스턴트
+          </div>
+          <div class="rec-card-body">
+            칸반·WBS에 AI 어시스턴트 도입: 일정 자동 생성, 역할 분담 제안, 기술 스택 추천. OpenAI
+            API 연동으로 차별화. LLM 기반 협업 도구는 2025~2026년 가장 빠르게 성장하는 SaaS
+            카테고리입니다.
+          </div>
+        </div>
+
+        <div class="rec-card p3">
+          <div class="rec-card-title">
+            <span class="priority-tag p3-tag">P3</span> 해커톤 / 프로젝트 챌린지 기능
+          </div>
+          <div class="rec-card-body">
+            플랫폼 내에서 해커톤·사이드 프로젝트 대회를 주최할 수 있는 기능. 기업 스폰서십 + 참가비
+            수익 모델 가능. 커뮤니티 활성화와 브랜드 인지도를 동시에 높이는 성장 레버.
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ 8. 종합 평가 ════ -->
+      <div class="section">
+        <div class="section-title"><span class="num">8</span>최종 종합 평가</div>
+
+        <div class="verdict">
+          <div class="verdict-grade">C+</div>
+          <div class="verdict-title">MVP 초기 단계 — 잠재력은 충분, 상업화까지 갭 존재</div>
+          <div class="verdict-body">
+            Side Project Mate는 <strong>개발자 특화 팀 매칭 + 협업 도구 통합</strong>이라는 독특하고
+            실현 가능한 포지션을 갖추고 있습니다. 기술 스택 선택과 아키텍처 설계는 합리적이며, 핵심
+            기능(프로젝트 관리, 지원 시스템, 칸반 보드)은 사용 가능한 수준으로 구현되어 있습니다.
+            <br /><br />
+            그러나
+            <strong>채팅 미완성, 수익 모델 부재, 관리자 패널 없음, SEO 전무, 법적 고지 누락</strong>
+            등 상업적 출시를 위한 핵심 요건들이 충족되지 않은 상태입니다. 현재 버전은 "포트폴리오
+            수준의 프로토타입"으로 평가하며, P0 개선 사항을 완료한다면
+            <strong>B 등급 (출시 가능 MVP)</strong>으로 재평가 가능합니다.
+          </div>
+        </div>
+
+        <div class="three-col">
+          <div class="card" style="text-align: center; border-top: 4px solid var(--success)">
+            <div style="font-size: 32px; margin-bottom: 8px">💪</div>
+            <p style="font-weight: 700; margin-bottom: 6px">가장 큰 강점</p>
+            <p class="text-muted">
+              개발자 특화 프로필 (GitHub·Solved.ac·Blog)과 실시간 칸반 협업의 결합
+            </p>
+          </div>
+          <div class="card" style="text-align: center; border-top: 4px solid var(--danger)">
+            <div style="font-size: 32px; margin-bottom: 8px">⚠️</div>
+            <p style="font-weight: 700; margin-bottom: 6px">가장 큰 위험</p>
+            <p class="text-muted">채팅 미완성 + 수익 모델 부재로 인한 지속 운영 불가능성</p>
+          </div>
+          <div class="card" style="text-align: center; border-top: 4px solid var(--brand)">
+            <div style="font-size: 32px; margin-bottom: 8px">🚀</div>
+            <p style="font-weight: 700; margin-bottom: 6px">핵심 기회</p>
+            <p class="text-muted">
+              국내에 "사이드 프로젝트 특화" 성숙 플랫폼 부재 — 선점 기회 존재
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <hr />
+
+      <p class="text-muted" style="text-align: center; padding: 20px 0">
+        본 보고서는 README.md, CLAUDE.md, UI_UX_IMPROVEMENT_PLAN.md, admin-page-plan.md,
+        WBS_REDESIGN.md를 기반으로 작성되었습니다.<br />
+        심사일: 2026년 3월 3일 · 심사 기준: 국내외 팀 매칭·협업 SaaS 플랫폼 상용 서비스
+      </p>
+    </div>
+  </body>
+</html>

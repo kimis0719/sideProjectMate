@@ -18,7 +18,9 @@ export default async function ProjectsPage() {
 
   return (
     <>
-      <Suspense fallback={<div className="text-center py-20 text-foreground">페이지를 불러오는 중...</div>}>
+      <Suspense
+        fallback={<div className="text-center py-20 text-foreground">페이지를 불러오는 중...</div>}
+      >
         <ProjectList categoryCodes={categoryCodes} statusCodes={statusCodes} />
       </Suspense>
       {/* 광고 배너 — 프로젝트 목록 하단 */}

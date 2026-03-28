@@ -38,8 +38,22 @@ describe('GET/POST /api/admin/common-codes', () => {
   it('관리자가 공통 코드 목록을 조회한다', async () => {
     mockAdmin();
     await CommonCode.create([
-      { group: 'PROJECT_STATUS', groupName: '프로젝트 상태', code: '01', label: '모집중', order: 1, isActive: true },
-      { group: 'PROJECT_STATUS', groupName: '프로젝트 상태', code: '02', label: '진행중', order: 2, isActive: true },
+      {
+        group: 'PROJECT_STATUS',
+        groupName: '프로젝트 상태',
+        code: '01',
+        label: '모집중',
+        order: 1,
+        isActive: true,
+      },
+      {
+        group: 'PROJECT_STATUS',
+        groupName: '프로젝트 상태',
+        code: '02',
+        label: '진행중',
+        order: 2,
+        isActive: true,
+      },
     ]);
 
     const req = createMockNextRequest('http://localhost:3000/api/admin/common-codes');
@@ -54,11 +68,27 @@ describe('GET/POST /api/admin/common-codes', () => {
   it('그룹별로 코드를 필터링한다', async () => {
     mockAdmin();
     await CommonCode.create([
-      { group: 'PROJECT_STATUS', groupName: '프로젝트 상태', code: '01', label: '모집중', order: 1, isActive: true },
-      { group: 'ROLE_TYPE', groupName: '역할 타입', code: 'DEV', label: '개발자', order: 1, isActive: true },
+      {
+        group: 'PROJECT_STATUS',
+        groupName: '프로젝트 상태',
+        code: '01',
+        label: '모집중',
+        order: 1,
+        isActive: true,
+      },
+      {
+        group: 'ROLE_TYPE',
+        groupName: '역할 타입',
+        code: 'DEV',
+        label: '개발자',
+        order: 1,
+        isActive: true,
+      },
     ]);
 
-    const req = createMockNextRequest('http://localhost:3000/api/admin/common-codes?group=PROJECT_STATUS');
+    const req = createMockNextRequest(
+      'http://localhost:3000/api/admin/common-codes?group=PROJECT_STATUS'
+    );
     const response = await GET(req);
     const body = await response.json();
 

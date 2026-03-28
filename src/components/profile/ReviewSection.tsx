@@ -43,7 +43,9 @@ function StarRating({ rating }: { rating: number }) {
 function ReviewCard({ review }: { review: ReviewData }) {
   const reviewer = review.reviewerId;
   const date = new Date(review.createdAt).toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'short', day: 'numeric',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
 
   return (
@@ -80,7 +82,11 @@ function ReviewCard({ review }: { review: ReviewData }) {
       {/* 리뷰어 정보 */}
       <div className="flex items-center gap-2 pt-1 border-t border-gray-100 dark:border-gray-700">
         {reviewer?.avatarUrl ? (
-          <img src={reviewer.avatarUrl} alt={reviewer.nName} className="w-6 h-6 rounded-full object-cover" />
+          <img
+            src={reviewer.avatarUrl}
+            alt={reviewer.nName}
+            className="w-6 h-6 rounded-full object-cover"
+          />
         ) : (
           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
             <span className="text-xs text-muted-foreground font-medium">
@@ -114,9 +120,8 @@ export default function ReviewSection({ userId }: ReviewSectionProps) {
   }, [userId]);
 
   // 평균 별점 계산
-  const avgRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-    : 0;
+  const avgRating =
+    reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
 
   return (
     <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">

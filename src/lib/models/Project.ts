@@ -93,7 +93,7 @@ ProjectSchema.virtual('membersString').get(function (this: IProject) {
   if (!this.members) {
     return '';
   }
-  return this.members.map(m => `${m.role} ${m.current}/${m.max}`).join(', ');
+  return this.members.map((m) => `${m.role} ${m.current}/${m.max}`).join(', ');
 });
 
 ProjectSchema.virtual('likesCount').get(function (this: IProject) {

@@ -95,13 +95,18 @@ export async function fetchGitHubStats(username: string): Promise<GitHubStats | 
       .map(([lang]) => lang);
 
     // 총 스타 수 계산
-    const totalStars = user.repositories.nodes.reduce((acc: number, repo: any) => acc + repo.stargazerCount, 0);
+    const totalStars = user.repositories.nodes.reduce(
+      (acc: number, repo: any) => acc + repo.stargazerCount,
+      0
+    );
 
     return {
       followers: user.followers.totalCount,
       following: user.following.totalCount,
       totalStars: totalStars,
-      totalCommits: user.contributionsCollection.totalCommitContributions + user.contributionsCollection.restrictedContributionsCount,
+      totalCommits:
+        user.contributionsCollection.totalCommitContributions +
+        user.contributionsCollection.restrictedContributionsCount,
       totalPRs: user.pullRequests.totalCount,
       totalIssues: user.issues.totalCount,
       contributions: user.contributionsCollection.totalCommitContributions,

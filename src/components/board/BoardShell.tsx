@@ -119,7 +119,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
       initSocket({
         _id: session.user.id,
         nName: session.user.name || 'Unknown',
-        avatarUrl: session.user.image || undefined // next-auth의 image를 avatarUrl로 매핑
+        avatarUrl: session.user.image || undefined, // next-auth의 image를 avatarUrl로 매핑
       });
 
       return () => {
@@ -190,7 +190,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
       if (e.key === 'Delete') {
         if (selectedNoteIds.length > 0) {
           // Temp 노트와 실제 노트를 구분
-          const realNoteIds = selectedNoteIds.filter(id => !id.startsWith('temp-'));
+          const realNoteIds = selectedNoteIds.filter((id) => !id.startsWith('temp-'));
 
           if (realNoteIds.length > 0) {
             // Batch Delete Action 호출
@@ -202,7 +202,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         }
       }
 
-      if (e.shiftKey && e.key === '!') { // Shift + 1 is '!'
+      if (e.shiftKey && e.key === '!') {
+        // Shift + 1 is '!'
         e.preventDefault();
         if (containerRef.current) {
           fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
@@ -267,7 +268,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         const startY = e.clientY - rect.top;
         setSelectionBox({ startX, startY, currentX: startX, currentY: startY });
       }
-    } else if (isSelectionMode && e.pointerType === 'touch') { // 모바일 선택 모드
+    } else if (isSelectionMode && e.pointerType === 'touch') {
+      // 모바일 선택 모드
       setIsSelecting(true);
       const rect = containerRef.current?.getBoundingClientRect();
       if (rect) {
@@ -331,12 +333,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           .filter((n) => {
             const nRight = n.x + NOTE_WIDTH;
             const nBottom = n.y + NOTE_HEIGHT;
-            return (
-              n.x < boxRight &&
-              nRight > boxLeft &&
-              n.y < boxBottom &&
-              nBottom > boxTop
-            );
+            return n.x < boxRight && nRight > boxLeft && n.y < boxBottom && nBottom > boxTop;
           })
           .map((n) => n.id);
 
@@ -361,8 +358,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     const { boardId, pan, zoom } = useBoardStore.getState();
     if (!boardId) return;
 
-    const viewportCenterX = -pan.x / zoom + (window.innerWidth / 2) / zoom;
-    const viewportCenterY = -pan.y / zoom + (window.innerHeight / 2) / zoom;
+    const viewportCenterX = -pan.x / zoom + window.innerWidth / 2 / zoom;
+    const viewportCenterY = -pan.y / zoom + window.innerHeight / 2 / zoom;
 
     const newSection = {
       boardId: boardId as any,
@@ -390,12 +387,12 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           if (data.capturedNoteIds && data.capturedNoteIds.length > 0) {
             const updates = data.capturedNoteIds.map((noteId: string) => ({
               id: noteId,
-              changes: { sectionId: data.data._id }
+              changes: { sectionId: data.data._id },
             }));
             // updateNotes 액션을 사용하여 로컬 상태 업데이트 (서버는 이미 반영됨)
             // updateNotes는 내부적으로 PATCH 요청을 보내지만, 여기서는 로컬 상태만 바꾸고 싶음.
-            // 하지만 updateNotes는 서버 요청도 보냄. 
-            // 1. updateNotes를 수정하거나 
+            // 하지만 updateNotes는 서버 요청도 보냄.
+            // 1. updateNotes를 수정하거나
             // 2. 그냥 updateNotes를 쓰고 서버 응답은 무시 (서버 상태와 일치하므로 문제 없음, 다만 불필요한 트래픽)
             // 3. 로컬 상태만 바꾸는 액션을 추가
 
@@ -407,7 +404,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             // 가장 깔끔한 방법: updateNotes가 'optimistic only' 옵션을 받도록 수정하거나,
             // 그냥 서버 요청 보내게 둠 (어차피 값 같음).
             // 여기서는 불필요한 트래픽 방지를 위해 store에 'localUpdateNotes' 같은 걸 추가하는게 좋지만,
-            // 일단은 useBoardStore의 setState를 활용하거나, 
+            // 일단은 useBoardStore의 setState를 활용하거나,
             // 기존 updateNotes를 사용하되 불필요한 요청 감수.
 
             // -> updateNotes 사용.
@@ -475,9 +472,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-secondary/50 px-3 py-1.5 rounded-full border border-secondary">
-            <span className="text-xs font-medium text-secondary-foreground">
-              Notes
-            </span>
+            <span className="text-xs font-medium text-secondary-foreground">Notes</span>
             <span className="ml-2 text-xs font-bold bg-background px-1.5 py-0.5 rounded-full text-foreground shadow-sm">
               {notesCount}
             </span>
@@ -487,31 +482,37 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           <div className="flex items-center -space-x-2 mr-2 ml-1" id="board-presence-area">
             {/* 1. 서버에 로드된 멤버 정보에서 내 프로필을 우선적으로 찾아 매칭 */}
             {[
-              ...(session?.user ? [{
-                _id: session.user.id,
-                nName: session.user.name || 'Me',
-                avatarUrl: session.user.image || undefined
-              }] : []),
-              ...(activeUsers || []).filter(u => u._id !== session?.user?.id)
-            ].slice(0, 5).map((user) => (
-              <div key={user._id} className="relative group">
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.nName}
-                    title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
-                    className={`w-8 h-8 rounded-full border-2 border-background object-cover z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'border-primary' : 'bg-secondary'}`}
-                  />
-                ) : (
-                  <div
-                    title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
-                    className={`w-8 h-8 rounded-full border-2 border-background flex items-center justify-center text-[10px] font-bold z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground'}`}
-                  >
-                    {user.nName ? user.nName.charAt(0).toUpperCase() : '?'}
-                  </div>
-                )}
-              </div>
-            ))}
+              ...(session?.user
+                ? [
+                    {
+                      _id: session.user.id,
+                      nName: session.user.name || 'Me',
+                      avatarUrl: session.user.image || undefined,
+                    },
+                  ]
+                : []),
+              ...(activeUsers || []).filter((u) => u._id !== session?.user?.id),
+            ]
+              .slice(0, 5)
+              .map((user) => (
+                <div key={user._id} className="relative group">
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.nName}
+                      title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
+                      className={`w-8 h-8 rounded-full border-2 border-background object-cover z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'border-primary' : 'bg-secondary'}`}
+                    />
+                  ) : (
+                    <div
+                      title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
+                      className={`w-8 h-8 rounded-full border-2 border-background flex items-center justify-center text-[10px] font-bold z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground'}`}
+                    >
+                      {user.nName ? user.nName.charAt(0).toUpperCase() : '?'}
+                    </div>
+                  )}
+                </div>
+              ))}
             {activeUsers.length > 5 && (
               <div
                 title={`${activeUsers.length - 5}명 더 접속 중`}
@@ -529,7 +530,17 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors"
             title="Shortcuts (?)"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
               <line x1="12" y1="17" x2="12.01" y2="17"></line>
@@ -567,25 +578,55 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
       <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-40 flex gap-2 sm:hidden">
         <button
           onClick={toggleSnap}
-          className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md border ${isSnapEnabled
-            ? 'bg-blue-100 border-blue-400 text-blue-600 dark:bg-blue-900/50 dark:border-blue-500 dark:text-blue-300'
-            : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'
-            }`}
+          className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md border ${
+            isSnapEnabled
+              ? 'bg-blue-100 border-blue-400 text-blue-600 dark:bg-blue-900/50 dark:border-blue-500 dark:text-blue-300'
+              : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'
+          }`}
           title="자석 모드 (스냅)"
         >
           {/* Magnet Icon */}
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 21 3-3H6a3 3 0 1 0 0 -6h3v6a3 3 0 0 0 3 3h6l3 3" /><path d="M15 6V3h-3a3 3 0 1 0 0 6h3v-6a3 3 0 0 0-3-3" /></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m6 21 3-3H6a3 3 0 1 0 0 -6h3v6a3 3 0 0 0 3 3h6l3 3" />
+            <path d="M15 6V3h-3a3 3 0 1 0 0 6h3v-6a3 3 0 0 0-3-3" />
+          </svg>
         </button>
         <button
           onClick={toggleSelectionMode}
-          className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md border ${isSelectionMode
-            ? 'bg-blue-100 border-blue-400 text-blue-600 dark:bg-blue-900/50 dark:border-blue-500 dark:text-blue-300'
-            : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'
-            }`}
+          className={`flex items-center justify-center w-10 h-10 rounded-full shadow-md border ${
+            isSelectionMode
+              ? 'bg-blue-100 border-blue-400 text-blue-600 dark:bg-blue-900/50 dark:border-blue-500 dark:text-blue-300'
+              : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'
+          }`}
           title="다중 선택 모드"
         >
           {/* Select Icon */}
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h7v7H3z" /><path d="M14 3h7v7h-7z" /><path d="M14 14h7v7h-7z" /><path d="M3 14h7v7H3z" /></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 3h7v7H3z" />
+            <path d="M14 3h7v7h-7z" />
+            <path d="M14 14h7v7h-7z" />
+            <path d="M3 14h7v7H3z" />
+          </svg>
         </button>
       </div>
 

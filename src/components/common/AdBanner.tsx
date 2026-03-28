@@ -84,13 +84,8 @@ export default function AdBanner({
     if (hideForLoggedIn && session) return null;
 
     return (
-      <div
-        className={`w-full flex flex-col items-center ${className}`}
-        aria-label="광고 영역"
-      >
-        <p className="text-[10px] text-muted-foreground/50 mb-1 self-start select-none">
-          광고
-        </p>
+      <div className={`w-full flex flex-col items-center ${className}`} aria-label="광고 영역">
+        <p className="text-[10px] text-muted-foreground/50 mb-1 self-start select-none">광고</p>
         <div
           className="flex items-center justify-center border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20"
           style={{ width: '100%', maxWidth: `${width}px`, height: `${height}px` }}
@@ -104,14 +99,9 @@ export default function AdBanner({
   }
 
   return (
-    <div
-      className={`w-full flex flex-col items-center ${className}`}
-      aria-label="광고 영역"
-    >
+    <div className={`w-full flex flex-col items-center ${className}`} aria-label="광고 영역">
       {/* 법적 의무: "광고" 레이블 명시 */}
-      <p className="text-[10px] text-muted-foreground/50 mb-1 self-start select-none">
-        광고
-      </p>
+      <p className="text-[10px] text-muted-foreground/50 mb-1 self-start select-none">광고</p>
       {/* SDK가 마운트 후 ins 태그를 인식하여 광고 노출 */}
       <ins
         className="kakao_ad_area"

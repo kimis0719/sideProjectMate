@@ -9,13 +9,27 @@ interface StatsData {
   users: {
     total: number;
     newThisWeek: number;
-    recent: { _id: string; nName: string; authorEmail: string; createdAt: string; memberType: string }[];
+    recent: {
+      _id: string;
+      nName: string;
+      authorEmail: string;
+      createdAt: string;
+      memberType: string;
+    }[];
   };
   projects: {
     total: number;
     newThisWeek: number;
     byStatus: { recruiting: number; inProgress: number; completed: number };
-    recent: { _id: string; pid: number; title: string; status: string; views: number; createdAt: string; author: { nName: string } | null }[];
+    recent: {
+      _id: string;
+      pid: number;
+      title: string;
+      status: string;
+      views: number;
+      createdAt: string;
+      author: { nName: string } | null;
+    }[];
   };
   applications: {
     total: number;
@@ -121,7 +135,10 @@ export default function AdminDashboard() {
           { label: '진행중', count: stats.projects.byStatus.inProgress, color: 'bg-yellow-400' },
           { label: '완료', count: stats.projects.byStatus.completed, color: 'bg-gray-400' },
         ].map(({ label, count, color }) => (
-          <div key={label} className="bg-card rounded-xl border border-border shadow-sm p-4 text-center">
+          <div
+            key={label}
+            className="bg-card rounded-xl border border-border shadow-sm p-4 text-center"
+          >
             <div className={`w-2 h-2 rounded-full ${color} mx-auto mb-2`} />
             <p className="text-xl font-bold text-foreground">{count}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
@@ -153,7 +170,9 @@ export default function AdminDashboard() {
                       src={`https://skillicons.dev/icons?i=${slug}`}
                       alt={stack.name}
                       className="w-5 h-5 object-contain"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
                     <span className="text-sm text-foreground w-24 truncate">{stack.name}</span>
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
@@ -162,7 +181,9 @@ export default function AdminDashboard() {
                         style={{ width: `${barWidth}%` }}
                       />
                     </div>
-                    <span className="text-xs text-muted-foreground w-6 text-right">{stack.count}</span>
+                    <span className="text-xs text-muted-foreground w-6 text-right">
+                      {stack.count}
+                    </span>
                   </li>
                 );
               })}
@@ -211,7 +232,10 @@ export default function AdminDashboard() {
             </div>
             <ul className="space-y-2">
               {stats.projects.recent.map((project) => {
-                const statusInfo = STATUS_LABEL[project.status] ?? { label: project.status, color: 'text-muted-foreground bg-muted' };
+                const statusInfo = STATUS_LABEL[project.status] ?? {
+                  label: project.status,
+                  color: 'text-muted-foreground bg-muted',
+                };
                 return (
                   <li key={project._id} className="flex items-center justify-between text-sm gap-2">
                     <Link
@@ -222,7 +246,9 @@ export default function AdminDashboard() {
                       {project.title}
                     </Link>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${statusInfo.color}`}>
+                      <span
+                        className={`text-xs px-1.5 py-0.5 rounded font-medium ${statusInfo.color}`}
+                      >
                         {statusInfo.label}
                       </span>
                       <span className="text-xs text-muted-foreground">

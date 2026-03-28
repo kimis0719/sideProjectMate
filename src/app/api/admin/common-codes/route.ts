@@ -21,7 +21,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: codes });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: '공통 코드를 불러오는 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '공통 코드를 불러오는 중 오류가 발생했습니다.',
+        error: error.message,
+      },
       { status: 500 }
     );
   }

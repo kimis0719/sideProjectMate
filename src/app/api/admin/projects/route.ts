@@ -36,7 +36,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: { projects, total, page, limit } });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: '프로젝트 목록을 불러오는 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 목록을 불러오는 중 오류가 발생했습니다.',
+        error: error.message,
+      },
       { status: 500 }
     );
   }
@@ -68,7 +72,11 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: '프로젝트 일괄 처리 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 일괄 처리 중 오류가 발생했습니다.',
+        error: error.message,
+      },
       { status: 500 }
     );
   }
@@ -100,7 +108,11 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: '프로젝트 일괄 삭제 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 일괄 삭제 중 오류가 발생했습니다.',
+        error: error.message,
+      },
       { status: 500 }
     );
   }

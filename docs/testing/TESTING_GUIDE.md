@@ -43,6 +43,7 @@ test('모든 항목을 채운 프로필의 완성도는 100%', () => {
 ```
 
 **우리 프로젝트에서의 대상**:
+
 - `taskDependency.ts` — 의존관계 검증, 순환 참조 감지, 크리티컬 패스 계산
 - `scheduleConflict.ts` — 날짜 겹침 감지, 충돌 심각도, 조정 제안
 - `iconUtils.ts` — 기술명 → 아이콘 슬러그 매핑
@@ -72,6 +73,7 @@ test('프로젝트 목록 조회 시 페이지네이션이 동작한다', async 
 ```
 
 **우리 프로젝트에서의 대상**:
+
 - API Route Handlers (`/api/projects`, `/api/applications`, `/api/wbs/tasks` 등)
 - Zustand 스토어 액션 (API 호출 + 상태 업데이트 흐름)
 - Socket.io 이벤트 핸들러
@@ -97,6 +99,7 @@ test('프로젝트 지원 → 수락 → 채팅방 생성 플로우', async ({ p
 ```
 
 **우리 프로젝트에서의 대상** (Phase 3 이후):
+
 - 회원가입 → 온보딩 → 프로필 완성 플로우
 - 프로젝트 생성 → 지원 → 수락 → 채팅방 생성 플로우
 - 칸반 보드 실시간 동기화
@@ -107,16 +110,16 @@ test('프로젝트 지원 → 수락 → 채팅방 생성 플로우', async ({ p
 
 우리 프로젝트(Next.js 14 + TypeScript)에 가장 적합한 테스트 러너를 비교합니다.
 
-| 비교 항목 | Jest | Vitest |
-|-----------|------|--------|
-| TypeScript 지원 | 별도 설정 필요 (ts-jest) | 네이티브 지원 |
-| ESM 지원 | 불완전 (실험적) | 완벽 (ESM 우선) |
-| 실행 속도 | 느림 (cold start) | 빠름 (Vite 기반 HMR) |
-| 설정 복잡도 | 높음 (특히 Next.js) | 낮음 (vite.config 재사용) |
-| 모킹 API | `jest.mock()` | `vi.mock()` (동일 패턴) |
-| 커뮤니티 | 더 크지만 성장 둔화 | 빠르게 성장, Vite 생태계 |
-| Next.js 호환 | 공식 지원 | 플러그인으로 지원 |
-| Watch 모드 | 있음 | 더 빠름 (Vite HMR) |
+| 비교 항목       | Jest                     | Vitest                    |
+| --------------- | ------------------------ | ------------------------- |
+| TypeScript 지원 | 별도 설정 필요 (ts-jest) | 네이티브 지원             |
+| ESM 지원        | 불완전 (실험적)          | 완벽 (ESM 우선)           |
+| 실행 속도       | 느림 (cold start)        | 빠름 (Vite 기반 HMR)      |
+| 설정 복잡도     | 높음 (특히 Next.js)      | 낮음 (vite.config 재사용) |
+| 모킹 API        | `jest.mock()`            | `vi.mock()` (동일 패턴)   |
+| 커뮤니티        | 더 크지만 성장 둔화      | 빠르게 성장, Vite 생태계  |
+| Next.js 호환    | 공식 지원                | 플러그인으로 지원         |
+| Watch 모드      | 있음                     | 더 빠름 (Vite HMR)        |
 
 **결론**: Vitest를 채택합니다. TypeScript 네이티브 지원과 빠른 실행 속도가 결정적입니다. Jest의 `expect` / `describe` / `it` 문법과 거의 동일해서 학습 비용도 낮습니다.
 
@@ -126,16 +129,16 @@ test('프로젝트 지원 → 수락 → 채팅방 생성 플로우', async ({ p
 
 실제 코드를 작성하기 전에 알아야 할 핵심 개념입니다.
 
-| 용어 | 설명 | 예시 |
-|------|------|------|
-| **describe** | 테스트 그룹을 묶는 블록 | `describe('profileUtils', () => { ... })` |
-| **it / test** | 개별 테스트 케이스 | `it('빈 프로필은 0%', () => { ... })` |
-| **expect** | 결과 검증 (단언문) | `expect(result).toBe(100)` |
-| **Mock** | 가짜 객체/함수로 대체 | DB 호출 대신 가짜 데이터 반환 |
-| **Spy** | 함수 호출 여부·횟수 감시 | `vi.spyOn(console, 'error')` |
-| **Fixture** | 테스트용 고정 데이터 | `const mockUser = { email: 'test@test.com' }` |
-| **Coverage** | 테스트가 코드의 몇 %를 실행했는지 | `80% statement coverage` |
-| **AAA 패턴** | Arrange(준비) → Act(실행) → Assert(검증) | 모든 테스트의 기본 구조 |
+| 용어          | 설명                                     | 예시                                          |
+| ------------- | ---------------------------------------- | --------------------------------------------- |
+| **describe**  | 테스트 그룹을 묶는 블록                  | `describe('profileUtils', () => { ... })`     |
+| **it / test** | 개별 테스트 케이스                       | `it('빈 프로필은 0%', () => { ... })`         |
+| **expect**    | 결과 검증 (단언문)                       | `expect(result).toBe(100)`                    |
+| **Mock**      | 가짜 객체/함수로 대체                    | DB 호출 대신 가짜 데이터 반환                 |
+| **Spy**       | 함수 호출 여부·횟수 감시                 | `vi.spyOn(console, 'error')`                  |
+| **Fixture**   | 테스트용 고정 데이터                     | `const mockUser = { email: 'test@test.com' }` |
+| **Coverage**  | 테스트가 코드의 몇 %를 실행했는지        | `80% statement coverage`                      |
+| **AAA 패턴**  | Arrange(준비) → Act(실행) → Assert(검증) | 모든 테스트의 기본 구조                       |
 
 ```typescript
 // AAA 패턴 예시
@@ -162,34 +165,34 @@ test('날짜 범위가 겹치면 true를 반환한다', () => {
 
 #### Tier 1: 순수 함수 (의존성 없음, 최고 ROI)
 
-| 파일 | 함수 수 | 예상 테스트 수 | 난이도 |
-|------|---------|---------------|--------|
-| `lib/utils/wbs/taskDependency.ts` | 9개 | 50~70개 | 쉬움 |
-| `lib/utils/wbs/scheduleConflict.ts` | 7개 | 40~50개 | 쉬움 |
-| `lib/iconUtils.ts` | 2개 + 상수 | 25개 | 매우 쉬움 |
-| `lib/profileUtils.ts` | 1개 | 20개 | 매우 쉬움 |
-| `lib/utils/resourceUtils.ts` | 2개 | 15개 | 쉬움 |
+| 파일                                | 함수 수    | 예상 테스트 수 | 난이도    |
+| ----------------------------------- | ---------- | -------------- | --------- |
+| `lib/utils/wbs/taskDependency.ts`   | 9개        | 50~70개        | 쉬움      |
+| `lib/utils/wbs/scheduleConflict.ts` | 7개        | 40~50개        | 쉬움      |
+| `lib/iconUtils.ts`                  | 2개 + 상수 | 25개           | 매우 쉬움 |
+| `lib/profileUtils.ts`               | 1개        | 20개           | 매우 쉬움 |
+| `lib/utils/resourceUtils.ts`        | 2개        | 15개           | 쉬움      |
 
 이 파일들은 import하면 바로 테스트할 수 있습니다. Mock이 필요 없어 테스트 입문에 이상적입니다.
 
 #### Tier 2: 상태 관리 (Zustand Mock 필요)
 
-| 파일 | 액션 수 | 예상 테스트 수 | 난이도 |
-|------|---------|---------------|--------|
-| `store/wbsStore.ts` | 8개 | 40~50개 | 보통 |
-| `store/boardStore.ts` | 10개+ | 40~50개 | 보통 |
-| `hooks/useModal.ts` | 3개 | 15개 | 보통 |
+| 파일                  | 액션 수 | 예상 테스트 수 | 난이도 |
+| --------------------- | ------- | -------------- | ------ |
+| `store/wbsStore.ts`   | 8개     | 40~50개        | 보통   |
+| `store/boardStore.ts` | 10개+   | 40~50개        | 보통   |
+| `hooks/useModal.ts`   | 3개     | 15개           | 보통   |
 
 `fetch()`, `getSocket()` 등을 Mock으로 대체해야 합니다.
 
 #### Tier 3: API Routes (DB Mock 필요)
 
-| 라우트 그룹 | 핸들러 수 | 예상 테스트 수 | 난이도 |
-|-------------|----------|---------------|--------|
-| `/api/wbs/tasks` | GET, POST, PUT, DELETE | 30~40개 | 보통~어려움 |
-| `/api/projects` | GET, POST, PUT, DELETE | 30~40개 | 보통~어려움 |
-| `/api/applications` | GET, POST, PUT | 20~30개 | 보통 |
-| `/api/admin/*` | 9개 라우트 | 40~50개 | 어려움 |
+| 라우트 그룹         | 핸들러 수              | 예상 테스트 수 | 난이도      |
+| ------------------- | ---------------------- | -------------- | ----------- |
+| `/api/wbs/tasks`    | GET, POST, PUT, DELETE | 30~40개        | 보통~어려움 |
+| `/api/projects`     | GET, POST, PUT, DELETE | 30~40개        | 보통~어려움 |
+| `/api/applications` | GET, POST, PUT         | 20~30개        | 보통        |
+| `/api/admin/*`      | 9개 라우트             | 40~50개        | 어려움      |
 
 `mongodb-memory-server`로 인메모리 DB를 사용하거나, Mongoose 모델을 Mock합니다.
 
@@ -214,14 +217,14 @@ Playwright로 핵심 사용자 플로우만 검증합니다. 초기에는 도입
 }
 ```
 
-| 패키지 | 역할 | 어디서 쓰이나 |
-|--------|------|-------------|
-| `vitest` | 테스트 러너 + 단언 + 모킹 | 전체 |
-| `@vitest/coverage-v8` | 코드 커버리지 리포트 | 전체 |
-| `@testing-library/react` | React 컴포넌트/훅 테스트 | Tier 2 (훅) |
-| `@testing-library/jest-dom` | DOM 매처 확장 | 컴포넌트 테스트 |
-| `mongodb-memory-server` | 인메모리 MongoDB (테스트용) | Tier 3 (API) |
-| `msw` | HTTP 요청 가로채기 (Mock Server) | Tier 2 (스토어) |
+| 패키지                      | 역할                             | 어디서 쓰이나   |
+| --------------------------- | -------------------------------- | --------------- |
+| `vitest`                    | 테스트 러너 + 단언 + 모킹        | 전체            |
+| `@vitest/coverage-v8`       | 코드 커버리지 리포트             | 전체            |
+| `@testing-library/react`    | React 컴포넌트/훅 테스트         | Tier 2 (훅)     |
+| `@testing-library/jest-dom` | DOM 매처 확장                    | 컴포넌트 테스트 |
+| `mongodb-memory-server`     | 인메모리 MongoDB (테스트용)      | Tier 3 (API)    |
+| `msw`                       | HTTP 요청 가로채기 (Mock Server) | Tier 2 (스토어) |
 
 ---
 
@@ -278,18 +281,18 @@ import path from 'path';
 
 export default defineConfig({
   test: {
-    globals: true,                    // describe, it, expect 전역 사용
-    environment: 'node',              // 기본 환경 (API/유틸 테스트)
-    include: ['src/**/*.test.ts'],    // 테스트 파일 패턴
+    globals: true, // describe, it, expect 전역 사용
+    environment: 'node', // 기본 환경 (API/유틸 테스트)
+    include: ['src/**/*.test.ts'], // 테스트 파일 패턴
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html'],     // 터미널 + HTML 리포트
+      reporter: ['text', 'html'], // 터미널 + HTML 리포트
       include: ['src/lib/**', 'src/store/**'],
       exclude: ['src/**/*.test.ts'],
     },
     setupFiles: ['src/__tests__/setup.ts'],
     alias: {
-      '@': path.resolve(__dirname, './src'),   // @/ 별칭 연동
+      '@': path.resolve(__dirname, './src'), // @/ 별칭 연동
     },
   },
 });
@@ -702,31 +705,39 @@ Week 3+ (Phase 4)
 // ── 기본 구조 ──
 describe('그룹 이름', () => {
   it('테스트 이름', () => {
-    expect(actual).toBe(expected);          // 일치 (===)
-    expect(actual).toEqual(expected);       // 깊은 비교 (객체/배열)
-    expect(actual).toBeTruthy();            // truthy 값
-    expect(actual).toBeNull();              // null
-    expect(actual).toContain(item);         // 배열/문자열에 포함
-    expect(actual).toHaveLength(n);         // 길이
-    expect(actual).toBeGreaterThan(n);      // 크기 비교
-    expect(actual).toThrow();               // 에러 발생
-    expect(actual).resolves.toBe(value);    // Promise 해결값
-    expect(actual).rejects.toThrow();       // Promise 거부
+    expect(actual).toBe(expected); // 일치 (===)
+    expect(actual).toEqual(expected); // 깊은 비교 (객체/배열)
+    expect(actual).toBeTruthy(); // truthy 값
+    expect(actual).toBeNull(); // null
+    expect(actual).toContain(item); // 배열/문자열에 포함
+    expect(actual).toHaveLength(n); // 길이
+    expect(actual).toBeGreaterThan(n); // 크기 비교
+    expect(actual).toThrow(); // 에러 발생
+    expect(actual).resolves.toBe(value); // Promise 해결값
+    expect(actual).rejects.toThrow(); // Promise 거부
   });
 });
 
 // ── Mock ──
-const mockFn = vi.fn();                    // 가짜 함수
-mockFn.mockReturnValue('hello');            // 반환값 지정
-mockFn.mockResolvedValue(data);             // Promise 반환
-vi.mock('@/lib/socket');                    // 모듈 전체 Mock
-vi.spyOn(object, 'method');                 // 기존 메서드 감시
+const mockFn = vi.fn(); // 가짜 함수
+mockFn.mockReturnValue('hello'); // 반환값 지정
+mockFn.mockResolvedValue(data); // Promise 반환
+vi.mock('@/lib/socket'); // 모듈 전체 Mock
+vi.spyOn(object, 'method'); // 기존 메서드 감시
 
 // ── 생명주기 ──
-beforeAll(() => { /* 전체 시작 전 1번 */ });
-beforeEach(() => { /* 각 테스트 전 */ });
-afterEach(() => { /* 각 테스트 후 */ });
-afterAll(() => { /* 전체 종료 후 1번 */ });
+beforeAll(() => {
+  /* 전체 시작 전 1번 */
+});
+beforeEach(() => {
+  /* 각 테스트 전 */
+});
+afterEach(() => {
+  /* 각 테스트 후 */
+});
+afterAll(() => {
+  /* 전체 종료 후 1번 */
+});
 ```
 
 ---
@@ -735,15 +746,15 @@ afterAll(() => { /* 전체 종료 후 1번 */ });
 
 테스트를 작성하면서 자연스럽게 발견될 가능성이 높은 기존 버그들입니다.
 
-| 버그 | 파일 | 테스트로 감지 가능한 이유 |
-|------|------|------------------------|
-| 배치 삭제 의존관계 쿼리 오류 | `wbs/tasks/batch/route.ts` | 삭제 후 다른 태스크 의존관계 검증 시 실패 |
-| addTask 임시 ID 미교체 | `wbsStore.ts` | 서버 응답 후 selectedTaskId 상태 검증 시 실패 |
-| GanttChart 타이머 미해제 | `GanttChart.tsx` | 언마운트 후 콜백 실행 여부 검증 시 감지 |
-| WBS API 응답 형식 불일치 | `wbs/tasks/route.ts` | `{ success, data }` 구조 검증 시 실패 |
-| mypage Hook 규칙 위반 | `mypage/page.tsx` | 컴포넌트 렌더링 테스트 시 React 경고 감지 |
+| 버그                         | 파일                       | 테스트로 감지 가능한 이유                     |
+| ---------------------------- | -------------------------- | --------------------------------------------- |
+| 배치 삭제 의존관계 쿼리 오류 | `wbs/tasks/batch/route.ts` | 삭제 후 다른 태스크 의존관계 검증 시 실패     |
+| addTask 임시 ID 미교체       | `wbsStore.ts`              | 서버 응답 후 selectedTaskId 상태 검증 시 실패 |
+| GanttChart 타이머 미해제     | `GanttChart.tsx`           | 언마운트 후 콜백 실행 여부 검증 시 감지       |
+| WBS API 응답 형식 불일치     | `wbs/tasks/route.ts`       | `{ success, data }` 구조 검증 시 실패         |
+| mypage Hook 규칙 위반        | `mypage/page.tsx`          | 컴포넌트 렌더링 테스트 시 React 경고 감지     |
 
 ---
 
-*본 문서는 Side Project Mate 코드베이스를 직접 분석하여 작성되었습니다.*
-*최종 업데이트: 2026-03-07*
+_본 문서는 Side Project Mate 코드베이스를 직접 분석하여 작성되었습니다._
+_최종 업데이트: 2026-03-07_

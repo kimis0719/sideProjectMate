@@ -18,14 +18,20 @@ export async function GET(request: Request) {
 
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
-      return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
 
     if (!boardId || !mongoose.Types.ObjectId.isValid(boardId)) {
-      return NextResponse.json({ success: false, message: '유효한 boardId가 필요합니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '유효한 boardId가 필요합니다.' },
+        { status: 400 }
+      );
     }
 
     const notes = await Note.find({ boardId }).sort({ createdAt: 1 });
@@ -46,14 +52,21 @@ export async function POST(request: Request) {
 
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
-      return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
-    const { text, x, y, color, width, height, boardId, sectionId, tags, dueDate, assigneeId } = body;
+    const { text, x, y, color, width, height, boardId, sectionId, tags, dueDate, assigneeId } =
+      body;
 
     if (!boardId || !text || x === undefined || y === undefined) {
-      return NextResponse.json({ success: false, message: '필수 필드가 누락되었습니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '필수 필드가 누락되었습니다.' },
+        { status: 400 }
+      );
     }
 
     const newNote = new Note({

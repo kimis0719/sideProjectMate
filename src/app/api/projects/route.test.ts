@@ -93,7 +93,10 @@ describe('GET /api/projects', () => {
 
   it('search 파라미터로 제목을 검색한다', async () => {
     const user = await createTestUser();
-    await createTestProject(user._id.toString(), { title: 'React 프로젝트', content: 'React 기반' });
+    await createTestProject(user._id.toString(), {
+      title: 'React 프로젝트',
+      content: 'React 기반',
+    });
     await createTestProject(user._id.toString(), { title: 'Vue 프로젝트', content: 'Vue 기반' });
     await createTestProject(user._id.toString(), { title: 'Angular 앱', content: 'Angular 기반' });
 
@@ -224,16 +227,17 @@ describe('POST /api/projects', () => {
       expires: '2099-12-31',
     });
 
-    const makeRequest = () => new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: '프로젝트',
-        category: 'WEB',
-        content: '내용',
-        members: [{ role: '개발자', current: 0, max: 1 }],
-      }),
-    });
+    const makeRequest = () =>
+      new Request(BASE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: '프로젝트',
+          category: 'WEB',
+          content: '내용',
+          members: [{ role: '개발자', current: 0, max: 1 }],
+        }),
+      });
 
     const res1 = await POST(makeRequest());
     const body1 = await res1.json();

@@ -28,12 +28,18 @@ describe('PATCH /api/wbs/tasks/batch', () => {
   it('여러 작업을 한 번에 업데이트한다', async () => {
     const user = await createTestUser();
     const task1 = await Task.create({
-      pid: 1, title: '작업1', assignee: user._id,
-      startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05'),
+      pid: 1,
+      title: '작업1',
+      assignee: user._id,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-05'),
     });
     const task2 = await Task.create({
-      pid: 1, title: '작업2', assignee: user._id,
-      startDate: new Date('2024-01-06'), endDate: new Date('2024-01-10'),
+      pid: 1,
+      title: '작업2',
+      assignee: user._id,
+      startDate: new Date('2024-01-06'),
+      endDate: new Date('2024-01-10'),
     });
 
     const request = createMockNextRequest(BASE_URL, {
@@ -60,16 +66,17 @@ describe('PATCH /api/wbs/tasks/batch', () => {
   it('title 등 비날짜 필드를 배치로 업데이트할 수 있다', async () => {
     const user = await createTestUser();
     const task = await Task.create({
-      pid: 1, title: '원래제목', assignee: user._id,
-      startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05'),
+      pid: 1,
+      title: '원래제목',
+      assignee: user._id,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-05'),
     });
 
     const request = createMockNextRequest(BASE_URL, {
       method: 'PATCH',
       body: {
-        updates: [
-          { id: task._id.toString(), changes: { title: '변경된제목', progress: 30 } },
-        ],
+        updates: [{ id: task._id.toString(), changes: { title: '변경된제목', progress: 30 } }],
       },
     });
     const response = await PATCH(request);
@@ -101,8 +108,11 @@ describe('PATCH /api/wbs/tasks/batch', () => {
   it('종료일이 시작일보다 이전인 변경이 있으면 500을 반환한다', async () => {
     const user = await createTestUser();
     const task = await Task.create({
-      pid: 1, title: '잘못된날짜', assignee: user._id,
-      startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05'),
+      pid: 1,
+      title: '잘못된날짜',
+      assignee: user._id,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-05'),
     });
 
     const request = createMockNextRequest(BASE_URL, {
@@ -126,12 +136,18 @@ describe('DELETE /api/wbs/tasks/batch', () => {
   it('여러 작업을 한 번에 삭제한다', async () => {
     const user = await createTestUser();
     const task1 = await Task.create({
-      pid: 1, title: '삭제1', assignee: user._id,
-      startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05'),
+      pid: 1,
+      title: '삭제1',
+      assignee: user._id,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-05'),
     });
     const task2 = await Task.create({
-      pid: 1, title: '삭제2', assignee: user._id,
-      startDate: new Date('2024-01-06'), endDate: new Date('2024-01-10'),
+      pid: 1,
+      title: '삭제2',
+      assignee: user._id,
+      startDate: new Date('2024-01-06'),
+      endDate: new Date('2024-01-10'),
     });
 
     const request = createMockNextRequest(BASE_URL, {
@@ -152,16 +168,25 @@ describe('DELETE /api/wbs/tasks/batch', () => {
   it('삭제된 작업들의 의존관계가 다른 작업에서 정리된다', async () => {
     const user = await createTestUser();
     const taskA = await Task.create({
-      pid: 1, title: '작업A', assignee: user._id,
-      startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05'),
+      pid: 1,
+      title: '작업A',
+      assignee: user._id,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-05'),
     });
     const taskB = await Task.create({
-      pid: 1, title: '작업B', assignee: user._id,
-      startDate: new Date('2024-01-06'), endDate: new Date('2024-01-10'),
+      pid: 1,
+      title: '작업B',
+      assignee: user._id,
+      startDate: new Date('2024-01-06'),
+      endDate: new Date('2024-01-10'),
     });
     const taskC = await Task.create({
-      pid: 1, title: '작업C', assignee: user._id,
-      startDate: new Date('2024-01-11'), endDate: new Date('2024-01-15'),
+      pid: 1,
+      title: '작업C',
+      assignee: user._id,
+      startDate: new Date('2024-01-11'),
+      endDate: new Date('2024-01-15'),
       dependencies: [
         { taskId: taskA._id, type: 'FS' },
         { taskId: taskB._id, type: 'FS' },
@@ -199,12 +224,18 @@ describe('DELETE /api/wbs/tasks/batch', () => {
   it('삭제 대상이 아닌 작업은 유지된다', async () => {
     const user = await createTestUser();
     const task1 = await Task.create({
-      pid: 1, title: '삭제대상', assignee: user._id,
-      startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05'),
+      pid: 1,
+      title: '삭제대상',
+      assignee: user._id,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-05'),
     });
     await Task.create({
-      pid: 1, title: '유지대상', assignee: user._id,
-      startDate: new Date('2024-01-06'), endDate: new Date('2024-01-10'),
+      pid: 1,
+      title: '유지대상',
+      assignee: user._id,
+      startDate: new Date('2024-01-06'),
+      endDate: new Date('2024-01-10'),
     });
 
     const request = createMockNextRequest(BASE_URL, {

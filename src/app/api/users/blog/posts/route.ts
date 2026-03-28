@@ -45,7 +45,6 @@ export async function GET(req: NextRequest) {
     // 실제 RSS 데이터 가져오기
     const posts = await getLatestBlogPosts(rssUrl);
     return NextResponse.json(posts);
-
   } catch (error) {
     // [상황 3] URL은 있는데 RSS를 못 가져오는 경우 (404 등)
     // 서버 터트리지 말고 로그만 남기고 '빈 배열' 반환

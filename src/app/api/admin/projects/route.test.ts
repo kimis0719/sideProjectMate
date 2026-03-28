@@ -70,9 +70,7 @@ describe('GET /api/admin/projects', () => {
     await createTestProject(admin._id.toString(), { title: '프로젝트B', pid: 1002 });
     mockAdmin(admin._id.toString());
 
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/projects?page=1&limit=10'
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/projects?page=1&limit=10');
     const res = await GET(req);
     const json = await res.json();
 
@@ -118,9 +116,7 @@ describe('GET /api/admin/projects', () => {
       expires: '2099-12-31',
     });
 
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/projects?page=1&limit=10'
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/projects?page=1&limit=10');
     const res = await GET(req);
     const json = await res.json();
 
@@ -131,9 +127,7 @@ describe('GET /api/admin/projects', () => {
   it('미인증 시 401을 반환한다', async () => {
     mockGetServerSession.mockResolvedValue(null);
 
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/projects?page=1&limit=10'
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/projects?page=1&limit=10');
     const res = await GET(req);
     const json = await res.json();
 
@@ -149,10 +143,10 @@ describe('PATCH /api/admin/projects', () => {
     const p2 = await createTestProject(admin._id.toString(), { pid: 3002, delYn: false });
     mockAdmin(admin._id.toString());
 
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/projects',
-      { method: 'PATCH', body: { pids: [p1.pid, p2.pid], delYn: true } }
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/projects', {
+      method: 'PATCH',
+      body: { pids: [p1.pid, p2.pid], delYn: true },
+    });
     const res = await PATCH(req);
     const json = await res.json();
 
@@ -175,10 +169,10 @@ describe('DELETE /api/admin/projects', () => {
     const p2 = await createTestProject(admin._id.toString(), { pid: 4002 });
     mockAdmin(admin._id.toString());
 
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/projects',
-      { method: 'DELETE', body: { pids: [p1.pid, p2.pid] } }
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/projects', {
+      method: 'DELETE',
+      body: { pids: [p1.pid, p2.pid] },
+    });
     const res = await DELETE(req);
     const json = await res.json();
 

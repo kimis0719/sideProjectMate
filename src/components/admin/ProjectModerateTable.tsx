@@ -26,8 +26,14 @@ interface PaginatedResult {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  '01': { label: '모집중', color: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400' },
-  '02': { label: '진행중', color: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400' },
+  '01': {
+    label: '모집중',
+    color: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',
+  },
+  '02': {
+    label: '진행중',
+    color: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400',
+  },
   '03': { label: '완료', color: 'bg-muted text-muted-foreground' },
 };
 
@@ -90,7 +96,13 @@ export default function ProjectModerateTable() {
     const json = await res.json();
     if (json.success) {
       setData((prev) =>
-        prev ? { ...prev, projects: prev.projects.filter((p) => p._id !== project._id), total: prev.total - 1 } : prev
+        prev
+          ? {
+              ...prev,
+              projects: prev.projects.filter((p) => p._id !== project._id),
+              total: prev.total - 1,
+            }
+          : prev
       );
     } else {
       await alert('오류', json.message);
@@ -99,7 +111,9 @@ export default function ProjectModerateTable() {
 
   const handleModalDeleted = (pid: number) => {
     setData((prev) =>
-      prev ? { ...prev, projects: prev.projects.filter((p) => p.pid !== pid), total: prev.total - 1 } : prev
+      prev
+        ? { ...prev, projects: prev.projects.filter((p) => p.pid !== pid), total: prev.total - 1 }
+        : prev
     );
   };
 
@@ -318,7 +332,10 @@ export default function ProjectModerateTable() {
             )}
             {!loading &&
               data?.projects.map((project) => {
-                const statusInfo = STATUS_MAP[project.status] ?? { label: project.status, color: 'bg-muted text-muted-foreground' };
+                const statusInfo = STATUS_MAP[project.status] ?? {
+                  label: project.status,
+                  color: 'bg-muted text-muted-foreground',
+                };
                 return (
                   <tr
                     key={project._id}
@@ -335,7 +352,9 @@ export default function ProjectModerateTable() {
                         className="rounded border-border cursor-pointer"
                       />
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{project.pid}</td>
+                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
+                      {project.pid}
+                    </td>
                     <td className="px-4 py-3 font-medium text-foreground max-w-xs">
                       <div className="flex items-center gap-1.5">
                         <span className="hover:text-blue-600 hover:underline line-clamp-1">
@@ -363,12 +382,16 @@ export default function ProjectModerateTable() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusInfo.color}`}>
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusInfo.color}`}
+                      >
                         {statusInfo.label}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{project.views}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{project.likes?.length ?? 0}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {project.likes?.length ?? 0}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">
                       {new Date(project.createdAt).toLocaleDateString('ko-KR')}
                     </td>

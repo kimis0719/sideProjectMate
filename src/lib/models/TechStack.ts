@@ -25,4 +25,5 @@ const TechStackSchema: Schema = new Schema({
   },
 });
 
-export default mongoose.models.TechStack || mongoose.model<ITechStack>('TechStack', TechStackSchema, 'techstacks');
+export default mongoose.models.TechStack ||
+  mongoose.model<ITechStack>('TechStack', TechStackSchema, 'techstacks');

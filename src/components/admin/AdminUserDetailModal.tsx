@@ -129,7 +129,9 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
           )}
 
           {!loading && !user && (
-            <div className="text-center py-12 text-muted-foreground text-sm">사용자를 찾을 수 없습니다.</div>
+            <div className="text-center py-12 text-muted-foreground text-sm">
+              사용자를 찾을 수 없습니다.
+            </div>
           )}
 
           {!loading && user && (
@@ -148,7 +150,9 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-foreground text-lg">{user.nName || '(이름 없음)'}</p>
+                  <p className="font-semibold text-foreground text-lg">
+                    {user.nName || '(이름 없음)'}
+                  </p>
                   <p className="text-sm text-muted-foreground">{user.authorEmail}</p>
                   <p className="text-xs text-muted-foreground font-mono mt-0.5">UID: {user.uid}</p>
                 </div>
@@ -184,26 +188,22 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
 
               {/* 기본 정보 */}
               <div className="border border-border rounded-lg divide-y divide-border">
-                {user.position && (
-                  <InfoRow label="직군" value={user.position} />
-                )}
-                {user.career && (
-                  <InfoRow label="경력" value={user.career} />
-                )}
-                {user.status && (
-                  <InfoRow label="활동 상태" value={user.status} />
-                )}
-                {user.mblNo && (
-                  <InfoRow label="연락처" value={user.mblNo} />
-                )}
+                {user.position && <InfoRow label="직군" value={user.position} />}
+                {user.career && <InfoRow label="경력" value={user.career} />}
+                {user.status && <InfoRow label="활동 상태" value={user.status} />}
+                {user.mblNo && <InfoRow label="연락처" value={user.mblNo} />}
                 {user.providers && user.providers.length > 0 && (
                   <InfoRow label="가입 방식" value={user.providers.join(', ')} />
                 )}
-                {user.level !== undefined && (
-                  <InfoRow label="레벨" value={`Lv.${user.level}`} />
-                )}
-                <InfoRow label="가입일" value={new Date(user.createdAt).toLocaleDateString('ko-KR')} />
-                <InfoRow label="최종 수정" value={new Date(user.updatedAt).toLocaleDateString('ko-KR')} />
+                {user.level !== undefined && <InfoRow label="레벨" value={`Lv.${user.level}`} />}
+                <InfoRow
+                  label="가입일"
+                  value={new Date(user.createdAt).toLocaleDateString('ko-KR')}
+                />
+                <InfoRow
+                  label="최종 수정"
+                  value={new Date(user.updatedAt).toLocaleDateString('ko-KR')}
+                />
               </div>
 
               {/* 소개 */}
@@ -259,7 +259,9 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
 
               {/* 계정 관리 (Danger Zone) */}
               <div className="border border-red-200 dark:border-red-900/50 rounded-lg p-4 bg-red-50/50 dark:bg-red-950/10">
-                <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">계정 관리</p>
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">
+                  계정 관리
+                </p>
                 <p className="text-xs text-muted-foreground mb-3">
                   {user.delYn
                     ? '계정을 활성화하면 해당 사용자가 다시 로그인할 수 있습니다.'

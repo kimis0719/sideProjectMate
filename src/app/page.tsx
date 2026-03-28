@@ -8,7 +8,8 @@ import CommonCode, { ICommonCode } from '@/lib/models/CommonCode';
 
 export const metadata: Metadata = {
   title: 'Side Project Mate — 사이드 프로젝트 팀 매칭 플랫폼',
-  description: '디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼. 칸반 보드, WBS, 실시간 협업 도구까지.',
+  description:
+    '디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼. 칸반 보드, WBS, 실시간 협업 도구까지.',
   openGraph: {
     title: 'Side Project Mate',
     description: '디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼',
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 async function getCommonCodes(group: string) {
   await dbConnect();
   const codes: any[] = await CommonCode.find({ group, isActive: true }).sort('order').lean();
-  return codes.map(code => ({
+  return codes.map((code) => ({
     ...code,
     _id: code._id.toString(),
   })) as ICommonCode[];

@@ -22,7 +22,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     );
 
     if (!updated) {
-      return NextResponse.json({ success: false, message: '코드를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '코드를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true, data: updated });
@@ -44,7 +47,10 @@ export async function DELETE(_request: NextRequest, { params }: { params: { id: 
     const deleted = await CommonCode.findByIdAndDelete(params.id);
 
     if (!deleted) {
-      return NextResponse.json({ success: false, message: '코드를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '코드를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true, message: '공통 코드가 삭제되었습니다.' });

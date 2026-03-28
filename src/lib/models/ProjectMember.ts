@@ -40,4 +40,5 @@ const ProjectMemberSchema: Schema = new Schema(
 // 프로젝트 멤버 인덱스 설정
 ProjectMemberSchema.index({ projectId: 1, userId: 1 }, { unique: true });
 
-export default mongoose.models.ProjectMember || mongoose.model<IProjectMember>('ProjectMember', ProjectMemberSchema, 'projectmembers');
+export default mongoose.models.ProjectMember ||
+  mongoose.model<IProjectMember>('ProjectMember', ProjectMemberSchema, 'projectmembers');

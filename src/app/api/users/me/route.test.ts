@@ -74,9 +74,7 @@ describe('GET /api/users/me', () => {
 
     await Availability.create({
       userId: user._id,
-      schedule: [
-        { day: 'monday', timeRanges: [{ start: '09:00', end: '12:00' }] },
-      ],
+      schedule: [{ day: 'monday', timeRanges: [{ start: '09:00', end: '12:00' }] }],
       preference: 80,
       personalityTags: ['analyst', 'doer'],
     });
@@ -200,7 +198,7 @@ describe('PATCH /api/users/me', () => {
     expect(json.data.introduction).toBe('새로운 자기소개입니다');
 
     // DB에 실제 저장 확인
-    const saved = await User.findById(user._id).lean() as any;
+    const saved = (await User.findById(user._id).lean()) as any;
     expect(saved.introduction).toBe('새로운 자기소개입니다');
   });
 

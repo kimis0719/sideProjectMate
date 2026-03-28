@@ -17,7 +17,10 @@ export async function GET(request: Request) {
   const pid = searchParams.get('pid');
 
   if (pid === null) {
-    return NextResponse.json({ success: false, message: 'Project ID (pid)가 필요합니다.' }, { status: 400 });
+    return NextResponse.json(
+      { success: false, message: 'Project ID (pid)가 필요합니다.' },
+      { status: 400 }
+    );
   }
 
   const projectId = Number(pid);
@@ -33,7 +36,10 @@ export async function GET(request: Request) {
     if (!board) {
       const project = await Project.findOne({ pid: projectId });
       if (!project) {
-        return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
+        return NextResponse.json(
+          { success: false, message: '프로젝트를 찾을 수 없습니다.' },
+          { status: 404 }
+        );
       }
 
       board = await Board.create({

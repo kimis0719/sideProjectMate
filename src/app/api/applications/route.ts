@@ -20,10 +20,13 @@ export async function GET(request: Request) {
       .populate('projectId', 'title pid'); // 지원한 프로젝트의 제목과 pid를 가져옴
 
     return NextResponse.json({ success: true, data: myApplications });
-
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: '내 지원 목록을 불러오는 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '내 지원 목록을 불러오는 중 오류가 발생했습니다.',
+        error: error.message,
+      },
       { status: 500 }
     );
   }

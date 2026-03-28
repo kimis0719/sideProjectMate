@@ -57,9 +57,7 @@ describe('GET /api/admin/users', () => {
     await createTestUser({ nName: '유저B' });
     mockAdmin(admin._id.toString());
 
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/users?page=1&limit=10'
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/users?page=1&limit=10');
     const res = await GET(req);
     const json = await res.json();
 
@@ -96,9 +94,7 @@ describe('GET /api/admin/users', () => {
       expires: '2099-12-31',
     });
 
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/users?page=1&limit=10'
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/users?page=1&limit=10');
     const res = await GET(req);
     const json = await res.json();
 
@@ -109,9 +105,7 @@ describe('GET /api/admin/users', () => {
   it('미인증 시 401을 반환한다', async () => {
     mockGetServerSession.mockResolvedValue(null);
 
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/users?page=1&limit=10'
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/users?page=1&limit=10');
     const res = await GET(req);
     const json = await res.json();
 
@@ -128,10 +122,10 @@ describe('PATCH /api/admin/users', () => {
     mockAdmin(admin._id.toString());
 
     const ids = [user1._id.toString(), user2._id.toString()];
-    const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/users',
-      { method: 'PATCH', body: { ids, delYn: true } }
-    );
+    const req = createMockNextRequest('http://localhost:3000/api/admin/users', {
+      method: 'PATCH',
+      body: { ids, delYn: true },
+    });
     const res = await PATCH(req);
     const json = await res.json();
 

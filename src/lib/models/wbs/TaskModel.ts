@@ -12,8 +12,8 @@ export type DependencyType = 'FS' | 'SS' | 'FF';
  * 의존관계 정보
  */
 export interface IDependency {
-  taskId: mongoose.Types.ObjectId;  // 선행 작업 ID
-  type: DependencyType;              // 의존관계 타입
+  taskId: mongoose.Types.ObjectId; // 선행 작업 ID
+  type: DependencyType; // 의존관계 타입
 }
 
 /**
@@ -21,19 +21,19 @@ export interface IDependency {
  * 프로젝트의 작업(Task)을 정의하는 타입입니다.
  */
 export interface ITask extends Document {
-  pid: number;                          // 프로젝트 ID (어느 프로젝트의 작업인지 식별)
-  title: string;                        // 작업명
-  description: string;                  // 작업 상세 설명
-  assignee: mongoose.Types.ObjectId;    // 담당자 (User 모델 참조)
-  startDate: Date;                      // 작업 시작일
-  endDate: Date;                        // 작업 종료일
-  status: 'todo' | 'in-progress' | 'done';  // 진행 상태
-  progress: number;                     // 진행률 (0-100%)
-  dependencies: IDependency[];          // 선행 작업 및 의존관계 타입
-  phase: string;                        // 단계/그룹명 (예: 기획, 개발, 테스트)
-  milestone: boolean;                   // 마일스톤 여부 (phase의 주요 완료 시점 표시)
-  createdAt: Date;                      // 생성일시
-  updatedAt: Date;                      // 수정일시
+  pid: number; // 프로젝트 ID (어느 프로젝트의 작업인지 식별)
+  title: string; // 작업명
+  description: string; // 작업 상세 설명
+  assignee: mongoose.Types.ObjectId; // 담당자 (User 모델 참조)
+  startDate: Date; // 작업 시작일
+  endDate: Date; // 작업 종료일
+  status: 'todo' | 'in-progress' | 'done'; // 진행 상태
+  progress: number; // 진행률 (0-100%)
+  dependencies: IDependency[]; // 선행 작업 및 의존관계 타입
+  phase: string; // 단계/그룹명 (예: 기획, 개발, 테스트)
+  milestone: boolean; // 마일스톤 여부 (phase의 주요 완료 시점 표시)
+  createdAt: Date; // 생성일시
+  updatedAt: Date; // 수정일시
 }
 
 /**
@@ -46,7 +46,7 @@ const TaskSchema: Schema = new Schema(
     pid: {
       type: Number,
       required: true,
-      index: true,  // pid로 빠른 조회를 위해 인덱스 추가
+      index: true, // pid로 빠른 조회를 위해 인덱스 추가
     },
     // 작업명 - 간트차트에 표시될 작업의 제목
     title: {
@@ -78,7 +78,7 @@ const TaskSchema: Schema = new Schema(
       required: true,
       validate: {
         // 종료일이 시작일보다 이전일 수 없도록 검증
-        validator: function(this: ITask, value: Date) {
+        validator: function (this: ITask, value: Date) {
           return value >= this.startDate;
         },
         message: '종료일은 시작일보다 이후여야 합니다.',
@@ -100,18 +100,20 @@ const TaskSchema: Schema = new Schema(
     // 선행 작업 - 이 작업이 시작되기 전에 완료되어야 할 작업들의 ID 배열
     // 간트차트에서 화살표로 의존성을 표시할 때 사용
     dependencies: {
-      type: [{
-        taskId: {
-          type: Schema.Types.ObjectId,
-          ref: 'Task',
-          required: true,
+      type: [
+        {
+          taskId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Task',
+            required: true,
+          },
+          type: {
+            type: String,
+            enum: ['FS', 'SS', 'FF'],
+            default: 'FS',
+          },
         },
-        type: {
-          type: String,
-          enum: ['FS', 'SS', 'FF'],
-          default: 'FS',
-        },
-      }],
+      ],
       default: [],
     },
     // 단계/그룹명 - 작업을 그룹화하는 단계 (예: "기획", "개발", "테스트", "배포")
@@ -128,8 +130,8 @@ const TaskSchema: Schema = new Schema(
       default: false,
     },
   },
-  { 
-    timestamps: true  // createdAt, updatedAt 자동 생성
+  {
+    timestamps: true, // createdAt, updatedAt 자동 생성
   }
 );
 

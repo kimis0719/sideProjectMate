@@ -16,10 +16,7 @@ const SIZE_MAP = {
 type AdSize = 'leaderboard' | 'rectangle' | 'auto';
 
 /** auto 사이즈를 실제 사이즈로 결정하는 순수 함수 */
-const resolveAdSize = (
-  size: AdSize,
-  isMobile: boolean
-): 'leaderboard' | 'rectangle' =>
+const resolveAdSize = (size: AdSize, isMobile: boolean): 'leaderboard' | 'rectangle' =>
   size === 'auto' ? (isMobile ? 'rectangle' : 'leaderboard') : size;
 
 /** 광고 영역 환경변수 키 목록 */

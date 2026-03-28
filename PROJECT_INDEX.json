@@ -21,40 +21,127 @@
     "tests": "npm run test:run"
   },
   "pages": [
-    "/", "/login", "/register",
-    "/projects", "/projects/[pid]", "/projects/new", "/projects/[pid]/edit", "/projects/[pid]/manage",
-    "/dashboard/[pid]", "/dashboard/[pid]/kanban", "/dashboard/[pid]/wbs",
+    "/",
+    "/login",
+    "/register",
+    "/projects",
+    "/projects/[pid]",
+    "/projects/new",
+    "/projects/[pid]/edit",
+    "/projects/[pid]/manage",
+    "/dashboard/[pid]",
+    "/dashboard/[pid]/kanban",
+    "/dashboard/[pid]/wbs",
     "/kanban/[pid]",
-    "/profile", "/profile/[id]", "/tech", "/mypage",
+    "/profile",
+    "/profile/[id]",
+    "/tech",
+    "/mypage",
     "/chat",
-    "/admin", "/admin/users", "/admin/projects", "/admin/common-codes", "/admin/tech-stacks",
-    "/privacy", "/terms"
+    "/admin",
+    "/admin/users",
+    "/admin/projects",
+    "/admin/common-codes",
+    "/admin/tech-stacks",
+    "/privacy",
+    "/terms"
   ],
   "api_domains": {
     "auth": ["api/auth/[...nextauth]", "api/auth/register"],
-    "projects": ["api/projects", "api/projects/[pid]", "api/projects/[pid]/apply", "api/projects/[pid]/applications", "api/projects/[pid]/application/me", "api/projects/[pid]/like", "api/projects/[pid]/resources"],
-    "applications": ["api/applications", "api/applications/[appId]", "api/applications/by-project/[pid]"],
-    "kanban": ["api/kanban/boards", "api/kanban/boards/[boardId]/members", "api/kanban/sections", "api/kanban/sections/[id]", "api/kanban/notes", "api/kanban/notes/[noteId]", "api/kanban/notes/batch", "api/kanban/notes/batch-delete"],
+    "projects": [
+      "api/projects",
+      "api/projects/[pid]",
+      "api/projects/[pid]/apply",
+      "api/projects/[pid]/applications",
+      "api/projects/[pid]/application/me",
+      "api/projects/[pid]/like",
+      "api/projects/[pid]/resources"
+    ],
+    "applications": [
+      "api/applications",
+      "api/applications/[appId]",
+      "api/applications/by-project/[pid]"
+    ],
+    "kanban": [
+      "api/kanban/boards",
+      "api/kanban/boards/[boardId]/members",
+      "api/kanban/sections",
+      "api/kanban/sections/[id]",
+      "api/kanban/notes",
+      "api/kanban/notes/[noteId]",
+      "api/kanban/notes/batch",
+      "api/kanban/notes/batch-delete"
+    ],
     "wbs": ["api/wbs/tasks", "api/wbs/tasks/[taskId]", "api/wbs/tasks/batch"],
-    "chat": ["api/chat/rooms", "api/chat/rooms/[roomId]", "api/chat/messages", "api/chat/messages/[roomId]"],
-    "users": ["api/users", "api/users/me", "api/users/[id]", "api/users/me/availability", "api/users/blog/posts", "api/users/github-stats"],
+    "chat": [
+      "api/chat/rooms",
+      "api/chat/rooms/[roomId]",
+      "api/chat/messages",
+      "api/chat/messages/[roomId]"
+    ],
+    "users": [
+      "api/users",
+      "api/users/me",
+      "api/users/[id]",
+      "api/users/me/availability",
+      "api/users/blog/posts",
+      "api/users/github-stats"
+    ],
     "notifications": ["api/notifications", "api/notifications/[id]"],
-    "admin": ["api/admin/stats", "api/admin/users", "api/admin/users/[id]", "api/admin/projects", "api/admin/projects/[pid]", "api/admin/common-codes", "api/admin/common-codes/[id]", "api/admin/tech-stacks", "api/admin/tech-stacks/[id]"],
-    "misc": ["api/cloudinary/sign", "api/common-codes", "api/tech-stacks", "api/reviews", "api/reviews/check", "api/utils/og", "api/proxy/solved", "api/status", "api/debug/github-sync"]
+    "admin": [
+      "api/admin/stats",
+      "api/admin/users",
+      "api/admin/users/[id]",
+      "api/admin/projects",
+      "api/admin/projects/[pid]",
+      "api/admin/common-codes",
+      "api/admin/common-codes/[id]",
+      "api/admin/tech-stacks",
+      "api/admin/tech-stacks/[id]"
+    ],
+    "misc": [
+      "api/cloudinary/sign",
+      "api/common-codes",
+      "api/tech-stacks",
+      "api/reviews",
+      "api/reviews/check",
+      "api/utils/og",
+      "api/proxy/solved",
+      "api/status",
+      "api/debug/github-sync"
+    ]
   },
   "models": {
-    "User": { "collection": "memberbasics", "key_fields": ["uid", "nName", "authorEmail", "memberType"] },
-    "Project": { "collection": "projects", "key_fields": ["pid", "title", "authorId", "status", "category"] },
-    "Application": { "collection": "applications", "key_fields": ["projectId", "applicantId", "status"] },
-    "ProjectMember": { "collection": "projectmembers", "key_fields": ["projectId", "userId", "role"] },
+    "User": {
+      "collection": "memberbasics",
+      "key_fields": ["uid", "nName", "authorEmail", "memberType"]
+    },
+    "Project": {
+      "collection": "projects",
+      "key_fields": ["pid", "title", "authorId", "status", "category"]
+    },
+    "Application": {
+      "collection": "applications",
+      "key_fields": ["projectId", "applicantId", "status"]
+    },
+    "ProjectMember": {
+      "collection": "projectmembers",
+      "key_fields": ["projectId", "userId", "role"]
+    },
     "Notification": { "collection": "notifications", "key_fields": ["userId", "type", "message"] },
     "Counter": { "collection": "counters", "key_fields": ["name", "seq"] },
     "BoardModel": { "collection": "boards", "key_fields": ["projectId", "title"] },
     "SectionModel": { "collection": "sections", "key_fields": ["boardId", "title", "order"] },
     "NoteModel": { "collection": "notes", "key_fields": ["sectionId", "content", "order"] },
-    "TaskModel": { "collection": "tasks", "key_fields": ["pid", "title", "startDate", "endDate", "dependencies"] },
+    "TaskModel": {
+      "collection": "tasks",
+      "key_fields": ["pid", "title", "startDate", "endDate", "dependencies"]
+    },
     "ChatRoom": { "collection": "chatrooms", "key_fields": ["participants", "type"] },
-    "ChatMessage": { "collection": "chatmessages", "key_fields": ["roomId", "senderId", "content"] },
+    "ChatMessage": {
+      "collection": "chatmessages",
+      "key_fields": ["roomId", "senderId", "content"]
+    },
     "Review": { "collection": "reviews", "key_fields": ["reviewerId", "revieweeId", "projectId"] },
     "Comment": { "collection": "comments", "status": "model_only" },
     "Post": { "collection": "posts", "status": "model_only" },
@@ -64,10 +151,16 @@
     "Availability": { "collection": "availabilities", "key_fields": ["userId", "schedule"] }
   },
   "stores": {
-    "boardStore": { "path": "src/store/boardStore.ts", "purpose": "Kanban state (Undo/Redo via Zundo)" },
+    "boardStore": {
+      "path": "src/store/boardStore.ts",
+      "purpose": "Kanban state (Undo/Redo via Zundo)"
+    },
     "wbsStore": { "path": "src/store/wbsStore.ts", "purpose": "WBS tasks CRUD + socket" },
     "modalStore": { "path": "src/store/modalStore.ts", "purpose": "Global alert/confirm modal" },
-    "notificationStore": { "path": "src/lib/store/notificationStore.ts", "purpose": "Notification state" }
+    "notificationStore": {
+      "path": "src/lib/store/notificationStore.ts",
+      "purpose": "Notification state"
+    }
   },
   "utils": [
     { "name": "taskDependency", "path": "src/lib/utils/wbs/taskDependency.ts" },

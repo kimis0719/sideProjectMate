@@ -23,8 +23,7 @@ export default function AdminSidebar() {
 
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map(({ href, label, icon }) => {
-          const isActive =
-            href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
+          const isActive = href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -43,10 +42,7 @@ export default function AdminSidebar() {
       </nav>
 
       <div className="px-6 py-4 border-t border-gray-700 dark:border-gray-800">
-        <Link
-          href="/"
-          className="text-xs text-gray-400 hover:text-white transition-colors"
-        >
+        <Link href="/" className="text-xs text-gray-400 hover:text-white transition-colors">
           ← 서비스로 돌아가기
         </Link>
       </div>
