@@ -30,4 +30,7 @@ yarn-error.log*
 .env
 .vscode
 .idea
-.claude
+.workzones.yml
+.claude/*
+!.claude/skills/
+!.claude/skills/**
