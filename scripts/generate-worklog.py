@@ -1,6 +1,7 @@
 import urllib.request
 import json
 import os
+import sys
 import datetime
 
 api_key = os.environ['ANTHROPIC_API_KEY']
@@ -47,9 +48,14 @@ req = urllib.request.Request(
     }
 )
 
-with urllib.request.urlopen(req) as resp:
-    result = json.loads(resp.read())
-    content = result['content'][0]['text']
+try:
+    with urllib.request.urlopen(req) as resp:
+        result = json.loads(resp.read())
+        content = result['content'][0]['text']
+except urllib.error.HTTPError as e:
+    error_body = e.read().decode('utf-8')
+    print(f"❌ Anthropic API 오류 {e.code}: {error_body}", file=sys.stderr)
+    sys.exit(1)
 
 date = datetime.date.today().strftime('%Y-%m-%d')
 filename = f"work-logs/{date}-{actor}-{sha}.md"
