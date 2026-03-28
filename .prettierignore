@@ -11,3 +11,7 @@ dist/
 out/
 build/
 coverage/
+
+# 자동 생성된 리포트 파일
+*_report.html
+*-review.html
