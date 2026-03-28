@@ -21,6 +21,9 @@ export type Note = {
   assigneeId?: string;
   creatorId?: string;
   updaterId?: string;
+  status?: 'active' | 'done';
+  completedAt?: Date;
+  completionNote?: string;
 };
 
 export type Board = {
@@ -39,6 +42,8 @@ export type Section = {
   boardId: string;
   color?: string;
   zIndex?: number;
+  parentSectionId?: string | null;
+  depth?: number;
 };
 
 const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
@@ -120,6 +125,15 @@ type BoardState = {
   undo: () => void;
   redo: () => void;
 
+  // View Mode (완료 탭)
+  viewMode: 'active' | 'done';
+  completedNotes: Note[];
+  completedNotesLoaded: boolean;
+  setViewMode: (mode: 'active' | 'done') => void;
+  fetchCompletedNotes: (boardId: string) => Promise<void>;
+  completeNote: (noteId: string, completionNote?: string) => Promise<void>;
+  revertNote: (noteId: string) => Promise<void>;
+
   // Remote-only Actions (Internal use by socket listeners)
   applyRemoteNoteCreation: (note: Note) => void;
   applyRemoteNoteUpdate: (note: Note) => void;
@@ -163,6 +177,9 @@ export const useBoardStore = create<BoardState>()(
         isSnapEnabled: false,
         isSelectionMode: false,
         isRemoteUpdate: false,
+        viewMode: 'active',
+        completedNotes: [],
+        completedNotesLoaded: false,
 
         setActiveUsers: (users) => set({ activeUsers: users }),
 
@@ -177,10 +194,15 @@ export const useBoardStore = create<BoardState>()(
             if (!boardRes.ok) throw new Error('Failed to fetch board');
             const boardJson = await boardRes.json();
             const board = transformDoc(boardJson.data);
-            set({ boardId: board.id });
+            set({
+              boardId: board.id,
+              viewMode: 'active',
+              completedNotes: [],
+              completedNotesLoaded: false,
+            });
 
-            // 2. 노트 조회
-            const notesRes = await fetch(`/api/kanban/notes?boardId=${board.id}`);
+            // 2. 노트 조회 (active만)
+            const notesRes = await fetch(`/api/kanban/notes?boardId=${board.id}&status=active`);
             if (notesRes.ok) {
               const notesJson = await notesRes.json();
               const noteList = notesJson.data || [];
@@ -358,6 +380,49 @@ export const useBoardStore = create<BoardState>()(
                 if (newPeerSelections[key].length === 0) delete newPeerSelections[key];
               });
               return { peerSelections: newPeerSelections };
+            });
+          });
+
+          // Note Completion Events
+          socket.off('note-completed');
+          socket.on(
+            'note-completed',
+            (data: { noteId: string; completedAt: string; completionNote?: string }) => {
+              set((state) => {
+                const note = state.notes.find((n) => n.id === data.noteId);
+                const completedNote = note
+                  ? {
+                      ...note,
+                      status: 'done' as const,
+                      completedAt: new Date(data.completedAt),
+                      completionNote: data.completionNote,
+                    }
+                  : null;
+                return {
+                  notes: state.notes.filter((n) => n.id !== data.noteId),
+                  completedNotes:
+                    completedNote && state.completedNotesLoaded
+                      ? [...state.completedNotes, completedNote]
+                      : state.completedNotes,
+                };
+              });
+            }
+          );
+
+          socket.off('note-reverted');
+          socket.on('note-reverted', (data: { noteId: string; note: Note }) => {
+            set((state) => {
+              const revertedNote = {
+                ...data.note,
+                status: 'active' as const,
+                completedAt: undefined,
+              };
+              return {
+                notes: state.notes.find((n) => n.id === data.noteId)
+                  ? state.notes
+                  : [...state.notes, revertedNote],
+                completedNotes: state.completedNotes.filter((n) => n.id !== data.noteId),
+              };
             });
           });
 
@@ -852,12 +917,26 @@ export const useBoardStore = create<BoardState>()(
           if (dx === 0 && dy === 0) return;
 
           const updatedSection = { ...section, x, y };
-          const newSections = sections.map((s) => (s.id === id ? updatedSection : s));
 
-          // 섹션 내 노트들을 함께 이동
+          // 자식 섹션도 함께 이동
+          const childSections = sections.filter((s) => s.parentSectionId === id);
+          const updatedChildSections = childSections.map((cs) => ({
+            ...cs,
+            x: cs.x + dx,
+            y: cs.y + dy,
+          }));
+
+          const newSections = sections.map((s) => {
+            if (s.id === id) return updatedSection;
+            const child = updatedChildSections.find((cs) => cs.id === s.id);
+            return child || s;
+          });
+
+          // 부모 노트 + 자식 섹션의 노트 모두 이동
+          const allMovedSectionIds = [id, ...childSections.map((cs) => cs.id)];
           const affectedNotes: Note[] = [];
           const newNotes = notes.map((n) => {
-            if (n.sectionId?.toString() === id) {
+            if (n.sectionId && allMovedSectionIds.includes(n.sectionId.toString())) {
               const updatedNote = { ...n, x: n.x + dx, y: n.y + dy };
               affectedNotes.push(updatedNote);
               return updatedNote;
@@ -867,10 +946,12 @@ export const useBoardStore = create<BoardState>()(
 
           set({ sections: newSections, notes: newNotes });
 
-          // 실시간 브로드캐스트 (변경된 항목만)
           if (boardId) {
             const socket = socketClient.connect();
             socket.emit('update-section', { boardId, section: updatedSection });
+            updatedChildSections.forEach((cs) =>
+              socket.emit('update-section', { boardId, section: cs })
+            );
             affectedNotes.forEach((note) => {
               socket.emit('update-note', { boardId, note });
             });
@@ -1026,6 +1107,107 @@ export const useBoardStore = create<BoardState>()(
               socket.emit('delete-section', { boardId, sectionId: oldSection.id });
             }
           });
+        },
+
+        setViewMode: (mode) => set({ viewMode: mode }),
+
+        fetchCompletedNotes: async (boardId) => {
+          try {
+            const res = await fetch(`/api/kanban/notes?boardId=${boardId}&status=done`);
+            if (res.ok) {
+              const json = await res.json();
+              const notes = (json.data || []).map((n: any) => ({
+                ...n,
+                id: n._id || n.id,
+                tags: n.tags || [],
+                completedAt: n.completedAt ? new Date(n.completedAt) : undefined,
+              }));
+              set({ completedNotes: notes, completedNotesLoaded: true });
+            }
+          } catch (error) {
+            console.error('Failed to fetch completed notes:', error);
+          }
+        },
+
+        completeNote: async (noteId, completionNote) => {
+          const { notes, boardId, completedNotes, completedNotesLoaded } = get();
+          const note = notes.find((n) => n.id === noteId);
+          if (!note) return;
+
+          const completedAt = new Date();
+          const completedNote: Note = { ...note, status: 'done', completedAt, completionNote };
+
+          // Optimistic update
+          set((state) => ({
+            notes: state.notes.filter((n) => n.id !== noteId),
+            completedNotes: completedNotesLoaded
+              ? [...state.completedNotes, completedNote]
+              : state.completedNotes,
+            selectedNoteIds: state.selectedNoteIds.filter((id) => id !== noteId),
+          }));
+
+          try {
+            await fetch(`/api/kanban/notes/${noteId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                status: 'done',
+                completedAt,
+                completionNote: completionNote || null,
+              }),
+            });
+
+            if (boardId) {
+              const socket = socketClient.connect();
+              socket.emit('complete-note', { boardId, noteId, completedAt, completionNote });
+            }
+          } catch (error) {
+            console.error('Failed to complete note:', error);
+            // Rollback
+            set((state) => ({
+              notes: [...state.notes, note],
+              completedNotes: state.completedNotes.filter((n) => n.id !== noteId),
+            }));
+          }
+        },
+
+        revertNote: async (noteId) => {
+          const { completedNotes, boardId } = get();
+          const note = completedNotes.find((n) => n.id === noteId);
+          if (!note) return;
+
+          const revertedNote: Note = {
+            ...note,
+            status: 'active',
+            completedAt: undefined,
+            completionNote: undefined,
+          };
+
+          // Optimistic update
+          set((state) => ({
+            completedNotes: state.completedNotes.filter((n) => n.id !== noteId),
+            notes: [...state.notes, revertedNote],
+          }));
+
+          try {
+            await fetch(`/api/kanban/notes/${noteId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'active', completedAt: null }),
+            });
+
+            if (boardId) {
+              const socket = socketClient.connect();
+              socket.emit('revert-note', { boardId, noteId, note: revertedNote });
+            }
+          } catch (error) {
+            console.error('Failed to revert note:', error);
+            // Rollback
+            set((state) => ({
+              notes: state.notes.filter((n) => n.id !== noteId),
+              completedNotes: [...state.completedNotes, note],
+            }));
+          }
         },
 
         // --- Remote-only Actions Implementation ---

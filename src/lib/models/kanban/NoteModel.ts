@@ -14,6 +14,9 @@ export interface INote extends Document {
   updaterId?: mongoose.Types.ObjectId;
   boardId: mongoose.Types.ObjectId;
   sectionId?: mongoose.Types.ObjectId;
+  status: 'active' | 'done';
+  completedAt?: Date;
+  completionNote?: string;
 }
 
 const NoteSchema: Schema = new Schema(
@@ -65,11 +68,25 @@ const NoteSchema: Schema = new Schema(
       ref: 'Section',
       default: null,
     },
+    status: {
+      type: String,
+      enum: ['active', 'done'],
+      default: 'active',
+    },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
+    completionNote: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
 NoteSchema.index({ boardId: 1 });
 NoteSchema.index({ sectionId: 1 });
+NoteSchema.index({ boardId: 1, status: 1 });
 
 export default models.Note || model<INote>('Note', NoteSchema);

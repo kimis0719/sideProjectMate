@@ -75,6 +75,48 @@ describe('GET /api/kanban/notes', () => {
     expect(json.data[1].text).toBe('Test Note 2');
   });
 
+  it('status=active 쿼리로 진행중 노트만 조회한다', async () => {
+    mockGetServerSession.mockResolvedValue(mockSession);
+    const boardId = new mongoose.Types.ObjectId();
+    const creatorId = new mongoose.Types.ObjectId();
+
+    await Note.create({ text: 'Active', x: 0, y: 0, boardId, creatorId, status: 'active' });
+    await Note.create({ text: 'Done', x: 0, y: 0, boardId, creatorId, status: 'done' });
+
+    const req = new Request(`${BASE_URL}?boardId=${boardId.toString()}&status=active`);
+    const res = await GET(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0].text).toBe('Active');
+  });
+
+  it('status=done 쿼리로 완료 노트만 조회한다', async () => {
+    mockGetServerSession.mockResolvedValue(mockSession);
+    const boardId = new mongoose.Types.ObjectId();
+    const creatorId = new mongoose.Types.ObjectId();
+
+    await Note.create({ text: 'Active', x: 0, y: 0, boardId, creatorId, status: 'active' });
+    await Note.create({
+      text: 'Done',
+      x: 0,
+      y: 0,
+      boardId,
+      creatorId,
+      status: 'done',
+      completedAt: new Date(),
+    });
+
+    const req = new Request(`${BASE_URL}?boardId=${boardId.toString()}&status=done`);
+    const res = await GET(req);
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0].text).toBe('Done');
+  });
+
   it('boardId가 없으면 400을 반환한다', async () => {
     mockGetServerSession.mockResolvedValue(mockSession);
 

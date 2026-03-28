@@ -28,10 +28,29 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { boardId, title, x, y, width, height, color, zIndex } = body;
+    const { boardId, title, x, y, width, height, color, zIndex, parentSectionId } = body;
 
     if (!boardId) {
       return NextResponse.json({ success: false, error: 'Board ID is required' }, { status: 400 });
+    }
+
+    // depth 결정: parentSectionId가 있으면 자식(1), 없으면 최상위(0)
+    let depth = 0;
+    if (parentSectionId) {
+      const parent = (await Section.findById(parentSectionId).lean()) as any;
+      if (!parent) {
+        return NextResponse.json(
+          { success: false, error: 'Parent section not found' },
+          { status: 404 }
+        );
+      }
+      if (parent.depth >= 1) {
+        return NextResponse.json(
+          { success: false, error: '섹션 중첩은 1단계까지만 가능합니다.' },
+          { status: 400 }
+        );
+      }
+      depth = 1;
     }
 
     await dbConnect();
@@ -46,6 +65,8 @@ export async function POST(req: NextRequest) {
       height,
       color,
       zIndex,
+      parentSectionId: parentSectionId || null,
+      depth,
     });
 
     // 2. Auto-Capture: 섹션 범위 내의 Orphan Note들을 찾아 sectionId 업데이트

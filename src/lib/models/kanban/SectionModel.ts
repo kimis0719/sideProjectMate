@@ -9,6 +9,8 @@ export interface ISection extends Document {
   height: number;
   color: string;
   zIndex: number;
+  parentSectionId: mongoose.Types.ObjectId | null;
+  depth: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +25,15 @@ const SectionSchema = new Schema<ISection>(
     height: { type: Number, required: true, default: 300 },
     color: { type: String, default: '#E5E7EB' }, // Default gray
     zIndex: { type: Number, default: 0 },
+    parentSectionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Section',
+      default: null,
+    },
+    depth: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
