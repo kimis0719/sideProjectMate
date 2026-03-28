@@ -1,0 +1,18 @@
+# 작업 구역 선언 파일
+# 작업 시작 시 본인이 담당하는 파일/디렉토리를 아래에 선언하세요.
+# PR 머지 후에는 반드시 해당 항목을 삭제하거나 status를 free로 변경하세요.
+#
+# status 종류:
+#   locked → 수정 금지 (다른 팀원 작업 중, 충돌 위험)
+#   active → 작업 중 (머지 전이지만 충돌 위험 낮음)
+#   free   → 작업 가능
+#
+# 예시:
+# zones:
+#   - path: "src/store/boardStore.ts"
+#     owner: "HJ"
+#     status: "locked"
+#     reason: "실시간 소켓 로직 작업 중"
+#     expires: "2026-04-05"
+
+zones: []

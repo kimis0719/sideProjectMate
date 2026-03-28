@@ -1,0 +1,105 @@
+name: Conflict Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-workzones:
+    name: 작업 구역 충돌 검사
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 변경 파일 vs 작업 구역 충돌 검사
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 << 'PYEOF'
+          import subprocess
+          import os
+          import json
+
+          # .workzones.yml 파싱 (PyYAML 없이 간단히 처리)
+          zones = []
+          try:
+              with open('.workzones.yml', 'r', encoding='utf-8') as f:
+                  content = f.read()
+
+              current_zone = {}
+              for line in content.split('\n'):
+                  line = line.strip()
+                  if line.startswith('- path:'):
+                      if current_zone:
+                          zones.append(current_zone)
+                      current_zone = {'path': line.split(':', 1)[1].strip().strip('"')}
+                  elif line.startswith('owner:') and current_zone:
+                      current_zone['owner'] = line.split(':', 1)[1].strip()
+                  elif line.startswith('status:') and current_zone:
+                      current_zone['status'] = line.split(':', 1)[1].strip()
+                  elif line.startswith('reason:') and current_zone:
+                      current_zone['reason'] = line.split(':', 1)[1].strip().strip('"')
+              if current_zone:
+                  zones.append(current_zone)
+          except FileNotFoundError:
+              print("⚠️ .workzones.yml 파일 없음, 검사 건너뜀")
+              exit(0)
+
+          locked_zones = [z for z in zones if z.get('status') == 'locked']
+          if not locked_zones:
+              print("✅ locked 구역 없음, 통과")
+              exit(0)
+
+          # PR 변경 파일 목록 가져오기
+          result = subprocess.run(
+              ['git', 'diff', '--name-only', 'origin/main...HEAD'],
+              capture_output=True, text=True
+          )
+          changed_files = result.stdout.strip().split('\n')
+
+          # 충돌 검사
+          conflicts = []
+          for zone in locked_zones:
+              zone_path = zone['path']
+              for changed in changed_files:
+                  if changed.startswith(zone_path) or changed == zone_path:
+                      conflicts.append({
+                          'file': changed,
+                          'zone': zone
+                      })
+
+          if not conflicts:
+              print("✅ 작업 구역 충돌 없음, 통과")
+              exit(0)
+
+          # 충돌 발견 시 PR 코멘트 작성
+          comment = "## ⚠️ 작업 구역 충돌 감지\n\n"
+          comment += "이 PR에서 수정된 파일이 현재 다른 팀원이 작업 중인 구역과 겹칩니다.\n\n"
+          comment += "| 수정 파일 | 담당자 | 사유 |\n"
+          comment += "|-----------|--------|------|\n"
+          for c in conflicts:
+              owner = c['zone'].get('owner', '?')
+              reason = c['zone'].get('reason', '-')
+              comment += f"| `{c['file']}` | {owner} | {reason} |\n"
+          comment += "\n머지 전에 해당 담당자와 먼저 조율해주세요."
+
+          pr_number = os.environ['PR_NUMBER']
+          repo = os.environ.get('GITHUB_REPOSITORY', '')
+
+          subprocess.run([
+              'gh', 'pr', 'comment', pr_number,
+              '--body', comment,
+              '--repo', repo
+          ], env={**os.environ, 'GH_TOKEN': os.environ['GH_TOKEN']})
+
+          print(f"⚠️ 충돌 {len(conflicts)}건 발견, PR에 코멘트 등록 완료")
+          # 경고만 하고 빌드는 차단하지 않음 (exit 0)
+          exit(0)
+          PYEOF
