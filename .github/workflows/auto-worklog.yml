@@ -1,0 +1,131 @@
+name: Auto Work Log
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  generate-worklog:
+    name: Work Log 자동 생성
+    runs-on: ubuntu-latest
+    # 봇이 생성한 커밋은 건너뜀 (무한 루프 방지)
+    if: github.actor != 'github-actions[bot]'
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 변경 파일 추출
+        id: diff
+        run: |
+          # 이전 커밋이 없는 경우(첫 커밋) 처리
+          if git rev-parse HEAD~1 > /dev/null 2>&1; then
+            CHANGED=$(git diff HEAD~1 HEAD --name-only | grep -v '^work-logs/' || true)
+            STAT=$(git diff HEAD~1 HEAD --stat | tail -1)
+          else
+            CHANGED=$(git show --name-only --format="" HEAD | grep -v '^work-logs/' || true)
+            STAT="첫 번째 커밋"
+          fi
+
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "stat=$STAT" >> $GITHUB_OUTPUT
+
+          # work-logs 파일만 변경된 경우 스킵
+          if [ -z "$CHANGED" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Claude API로 Work Log 생성
+        if: steps.diff.outputs.skip == 'false'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          CHANGED_FILES: ${{ steps.diff.outputs.changed_files }}
+          DIFF_STAT: ${{ steps.diff.outputs.stat }}
+        run: |
+          python3 << 'PYEOF'
+          import urllib.request
+          import json
+          import os
+          import datetime
+
+          api_key = os.environ['ANTHROPIC_API_KEY']
+          actor = os.environ['GITHUB_ACTOR']
+          branch = os.environ['GITHUB_REF_NAME'].replace('/', '-')
+          sha = os.environ['GITHUB_SHA'][:7]
+          changed = os.environ['CHANGED_FILES']
+          stat = os.environ['DIFF_STAT']
+
+          prompt = f"""아래 git 변경사항을 분석해서 work-log를 작성해줘. 간결하게 작성할 것.
+
+변경된 파일:
+{changed}
+
+변경 통계: {stat}
+
+다음 형식으로만 출력 (다른 말 없이):
+
+## 작업 요약
+(한 줄 요약)
+
+## 변경된 파일
+- `파일경로` — 변경 내용 (각 파일마다 한 줄)
+
+## 미완성 / 다음 세션에서 이어받을 부분
+없음 (또는 내용)
+
+## 건드리면 안 되는 부분
+없음 (또는 내용)"""
+
+          payload = json.dumps({
+              "model": "claude-haiku-4-5-20251001",
+              "max_tokens": 400,
+              "messages": [{"role": "user", "content": prompt}]
+          }).encode('utf-8')
+
+          req = urllib.request.Request(
+              'https://api.anthropic.com/v1/messages',
+              data=payload,
+              headers={
+                  'x-api-key': api_key,
+                  'anthropic-version': '2023-06-01',
+                  'content-type': 'application/json'
+              }
+          )
+
+          with urllib.request.urlopen(req) as resp:
+              result = json.loads(resp.read())
+              content = result['content'][0]['text']
+
+          date = datetime.date.today().strftime('%Y-%m-%d')
+          filename = f"work-logs/{date}-{actor}-{sha}.md"
+
+          header = f"## {date} — {actor} ({branch}) `{sha}`\n> 모델: claude-haiku-4-5 (자동생성)\n\n"
+
+          os.makedirs('work-logs', exist_ok=True)
+          with open(filename, 'w', encoding='utf-8') as f:
+              f.write(header + content + '\n')
+
+          print(f"✅ Work log 생성 완료: {filename}")
+          PYEOF
+
+      - name: Work Log 커밋 & 푸시
+        if: steps.diff.outputs.skip == 'false'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add work-logs/
+          git diff --staged --quiet || git commit -m "docs: auto-generate work log [${{ github.sha }}]"
+          git push
