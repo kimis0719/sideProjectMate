@@ -1,0 +1,35 @@
+name: Update MAP.md
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-maps:
+    name: MAP.md 자동 갱신
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: MAP.md 갱신 실행
+        run: node scripts/generate-maps.js
+
+      - name: 변경사항 커밋 & 푸시
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add src/**/MAP.md
+          git diff --staged --quiet || git commit -m "docs: auto-update MAP.md files"
+          git push
