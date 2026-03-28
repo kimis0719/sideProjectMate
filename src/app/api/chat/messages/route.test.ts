@@ -85,7 +85,7 @@ describe('POST /api/chat/messages', () => {
 
     await POST(request);
 
-    const updatedRoom = await ChatRoom.findById(room._id).lean();
+    const updatedRoom = await ChatRoom.findById(room._id).lean<{ lastMessage?: string }>();
     expect(updatedRoom!.lastMessage).toBe('마지막 메시지 테스트');
   });
 
@@ -111,7 +111,9 @@ describe('POST /api/chat/messages', () => {
 
     await POST(request);
 
-    const updatedRoom = await ChatRoom.findById(room._id).lean();
+    const updatedRoom = await ChatRoom.findById(room._id).lean<{
+      unreadCounts?: Record<string, number>;
+    }>();
     const unreadCounts = updatedRoom!.unreadCounts as Record<string, number>;
 
     // 발신자(user1)는 증가하지 않고, 수신자(user2)만 증가

@@ -19,7 +19,7 @@ interface ModalState {
   isDestructive?: boolean;
   closeOnBackdropClick?: boolean;
   showCloseButton?: boolean;
-  resolve: (value: any) => void;
+  resolve: (value?: any) => void;
 
   // Actions
   openConfirm: (

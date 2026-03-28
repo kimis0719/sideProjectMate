@@ -659,10 +659,10 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         <ReviewModal
           isOpen={!!reviewTarget}
           onClose={() => setReviewTarget(null)}
-          projectId={project._id as string}
+          projectId={project._id?.toString() ?? ''}
           reviewee={reviewTarget}
           onSuccess={() => {
-            setReviewedIds((prev) => new Set([...prev, reviewTarget._id]));
+            setReviewedIds((prev) => new Set(Array.from(prev).concat(reviewTarget._id)));
             setReviewTarget(null);
           }}
         />

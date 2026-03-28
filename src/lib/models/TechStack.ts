@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface ITechStack extends Document {
+export interface ITechStack extends Omit<Document, '_id'> {
   _id: string;
   name: string;
   category: 'frontend' | 'backend' | 'database' | 'devops' | 'mobile' | 'etc';

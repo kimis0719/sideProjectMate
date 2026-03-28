@@ -1,7 +1,13 @@
-node_modules
-.next
-dist
-.env*
-*.min.js
-public
-coverage
+# GitHub Actions 워크플로우 파일
+# auto-worklog.yml 등에서 Python 헤어독(<<)이 YAML 파서 오류를 유발
+.github/workflows/
+
+# 의존성
+node_modules/
+
+# 빌드 산출물
+.next/
+dist/
+out/
+build/
+coverage/

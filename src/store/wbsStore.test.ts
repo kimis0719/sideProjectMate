@@ -198,7 +198,7 @@ describe('wbsStore', () => {
   describe('addTask', () => {
     // ───────────────────────────────────────────────────────────────────────────
 
-    const newTaskInput: Omit<Task, 'id'> = {
+    const newTaskInput = {
       title: '새 작업',
       startDate: '2024-07-01' as any,
       endDate: '2024-07-15' as any,
@@ -206,7 +206,7 @@ describe('wbsStore', () => {
       assignee: { _id: 'user-001', nName: 'Alice' },
       dependencies: [],
       projectPid: 1,
-    } as Omit<Task, 'id'>;
+    } as unknown as Omit<Task, 'id'>;
 
     it('Optimistic Update로 임시 ID를 가진 작업이 즉시 추가된다', async () => {
       // fetch를 지연시켜 optimistic 상태를 관찰

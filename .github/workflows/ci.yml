@@ -30,9 +30,6 @@ jobs:
   typecheck:
     name: TypeScript 타입 체크
     runs-on: ubuntu-latest
-    # 타입 에러 정리 완료 전까지는 실패해도 PR 머지 차단 안 함
-    # TODO: 기존 타입 에러 정리 완료 후 continue-on-error 제거
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -46,5 +43,4 @@ jobs:
       - name: 의존성 설치
         run: npm ci
 
-      - name: TypeScript 타입 체크
-        run: npx tsc --noEmit
+      - name: TypeScr
