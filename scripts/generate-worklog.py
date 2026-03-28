@@ -54,6 +54,19 @@ try:
         content = result['content'][0]['text']
 except urllib.error.HTTPError as e:
     error_body = e.read().decode('utf-8')
+    try:
+        error_json = json.loads(error_body)
+        error_type = error_json.get('error', {}).get('type', '')
+        error_msg = error_json.get('error', {}).get('message', '')
+    except Exception:
+        error_type = ''
+        error_msg = error_body
+
+    if error_type == 'invalid_request_error' and 'credit' in error_msg.lower():
+        print(f"⚠️ Anthropic API 크레딧 부족으로 work-log 자동 생성을 건너뜁니다.")
+        print(f"   Plans & Billing에서 크레딧을 충전해주세요.")
+        sys.exit(0)
+
     print(f"❌ Anthropic API 오류 {e.code}: {error_body}", file=sys.stderr)
     sys.exit(1)
 
