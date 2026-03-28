@@ -14,7 +14,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
-    "prepare": "husky"
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production') require('child_process').execSync('husky', {stdio: 'inherit'})\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
