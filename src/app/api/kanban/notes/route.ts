@@ -34,7 +34,8 @@ export async function GET(request: Request) {
       );
     }
 
-    const notes = await Note.find({ boardId }).sort({ createdAt: 1 });
+    const status = searchParams.get('status') || 'active';
+    const notes = await Note.find({ boardId, status }).sort({ createdAt: 1 });
 
     return NextResponse.json({ success: true, data: notes });
   } catch (error) {

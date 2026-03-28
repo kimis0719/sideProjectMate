@@ -11,6 +11,25 @@ import ZoomController from '@/components/board/ZoomController';
 import ShortcutModal from '@/components/board/ShortcutModal';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import type { Section, Note } from '@/store/boardStore';
+
+// zIndex 계층 헬퍼
+function getSectionZIndex(section: Section): number {
+  if (!section.parentSectionId) return section.zIndex || 10;
+  // 자식 섹션: 부모 zIndex + 2 (단, 부모 zIndex를 직접 참조하지 않으므로 고정값 사용)
+  // 실제로는 렌더 시 sections 배열에서 부모를 찾아 계산
+  return (section.zIndex || 10) + 2;
+}
+
+function getNoteZIndex(note: Note, sections: Section[]): number {
+  if (!note.sectionId) return 1;
+  const section = sections.find((s) => s.id === note.sectionId);
+  if (!section) return 1;
+  if (!section.parentSectionId) return (section.zIndex || 10) + 1;
+  // 자식 섹션 내 노트: 부모 zIndex + 3
+  const parent = sections.find((s) => s.id === section.parentSectionId);
+  return (parent?.zIndex || 10) + 3;
+}
 
 /**
  * 임시로 사용할 공용 보드의 프로젝트 ID.
@@ -55,6 +74,11 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     setCurrentUserId,
     activeUsers,
     setActiveUsers,
+    viewMode,
+    setViewMode,
+    completedNotes,
+    completedNotesLoaded,
+    fetchCompletedNotes,
   } = useBoardStore((s) => ({
     notes: s.notes,
     sections: s.sections,
@@ -81,10 +105,25 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     setCurrentUserId: s.setCurrentUserId,
     activeUsers: s.activeUsers,
     setActiveUsers: s.setActiveUsers,
+    viewMode: s.viewMode,
+    setViewMode: s.setViewMode,
+    completedNotes: s.completedNotes,
+    completedNotesLoaded: s.completedNotesLoaded,
+    fetchCompletedNotes: s.fetchCompletedNotes,
   }));
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const notesCount = notes.length;
+
+  const handleTabSwitch = React.useCallback(
+    (mode: 'active' | 'done') => {
+      setViewMode(mode);
+      if (mode === 'done' && !completedNotesLoaded && boardId) {
+        fetchCompletedNotes(boardId);
+      }
+    },
+    [setViewMode, completedNotesLoaded, boardId, fetchCompletedNotes]
+  );
 
   // 현재 보드의 ID를 결정합니다. pid가 유효하면 해당 pid를, 그렇지 않으면 임시 ID를 사용합니다.
   const boardPid = pid || TEMP_PUBLIC_PID;
@@ -141,6 +180,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           socket.off('note-deselected');
           socket.off('board-synced');
           socket.off('board-users-update');
+          socket.off('note-completed');
+          socket.off('note-reverted');
         }
       };
     }
@@ -471,11 +512,34 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-secondary/50 px-3 py-1.5 rounded-full border border-secondary">
-            <span className="text-xs font-medium text-secondary-foreground">Notes</span>
-            <span className="ml-2 text-xs font-bold bg-background px-1.5 py-0.5 rounded-full text-foreground shadow-sm">
-              {notesCount}
-            </span>
+          {/* 진행중 / 완료 탭 */}
+          <div className="flex items-center rounded-full border border-secondary bg-secondary/50 overflow-hidden">
+            <button
+              onClick={() => handleTabSwitch('active')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+                viewMode === 'active'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>📌 진행중</span>
+              <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold text-[10px]">
+                {notesCount}
+              </span>
+            </button>
+            <button
+              onClick={() => handleTabSwitch('done')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+                viewMode === 'done'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span>✅ 완료</span>
+              <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full font-bold text-[10px]">
+                {completedNotes.length}
+              </span>
+            </button>
           </div>
 
           {/* 접속자 아바타 그룹 (Presence UI) */}
@@ -547,30 +611,34 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             </svg>
           </button>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (containerRef.current) {
-                addNote(containerRef.current.clientWidth, containerRef.current.clientHeight);
-              } else {
-                addNote();
-              }
-            }}
-            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 shadow-sm transition-colors"
-          >
-            <span className="hidden sm:inline">+ 노트 추가</span>
-            <span className="sm:hidden">+</span>
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddSection();
-            }}
-            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-sm transition-colors"
-          >
-            <span className="hidden sm:inline">+ 섹션 추가</span>
-            <span className="sm:hidden">+</span>
-          </button>
+          {viewMode === 'active' && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (containerRef.current) {
+                    addNote(containerRef.current.clientWidth, containerRef.current.clientHeight);
+                  } else {
+                    addNote();
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 shadow-sm transition-colors"
+              >
+                <span className="hidden sm:inline">+ 노트 추가</span>
+                <span className="sm:hidden">+</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddSection();
+                }}
+                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-sm transition-colors"
+              >
+                <span className="hidden sm:inline">+ 섹션 추가</span>
+                <span className="sm:hidden">+</span>
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -635,7 +703,9 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
       <main
         ref={containerRef}
-        className="relative flex-1 overflow-hidden bg-background select-none"
+        className={`relative flex-1 overflow-hidden select-none transition-colors duration-300 ${
+          viewMode === 'done' ? 'bg-gray-100 dark:bg-gray-900' : 'bg-background'
+        }`}
         aria-label="화이트보드"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -662,29 +732,35 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             style={{ opacity: 0.5 }}
           />
 
-          {/* Sections (Render First) */}
-          {sections.map((section) => (
-            <SectionItem key={section.id} section={section} />
-          ))}
+          {/* Sections (Render First) - 부모 먼저, 자식 나중에 렌더 */}
+          {[...sections]
+            .sort((a, b) => (a.depth || 0) - (b.depth || 0))
+            .map((section) => {
+              // zIndex 계층 계산
+              let sectionZIndex = section.zIndex || 10;
+              if (section.parentSectionId) {
+                const parent = sections.find((s) => s.id === section.parentSectionId);
+                sectionZIndex = (parent?.zIndex || 10) + 2;
+              }
+              return (
+                <SectionItem
+                  key={section.id}
+                  section={{ ...section, zIndex: sectionZIndex }}
+                  readOnly={viewMode === 'done'}
+                />
+              );
+            })}
 
           {/* Notes */}
-          {notes.length === 0 && sections.length === 0 ? (
+          {viewMode === 'active' && notes.length === 0 && sections.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-muted-foreground text-sm bg-card/80 px-4 py-2 rounded-full backdrop-blur-sm shadow-sm border border-border">
                 노트나 섹션을 추가해보세요!
               </div>
             </div>
-          ) : (
+          ) : viewMode === 'active' ? (
             notes.map((note) => {
-              // Z-Index Calculation
-              let zIndex = 1; // Orphan (Default)
-              if (note.sectionId) {
-                const section = sections.find((s) => s.id === note.sectionId);
-                if (section) {
-                  zIndex = (section.zIndex || 10) + 1;
-                }
-              }
-
+              const zIndex = getNoteZIndex(note, sections);
               return (
                 <NoteItem
                   key={note.id}
@@ -701,6 +777,37 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                   assigneeId={note.assigneeId}
                   dueDate={note.dueDate}
                   tags={note.tags}
+                />
+              );
+            })
+          ) : /* 완료 탭 뷰 */
+          completedNotes.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-muted-foreground text-sm bg-card/80 px-4 py-2 rounded-full backdrop-blur-sm shadow-sm border border-border">
+                완료된 노트가 없습니다.
+              </div>
+            </div>
+          ) : (
+            completedNotes.map((note) => {
+              const zIndex = getNoteZIndex(note, sections);
+              return (
+                <NoteItem
+                  key={note.id}
+                  id={note.id}
+                  x={note.x}
+                  y={note.y}
+                  text={note.text}
+                  color={note.color}
+                  zIndex={zIndex}
+                  width={note.width}
+                  height={note.height}
+                  creatorId={note.creatorId}
+                  updaterId={note.updaterId}
+                  assigneeId={note.assigneeId}
+                  dueDate={note.dueDate}
+                  tags={note.tags}
+                  isDoneView
+                  completedAt={note.completedAt}
                 />
               );
             })

@@ -127,6 +127,18 @@ app.prepare().then(() => {
       socket.to(boardId).emit('notes-deleted-batch', noteIds);
     });
 
+    // 4-2. 노트 완료
+    socket.on('complete-note', (data) => {
+      const { boardId, noteId, completedAt, completionNote } = data;
+      socket.to(boardId).emit('note-completed', { noteId, completedAt, completionNote });
+    });
+
+    // 4-3. 노트 되돌리기
+    socket.on('revert-note', (data) => {
+      const { boardId, noteId, note } = data;
+      socket.to(boardId).emit('note-reverted', { noteId, note });
+    });
+
     // 5. 섹션 업데이트
     socket.on('update-section', (data) => {
       const { boardId, section } = data;

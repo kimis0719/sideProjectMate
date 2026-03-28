@@ -67,6 +67,8 @@ type Props = {
   assigneeId?: string;
   dueDate?: Date;
   tags: string[];
+  isDoneView?: boolean;
+  completedAt?: Date;
 };
 
 // D-Day 계산 헬퍼
@@ -275,6 +277,8 @@ export default function NoteItem({
   assigneeId,
   dueDate,
   tags = [],
+  isDoneView = false,
+  completedAt,
 }: Props) {
   const {
     moveNote,
@@ -295,6 +299,8 @@ export default function NoteItem({
     isSnapEnabled,
     isSelectionMode,
     peerSelections,
+    completeNote,
+    revertNote,
   } = useBoardStore((s) => ({
     moveNote: s.moveNote,
     moveNotes: s.moveNotes,
@@ -314,6 +320,8 @@ export default function NoteItem({
     isSnapEnabled: s.isSnapEnabled,
     isSelectionMode: s.isSelectionMode,
     peerSelections: s.peerSelections,
+    completeNote: s.completeNote,
+    revertNote: s.revertNote,
   }));
 
   const { data: session } = useSession();
@@ -322,6 +330,8 @@ export default function NoteItem({
   const [isEditing, setIsEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(text);
   const [tagInput, setTagInput] = React.useState('');
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [isCompleting, setIsCompleting] = React.useState(false);
 
   const isDragging = React.useRef(false);
   const isResizing = React.useRef(false);
@@ -382,6 +392,7 @@ export default function NoteItem({
   const beginEdit = React.useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       e.stopPropagation();
+      if (isDoneView) return;
       if (isLockedByOther) return;
 
       setDraft(text);
@@ -528,6 +539,7 @@ export default function NoteItem({
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
+      if (isDoneView) return;
       if (isEditing) return;
       if (isLockedByOther) return;
 
@@ -871,21 +883,24 @@ export default function NoteItem({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
       onContextMenu={(e) => e.preventDefault()}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
         position: 'absolute',
         transform: `translate3d(${x}px, ${y}px, 0)`,
         width: width,
         height: height,
-        background: color,
+        background: isDoneView ? `${color}99` : color,
         boxShadow: finalShadow,
         borderRadius: 12,
         padding: 0,
-        cursor: isEditing ? 'text' : 'grab',
+        cursor: isDoneView ? 'default' : isEditing ? 'text' : 'grab',
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
         outline: 'none',
-        opacity: isTempNote ? 0.7 : 1,
+        opacity: isTempNote ? 0.7 : isCompleting ? 0 : 1,
+        transition: isCompleting ? 'opacity 0.3s ease, transform 0.3s ease' : undefined,
         zIndex: isSelected ? 9999 : zIndex,
         pointerEvents: isLockedByOther ? 'none' : 'auto',
         display: 'flex',
@@ -1138,40 +1153,118 @@ export default function NoteItem({
         </button>
       )}
 
-      {/* Settings Button */}
-      <button
-        type="button"
-        aria-label="설정 메뉴 열기"
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={togglePalette}
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          width: 24,
-          height: 24,
-          borderRadius: 4,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          zIndex: 30,
-          opacity: 0.6,
-        }}
-        className="hover:bg-black/10 transition-colors"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+      {/* 완료 체크박스 (진행중 뷰, hover 시 표시) */}
+      {!isDoneView && !isTempNote && (
+        <button
+          type="button"
+          aria-label="노트 완료"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={async (e) => {
+            e.stopPropagation();
+            setIsCompleting(true);
+            await new Promise((r) => setTimeout(r, 280));
+            completeNote(id);
+          }}
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            border: '2px solid rgba(0,0,0,0.25)',
+            background: 'transparent',
+            cursor: 'pointer',
+            zIndex: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: isHovered ? 1 : 0,
+            transition: 'opacity 0.15s ease',
+          }}
+          className="hover:bg-green-100 hover:border-green-500"
+        />
+      )}
+
+      {/* 완료 날짜 뱃지 + 되돌리기 버튼 (완료 뷰) */}
+      {isDoneView && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            right: 36,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            zIndex: 30,
+          }}
         >
-          <circle cx="12" cy="5" r="2" fill="currentColor" />
-          <circle cx="12" cy="12" r="2" fill="currentColor" />
-          <circle cx="12" cy="19" r="2" fill="currentColor" />
-        </svg>
-      </button>
+          <span style={{ fontSize: 10, color: '#059669', fontWeight: 600, whiteSpace: 'nowrap' }}>
+            ✅{' '}
+            {completedAt
+              ? completedAt.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+              : '완료'}
+          </span>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              revertNote(id);
+            }}
+            style={{
+              fontSize: 10,
+              padding: '1px 6px',
+              borderRadius: 8,
+              border: '1px solid rgba(0,0,0,0.15)',
+              background: 'white',
+              cursor: 'pointer',
+              color: '#6B7280',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            ↩️ 되돌리기
+          </button>
+        </div>
+      )}
+
+      {/* Settings Button */}
+      {!isDoneView && (
+        <button
+          type="button"
+          aria-label="설정 메뉴 열기"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={togglePalette}
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            width: 24,
+            height: 24,
+            borderRadius: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 30,
+            opacity: 0.6,
+          }}
+          className="hover:bg-black/10 transition-colors"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="12" cy="5" r="2" fill="currentColor" />
+            <circle cx="12" cy="12" r="2" fill="currentColor" />
+            <circle cx="12" cy="19" r="2" fill="currentColor" />
+          </svg>
+        </button>
+      )}
 
       {/* Main Content Area */}
       <div

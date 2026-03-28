@@ -15,4 +15,19 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones: []
+zones:
+  - path: 'src/app/api/kanban/'
+    owner: 'kimis'
+    status: 'active'
+    reason: 'KANBAN_PREREQUISITE_PLAN 1) 섹션 중첩, 2) 메모 완료 구현'
+    expires: '2026-04-04'
+  - path: 'src/store/boardStore.ts'
+    owner: 'kimis'
+    status: 'active'
+    reason: 'KANBAN_PREREQUISITE_PLAN 1) 섹션 중첩, 2) 메모 완료 구현'
+    expires: '2026-04-04'
+  - path: 'src/components/board/'
+    owner: 'kimis'
+    status: 'active'
+    reason: 'KANBAN_PREREQUISITE_PLAN 1) 섹션 중첩, 2) 메모 완료 구현'
+    expires: '2026-04-04'

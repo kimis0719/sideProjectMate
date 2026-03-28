@@ -54,6 +54,42 @@ describe('PATCH /api/kanban/notes/[noteId]', () => {
     expect(json.data.y).toBe(200); // 변경하지 않은 필드는 유지
   });
 
+  it('노트를 완료 처리한다 (status=done)', async () => {
+    const note = await createTestNote();
+    const completedAt = new Date();
+
+    const req = new Request('http://localhost:3000/api/kanban/notes/' + note._id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'done', completedAt, completionNote: '작업 완료' }),
+    });
+    const res = await PATCH(req, { params: { noteId: note._id.toString() } });
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.success).toBe(true);
+    expect(json.data.status).toBe('done');
+    expect(json.data.completionNote).toBe('작업 완료');
+    expect(json.data.completedAt).toBeTruthy();
+  });
+
+  it('노트를 되돌린다 (status=active)', async () => {
+    const note = await createTestNote({ status: 'done', completedAt: new Date() });
+
+    const req = new Request('http://localhost:3000/api/kanban/notes/' + note._id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'active', completedAt: null }),
+    });
+    const res = await PATCH(req, { params: { noteId: note._id.toString() } });
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.success).toBe(true);
+    expect(json.data.status).toBe('active');
+    expect(json.data.completedAt).toBeNull();
+  });
+
   it('존재하지 않는 노트면 404를 반환한다', async () => {
     const fakeId = new mongoose.Types.ObjectId();
 

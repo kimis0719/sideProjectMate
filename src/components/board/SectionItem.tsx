@@ -191,9 +191,10 @@ const calculateSectionResizeSnap = (
 
 type Props = {
   section: Section;
+  readOnly?: boolean;
 };
 
-export default function SectionItem({ section }: Props) {
+export default function SectionItem({ section, readOnly = false }: Props) {
   const {
     moveSection,
     updateSection,
@@ -254,6 +255,10 @@ export default function SectionItem({ section }: Props) {
 
   // 섹션 드래그 시 자식 노트 DOM 캐시 (드래그 시작 시 1회 빌드, 매 프레임 querySelectorAll 제거)
   const childNodeCacheRef = React.useRef<Map<HTMLElement, { startX: number; startY: number }>>(
+    new Map()
+  );
+  // 자식 섹션 DOM 캐시 (부모 섹션 드래그 시 자식 섹션도 이동)
+  const childSectionCacheRef = React.useRef<Map<HTMLElement, { startX: number; startY: number }>>(
     new Map()
   );
   const sectionDragDeltaRef = React.useRef({ x: 0, y: 0 });
@@ -335,6 +340,7 @@ export default function SectionItem({ section }: Props) {
 
     // 자식 노트의 DOM 요소와 시작 위치를 1회 캐싱 (매 포인터 이벤트에서 querySelectorAll 제거)
     childNodeCacheRef.current = new Map();
+    childSectionCacheRef.current = new Map();
     sectionDragDeltaRef.current = { x: 0, y: 0 };
     const childEls = document.querySelectorAll(`[data-section-id="${section.id}"]`);
     childEls.forEach((el) => {
@@ -344,6 +350,37 @@ export default function SectionItem({ section }: Props) {
         childNodeCacheRef.current.set(htmlEl, {
           startX: parseFloat(match[1]),
           startY: parseFloat(match[2]),
+        });
+      }
+    });
+
+    // 자식 섹션 DOM 캐시 (depth=1이며 parentSectionId===section.id인 섹션들)
+    const childSecs = useBoardStore
+      .getState()
+      .sections.filter((s) => s.parentSectionId === section.id);
+    childSecs.forEach((cs) => {
+      const el = document.querySelector(`[data-section-item-id="${cs.id}"]`) as HTMLElement;
+      if (el) {
+        const match = el.style.transform.match(/translate3d\(([^p]+)px,\s*([^p]+)px,\s*0\)/);
+        if (match) {
+          childSectionCacheRef.current.set(el, {
+            startX: parseFloat(match[1]),
+            startY: parseFloat(match[2]),
+          });
+        }
+        // 자식 섹션의 노트도 childNodeCache에 추가
+        const grandchildEls = document.querySelectorAll(`[data-section-id="${cs.id}"]`);
+        grandchildEls.forEach((gEl) => {
+          const gHtmlEl = gEl as HTMLElement;
+          const gMatch = gHtmlEl.style.transform.match(
+            /translate3d\(([^p]+)px,\s*([^p]+)px,\s*0\)/
+          );
+          if (gMatch) {
+            childNodeCacheRef.current.set(gHtmlEl, {
+              startX: parseFloat(gMatch[1]),
+              startY: parseFloat(gMatch[2]),
+            });
+          }
         });
       }
     });
@@ -403,6 +440,9 @@ export default function SectionItem({ section }: Props) {
       childNodeCacheRef.current.forEach(({ startX, startY }, el) => {
         el.style.transform = `translate3d(${startX + sectionDragDeltaRef.current.x}px, ${startY + sectionDragDeltaRef.current.y}px, 0)`;
       });
+      childSectionCacheRef.current.forEach(({ startX, startY }, el) => {
+        el.style.transform = `translate3d(${startX + sectionDragDeltaRef.current.x}px, ${startY + sectionDragDeltaRef.current.y}px, 0)`;
+      });
 
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
     }
@@ -416,29 +456,91 @@ export default function SectionItem({ section }: Props) {
 
     if (!hasMoved.current) return;
 
+    const finalX = currentVisual.current.x;
+    const finalY = currentVisual.current.y;
+    const myCenterX = finalX + section.width / 2;
+    const myCenterY = finalY + section.height / 2;
+
+    // 자식 섹션이 드래그된 경우: 부모 경계 밖이면 릴리즈
+    if (section.depth === 1 && section.parentSectionId) {
+      const parent = useBoardStore
+        .getState()
+        .sections.find((s) => s.id === section.parentSectionId);
+
+      if (parent) {
+        const isInsideParent =
+          myCenterX >= parent.x &&
+          myCenterX <= parent.x + parent.width &&
+          myCenterY >= parent.y &&
+          myCenterY <= parent.y + parent.height;
+
+        if (!isInsideParent) {
+          // 릴리즈: 최상위로 승격
+          updateSection(section.id, { parentSectionId: null, depth: 0 });
+          fetch(`/api/kanban/sections/${section.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parentSectionId: null, depth: 0 }),
+          }).catch((err) => console.error('Failed to release child section:', err));
+        }
+      }
+    }
+
+    // 최상위 섹션이 드래그된 경우: 다른 최상위 섹션 안에 들어오면 자식으로 캡처
+    if (!section.parentSectionId) {
+      const allSections = useBoardStore.getState().sections;
+      const potentialParent = allSections.find((s) => {
+        if (s.id === section.id) return false;
+        if ((s.depth || 0) !== 0) return false; // 최상위 섹션만 부모가 될 수 있음
+        return (
+          myCenterX >= s.x &&
+          myCenterX <= s.x + s.width &&
+          myCenterY >= s.y &&
+          myCenterY <= s.y + s.height
+        );
+      });
+
+      if (potentialParent) {
+        updateSection(section.id, { parentSectionId: potentialParent.id, depth: 1 });
+        fetch(`/api/kanban/sections/${section.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ parentSectionId: potentialParent.id, depth: 1 }),
+        }).catch((err) => console.error('Failed to capture section into parent:', err));
+      }
+    }
+
     // 드래그 종료 시: 섹션 위치 저장 + 하위 노트 위치 저장
     debouncedSave.cancel();
 
-    const finalX = currentVisual.current.x;
-    const finalY = currentVisual.current.y;
-
-    const deltaX = finalX - section.x;
-    const deltaY = finalY - section.y;
-
-    // 1. Move Section (Store Update - 하위 노트 이동 포함됨)
+    // 1. Move Section (Store Update - 자식 섹션 + 모든 노트 이동 포함됨)
     moveSection(section.id, finalX, finalY);
     saveChanges({ x: finalX, y: finalY });
 
-    // 2. Move Child Notes (DB Save Only)
-    const childNotes = notes.filter((n) => n.sectionId === section.id);
+    // 2. 자식 섹션 DB 저장
+    const childSections = useBoardStore
+      .getState()
+      .sections.filter((s) => s.parentSectionId === section.id);
+    childSections.forEach((cs) => {
+      fetch(`/api/kanban/sections/${cs.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ x: cs.x, y: cs.y }),
+      }).catch((err) => console.error('Failed to update child section:', err));
+    });
 
-    if (childNotes.length > 0) {
-      const updates = childNotes.map((n) => ({
+    // 3. Move Child Notes (DB Save Only) - 모든 소속 노트 (부모 + 자식 섹션의 노트)
+    const allMovedSectionIds = [section.id, ...childSections.map((cs) => cs.id)];
+    const allChildNotes = useBoardStore
+      .getState()
+      .notes.filter((n) => n.sectionId && allMovedSectionIds.includes(n.sectionId.toString()));
+
+    if (allChildNotes.length > 0) {
+      const updates = allChildNotes.map((n) => ({
         id: n.id,
-        changes: { x: n.x + deltaX, y: n.y + deltaY },
+        changes: { x: n.x, y: n.y },
       }));
 
-      // DB 업데이트 (Batch) - Store는 moveSection에서 이미 업데이트됨
       fetch('/api/kanban/notes/batch', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -555,6 +657,60 @@ export default function SectionItem({ section }: Props) {
     if (updates.length > 0) {
       updateNotes(updates);
     }
+
+    // 리사이즈 종료 시 섹션 자동 캡처/릴리즈 (depth=0인 섹션만 대상)
+    if (!section.parentSectionId) {
+      const allSections = useBoardStore.getState().sections;
+      const sectionUpdates: { id: string; changes: Partial<Section> }[] = [];
+
+      allSections.forEach((s) => {
+        if (s.id === section.id) return;
+        if (s.depth !== 0) return; // 이미 자식인 섹션은 대상 아님
+
+        const sCenterX = s.x + s.width / 2;
+        const sCenterY = s.y + s.height / 2;
+        const isInside =
+          sCenterX >= secX &&
+          sCenterX <= secX + finalWidth &&
+          sCenterY >= secY &&
+          sCenterY <= secY + finalHeight;
+
+        if (isInside && s.parentSectionId !== section.id) {
+          sectionUpdates.push({
+            id: s.id,
+            changes: { parentSectionId: section.id, depth: 1 },
+          });
+        }
+      });
+
+      // 기존 자식 중 범위를 벗어난 것은 릴리즈
+      allSections.forEach((s) => {
+        if (s.parentSectionId !== section.id) return;
+        const sCenterX = s.x + s.width / 2;
+        const sCenterY = s.y + s.height / 2;
+        const isStillInside =
+          sCenterX >= secX &&
+          sCenterX <= secX + finalWidth &&
+          sCenterY >= secY &&
+          sCenterY <= secY + finalHeight;
+
+        if (!isStillInside) {
+          sectionUpdates.push({
+            id: s.id,
+            changes: { parentSectionId: null, depth: 0 },
+          });
+        }
+      });
+
+      sectionUpdates.forEach(({ id, changes }) => {
+        updateSection(id, changes);
+        fetch(`/api/kanban/sections/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(changes),
+        }).catch((err) => console.error('Failed to update section nesting:', err));
+      });
+    }
   };
 
   // --- Delete ---
@@ -615,7 +771,16 @@ export default function SectionItem({ section }: Props) {
 
     if (isSectionOnly === true) {
       removeSection(section.id);
-      await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, { method: 'DELETE' });
+      const res = await fetch(`/api/kanban/sections/${section.id}?deleteNotes=false`, {
+        method: 'DELETE',
+      });
+      const resJson = await res.json();
+
+      // 자식 섹션들 최상위 승격 (store 업데이트)
+      const promotedChildIds: string[] = resJson.promotedChildIds || [];
+      promotedChildIds.forEach((childId) => {
+        updateSection(childId, { parentSectionId: null, depth: 0 });
+      });
 
       const childNotes = notes.filter((n) => n.sectionId === section.id);
       if (childNotes.length > 0) {
@@ -631,6 +796,7 @@ export default function SectionItem({ section }: Props) {
   return (
     <div
       ref={visualRef}
+      data-section-item-id={section.id}
       style={{
         position: 'absolute',
         transform: `translate3d(${section.x}px, ${section.y}px, 0)`,
@@ -641,6 +807,8 @@ export default function SectionItem({ section }: Props) {
         flexDirection: 'column',
         border: isLockedByOther ? `3px solid ${lockedColor}` : 'none',
         borderRadius: isLockedByOther ? 8 : 0,
+        opacity: readOnly ? 0.4 : 1,
+        pointerEvents: readOnly ? 'none' : 'auto',
       }}
     >
       {/* Lock Indicator */}
@@ -734,7 +902,11 @@ export default function SectionItem({ section }: Props) {
       <div
         style={{
           flex: 1,
-          background: `${section.color || '#E5E7EB'}33`, // 20% opacity
+          // 자식 섹션은 약간 짙은 배경 (opacity 차이)
+          background:
+            section.depth === 1
+              ? `${section.color || '#E5E7EB'}55`
+              : `${section.color || '#E5E7EB'}33`,
           border: `2px dashed ${section.color || '#E5E7EB'}`,
           borderTop: 'none',
           borderBottomLeftRadius: 8,
