@@ -103,7 +103,45 @@ git diff origin/main...HEAD --stat        # 변경 통계
 
 ---
 
-## 5단계: 프로젝트 문서 자동 갱신 (TODO-010)
+## 5단계: GitHub PR 자동 생성
+
+현재 브랜치와 연결된 이슈 번호를 브랜치명에서 추출합니다 (예: `feature/180-spm-improve` → `#180`).
+
+work-log 내용을 기반으로 PR 초안을 작성하고 사용자에게 확인을 요청합니다:
+
+```
+📝 PR 초안:
+─────────────────────────────
+제목: [이슈 제목 기반 자동 작성]
+본문:
+## 작업 요약
+[work-log 요약 내용]
+
+## 변경된 파일
+[work-log 변경 파일 목록]
+
+## 테스트 결과
+[work-log 테스트 결과]
+
+Closes #[이슈번호]
+─────────────────────────────
+이대로 PR을 생성할까요?
+```
+
+확인 후 PR 생성:
+
+```bash
+gh pr create \
+  --title "[PR 제목]" \
+  --body "[PR 본문]" \
+  --base main
+```
+
+PR URL을 출력합니다.
+
+---
+
+## 6단계: 프로젝트 문서 자동 갱신 (TODO-010)
 
 이번 작업에서 추가/수정/삭제된 파일을 감지해 아래 문서를 갱신합니다.
 
@@ -135,14 +173,14 @@ git diff origin/main...HEAD --stat        # 변경 통계
 
 ---
 
-## 6단계: .workzones.yml 정리
+## 7단계: .workzones.yml 정리
 
 `.workzones.yml`에서 현재 작업자(`owner`)에 해당하는 모든 항목을 제거합니다.
 남은 항목이 없으면 `zones: []`로 설정합니다.
 
 ---
 
-## 7단계: CLAUDE.md 현황 표 복원
+## 8단계: CLAUDE.md 현황 표 복원
 
 `CLAUDE.md`의 "현재 진행 중인 작업 현황" 표에서 현재 작업자의 행을 삭제합니다.
 표에 남은 항목이 없으면 기본 행을 복원합니다:
@@ -153,15 +191,14 @@ git diff origin/main...HEAD --stat        # 변경 통계
 
 ---
 
-## 8단계: 완료 메시지 출력
+## 9단계: 완료 메시지 출력
 
 ```
 ✅ SPM 세션 종료
 ─────────────────────────────
 👤 [작업자]의 작업 구역이 해제되었습니다.
-🗑️ 제거된 구역:
-   - src/app/api/kanban/
-   - src/store/boardStore.ts
+🌿 브랜치: [브랜치명]
+🔗 PR: [PR URL]
 📝 work-log 생성 완료:
    - work-logs/2026-03-28-HJ-a1b2c3d.md
 📄 갱신된 문서:
@@ -169,7 +206,6 @@ git diff origin/main...HEAD --stat        # 변경 통계
    - CLAUDE.md
    - src/app/api/kanban/MAP.md
 ─────────────────────────────
-변경된 파일을 커밋하고 PR을 올려주세요.
 ```
 
 변경된 파일이 없어 work-log를 생성하지 않은 경우:
