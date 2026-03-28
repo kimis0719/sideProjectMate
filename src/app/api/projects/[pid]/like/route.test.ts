@@ -139,7 +139,7 @@ describe('POST /api/projects/[pid]/like', () => {
 
     const project = await Project.findOne({ pid: 3 });
     const likesAsStrings = project!.likes.map(String);
-    const uniqueLikes = [...new Set(likesAsStrings)];
+    const uniqueLikes = Array.from(new Set(likesAsStrings));
     expect(likesAsStrings.length).toBe(uniqueLikes.length);
     expect(likesAsStrings.filter((id: string) => id === user._id.toString()).length).toBe(1);
   });

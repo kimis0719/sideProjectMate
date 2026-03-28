@@ -14,7 +14,7 @@ export const ROOM_IDS = {
   system: 'aaaa00000000000000000005',
 } as const;
 
-export const PROJECT_IDS = {
+export const CHAT_PROJECT_IDS = {
   alpha: 'bbbb00000000000000000001',
 } as const;
 
@@ -59,7 +59,7 @@ export const mockRecruitRoom: IChatRoomClient = {
   _id: ROOM_IDS.recruit,
   category: 'RECRUIT',
   participants: [participantAlice, participantBob],
-  projectId: PROJECT_IDS.alpha,
+  projectId: CHAT_PROJECT_IDS.alpha,
   projectName: '알파 프로젝트',
   lastMessage: '지원해 주셔서 감사합니다.',
   updatedAt: '2024-03-01T11:00:00.000Z',
@@ -71,7 +71,7 @@ export const mockTeamRoom: IChatRoomClient = {
   _id: ROOM_IDS.team,
   category: 'TEAM',
   participants: [participantAlice, participantBob, participantCarol],
-  projectId: PROJECT_IDS.alpha,
+  projectId: CHAT_PROJECT_IDS.alpha,
   projectName: '알파 프로젝트',
   lastMessage: '팀 채팅방이 생성되었습니다.',
   updatedAt: '2024-03-01T12:00:00.000Z',
@@ -83,7 +83,7 @@ export const mockInquiryRoomWithMeta: IChatRoomClient = {
   _id: ROOM_IDS.inquiry,
   category: 'INQUIRY',
   participants: [participantAlice, participantBob],
-  projectId: PROJECT_IDS.alpha,
+  projectId: CHAT_PROJECT_IDS.alpha,
   metadata: { name: '메타데이터 프로젝트명' },
   updatedAt: '2024-03-01T13:00:00.000Z',
   myUnreadCount: 1,

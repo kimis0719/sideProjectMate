@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { setupTestDB, clearTestDB, teardownTestDB } from '@/__tests__/helpers/mockDb';
 import { createMockNextRequest } from '@/__tests__/helpers/apiTestHelper';
 import { USER_IDS } from '@/__tests__/fixtures/users';

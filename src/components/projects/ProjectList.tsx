@@ -166,7 +166,7 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
               >
                 <option value="all">전체 카테고리</option>
                 {categoryCodes.map((code) => (
-                  <option key={code._id as string} value={code.code}>
+                  <option key={code._id?.toString()} value={code.code}>
                     {code.label}
                   </option>
                 ))}
@@ -179,7 +179,7 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
               >
                 <option value="all">전체 상태</option>
                 {statusCodes.map((code) => (
-                  <option key={code._id as string} value={code.code}>
+                  <option key={code._id?.toString()} value={code.code}>
                     {code.label}
                   </option>
                 ))}

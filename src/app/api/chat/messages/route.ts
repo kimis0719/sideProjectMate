@@ -30,12 +30,14 @@ export async function POST(req: Request) {
     });
 
     // 2. 해당 채팅방(ChatRoom)의 lastMessage 업데이트 + 발신자 외 참여자 unreadCounts 증가
-    const room = await ChatRoom.findById(roomId).select('participants').lean();
+    const room = await ChatRoom.findById(roomId)
+      .select('participants')
+      .lean<{ participants: unknown[] }>();
     const incFields: Record<string, 1> = {};
     if (room) {
-      (room.participants as any[]).forEach((pid: any) => {
-        if (pid.toString() !== currentUserId) {
-          incFields[`unreadCounts.${pid.toString()}`] = 1;
+      room.participants.forEach((pid: unknown) => {
+        if (String(pid) !== currentUserId) {
+          incFields[`unreadCounts.${String(pid)}`] = 1;
         }
       });
     }
