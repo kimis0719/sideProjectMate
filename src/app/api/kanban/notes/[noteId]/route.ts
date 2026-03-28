@@ -6,13 +6,13 @@ import mongoose from 'mongoose';
 /**
  * 특정 노트를 수정하는 API (PATCH)
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: { noteId: string } }
-) {
+export async function PATCH(request: Request, { params }: { params: { noteId: string } }) {
   const { noteId } = params;
   if (!noteId || !mongoose.Types.ObjectId.isValid(noteId)) {
-    return NextResponse.json({ success: false, message: '유효하지 않은 노트 ID입니다.' }, { status: 400 });
+    return NextResponse.json(
+      { success: false, message: '유효하지 않은 노트 ID입니다.' },
+      { status: 400 }
+    );
   }
 
   try {
@@ -29,7 +29,10 @@ export async function PATCH(
     );
 
     if (!updatedNote) {
-      return NextResponse.json({ success: false, message: '노트를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '노트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true, data: updatedNote });
@@ -42,13 +45,13 @@ export async function PATCH(
 /**
  * 특정 노트를 삭제하는 API (DELETE)
  */
-export async function DELETE(
-  request: Request,
-  { params }: { params: { noteId: string } }
-) {
+export async function DELETE(request: Request, { params }: { params: { noteId: string } }) {
   const { noteId } = params;
   if (!noteId || !mongoose.Types.ObjectId.isValid(noteId)) {
-    return NextResponse.json({ success: false, message: '유효하지 않은 노트 ID입니다.' }, { status: 400 });
+    return NextResponse.json(
+      { success: false, message: '유효하지 않은 노트 ID입니다.' },
+      { status: 400 }
+    );
   }
 
   try {
@@ -56,7 +59,10 @@ export async function DELETE(
     const deletedNote = await Note.findByIdAndDelete(noteId);
 
     if (!deletedNote) {
-      return NextResponse.json({ success: false, message: '노트를 찾을 수 없거나 이미 삭제되었습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '노트를 찾을 수 없거나 이미 삭제되었습니다.' },
+        { status: 404 }
+      );
     }
 
     return new NextResponse(null, { status: 204 });

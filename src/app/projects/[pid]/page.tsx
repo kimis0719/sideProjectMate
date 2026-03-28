@@ -21,17 +21,19 @@ const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider
 
 // 프로젝트 데이터 타입 확장 (populate된 필드 포함)
 interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
-  author: {
-    _id: string;
-    nName: string;
-    position?: string;
-    career?: string;
-    level?: number;
-    introduction?: string;
-    techTags?: string[];
-    status?: string;
-    socialLinks?: any;
-  } | string;
+  author:
+    | {
+        _id: string;
+        nName: string;
+        position?: string;
+        career?: string;
+        level?: number;
+        introduction?: string;
+        techTags?: string[];
+        status?: string;
+        socialLinks?: any;
+      }
+    | string;
   tags: { _id: string; name: string; category: string }[];
   likesCount: number;
   projectMembers?: any[]; // projectMembers 필드 추가
@@ -64,15 +66,23 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [hasApplied, setHasApplied] = useState(false);
 
   // 리뷰 관련 상태
-  const [reviewTarget, setReviewTarget] = useState<{ _id: string; nName: string; avatarUrl?: string; position?: string } | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<{
+    _id: string;
+    nName: string;
+    avatarUrl?: string;
+    position?: string;
+  } | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
 
   const { fetchNotifications } = useNotificationStore();
-  const isOwner = session?.user?._id && typeof project?.author === 'object' && project.author._id === session.user._id;
+  const isOwner =
+    session?.user?._id &&
+    typeof project?.author === 'object' &&
+    project.author._id === session.user._id;
 
   // 현재 사용자가 프로젝트 멤버인지 확인
-  const isMember = project?.projectMembers?.some((m: any) =>
-    m.userId && (m.userId._id === session?.user?._id || m.userId === session?.user?._id)
+  const isMember = project?.projectMembers?.some(
+    (m: any) => m.userId && (m.userId._id === session?.user?._id || m.userId === session?.user?._id)
   );
 
   useEffect(() => {
@@ -134,7 +144,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             console.error('지원 내역 확인 실패', e);
           }
         }
-
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -165,7 +174,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       const ids = results.filter(Boolean) as string[];
       setReviewedIds(new Set(ids));
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?._id, project?.status, session?.user?._id]);
 
   /** 리뷰 가능한 팀원 목록 (자신 제외) */
@@ -235,7 +244,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         router.push(`/chat?roomId=${data.data._id}`);
       } else {
         // ✨ 에러 디버깅을 위해 상세 메시지 표시
-        const errorMsg = data.error ? `${data.message}\n(${data.error})` : (data.message || '채팅방 생성에 실패했습니다.');
+        const errorMsg = data.error
+          ? `${data.message}\n(${data.error})`
+          : data.message || '채팅방 생성에 실패했습니다.';
         await alert('오류', errorMsg);
       }
     } catch (e: any) {
@@ -288,7 +299,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     }
   };
 
-  const getAuthorName = (author: { _id: string; nName: string } | string | undefined | null): string => {
+  const getAuthorName = (
+    author: { _id: string; nName: string } | string | undefined | null
+  ): string => {
     if (typeof author === 'object' && author !== null && 'nName' in author) {
       return author.nName;
     }
@@ -303,7 +316,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       router.push('/login');
       return;
     }
-    const availableRole = project?.members.find(m => m.current < m.max);
+    const availableRole = project?.members.find((m) => m.current < m.max);
     if (availableRole) {
       setSelectedRole(availableRole.role);
     }
@@ -340,9 +353,24 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     }
   };
 
-  if (isLoading) return <div className="flex justify-center items-center min-h-screen text-foreground">로딩 중...</div>;
-  if (error) return <div className="flex justify-center items-center min-h-screen text-destructive">오류: {error}</div>;
-  if (!project) return <div className="flex justify-center items-center min-h-screen text-foreground">프로젝트를 찾을 수 없습니다.</div>;
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center min-h-screen text-foreground">
+        로딩 중...
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center items-center min-h-screen text-destructive">
+        오류: {error}
+      </div>
+    );
+  if (!project)
+    return (
+      <div className="flex justify-center items-center min-h-screen text-foreground">
+        프로젝트를 찾을 수 없습니다.
+      </div>
+    );
 
   // 버튼 텍스트 및 상태 결정
   let buttonText = '프로젝트 참여하기';
@@ -368,13 +396,22 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       <div className="container mx-auto px-4 py-8 md:py-12">
         {isOwner && (
           <div className="flex justify-end gap-2 mb-4">
-            <Link href={`/projects/${pid}/manage`} className="px-4 py-2 text-sm font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600">
+            <Link
+              href={`/projects/${pid}/manage`}
+              className="px-4 py-2 text-sm font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+            >
               지원자 관리
             </Link>
-            <Link href={`/projects/${pid}/edit`} className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
+            <Link
+              href={`/projects/${pid}/edit`}
+              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+            >
               수정
             </Link>
-            <button onClick={handleDelete} className="px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600">
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600"
+            >
               삭제
             </button>
           </div>
@@ -391,11 +428,31 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
                 <span>{project.views}</span>
               </div>
               <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
                 <span>{likeCount}</span>
               </div>
             </div>
@@ -417,7 +474,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   />
                 </div>
               )}
-              <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">{project.content}</p>
+              <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">
+                {project.content}
+              </p>
             </div>
 
             {/* 프로젝트 리더 상세 프로필 */}
@@ -425,7 +484,11 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               <div className="mt-12 border-t border-border pt-8">
                 <DetailProfileCard
                   title="👑 프로젝트 리더"
-                  user={typeof project.author === 'object' ? project.author : { _id: '', nName: '알 수 없음' }}
+                  user={
+                    typeof project.author === 'object'
+                      ? project.author
+                      : { _id: '', nName: '알 수 없음' }
+                  }
                   onClick={() => {
                     if (typeof project.author === 'object') {
                       router.push(`/profile/${project.author._id}`);
@@ -440,7 +503,19 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                       onClick={handleInquiry}
                       className="flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-lg transition-colors shadow-sm"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
                       작성자에게 1:1 문의하기
                     </button>
                   </div>
@@ -452,74 +527,121 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             <div className="sticky top-24 bg-card rounded-lg p-6 border border-border">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-bold text-foreground">프로젝트 요약</h3>
-                <button onClick={handleLike} className="p-2 rounded-full hover:bg-muted transition-colors"><svg className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-muted-foreground'}`} fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg></button>
+                <button
+                  onClick={handleLike}
+                  className="p-2 rounded-full hover:bg-muted transition-colors"
+                >
+                  <svg
+                    className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
+                    fill={isLiked ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                </button>
               </div>
               <div className="space-y-4">
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground">모집 현황</p>
                   <ul className="space-y-1 mt-1">
-                    {Array.isArray(project.members) && project.members.map((member, index) => (<li key={index} className="flex justify-between text-foreground"><span>{member.role}</span><span className="font-semibold">{member.current} / {member.max}</span></li>))}
+                    {Array.isArray(project.members) &&
+                      project.members.map((member, index) => (
+                        <li key={index} className="flex justify-between text-foreground">
+                          <span>{member.role}</span>
+                          <span className="font-semibold">
+                            {member.current} / {member.max}
+                          </span>
+                        </li>
+                      ))}
                   </ul>
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground">상태</p>
                   {/* 동적으로 가져온 상태 라벨 표시 */}
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === '01' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-muted text-muted-foreground'}`}>{statusLabel || project.status}</span>
+                  <span
+                    className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === '01' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-muted text-muted-foreground'}`}
+                  >
+                    {statusLabel || project.status}
+                  </span>
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground mb-2">기술 스택</p>
-                  <div className="flex flex-wrap gap-2">{project.tags.map(tag => (<span key={tag._id} className="px-3 py-1 bg-card border border-border text-foreground text-sm rounded-full">{tag.name}</span>))}</div>
+                  <div className="flex flex-wrap gap-2">
+                    {project.tags.map((tag) => (
+                      <span
+                        key={tag._id}
+                        className="px-3 py-1 bg-card border border-border text-foreground text-sm rounded-full"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
               <button
                 onClick={handleOpenApplyModal}
                 disabled={isButtonDisabled}
-                className={`mt-8 w-full font-bold py-3 rounded-lg transition-colors ${isButtonDisabled
-                  ? 'bg-muted cursor-not-allowed text-muted-foreground'
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  }`}
+                className={`mt-8 w-full font-bold py-3 rounded-lg transition-colors ${
+                  isButtonDisabled
+                    ? 'bg-muted cursor-not-allowed text-muted-foreground'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                }`}
               >
                 {buttonText}
               </button>
 
               {/* 팀원 리뷰 섹션 — 완료 프로젝트의 멤버/작성자에게만 표시 */}
-              {project.status === '03' && (isMember || isOwner) && (() => {
-                const reviewable = getReviewableUsers();
-                if (reviewable.length === 0) return null;
-                return (
-                  <div className="mt-6 pt-6 border-t border-border">
-                    <h4 className="text-sm font-semibold text-foreground mb-3">팀원 리뷰 작성</h4>
-                    <div className="space-y-2">
-                      {reviewable.map((u) => (
-                        <div key={u._id} className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            {u.avatarUrl ? (
-                              <img src={u.avatarUrl} alt={u.nName} className="w-7 h-7 rounded-full object-cover shrink-0" />
+              {project.status === '03' &&
+                (isMember || isOwner) &&
+                (() => {
+                  const reviewable = getReviewableUsers();
+                  if (reviewable.length === 0) return null;
+                  return (
+                    <div className="mt-6 pt-6 border-t border-border">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">팀원 리뷰 작성</h4>
+                      <div className="space-y-2">
+                        {reviewable.map((u) => (
+                          <div key={u._id} className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {u.avatarUrl ? (
+                                <img
+                                  src={u.avatarUrl}
+                                  alt={u.nName}
+                                  className="w-7 h-7 rounded-full object-cover shrink-0"
+                                />
+                              ) : (
+                                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                  <span className="text-xs font-bold text-primary">
+                                    {u.nName.charAt(0)}
+                                  </span>
+                                </div>
+                              )}
+                              <span className="text-sm text-foreground truncate">{u.nName}</span>
+                            </div>
+                            {reviewedIds.has(u._id) ? (
+                              <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                                작성 완료
+                              </span>
                             ) : (
-                              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                <span className="text-xs font-bold text-primary">{u.nName.charAt(0)}</span>
-                              </div>
+                              <button
+                                onClick={() => setReviewTarget(u)}
+                                className="shrink-0 text-xs px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                              >
+                                리뷰 쓰기
+                              </button>
                             )}
-                            <span className="text-sm text-foreground truncate">{u.nName}</span>
                           </div>
-                          {reviewedIds.has(u._id) ? (
-                            <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-                              작성 완료
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => setReviewTarget(u)}
-                              className="shrink-0 text-xs px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                            >
-                              리뷰 쓰기
-                            </button>
-                          )}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
               {/* 광고 배너 — 프로젝트 요약 카드 하단 (sticky 내부) */}
               <div className="mt-4 pt-4 border-t border-border">
                 <AdBanner
@@ -531,7 +653,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             </div>
           </div>
         </div>
-      </div >
+      </div>
       {/* 리뷰 작성 모달 */}
       {reviewTarget && project && (
         <ReviewModal
@@ -552,25 +674,61 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             <h2 className="text-2xl font-bold mb-6 text-foreground">프로젝트 지원하기</h2>
             <form onSubmit={handleApplySubmit}>
               <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">지원 역할</label>
-                <select id="role" value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)} className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground">
-                  <option value="" disabled>역할을 선택하세요</option>
-                  {project.members.filter(m => m.current < m.max).map(member => (<option key={member.role} value={member.role}>{member.role} ({member.current}/{member.max})</option>))}
+                <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">
+                  지원 역할
+                </label>
+                <select
+                  id="role"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                >
+                  <option value="" disabled>
+                    역할을 선택하세요
+                  </option>
+                  {project.members
+                    .filter((m) => m.current < m.max)
+                    .map((member) => (
+                      <option key={member.role} value={member.role}>
+                        {member.role} ({member.current}/{member.max})
+                      </option>
+                    ))}
                 </select>
               </div>
               <div className="mb-6">
-                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1">지원 메시지</label>
-                <textarea id="message" rows={5} value={applyMessage} onChange={(e) => setApplyMessage(e.target.value)} placeholder="자신을 어필하는 간단한 메시지를 남겨주세요." required className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground" />
+                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1">
+                  지원 메시지
+                </label>
+                <textarea
+                  id="message"
+                  rows={5}
+                  value={applyMessage}
+                  onChange={(e) => setApplyMessage(e.target.value)}
+                  placeholder="자신을 어필하는 간단한 메시지를 남겨주세요."
+                  required
+                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                />
               </div>
               <div className="flex justify-end gap-4">
-                <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">취소</button>
-                <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400">{isSubmitting ? '제출 중...' : '지원서 제출'}</button>
+                <button
+                  type="button"
+                  onClick={() => setIsApplyModalOpen(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
+                >
+                  {isSubmitting ? '제출 중...' : '지원서 제출'}
+                </button>
               </div>
             </form>
           </div>
         </div>
-      )
-      }
-    </div >
+      )}
+    </div>
   );
 }

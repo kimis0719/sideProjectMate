@@ -13,7 +13,6 @@ export async function GET() {
       success: true,
       data: techStacks,
     });
-
   } catch (error: any) {
     return NextResponse.json(
       {

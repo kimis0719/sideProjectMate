@@ -10,10 +10,7 @@ import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { appId: string } }
-) {
+export async function PUT(request: Request, { params }: { params: { appId: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -26,22 +23,34 @@ export async function PUT(
     const { status } = await request.json();
 
     if (!['accepted', 'rejected'].includes(status)) {
-      return NextResponse.json({ success: false, message: '잘못된 상태 값입니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '잘못된 상태 값입니다.' },
+        { status: 400 }
+      );
     }
 
     const application = await Application.findById(appId).populate('projectId');
     if (!application) {
-      return NextResponse.json({ success: false, message: '지원서를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '지원서를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     const project = application.projectId as any;
 
     if (project.author.toString() !== session.user._id) {
-      return NextResponse.json({ success: false, message: '지원서를 처리할 권한이 없습니다.' }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: '지원서를 처리할 권한이 없습니다.' },
+        { status: 403 }
+      );
     }
 
     if (application.status !== 'pending') {
-      return NextResponse.json({ success: false, message: '이미 처리된 지원서입니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '이미 처리된 지원서입니다.' },
+        { status: 400 }
+      );
     }
 
     application.status = status;
@@ -80,7 +89,6 @@ export async function PUT(
     });
 
     return NextResponse.json({ success: true, data: application });
-
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: '지원서 처리 중 오류가 발생했습니다.', error: error.message },
@@ -89,10 +97,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { appId: string } }
-) {
+export async function DELETE(request: Request, { params }: { params: { appId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
@@ -104,7 +109,10 @@ export async function DELETE(
 
     const application = await Application.findById(appId).populate('projectId');
     if (!application) {
-      return NextResponse.json({ success: false, message: '지원서를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '지원서를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     const project = application.projectId as any;
@@ -112,17 +120,22 @@ export async function DELETE(
     const isApplicant = application.applicantId.toString() === session.user._id;
 
     if (!isApplicant && !isOwner) {
-      return NextResponse.json({ success: false, message: '지원서를 삭제할 권한이 없습니다.' }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: '지원서를 삭제할 권한이 없습니다.' },
+        { status: 403 }
+      );
     }
 
     if (application.status === 'accepted') {
-      return NextResponse.json({ success: false, message: '이미 수락된 지원은 취소/삭제할 수 없습니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '이미 수락된 지원은 취소/삭제할 수 없습니다.' },
+        { status: 400 }
+      );
     }
 
     await Application.findByIdAndDelete(appId);
 
     return NextResponse.json({ success: true, message: '지원서가 삭제되었습니다.' });
-
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: '지원서 삭제 중 오류가 발생했습니다.', error: error.message },

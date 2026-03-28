@@ -60,9 +60,7 @@ describe('GET /api/users/[id] — 공개 프로필 조회', () => {
 
     await Availability.create({
       userId,
-      schedule: [
-        { day: 'monday', timeRanges: [{ start: '09:00', end: '12:00' }] },
-      ],
+      schedule: [{ day: 'monday', timeRanges: [{ start: '09:00', end: '12:00' }] }],
       preference: 80,
       personalityTags: ['analyst', 'doer'],
     });
@@ -150,9 +148,7 @@ describe('GET /api/users/[id] — 공개 프로필 조회', () => {
 
     await Availability.create({
       userId: user._id,
-      schedule: [
-        { day: 'tuesday', timeRanges: [{ start: '14:00', end: '18:00' }] },
-      ],
+      schedule: [{ day: 'tuesday', timeRanges: [{ start: '14:00', end: '18:00' }] }],
       preference: 60,
       personalityTags: [],
     });

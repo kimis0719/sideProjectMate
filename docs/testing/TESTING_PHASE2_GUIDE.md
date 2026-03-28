@@ -6,11 +6,11 @@
 
 Phase 1이 **순수 함수**(입력 → 출력)를 테스트했다면, Phase 2는 **상태 관리 로직**을 테스트합니다.
 
-| 비교 | Phase 1 | Phase 2 |
-|------|---------|---------|
-| 대상 | 유틸 함수 | Zustand 스토어, React 훅 |
-| Mock | 없음 (순수 함수) | fetch, Socket.io, 스토어 상태 |
-| 검증 포인트 | 반환값 | 상태 변화, API 호출, 소켓 이벤트, 롤백 |
+| 비교        | Phase 1          | Phase 2                                |
+| ----------- | ---------------- | -------------------------------------- |
+| 대상        | 유틸 함수        | Zustand 스토어, React 훅               |
+| Mock        | 없음 (순수 함수) | fetch, Socket.io, 스토어 상태          |
+| 검증 포인트 | 반환값           | 상태 변화, API 호출, 소켓 이벤트, 롤백 |
 
 ---
 
@@ -131,7 +131,9 @@ it('Optimistic Update로 임시 ID를 가진 작업이 즉시 추가된다', asy
   // fetch를 지연시켜 중간 상태를 관찰
   let resolveFetch;
   global.fetch = vi.fn().mockReturnValue(
-    new Promise((resolve) => { resolveFetch = resolve; })
+    new Promise((resolve) => {
+      resolveFetch = resolve;
+    })
   );
 
   const promise = useWbsStore.getState().addTask(newTask);
@@ -170,9 +172,9 @@ it('API 실패 시 원래 상태로 롤백된다', async () => {
 ```typescript
 it('wbs-task-deleted 이벤트 수신 시 해당 task가 제거된다', () => {
   useWbsStore.setState({ tasks: [task1, task2] });
-  useWbsStore.getState().initSocket(1);  // 이벤트 핸들러 등록
+  useWbsStore.getState().initSocket(1); // 이벤트 핸들러 등록
 
-  emitFromServer('wbs-task-deleted', 'task-001');  // 서버 이벤트 시뮬레이션
+  emitFromServer('wbs-task-deleted', 'task-001'); // 서버 이벤트 시뮬레이션
 
   expect(useWbsStore.getState().tasks).toHaveLength(1);
 });
@@ -222,8 +224,12 @@ const { mockSocket } = vi.hoisted(() => {
   return {
     mockSocket: {
       emit: vi.fn(),
-      on: vi.fn((event, handler) => { /* 핸들러 등록 */ }),
-      off: vi.fn((event) => { /* 핸들러 해제 */ }),
+      on: vi.fn((event, handler) => {
+        /* 핸들러 등록 */
+      }),
+      off: vi.fn((event) => {
+        /* 핸들러 해제 */
+      }),
       disconnect: vi.fn(),
     },
   };
@@ -233,7 +239,9 @@ vi.mock('@/lib/socket', () => ({ getSocket: () => mockSocket }));
 import { useChatStore } from './chatStore';
 
 const resetStore = () => {
-  useChatStore.setState({ /* 초기값 */ });
+  useChatStore.setState({
+    /* 초기값 */
+  });
 };
 
 describe('chatStore', () => {
@@ -253,14 +261,14 @@ describe('chatStore', () => {
 
 새로운 fetch 기반 액션을 테스트할 때 반드시 확인할 항목:
 
-| 확인 항목 | 예시 |
-|----------|------|
-| API 성공 시 상태가 올바르게 업데이트되는가 | `expect(state.tasks).toHaveLength(2)` |
-| API 호출 URL과 method가 올바른가 | `expect(fetch).toHaveBeenCalledWith('/api/...', { method: 'POST' })` |
-| Optimistic Update가 있다면, 서버 응답 전 상태가 반영되는가 | fetch를 지연시켜 중간 상태 관찰 |
-| API 실패 시 롤백이 동작하는가 | `mockFetchFailure()` → 원래 상태 유지 |
-| 소켓 브로드캐스트가 올바른 이벤트명과 데이터로 호출되는가 | `expect(mockSocket.emit).toHaveBeenCalledWith(...)` |
-| 소켓 조건이 없으면 emit하지 않는가 | `currentPid: null` → `emit` 미호출 |
+| 확인 항목                                                  | 예시                                                                 |
+| ---------------------------------------------------------- | -------------------------------------------------------------------- |
+| API 성공 시 상태가 올바르게 업데이트되는가                 | `expect(state.tasks).toHaveLength(2)`                                |
+| API 호출 URL과 method가 올바른가                           | `expect(fetch).toHaveBeenCalledWith('/api/...', { method: 'POST' })` |
+| Optimistic Update가 있다면, 서버 응답 전 상태가 반영되는가 | fetch를 지연시켜 중간 상태 관찰                                      |
+| API 실패 시 롤백이 동작하는가                              | `mockFetchFailure()` → 원래 상태 유지                                |
+| 소켓 브로드캐스트가 올바른 이벤트명과 데이터로 호출되는가  | `expect(mockSocket.emit).toHaveBeenCalledWith(...)`                  |
+| 소켓 조건이 없으면 emit하지 않는가                         | `currentPid: null` → `emit` 미호출                                   |
 
 ---
 
@@ -305,7 +313,7 @@ const { mockSocket, emitFromServer, clearListeners } = createMockSocket();
 // ❌ 에러 — mockSocket이 아직 초기화되지 않음
 const { mockSocket } = createMockSocket();
 vi.mock('@/lib/socket', () => ({
-  getSocket: () => mockSocket,  // ReferenceError!
+  getSocket: () => mockSocket, // ReferenceError!
 }));
 
 // ✅ 올바른 방법 — vi.hoisted()로 선언을 호이스팅
@@ -320,7 +328,7 @@ const { mockSocket } = vi.hoisted(() => {
   };
 });
 vi.mock('@/lib/socket', () => ({
-  getSocket: () => mockSocket,  // 정상 동작
+  getSocket: () => mockSocket, // 정상 동작
 }));
 ```
 
@@ -352,10 +360,10 @@ Phase 2 (스토어 + 훅):        161개
 
 ## 10. 한 줄 요약
 
-| 상황 | 할 일 |
-|------|-------|
-| 기존 스토어에 새 액션 추가 | 해당 스토어 테스트 파일에 `describe` 블록 추가 |
-| 새 Zustand 스토어 생성 | 파일 옆에 `*.test.ts` 만들고, resetStore + vi.mock 패턴 적용 |
-| fetch 사용 액션 | 성공/실패/롤백/소켓 브로드캐스트 4가지 검증 |
-| 소켓 수신 이벤트 | `emitFromServer()`로 서버 이벤트 시뮬레이션 후 상태 확인 |
-| vi.mock 에러 발생 | `vi.hoisted()` 패턴으로 변경 |
+| 상황                       | 할 일                                                        |
+| -------------------------- | ------------------------------------------------------------ |
+| 기존 스토어에 새 액션 추가 | 해당 스토어 테스트 파일에 `describe` 블록 추가               |
+| 새 Zustand 스토어 생성     | 파일 옆에 `*.test.ts` 만들고, resetStore + vi.mock 패턴 적용 |
+| fetch 사용 액션            | 성공/실패/롤백/소켓 브로드캐스트 4가지 검증                  |
+| 소켓 수신 이벤트           | `emitFromServer()`로 서버 이벤트 시뮬레이션 후 상태 확인     |
+| vi.mock 에러 발생          | `vi.hoisted()` 패턴으로 변경                                 |

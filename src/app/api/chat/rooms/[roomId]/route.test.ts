@@ -51,10 +51,9 @@ describe('DELETE /api/chat/rooms/[roomId]', () => {
 
     mockSession(user1._id.toString());
 
-    const response = await DELETE(
-      new Request('http://localhost:3000/api/chat/rooms/' + room._id),
-      { params: { roomId: room._id.toString() } }
-    );
+    const response = await DELETE(new Request('http://localhost:3000/api/chat/rooms/' + room._id), {
+      params: { roomId: room._id.toString() },
+    });
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -76,10 +75,9 @@ describe('DELETE /api/chat/rooms/[roomId]', () => {
 
     mockSession(user1._id.toString());
 
-    const response = await DELETE(
-      new Request('http://localhost:3000/api/chat/rooms/' + room._id),
-      { params: { roomId: room._id.toString() } }
-    );
+    const response = await DELETE(new Request('http://localhost:3000/api/chat/rooms/' + room._id), {
+      params: { roomId: room._id.toString() },
+    });
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -96,10 +94,9 @@ describe('DELETE /api/chat/rooms/[roomId]', () => {
 
     mockSession(user1._id.toString());
 
-    const response = await DELETE(
-      new Request('http://localhost:3000/api/chat/rooms/' + fakeId),
-      { params: { roomId: fakeId.toString() } }
-    );
+    const response = await DELETE(new Request('http://localhost:3000/api/chat/rooms/' + fakeId), {
+      params: { roomId: fakeId.toString() },
+    });
     const body = await response.json();
 
     expect(response.status).toBe(404);
@@ -118,10 +115,9 @@ describe('DELETE /api/chat/rooms/[roomId]', () => {
 
     mockSession(outsider._id.toString());
 
-    const response = await DELETE(
-      new Request('http://localhost:3000/api/chat/rooms/' + room._id),
-      { params: { roomId: room._id.toString() } }
-    );
+    const response = await DELETE(new Request('http://localhost:3000/api/chat/rooms/' + room._id), {
+      params: { roomId: room._id.toString() },
+    });
     const body = await response.json();
 
     expect(response.status).toBe(403);
@@ -132,10 +128,9 @@ describe('DELETE /api/chat/rooms/[roomId]', () => {
     mockGetServerSession.mockResolvedValue(null);
     const fakeId = new mongoose.Types.ObjectId();
 
-    const response = await DELETE(
-      new Request('http://localhost:3000/api/chat/rooms/' + fakeId),
-      { params: { roomId: fakeId.toString() } }
-    );
+    const response = await DELETE(new Request('http://localhost:3000/api/chat/rooms/' + fakeId), {
+      params: { roomId: fakeId.toString() },
+    });
     const body = await response.json();
 
     expect(response.status).toBe(401);

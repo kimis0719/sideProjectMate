@@ -59,7 +59,9 @@ describe('GET/POST /api/admin/tech-stacks', () => {
       { name: 'Node.js', category: 'backend', logoUrl: 'https://example.com/node.png' },
     ]);
 
-    const req = createMockNextRequest('http://localhost:3000/api/admin/tech-stacks?category=frontend');
+    const req = createMockNextRequest(
+      'http://localhost:3000/api/admin/tech-stacks?category=frontend'
+    );
     const response = await GET(req);
     const body = await response.json();
 

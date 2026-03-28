@@ -72,11 +72,10 @@ export async function POST(request: Request) {
       {
         success: true,
         message: '회원가입이 성공적으로 완료되었습니다.',
-        data: userResponse
+        data: userResponse,
       },
       { status: 201 }
     );
-
   } catch (error: any) {
     console.error('회원가입 오류:', error);
 

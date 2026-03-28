@@ -55,10 +55,11 @@ src/
 ```typescript
 // taskDependency.test.ts 구조 패턴
 import { describe, it, expect } from 'vitest';
-import { getPredecessorTasks } from './taskDependency';  // 테스트할 함수
+import { getPredecessorTasks } from './taskDependency'; // 테스트할 함수
 import { linearChainTasks } from '@/__tests__/fixtures/tasks'; // Mock 데이터
 
-describe('getPredecessorTasks', () => {   // 함수 단위로 그룹화
+describe('getPredecessorTasks', () => {
+  // 함수 단위로 그룹화
 
   it('의존관계 없는 작업의 선행 작업 목록은 빈 배열이다', () => {
     // Arrange: 준비
@@ -70,7 +71,6 @@ describe('getPredecessorTasks', () => {   // 함수 단위로 그룹화
     // Assert: 검증
     expect(result).toEqual([]);
   });
-
 });
 ```
 
@@ -88,7 +88,6 @@ describe('getPredecessorTasks', () => {   // 함수 단위로 그룹화
 // src/lib/utils/wbs/scheduleConflict.test.ts 맨 아래에 describe 블록 추가
 
 describe('getConflictSummary', () => {
-
   it('충돌이 없으면 요약에 total이 0이다', () => {
     const result = getConflictSummary([]);
     expect(result.total).toBe(0);
@@ -98,7 +97,6 @@ describe('getConflictSummary', () => {
     const result = getConflictSummary(mockConflicts); // fixture 사용
     expect(result.total).toBe(3);
   });
-
 });
 ```
 
@@ -168,8 +166,8 @@ import { linearChainTasks } from '@/__tests__/fixtures/tasks';
 
 // 기존 fixture를 약간 변형해서 사용 (원본은 건드리지 않음)
 const modifiedTask = {
-  ...linearChainTasks[0],  // 기존 fixture 복사
-  title: '변경된 제목',     // 필요한 부분만 덮어씀
+  ...linearChainTasks[0], // 기존 fixture 복사
+  title: '변경된 제목', // 필요한 부분만 덮어씀
 };
 ```
 
@@ -179,10 +177,10 @@ const modifiedTask = {
 
 ## 6. 한 줄 요약
 
-| 상황 | 할 일 |
-|------|-------|
-| 새 유틸 함수 추가 | 함수 옆에 `*.test.ts` 만들고 테스트 작성 |
-| 기존 함수 수정 | `test:run` 실행 → 실패 테스트 확인 → 기대값 수정 |
-| 버그 수정 | 실패 테스트 먼저 작성 → 코드 수정 → 통과 확인 |
-| 개발 중 실시간 확인 | `npm run test:watch` 켜두기 |
-| PR 전 최종 확인 | `npm run test:coverage` 로 커버리지 확인 |
+| 상황                | 할 일                                            |
+| ------------------- | ------------------------------------------------ |
+| 새 유틸 함수 추가   | 함수 옆에 `*.test.ts` 만들고 테스트 작성         |
+| 기존 함수 수정      | `test:run` 실행 → 실패 테스트 확인 → 기대값 수정 |
+| 버그 수정           | 실패 테스트 먼저 작성 → 코드 수정 → 통과 확인    |
+| 개발 중 실시간 확인 | `npm run test:watch` 켜두기                      |
+| PR 전 최종 확인     | `npm run test:coverage` 로 커버리지 확인         |

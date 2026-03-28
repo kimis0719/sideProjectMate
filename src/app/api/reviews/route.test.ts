@@ -233,9 +233,7 @@ describe('GET /api/reviews', () => {
       isPublic: false,
     });
 
-    const req = new Request(
-      `http://localhost:3000/api/reviews?revieweeId=${user2._id.toString()}`
-    );
+    const req = new Request(`http://localhost:3000/api/reviews?revieweeId=${user2._id.toString()}`);
     const response = await GET(req);
     const body = await response.json();
 

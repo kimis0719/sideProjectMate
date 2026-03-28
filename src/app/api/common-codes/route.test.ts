@@ -16,8 +16,22 @@ describe('GET /api/common-codes', () => {
 
   it('그룹별 공통 코드를 조회한다', async () => {
     await CommonCode.create([
-      { group: 'CATEGORY', groupName: '카테고리', code: '01', label: '웹', order: 1, isActive: true },
-      { group: 'CATEGORY', groupName: '카테고리', code: '02', label: '앱', order: 2, isActive: true },
+      {
+        group: 'CATEGORY',
+        groupName: '카테고리',
+        code: '01',
+        label: '웹',
+        order: 1,
+        isActive: true,
+      },
+      {
+        group: 'CATEGORY',
+        groupName: '카테고리',
+        code: '02',
+        label: '앱',
+        order: 2,
+        isActive: true,
+      },
       { group: 'STATUS', groupName: '상태', code: '01', label: '모집중', order: 1, isActive: true },
     ]);
 

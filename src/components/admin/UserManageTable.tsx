@@ -72,7 +72,9 @@ export default function UserManageTable() {
     const json = await res.json();
     if (json.success) {
       setData((prev) =>
-        prev ? { ...prev, users: prev.users.map((u) => (u._id === id ? { ...u, ...json.data } : u)) } : prev
+        prev
+          ? { ...prev, users: prev.users.map((u) => (u._id === id ? { ...u, ...json.data } : u)) }
+          : prev
       );
     } else {
       await alert('오류', json.message);

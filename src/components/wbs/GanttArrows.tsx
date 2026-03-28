@@ -3,9 +3,9 @@
 import { Task } from '@/store/wbsStore';
 
 export interface TaskBarPosition {
-  x: number;       // 바 왼쪽 X
-  rowY: number;    // 행 Y (SVG body 기준)
-  width: number;   // 바 너비
+  x: number; // 바 왼쪽 X
+  rowY: number; // 행 Y (SVG body 기준)
+  width: number; // 바 너비
   barHeight: number;
   rowHeight: number;
 }
@@ -91,9 +91,10 @@ export default function GanttArrows({ tasks, positionMap }: GanttArrowsProps) {
       }
 
       // FF는 오른쪽 방향 화살촉
-      const arrowTip = depType === 'FF'
-        ? `${toX},${toY} ${toX - ARROW_SIZE},${toY - ARROW_SIZE / 2} ${toX - ARROW_SIZE},${toY + ARROW_SIZE / 2}`
-        : `${toX},${toY} ${toX - ARROW_SIZE},${toY - ARROW_SIZE / 2} ${toX - ARROW_SIZE},${toY + ARROW_SIZE / 2}`;
+      const arrowTip =
+        depType === 'FF'
+          ? `${toX},${toY} ${toX - ARROW_SIZE},${toY - ARROW_SIZE / 2} ${toX - ARROW_SIZE},${toY + ARROW_SIZE / 2}`
+          : `${toX},${toY} ${toX - ARROW_SIZE},${toY - ARROW_SIZE / 2} ${toX - ARROW_SIZE},${toY + ARROW_SIZE / 2}`;
 
       elements.push(
         <g key={`arrow-${task.id}-${depId}-${idx}`}>
@@ -102,10 +103,7 @@ export default function GanttArrows({ tasks, positionMap }: GanttArrowsProps) {
             fill="none"
             style={{ stroke: ARROW_COLOR, strokeWidth: 1.5, opacity: 0.75 }}
           />
-          <polygon
-            points={arrowTip}
-            style={{ fill: ARROW_COLOR, opacity: 0.75 }}
-          />
+          <polygon points={arrowTip} style={{ fill: ARROW_COLOR, opacity: 0.75 }} />
         </g>
       );
     });

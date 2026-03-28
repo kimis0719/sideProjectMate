@@ -8,8 +8,8 @@ import { USER_IDS } from './users';
 export const PROJECT_IDS = {
   recruiting: '100000000000000000000001',
   inProgress: '100000000000000000000002',
-  completed:  '100000000000000000000003',
-  deleted:    '100000000000000000000004',
+  completed: '100000000000000000000003',
+  deleted: '100000000000000000000004',
 } as const;
 
 // ─── Mock 프로젝트 객체 ─────────────────────────────────────────────────────────
@@ -79,9 +79,7 @@ export const mockProjectCompleted = {
   title: '완료된 프로젝트',
   category: 'WEB',
   author: USER_IDS.alice,
-  members: [
-    { role: '풀스택 개발자', current: 1, max: 1 },
-  ],
+  members: [{ role: '풀스택 개발자', current: 1, max: 1 }],
   tags: [],
   images: ['✅'],
   content: '성공적으로 완료된 프로젝트입니다.',
@@ -105,8 +103,4 @@ export const mockProjectDeleted = {
 };
 
 /** 여러 프로젝트 배열 (목록 조회 테스트용) */
-export const mockProjectList = [
-  mockProjectRecruiting,
-  mockProjectInProgress,
-  mockProjectCompleted,
-];
+export const mockProjectList = [mockProjectRecruiting, mockProjectInProgress, mockProjectCompleted];

@@ -11,10 +11,7 @@ import Notification from '@/lib/models/Notification';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { pid: string } }
-) {
+export async function GET(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     await dbConnect();
@@ -22,7 +19,10 @@ export async function GET(
     const pidNum = Number(pid);
 
     if (!pid || isNaN(pidNum)) {
-      return NextResponse.json({ success: false, message: '유효하지 않은 프로젝트 ID입니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '유효하지 않은 프로젝트 ID입니다.' },
+        { status: 400 }
+      );
     }
 
     const project = await Project.findOneAndUpdate(
@@ -30,19 +30,26 @@ export async function GET(
       { $inc: { views: 1 } },
       { new: true }
     )
-      .populate('author', 'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl')
+      .populate(
+        'author',
+        'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl'
+      )
       .populate('tags')
       .populate({
         path: 'projectMembers',
         strictPopulate: false, // 오류를 해결하기 위해 이 옵션을 추가
         populate: {
           path: 'userId',
-          select: 'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl'
-        }
+          select:
+            'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl',
+        },
       });
 
     if (!project) {
-      return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '프로젝트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ success: true, data: project });
@@ -55,10 +62,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { pid: string } }
-) {
+export async function PUT(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -70,24 +74,32 @@ export async function PUT(
     const { pid } = params;
     const pidNum = Number(pid);
     if (isNaN(pidNum)) {
-      return NextResponse.json({ success: false, message: '유효하지 않은 프로젝트 ID입니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '유효하지 않은 프로젝트 ID입니다.' },
+        { status: 400 }
+      );
     }
     const project = await Project.findOne({ pid: pidNum });
 
     if (!project) {
-      return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '프로젝트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     if (project.author.toString() !== session.user._id) {
-      return NextResponse.json({ success: false, message: '수정 권한이 없습니다.' }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: '수정 권한이 없습니다.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
-    const updatedProject = await Project.findByIdAndUpdate(
-      project._id,
-      body,
-      { new: true, runValidators: true }
-    );
+    const updatedProject = await Project.findByIdAndUpdate(project._id, body, {
+      new: true,
+      runValidators: true,
+    });
 
     return NextResponse.json({ success: true, data: updatedProject });
   } catch (error: any) {
@@ -98,10 +110,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { pid: string } }
-) {
+export async function DELETE(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -113,16 +122,25 @@ export async function DELETE(
     const { pid } = params;
     const pidNum = Number(pid);
     if (isNaN(pidNum)) {
-      return NextResponse.json({ success: false, message: '유효하지 않은 프로젝트 ID입니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '유효하지 않은 프로젝트 ID입니다.' },
+        { status: 400 }
+      );
     }
     const project = await Project.findOne({ pid: pidNum });
 
     if (!project) {
-      return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '프로젝트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     if (project.author.toString() !== session.user._id) {
-      return NextResponse.json({ success: false, message: '삭제 권한이 없습니다.' }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: '삭제 권한이 없습니다.' },
+        { status: 403 }
+      );
     }
 
     await Project.findByIdAndDelete(project._id);
@@ -137,10 +155,7 @@ export async function DELETE(
 }
 
 // ✨ [PATCH] 프로젝트 상태 및 개요 부분 업데이트
-export async function PATCH(
-  request: Request,
-  { params }: { params: { pid: string } }
-) {
+export async function PATCH(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -152,17 +167,26 @@ export async function PATCH(
     const { pid } = params;
     const pidNum = Number(pid);
     if (isNaN(pidNum)) {
-      return NextResponse.json({ success: false, message: '유효하지 않은 프로젝트 ID입니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '유효하지 않은 프로젝트 ID입니다.' },
+        { status: 400 }
+      );
     }
     const project = await Project.findOne({ pid: pidNum });
 
     if (!project) {
-      return NextResponse.json({ success: false, message: '프로젝트를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: '프로젝트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
     }
 
     // 작성자 권한 체크
     if (project.author.toString() !== session.user._id) {
-      return NextResponse.json({ success: false, message: '수정 권한이 없습니다.' }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: '수정 권한이 없습니다.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -170,7 +194,10 @@ export async function PATCH(
 
     // 상태값 유효성 검사 (변경 시에만)
     if (status && !['01', '02', '03'].includes(status)) {
-      return NextResponse.json({ success: false, message: '유효하지 않은 상태 값입니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '유효하지 않은 상태 값입니다.' },
+        { status: 400 }
+      );
     }
 
     // 업데이트 객체 구성
@@ -179,7 +206,10 @@ export async function PATCH(
     if (overview !== undefined) updateData.overview = overview; // 빈 문자열 허용
 
     if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ success: false, message: '변경할 데이터가 없습니다.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '변경할 데이터가 없습니다.' },
+        { status: 400 }
+      );
     }
 
     const prevStatus = project.status;

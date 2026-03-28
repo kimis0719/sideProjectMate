@@ -6,13 +6,13 @@
 
 Phase 1이 **순수 함수**, Phase 2가 **Zustand 스토어**를 테스트했다면, Phase 3는 **API Route Handler + 실제 DB 연동**을 테스트합니다.
 
-| 비교 | Phase 1 | Phase 2 | Phase 3 |
-|------|---------|---------|---------|
-| 대상 | 유틸 함수 | Zustand 스토어, 훅 | API Route Handler |
-| Mock | 없음 | fetch, Socket.io | dbConnect, getServerSession |
-| DB | 없음 | 없음 | 인메모리 MongoDB (mongodb-memory-server) |
-| 검증 포인트 | 반환값 | 상태 변화, 롤백 | HTTP 응답 코드, DB 실제 저장/삭제, 권한 검증 |
-| 핵심 패키지 | vitest | vitest | vitest + mongodb-memory-server |
+| 비교        | Phase 1   | Phase 2            | Phase 3                                      |
+| ----------- | --------- | ------------------ | -------------------------------------------- |
+| 대상        | 유틸 함수 | Zustand 스토어, 훅 | API Route Handler                            |
+| Mock        | 없음      | fetch, Socket.io   | dbConnect, getServerSession                  |
+| DB          | 없음      | 없음               | 인메모리 MongoDB (mongodb-memory-server)     |
+| 검증 포인트 | 반환값    | 상태 변화, 롤백    | HTTP 응답 코드, DB 실제 저장/삭제, 권한 검증 |
+| 핵심 패키지 | vitest    | vitest             | vitest + mongodb-memory-server               |
 
 ---
 
@@ -97,17 +97,17 @@ npm run test:coverage
 import { setupTestDB, clearTestDB, teardownTestDB } from '@/__tests__/helpers/mockDb';
 
 describe('GET /api/wbs/tasks', () => {
-  beforeAll(async () => await setupTestDB());    // 인메모리 DB 시작 + 연결
-  afterEach(async () => await clearTestDB());    // 테스트 간 데이터 격리
-  afterAll(async () => await teardownTestDB());  // DB 종료
+  beforeAll(async () => await setupTestDB()); // 인메모리 DB 시작 + 연결
+  afterEach(async () => await clearTestDB()); // 테스트 간 데이터 격리
+  afterAll(async () => await teardownTestDB()); // DB 종료
 });
 ```
 
-| 함수 | 역할 | 호출 시점 |
-|------|------|----------|
-| `setupTestDB()` | MongoMemoryServer 시작 + Mongoose 연결 | `beforeAll` |
-| `clearTestDB()` | 모든 컬렉션 데이터 삭제 | `afterEach` |
-| `teardownTestDB()` | Mongoose 연결 해제 + 서버 종료 | `afterAll` |
+| 함수               | 역할                                   | 호출 시점   |
+| ------------------ | -------------------------------------- | ----------- |
+| `setupTestDB()`    | MongoMemoryServer 시작 + Mongoose 연결 | `beforeAll` |
+| `clearTestDB()`    | 모든 컬렉션 데이터 삭제                | `afterEach` |
+| `teardownTestDB()` | Mongoose 연결 해제 + 서버 종료         | `afterAll`  |
 
 ### 4-2. dbConnect 무시
 
@@ -225,8 +225,19 @@ describe('GET /api/wbs/tasks', () => {
 
   it('pid로 해당 프로젝트의 작업만 조회한다', async () => {
     // Arrange — 테스트 데이터 DB에 직접 삽입
-    const user = await User.create({ authorEmail: 'a@test.com', nName: '유저', uid: 1, password: 'pw' });
-    await Task.create({ pid: 1, title: '작업', assignee: user._id, startDate: new Date(), endDate: new Date() });
+    const user = await User.create({
+      authorEmail: 'a@test.com',
+      nName: '유저',
+      uid: 1,
+      password: 'pw',
+    });
+    await Task.create({
+      pid: 1,
+      title: '작업',
+      assignee: user._id,
+      startDate: new Date(),
+      endDate: new Date(),
+    });
 
     // Act — Route Handler 직접 호출
     const request = createMockNextRequest('http://localhost:3000/api/wbs/tasks?pid=1');
@@ -305,7 +316,7 @@ describe('POST /api/projects', () => {
 
 it('일반 유저는 403을 반환한다', async () => {
   mockGetServerSession.mockResolvedValue({
-    user: { _id: 'user-id', memberType: 'user' },  // admin이 아님
+    user: { _id: 'user-id', memberType: 'user' }, // admin이 아님
     expires: '2099-12-31',
   });
 
@@ -332,40 +343,40 @@ it('관리자는 통계를 조회할 수 있다', async () => {
 
 ### 공통 (모든 라우트)
 
-| 검증 항목 | 설명 |
-|----------|------|
+| 검증 항목      | 설명                                                                    |
+| -------------- | ----------------------------------------------------------------------- |
 | 성공 응답 형식 | `{ success: true, data: ... }` 또는 `{ success: true, message: '...' }` |
-| 실패 응답 형식 | `{ success: false, message: '...' }` |
-| HTTP 상태 코드 | 200, 201, 400, 401, 403, 404, 500 적절히 사용 |
+| 실패 응답 형식 | `{ success: false, message: '...' }`                                    |
+| HTTP 상태 코드 | 200, 201, 400, 401, 403, 404, 500 적절히 사용                           |
 
 ### 인증 필요 라우트
 
-| 검증 항목 | 설명 |
-|----------|------|
-| 미인증 → 401 | `mockGetServerSession.mockResolvedValue(null)` |
-| 권한 없음 → 403 | 작성자가 아닌 유저, 일반 유저가 admin 접근 |
-| 인증 성공 | 정상 세션으로 기능 동작 확인 |
+| 검증 항목       | 설명                                           |
+| --------------- | ---------------------------------------------- |
+| 미인증 → 401    | `mockGetServerSession.mockResolvedValue(null)` |
+| 권한 없음 → 403 | 작성자가 아닌 유저, 일반 유저가 admin 접근     |
+| 인증 성공       | 정상 세션으로 기능 동작 확인                   |
 
 ### CRUD 라우트
 
-| 검증 항목 | 설명 |
-|----------|------|
-| 생성 후 DB 저장 | `await Model.findById(id)` 로 실제 저장 확인 |
-| 수정 후 값 유지 | 변경하지 않은 필드가 원래 값 유지하는지 확인 |
-| 삭제 후 DB 제거 | `await Model.findById(id)` 가 `null` 인지 확인 |
-| 연관 데이터 정리 | 삭제 시 다른 문서의 참조(dependencies 등)도 정리 |
-| 필수 필드 누락 → 400 | 각 필수 필드별 누락 테스트 |
-| 존재하지 않는 ID → 404 | 유효하지만 존재하지 않는 ObjectId |
+| 검증 항목              | 설명                                             |
+| ---------------------- | ------------------------------------------------ |
+| 생성 후 DB 저장        | `await Model.findById(id)` 로 실제 저장 확인     |
+| 수정 후 값 유지        | 변경하지 않은 필드가 원래 값 유지하는지 확인     |
+| 삭제 후 DB 제거        | `await Model.findById(id)` 가 `null` 인지 확인   |
+| 연관 데이터 정리       | 삭제 시 다른 문서의 참조(dependencies 등)도 정리 |
+| 필수 필드 누락 → 400   | 각 필수 필드별 누락 테스트                       |
+| 존재하지 않는 ID → 404 | 유효하지만 존재하지 않는 ObjectId                |
 
 ### 목록 조회 라우트
 
-| 검증 항목 | 설명 |
-|----------|------|
+| 검증 항목    | 설명                                        |
+| ------------ | ------------------------------------------- |
 | 페이지네이션 | page, limit 파라미터 동작 + total 값 정확성 |
-| 필터 | search, category, status 등 개별 필터 동작 |
-| 정렬 | 기대한 순서로 결과 반환 |
-| 빈 결과 | 결과 없을 때 `[]` 반환 (에러가 아님) |
-| populate | 참조 필드가 올바르게 확장되었는지 확인 |
+| 필터         | search, category, status 등 개별 필터 동작  |
+| 정렬         | 기대한 순서로 결과 반환                     |
+| 빈 결과      | 결과 없을 때 `[]` 반환 (에러가 아님)        |
+| populate     | 참조 필드가 올바르게 확장되었는지 확인      |
 
 ---
 
@@ -419,12 +430,20 @@ async function createProjectWithApplicant() {
   const owner = await createTestUser({ nName: '프로젝트장' });
   const applicant = await createTestUser({ nName: '지원자' });
   const project = await Project.create({
-    pid: Date.now(), title: '프로젝트', category: 'WEB', author: owner._id,
-    members: [{ role: '프론트엔드', current: 0, max: 2 }], content: '내용', status: '01',
+    pid: Date.now(),
+    title: '프로젝트',
+    category: 'WEB',
+    author: owner._id,
+    members: [{ role: '프론트엔드', current: 0, max: 2 }],
+    content: '내용',
+    status: '01',
   });
   const application = await Application.create({
-    projectId: project._id, applicantId: applicant._id,
-    role: '프론트엔드', message: '지원합니다', status: 'pending',
+    projectId: project._id,
+    applicantId: applicant._id,
+    role: '프론트엔드',
+    message: '지원합니다',
+    status: 'pending',
   });
   return { owner, applicant, project, application };
 }
@@ -436,13 +455,13 @@ async function createProjectWithApplicant() {
 
 API Route 테스트에서 자주 Mock해야 하는 모듈 목록입니다.
 
-| 모듈 | Mock 방법 | 이유 |
-|------|----------|------|
-| `@/lib/mongodb` | `vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }))` | 인메모리 DB에 이미 연결됨 |
-| `next-auth` | `vi.fn()`으로 `getServerSession` 교체 | 세션 상태 제어 |
-| `next-auth/next` | 동일하게 Mock | 일부 라우트에서 이 경로로 import |
-| `@/lib/auth` | `vi.mock('@/lib/auth', () => ({ authOptions: {} }))` | 실제 authOptions 불필요 |
-| `next/headers` | `vi.mock('next/headers', () => ({ headers: vi.fn() }))` | `headers()` 호출 무시 |
+| 모듈             | Mock 방법                                                | 이유                             |
+| ---------------- | -------------------------------------------------------- | -------------------------------- |
+| `@/lib/mongodb`  | `vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }))` | 인메모리 DB에 이미 연결됨        |
+| `next-auth`      | `vi.fn()`으로 `getServerSession` 교체                    | 세션 상태 제어                   |
+| `next-auth/next` | 동일하게 Mock                                            | 일부 라우트에서 이 경로로 import |
+| `@/lib/auth`     | `vi.mock('@/lib/auth', () => ({ authOptions: {} }))`     | 실제 authOptions 불필요          |
+| `next/headers`   | `vi.mock('next/headers', () => ({ headers: vi.fn() }))`  | `headers()` 호출 무시            |
 
 ### next-auth Mock 주의사항
 
@@ -607,12 +626,12 @@ Phase 3 (API 통합):                 93개
 
 ## 12. 한 줄 요약
 
-| 상황 | 할 일 |
-|------|-------|
-| 새 API Route 생성 | 파일 옆에 `route.test.ts` 만들고, 보일러플레이트 복사 |
-| 인증 필요 라우트 | `mockGetServerSession`으로 인증/미인증 상태 제어 |
-| 관리자 전용 라우트 | `memberType: 'admin'`으로 세션 설정 |
-| DB 데이터 필요 | `beforeAll`에서 `setupTestDB()`, 헬퍼로 데이터 생성 |
-| 필수 검증 | 성공 201, 미인증 401, 권한 없음 403, 없는 리소스 404, 입력 오류 400 |
-| headers() 에러 | `vi.mock('next/headers', () => ({ headers: vi.fn() }))` 추가 |
-| 유니크 충돌 | 데이터 생성 시 `Date.now() + Math.random()` 사용 |
+| 상황               | 할 일                                                               |
+| ------------------ | ------------------------------------------------------------------- |
+| 새 API Route 생성  | 파일 옆에 `route.test.ts` 만들고, 보일러플레이트 복사               |
+| 인증 필요 라우트   | `mockGetServerSession`으로 인증/미인증 상태 제어                    |
+| 관리자 전용 라우트 | `memberType: 'admin'`으로 세션 설정                                 |
+| DB 데이터 필요     | `beforeAll`에서 `setupTestDB()`, 헬퍼로 데이터 생성                 |
+| 필수 검증          | 성공 201, 미인증 401, 권한 없음 403, 없는 리소스 404, 입력 오류 400 |
+| headers() 에러     | `vi.mock('next/headers', () => ({ headers: vi.fn() }))` 추가        |
+| 유니크 충돌        | 데이터 생성 시 `Date.now() + Math.random()` 사용                    |

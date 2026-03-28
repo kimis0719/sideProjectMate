@@ -25,7 +25,11 @@ async function createTestUser(overrides?: Record<string, unknown>) {
   });
 }
 
-async function createTestProject(authorId: string, pid: number, overrides?: Record<string, unknown>) {
+async function createTestProject(
+  authorId: string,
+  pid: number,
+  overrides?: Record<string, unknown>
+) {
   return Project.create({
     pid,
     title: `프로젝트 ${pid}`,

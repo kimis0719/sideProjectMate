@@ -5,7 +5,7 @@ interface Notification {
   _id: string;
   sender: { nName: string };
   type: 'new_applicant' | 'application_accepted' | 'application_rejected' | 'assign_note';
-  project: { title: string, pid: number };
+  project: { title: string; pid: number };
   read: boolean;
   metadata?: { noteId?: string };
   createdAt: string;
@@ -26,7 +26,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   setNotifications: (notifications) => {
     set({
       notifications,
-      unreadCount: notifications.filter(n => !n.read).length,
+      unreadCount: notifications.filter((n) => !n.read).length,
     });
   },
   fetchNotifications: async () => {
@@ -49,10 +49,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       const data = await res.json();
       if (data.success) {
         const currentNotifications = get().notifications;
-        const updatedNotifications = currentNotifications.filter(n => n._id !== id);
+        const updatedNotifications = currentNotifications.filter((n) => n._id !== id);
         set({
           notifications: updatedNotifications,
-          unreadCount: updatedNotifications.filter(n => !n.read).length,
+          unreadCount: updatedNotifications.filter((n) => !n.read).length,
         });
       }
     } catch (error) {

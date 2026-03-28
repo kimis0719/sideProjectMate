@@ -126,37 +126,69 @@ const calculateSnap = (
   let bestGuideY: number | null = null;
 
   const my = {
-    l: currX, c: currX + width / 2, r: currX + width,
-    t: currY, m: currY + height / 2, b: currY + height
+    l: currX,
+    c: currX + width / 2,
+    r: currX + width,
+    t: currY,
+    m: currY + height / 2,
+    b: currY + height,
   };
 
   notes.forEach((note) => {
     if (note.id === myId) return;
 
     const other = {
-      l: note.x, c: note.x + note.width / 2, r: note.x + note.width,
-      t: note.y, m: note.y + note.height / 2, b: note.y + note.height
+      l: note.x,
+      c: note.x + note.width / 2,
+      r: note.x + note.width,
+      t: note.y,
+      m: note.y + note.height / 2,
+      b: note.y + note.height,
     };
 
     // X-Axis Snap (Vertical Guides)
     const checkX = (target: number) => {
       // My Left -> Target
-      if (Math.abs(target - my.l) < minDiffX) { minDiffX = Math.abs(target - my.l); snappedX = target; bestGuideX = target; }
+      if (Math.abs(target - my.l) < minDiffX) {
+        minDiffX = Math.abs(target - my.l);
+        snappedX = target;
+        bestGuideX = target;
+      }
       // My Center -> Target
-      if (Math.abs(target - my.c) < minDiffX) { minDiffX = Math.abs(target - my.c); snappedX = target - width / 2; bestGuideX = target; }
+      if (Math.abs(target - my.c) < minDiffX) {
+        minDiffX = Math.abs(target - my.c);
+        snappedX = target - width / 2;
+        bestGuideX = target;
+      }
       // My Right -> Target
-      if (Math.abs(target - my.r) < minDiffX) { minDiffX = Math.abs(target - my.r); snappedX = target - width; bestGuideX = target; }
+      if (Math.abs(target - my.r) < minDiffX) {
+        minDiffX = Math.abs(target - my.r);
+        snappedX = target - width;
+        bestGuideX = target;
+      }
     };
     [other.l, other.c, other.r].forEach(checkX);
 
     // Y-Axis Snap (Horizontal Guides)
     const checkY = (target: number) => {
       // My Top
-      if (Math.abs(target - my.t) < minDiffY) { minDiffY = Math.abs(target - my.t); snappedY = target; bestGuideY = target; }
+      if (Math.abs(target - my.t) < minDiffY) {
+        minDiffY = Math.abs(target - my.t);
+        snappedY = target;
+        bestGuideY = target;
+      }
       // My Middle
-      if (Math.abs(target - my.m) < minDiffY) { minDiffY = Math.abs(target - my.m); snappedY = target - height / 2; bestGuideY = target; }
+      if (Math.abs(target - my.m) < minDiffY) {
+        minDiffY = Math.abs(target - my.m);
+        snappedY = target - height / 2;
+        bestGuideY = target;
+      }
       // My Bottom
-      if (Math.abs(target - my.b) < minDiffY) { minDiffY = Math.abs(target - my.b); snappedY = target - height; bestGuideY = target; }
+      if (Math.abs(target - my.b) < minDiffY) {
+        minDiffY = Math.abs(target - my.b);
+        snappedY = target - height;
+        bestGuideY = target;
+      }
     };
     [other.t, other.m, other.b].forEach(checkY);
   });
@@ -194,8 +226,12 @@ const calculateResizeSnap = (
     if (note.id === myId) return;
 
     const other = {
-      l: note.x, c: note.x + note.width / 2, r: note.x + note.width,
-      t: note.y, m: note.y + note.height / 2, b: note.y + note.height
+      l: note.x,
+      c: note.x + note.width / 2,
+      r: note.x + note.width,
+      t: note.y,
+      m: note.y + note.height / 2,
+      b: note.y + note.height,
     };
 
     // X-Axis Match (My Right vs Other L/C/R)
@@ -308,18 +344,20 @@ export default function NoteItem({
     }
   }, [x, y, width, height]);
 
-
   const isSelected = selectedNoteIds.includes(id);
   const isPaletteOpen = openPaletteNoteId === id;
   const isTempNote = id.startsWith('temp-');
 
   const lockInfo = lockedNotes && lockedNotes[id];
   const isLockedByOther = !!(lockInfo && lockInfo.socketId !== socketClient.socket?.id);
-  const lockedByUser = isLockedByOther ? members.find(m => m._id === lockInfo.userId) : null;
-  const lockedByName = lockedByUser ? lockedByUser.nName : (lockInfo?.userId || 'Unknown');
+  const lockedByUser = isLockedByOther ? members.find((m) => m._id === lockInfo.userId) : null;
+  const lockedByName = lockedByUser ? lockedByUser.nName : lockInfo?.userId || 'Unknown';
   const lockedColor = lockInfo ? stringToColor(lockInfo.userId) : '#EF4444';
 
-  const peerSelection = peerSelections && peerSelections[id] ? peerSelections[id].find(s => s.socketId !== socketClient.socket?.id) : null;
+  const peerSelection =
+    peerSelections && peerSelections[id]
+      ? peerSelections[id].find((s) => s.socketId !== socketClient.socket?.id)
+      : null;
   const isPeerSelected = !!peerSelection;
   const peerColor = peerSelection ? peerSelection.color : 'transparent';
 
@@ -379,36 +417,41 @@ export default function NoteItem({
     }
   }, [text, isEditing, isSelected, saveEdit]);
 
-
-  const getMemberInfo = React.useCallback((memberId?: string) => {
-    if (!memberId) return null;
-    const member = members.find(m => m._id === memberId);
-    if (!member) return { name: 'Unknown', avatarUrl: null, initial: '?' };
-    return {
-      name: member.nName,
-      avatarUrl: member.avatarUrl,
-      initial: member.nName.charAt(0).toUpperCase()
-    };
-  }, [members]);
+  const getMemberInfo = React.useCallback(
+    (memberId?: string) => {
+      if (!memberId) return null;
+      const member = members.find((m) => m._id === memberId);
+      if (!member) return { name: 'Unknown', avatarUrl: null, initial: '?' };
+      return {
+        name: member.nName,
+        avatarUrl: member.avatarUrl,
+        initial: member.nName.charAt(0).toUpperCase(),
+      };
+    },
+    [members]
+  );
 
   const creatorInfo = getMemberInfo(creatorId);
   const assigneeInfo = getMemberInfo(assigneeId);
 
   // --- Mobile Double Tap Logic ---
   const lastTapRef = React.useRef<number>(0);
-  const handleTouchEnd = React.useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      if (!isLockedByOther && !isSelectionMode) {
-        e.preventDefault();
-        setDraft(text);
-        setIsEditing(true);
-        selectNote(id);
-        if (myUserId !== 'anonymous') lockNote(id, myUserId);
+  const handleTouchEnd = React.useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      const now = Date.now();
+      if (now - lastTapRef.current < 300) {
+        if (!isLockedByOther && !isSelectionMode) {
+          e.preventDefault();
+          setDraft(text);
+          setIsEditing(true);
+          selectNote(id);
+          if (myUserId !== 'anonymous') lockNote(id, myUserId);
+        }
       }
-    }
-    lastTapRef.current = now;
-  }, [isLockedByOther, text, id, selectNote, myUserId, lockNote, isSelectionMode]);
+      lastTapRef.current = now;
+    },
+    [isLockedByOther, text, id, selectNote, myUserId, lockNote, isSelectionMode]
+  );
 
   const onResizePointerDown = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -451,16 +494,17 @@ export default function NoteItem({
     const FOOTER_HEIGHT = 48;
 
     const tagsH = tagsRef.current ? tagsRef.current.offsetHeight : 0;
-    const tagsMargin = (tags.length > 0 && tagsH > 0) ? 8 : 0;
+    const tagsMargin = tags.length > 0 && tagsH > 0 ? 8 : 0;
 
-    const totalCalculatedHeight = PADDING_TOP + tagsH + tagsMargin + contentHeight + PADDING_BOTTOM + FOOTER_HEIGHT;
+    const totalCalculatedHeight =
+      PADDING_TOP + tagsH + tagsMargin + contentHeight + PADDING_BOTTOM + FOOTER_HEIGHT;
 
     const safeHeight = Math.max(140, totalCalculatedHeight);
 
     // 3. Update Height
     if (Math.abs(safeHeight - height) > 2) {
       // 로컬 Visual 업데이트
-      // 높이 변경도 Undo 스택에 쌓일 수 있으므로 주의. 
+      // 높이 변경도 Undo 스택에 쌓일 수 있으므로 주의.
       // 하지만 여기서 updateNote를 부르면 equality 검사로 인해 무시되도록 설정했음.
       // 따라서 updateNote 호출은 안전함(높이 변화만 있으면 히스토리 안 쌓임).
       if (isEditing) {
@@ -473,12 +517,13 @@ export default function NoteItem({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft, isEditing, tags, text]);
 
-
   // Drag Accumulator for Multi-Select
   const totalDragRef = React.useRef({ x: 0, y: 0 });
 
   // 다중 선택 드래그 시 DOM 캐시 (드래그 시작 시 1회 빌드, 매 프레임 querySelector 제거)
-  const nodeCacheRef = React.useRef<Map<string, { el: HTMLElement; startX: number; startY: number }>>(new Map());
+  const nodeCacheRef = React.useRef<
+    Map<string, { el: HTMLElement; startX: number; startY: number }>
+  >(new Map());
 
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -506,10 +551,10 @@ export default function NoteItem({
       nodeCacheRef.current = new Map();
       const { selectedNoteIds: currentSelected, notes: allNotes } = useBoardStore.getState();
       if (currentSelected.length > 1) {
-        currentSelected.forEach(selectedId => {
+        currentSelected.forEach((selectedId) => {
           if (selectedId === id) return;
           const el = document.querySelector(`[data-note-id="${selectedId}"]`) as HTMLElement;
-          const note = allNotes.find(n => n.id === selectedId);
+          const note = allNotes.find((n) => n.id === selectedId);
           if (el && note) {
             nodeCacheRef.current.set(selectedId, { el, startX: note.x, startY: note.y });
           }
@@ -543,7 +588,8 @@ export default function NoteItem({
             const { w, h, guides } = calculateResizeSnap(
               currentVisual.current.x,
               currentVisual.current.y,
-              newWidth, newHeight,
+              newWidth,
+              newHeight,
               id,
               allNotes
             );
@@ -614,7 +660,20 @@ export default function NoteItem({
 
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
     },
-    [isEditing, isDragging, isResizing, zoom, width, height, id, selectedNoteIds, isSelected, isSelectionMode, isSnapEnabled, setAlignmentGuides]
+    [
+      isEditing,
+      isDragging,
+      isResizing,
+      zoom,
+      width,
+      height,
+      id,
+      selectedNoteIds,
+      isSelected,
+      isSelectionMode,
+      isSnapEnabled,
+      setAlignmentGuides,
+    ]
   );
 
   const onPointerUp = React.useCallback(
@@ -672,7 +731,6 @@ export default function NoteItem({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ updates }),
         }).catch((err) => console.error('Batch move failed:', err));
-
       } else {
         // 단일 선택의 경우, Visual만 바뀌어 있으므로 이제 Store Update
         const finalX = currentVisual.current.x;
@@ -683,8 +741,10 @@ export default function NoteItem({
         let snappedY = finalY;
 
         if (isSnapEnabled || e.altKey) {
-          if (Math.abs(snappedX % GRID_SIZE) < SNAP_THRESHOLD) snappedX = Math.round(snappedX / GRID_SIZE) * GRID_SIZE;
-          if (Math.abs(snappedY % GRID_SIZE) < SNAP_THRESHOLD) snappedY = Math.round(snappedY / GRID_SIZE) * GRID_SIZE;
+          if (Math.abs(snappedX % GRID_SIZE) < SNAP_THRESHOLD)
+            snappedX = Math.round(snappedX / GRID_SIZE) * GRID_SIZE;
+          if (Math.abs(snappedY % GRID_SIZE) < SNAP_THRESHOLD)
+            snappedY = Math.round(snappedY / GRID_SIZE) * GRID_SIZE;
         }
 
         moveNote(id, snappedX, snappedY); // Store Update (Undo 1회 저장)
@@ -692,21 +752,37 @@ export default function NoteItem({
         saveChanges({ x: snappedX, y: snappedY }); // DB 저장
       }
     },
-    [saveChanges, id, updateNote, width, height, selectedNoteIds, isSelected, setAlignmentGuides, debouncedSave, isSnapEnabled, moveNote, moveNotes]
+    [
+      saveChanges,
+      id,
+      updateNote,
+      width,
+      height,
+      selectedNoteIds,
+      isSelected,
+      setAlignmentGuides,
+      debouncedSave,
+      isSnapEnabled,
+      moveNote,
+      moveNotes,
+    ]
   );
 
-  const onPointerCancel = React.useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    isDragging.current = false;
-    isResizing.current = false;
-    (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-    setAlignmentGuides([]);
-    // Visual 되돌리기 (원상복구)
-    if (visualRef.current) {
-      visualRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-      visualRef.current.style.width = `${width}px`;
-      visualRef.current.style.height = `${height}px`;
-    }
-  }, [setAlignmentGuides, x, y, width, height]);
+  const onPointerCancel = React.useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      isDragging.current = false;
+      isResizing.current = false;
+      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+      setAlignmentGuides([]);
+      // Visual 되돌리기 (원상복구)
+      if (visualRef.current) {
+        visualRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        visualRef.current.style.width = `${width}px`;
+        visualRef.current.style.height = `${height}px`;
+      }
+    },
+    [setAlignmentGuides, x, y, width, height]
+  );
 
   const changeColor = React.useCallback(
     (newColor: string) => {
@@ -720,37 +796,49 @@ export default function NoteItem({
     setOpenPaletteNoteId(isPaletteOpen ? null : id);
   };
 
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (isEditing) return;
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (isEditing) return;
 
-    const STEP = e.shiftKey ? 50 : 10;
-    let dx = 0;
-    let dy = 0;
+      const STEP = e.shiftKey ? 50 : 10;
+      let dx = 0;
+      let dy = 0;
 
-    switch (e.key) {
-      case 'ArrowUp': dy = -STEP; break;
-      case 'ArrowDown': dy = STEP; break;
-      case 'ArrowLeft': dx = -STEP; break;
-      case 'ArrowRight': dx = STEP; break;
-      case 'Enter':
-        e.preventDefault();
-        setIsEditing(true);
-        return;
-      case 'Delete':
-        e.preventDefault();
-        removeNote(id);
-        return;
-      default: return;
-    }
+      switch (e.key) {
+        case 'ArrowUp':
+          dy = -STEP;
+          break;
+        case 'ArrowDown':
+          dy = STEP;
+          break;
+        case 'ArrowLeft':
+          dx = -STEP;
+          break;
+        case 'ArrowRight':
+          dx = STEP;
+          break;
+        case 'Enter':
+          e.preventDefault();
+          setIsEditing(true);
+          return;
+        case 'Delete':
+          e.preventDefault();
+          removeNote(id);
+          return;
+        default:
+          return;
+      }
 
-    e.preventDefault();
-    e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
 
-    const newX = x + dx;
-    const newY = y + dy;
-    moveNote(id, newX, newY);
-    debouncedSave({ x: newX, y: newY });
-  }, [isEditing, x, y, id, moveNote, debouncedSave, setIsEditing, removeNote]);
+      const newX = x + dx;
+      const newY = y + dy;
+      moveNote(id, newX, newY);
+      debouncedSave({ x: newX, y: newY });
+    },
+    [isEditing, x, y, id, moveNote, debouncedSave, setIsEditing, removeNote]
+  );
 
   // --- Box-Shadow (Border Replacement) ---
   const baseShadow = '0 2px 8px rgba(0,0,0,0.15)';
@@ -771,7 +859,7 @@ export default function NoteItem({
       ref={visualRef} // Attach Ref
       role="note"
       data-note-id={id} // For DOM manipulation
-      data-section-id={useBoardStore.getState().notes.find(n => n.id === id)?.sectionId || ''}
+      data-section-id={useBoardStore.getState().notes.find((n) => n.id === id)?.sectionId || ''}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onTouchEnd={handleTouchEnd}
@@ -806,32 +894,12 @@ export default function NoteItem({
     >
       {/* Lock Indicator */}
       {isLockedByOther && (
-        <div style={{
-          position: 'absolute',
-          top: -26,
-          left: -2,
-          background: lockedColor,
-          color: 'white',
-          fontSize: 12,
-          fontWeight: 'bold',
-          padding: '2px 8px',
-          borderRadius: '4px 4px 4px 0',
-          zIndex: 100,
-          whiteSpace: 'nowrap',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-        }}>
-          {lockedByName}님이 편집 중
-        </div>
-      )}
-
-      {/* Peer Selection Indicator & Name */}
-      {!isLockedByOther && isPeerSelected && (
-        <>
-          <div style={{
+        <div
+          style={{
             position: 'absolute',
             top: -26,
             left: -2,
-            background: peerColor,
+            background: lockedColor,
             color: 'white',
             fontSize: 12,
             fontWeight: 'bold',
@@ -839,202 +907,236 @@ export default function NoteItem({
             borderRadius: '4px 4px 4px 0',
             zIndex: 100,
             whiteSpace: 'nowrap',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-          }}>
-            {members.find(m => m._id === peerSelection.userId)?.nName || peerSelection.userId}님이 선택 중
+            boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+          }}
+        >
+          {lockedByName}님이 편집 중
+        </div>
+      )}
+
+      {/* Peer Selection Indicator & Name */}
+      {!isLockedByOther && isPeerSelected && (
+        <>
+          <div
+            style={{
+              position: 'absolute',
+              top: -26,
+              left: -2,
+              background: peerColor,
+              color: 'white',
+              fontSize: 12,
+              fontWeight: 'bold',
+              padding: '2px 8px',
+              borderRadius: '4px 4px 4px 0',
+              zIndex: 100,
+              whiteSpace: 'nowrap',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+            }}
+          >
+            {members.find((m) => m._id === peerSelection.userId)?.nName || peerSelection.userId}님이
+            선택 중
           </div>
-          <div style={{
-            position: 'absolute',
-            top: -10,
-            right: -2,
-            background: peerColor,
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            border: '2px solid white',
-            zIndex: 100,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-          }} />
+          <div
+            style={{
+              position: 'absolute',
+              top: -10,
+              right: -2,
+              background: peerColor,
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              border: '2px solid white',
+              zIndex: 100,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+            }}
+          />
         </>
       )}
 
-
       {/* Settings Popover */}
-      {
-        isPaletteOpen && (
-          <div
-            className="flex flex-col gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-xl z-20 border border-gray-100 dark:border-gray-700"
-            style={{
-              position: 'absolute',
-              top: 40,
-              right: -240,
-              width: 240,
-              cursor: 'default',
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            {/* 1. 색상 선택 */}
-            <div>
-              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">색상</div>
-              <div className="flex gap-2 flex-wrap">
-                {COLOR_PALETTE.map((c) => (
+      {isPaletteOpen && (
+        <div
+          className="flex flex-col gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-xl z-20 border border-gray-100 dark:border-gray-700"
+          style={{
+            position: 'absolute',
+            top: 40,
+            right: -240,
+            width: 240,
+            cursor: 'default',
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {/* 1. 색상 선택 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">색상</div>
+            <div className="flex gap-2 flex-wrap">
+              {COLOR_PALETTE.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => changeColor(c)}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    background: c,
+                    border: c === color ? '2px solid #3B82F6' : '1px solid rgba(0,0,0,0.1)',
+                    cursor: 'pointer',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 2. 담당자 설정 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
+              담당자
+            </div>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+              {members.length > 0 ? (
+                members.map((member) => (
                   <button
-                    key={c}
-                    type="button"
-                    onClick={() => changeColor(c)}
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      background: c,
-                      border: c === color ? '2px solid #3B82F6' : '1px solid rgba(0,0,0,0.1)',
-                      cursor: 'pointer',
+                    key={member._id}
+                    onClick={() => {
+                      updateNote(id, { assigneeId: member._id });
+                      saveChanges({ assigneeId: member._id });
                     }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* 2. 담당자 설정 */}
-            <div>
-              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">담당자</div>
-              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                {members.length > 0 ? (
-                  members.map((member) => (
-                    <button
-                      key={member._id}
-                      onClick={() => {
-                        updateNote(id, { assigneeId: member._id });
-                        saveChanges({ assigneeId: member._id });
-                      }}
-                      className={`flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors border ${assigneeId === member._id ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800' : 'hover:bg-gray-50 border-transparent dark:hover:bg-gray-700'}`}
+                    className={`flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors border ${assigneeId === member._id ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800' : 'hover:bg-gray-50 border-transparent dark:hover:bg-gray-700'}`}
+                  >
+                    {member.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={member.avatarUrl}
+                        alt={member.nName}
+                        className="w-5 h-5 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
+                        {member.nName[0]}
+                      </div>
+                    )}
+                    <span
+                      className={`text-xs ${assigneeId === member._id ? 'font-semibold text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}
                     >
-                      {member.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={member.avatarUrl} alt={member.nName} className="w-5 h-5 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
-                          {member.nName[0]}
-                        </div>
-                      )}
-                      <span className={`text-xs ${assigneeId === member._id ? 'font-semibold text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
-                        {member.nName}
-                      </span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="text-xs text-gray-400">멤버가 없습니다.</div>
-                )}
-              </div>
+                      {member.nName}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="text-xs text-gray-400">멤버가 없습니다.</div>
+              )}
             </div>
+          </div>
 
-            {/* 3. 태그 설정 */}
-            <div>
-              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">태그</div>
-              <div className="flex flex-wrap gap-1 mb-2">
-                {tags.map((tag) => (
-                  <span key={tag} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs flex items-center gap-1 text-gray-700 dark:text-gray-200">
-                    #{tag}
-                    <button
-                      onClick={() => {
-                        const newTags = tags.filter(t => t !== tag);
-                        updateNote(id, { tags: newTags });
-                        saveChanges({ tags: newTags });
-                      }}
-                      className="hover:text-red-500 ml-1"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <input
-                type="text"
-                placeholder="태그 입력 후 Enter"
-                className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const val = tagInput.trim();
-                    if (val && !tags.includes(val)) {
-                      const newTags = [...tags, val];
+          {/* 3. 태그 설정 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">태그</div>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs flex items-center gap-1 text-gray-700 dark:text-gray-200"
+                >
+                  #{tag}
+                  <button
+                    onClick={() => {
+                      const newTags = tags.filter((t) => t !== tag);
                       updateNote(id, { tags: newTags });
                       saveChanges({ tags: newTags });
-                      setTagInput('');
-                    }
+                    }}
+                    className="hover:text-red-500 ml-1"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="태그 입력 후 Enter"
+              className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const val = tagInput.trim();
+                  if (val && !tags.includes(val)) {
+                    const newTags = [...tags, val];
+                    updateNote(id, { tags: newTags });
+                    saveChanges({ tags: newTags });
+                    setTagInput('');
                   }
+                }
+              }}
+            />
+          </div>
+
+          {/* 4. 마감일 설정 (Input Style Change for clickable area) */}
+          <div>
+            <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
+              마감일
+            </div>
+            <div className="relative">
+              <input
+                type="date"
+                className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 cursor-pointer"
+                style={{ minHeight: '32px' }} // 높이 확보
+                value={dueDate ? toInputDate(dueDate) : ''}
+                onChange={(e) => {
+                  const date = e.target.value ? new Date(e.target.value) : undefined;
+                  updateNote(id, { dueDate: date });
+                  saveChanges({ dueDate: date });
                 }}
               />
             </div>
-
-            {/* 4. 마감일 설정 (Input Style Change for clickable area) */}
-            <div>
-              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">마감일</div>
-              <div className="relative">
-                <input
-                  type="date"
-                  className="w-full text-sm border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-gray-100 cursor-pointer"
-                  style={{ minHeight: '32px' }} // 높이 확보
-                  value={dueDate ? toInputDate(dueDate) : ''}
-                  onChange={(e) => {
-                    const date = e.target.value ? new Date(e.target.value) : undefined;
-                    updateNote(id, { dueDate: date });
-                    saveChanges({ dueDate: date });
-                  }}
-                />
-              </div>
-            </div>
-
-            <hr className="border-gray-100 dark:border-gray-700" />
-
-            {/* 5. 삭제 버튼 */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!isTempNote) removeNote(id);
-              }}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-            >
-              <span>🗑️ 노트 삭제</span>
-            </button>
-
           </div>
-        )
-      }
 
-      {/* Done Button for Mobile Editing - Top Center */}
-      {
-        isEditing && (
+          <hr className="border-gray-100 dark:border-gray-700" />
+
+          {/* 5. 삭제 버튼 */}
           <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
-              saveEdit();
+              if (!isTempNote) removeNote(id);
             }}
-            style={{
-              position: 'absolute',
-              top: -36,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 100,
-              backgroundColor: '#3B82F6',
-              color: 'white',
-              padding: '4px 12px',
-              borderRadius: 16,
-              fontSize: 13,
-              fontWeight: 600,
-              boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-              border: 'none',
-              cursor: 'pointer'
-            }}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
           >
-            완료
+            <span>🗑️ 노트 삭제</span>
           </button>
-        )
-      }
+        </div>
+      )}
+
+      {/* Done Button for Mobile Editing - Top Center */}
+      {isEditing && (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            saveEdit();
+          }}
+          style={{
+            position: 'absolute',
+            top: -36,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            backgroundColor: '#3B82F6',
+            color: 'white',
+            padding: '4px 12px',
+            borderRadius: 16,
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          완료
+        </button>
+      )}
 
       {/* Settings Button */}
       <button
@@ -1058,7 +1160,13 @@ export default function NoteItem({
         }}
         className="hover:bg-black/10 transition-colors"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
           <circle cx="12" cy="5" r="2" fill="currentColor" />
           <circle cx="12" cy="12" r="2" fill="currentColor" />
           <circle cx="12" cy="19" r="2" fill="currentColor" />
@@ -1100,38 +1208,42 @@ export default function NoteItem({
                 border: 'none',
               }}
             />
-            <div style={{
-              position: 'absolute',
-              bottom: 8,
-              right: 8,
-              fontSize: 10,
-              color: draft.length > 1900 ? '#EF4444' : '#9CA3AF',
-              pointerEvents: 'none',
-              zIndex: 10,
-              fontWeight: 600,
-              backgroundColor: 'rgba(255,255,255,0.7)',
-              padding: '2px 4px',
-              borderRadius: 4
-            }}>
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 8,
+                right: 8,
+                fontSize: 10,
+                color: draft.length > 1900 ? '#EF4444' : '#9CA3AF',
+                pointerEvents: 'none',
+                zIndex: 10,
+                fontWeight: 600,
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                padding: '2px 4px',
+                borderRadius: 4,
+              }}
+            >
               {draft.length}/2000
             </div>
           </>
         ) : (
           <div className="prose prose-sm max-w-none text-gray-900 select-text pointer-events-auto cursor-text text-sm break-all whitespace-pre-wrap leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {preprocessMarkdown(text)}
-            </ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{preprocessMarkdown(text)}</ReactMarkdown>
           </div>
         )}
       </div>
 
       {/* Tags Display */}
       <div ref={tagsRef} className="px-4 flex flex-wrap gap-1">
-        {tags.length > 0 && tags.map((tag) => (
-          <span key={tag} className="px-1.5 py-0.5 bg-black/5 rounded text-[10px] text-gray-600 font-medium">
-            #{tag}
-          </span>
-        ))}
+        {tags.length > 0 &&
+          tags.map((tag) => (
+            <span
+              key={tag}
+              className="px-1.5 py-0.5 bg-black/5 rounded text-[10px] text-gray-600 font-medium"
+            >
+              #{tag}
+            </span>
+          ))}
       </div>
 
       {/* Footer Info (D-Day, Assignee) */}
@@ -1142,7 +1254,11 @@ export default function NoteItem({
             <div className="flex items-center" title={`담당자: ${assigneeInfo?.name}`}>
               {assigneeInfo?.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={assigneeInfo.avatarUrl} alt={assigneeInfo.name} className="w-6 h-6 rounded-full object-cover border border-white shadow-sm" />
+                <img
+                  src={assigneeInfo.avatarUrl}
+                  alt={assigneeInfo.name}
+                  className="w-6 h-6 rounded-full object-cover border border-white shadow-sm"
+                />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 border border-white shadow-sm">
                   {assigneeInfo?.initial}
@@ -1157,41 +1273,37 @@ export default function NoteItem({
               style={{
                 borderColor: getDDayInfo(dueDate).color,
                 color: getDDayInfo(dueDate).color,
-                backgroundColor: 'white'
+                backgroundColor: 'white',
               }}
             >
               {getDDayInfo(dueDate).label}
             </div>
           )}
         </div>
-        <div className="text-[10px] text-gray-400">
-          {/* 작성자 정보 등 추가 가능 */}
-        </div>
+        <div className="text-[10px] text-gray-400">{/* 작성자 정보 등 추가 가능 */}</div>
       </div>
 
       {/* Resize Handle (Bottom-Right) */}
-      {
-        !isEditing && !isLockedByOther && (
-          <div
-            onPointerDown={onResizePointerDown}
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              width: 20,
-              height: 20,
-              cursor: 'nwse-resize',
-              zIndex: 50, // More than content
-            }}
-          >
-            {/* 시각적 핸들 아이콘 (Optional) */}
-            <svg width="100%" height="100%" viewBox="0 0 20 20" fill="none">
-              <path d="M14 14L20 20" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
-              <path d="M10 18L18 10" stroke="rgba(0,0,0,0.1)" strokeWidth="2" />
-            </svg>
-          </div>
-        )
-      }
-    </div >
+      {!isEditing && !isLockedByOther && (
+        <div
+          onPointerDown={onResizePointerDown}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: 20,
+            height: 20,
+            cursor: 'nwse-resize',
+            zIndex: 50, // More than content
+          }}
+        >
+          {/* 시각적 핸들 아이콘 (Optional) */}
+          <svg width="100%" height="100%" viewBox="0 0 20 20" fill="none">
+            <path d="M14 14L20 20" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
+            <path d="M10 18L18 10" stroke="rgba(0,0,0,0.1)" strokeWidth="2" />
+          </svg>
+        </div>
+      )}
+    </div>
   );
 }

@@ -46,4 +46,5 @@ const ApplicationSchema: Schema = new Schema(
 // 한 사용자는 한 프로젝트의 같은 역할에 한 번만 지원할 수 있도록 복합 인덱스 설정
 ApplicationSchema.index({ projectId: 1, applicantId: 1, role: 1 }, { unique: true });
 
-export default mongoose.models.Application || mongoose.model<IApplication>('Application', ApplicationSchema);
+export default mongoose.models.Application ||
+  mongoose.model<IApplication>('Application', ApplicationSchema);

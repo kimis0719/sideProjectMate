@@ -47,11 +47,19 @@ describe('GET /api/admin/stats', () => {
 
     // 테스트 데이터 생성
     const project = await Project.create({
-      pid: 1, title: '프로젝트1', category: 'WEB', author: user._id,
-      members: [{ role: '개발자', current: 0, max: 1 }], content: '내용', status: '01',
+      pid: 1,
+      title: '프로젝트1',
+      category: 'WEB',
+      author: user._id,
+      members: [{ role: '개발자', current: 0, max: 1 }],
+      content: '내용',
+      status: '01',
     });
     await Application.create({
-      projectId: project._id, applicantId: user._id, role: '개발자', message: '지원',
+      projectId: project._id,
+      applicantId: user._id,
+      role: '개발자',
+      message: '지원',
     });
 
     const response = await GET();
@@ -92,10 +100,42 @@ describe('GET /api/admin/stats', () => {
     });
 
     await Project.create([
-      { pid: 1, title: 'P1', category: 'WEB', author: user._id, members: [], content: 'c', status: '01' },
-      { pid: 2, title: 'P2', category: 'WEB', author: user._id, members: [], content: 'c', status: '01' },
-      { pid: 3, title: 'P3', category: 'WEB', author: user._id, members: [], content: 'c', status: '02' },
-      { pid: 4, title: 'P4', category: 'WEB', author: user._id, members: [], content: 'c', status: '03' },
+      {
+        pid: 1,
+        title: 'P1',
+        category: 'WEB',
+        author: user._id,
+        members: [],
+        content: 'c',
+        status: '01',
+      },
+      {
+        pid: 2,
+        title: 'P2',
+        category: 'WEB',
+        author: user._id,
+        members: [],
+        content: 'c',
+        status: '01',
+      },
+      {
+        pid: 3,
+        title: 'P3',
+        category: 'WEB',
+        author: user._id,
+        members: [],
+        content: 'c',
+        status: '02',
+      },
+      {
+        pid: 4,
+        title: 'P4',
+        category: 'WEB',
+        author: user._id,
+        members: [],
+        content: 'c',
+        status: '03',
+      },
     ]);
 
     const response = await GET();
@@ -112,8 +152,13 @@ describe('GET /api/admin/stats', () => {
     const user1 = await createTestUser();
     const user2 = await createTestUser();
     const project = await Project.create({
-      pid: 10, title: 'P', category: 'WEB', author: admin._id,
-      members: [{ role: '개발자', current: 0, max: 3 }], content: 'c', status: '01',
+      pid: 10,
+      title: 'P',
+      category: 'WEB',
+      author: admin._id,
+      members: [{ role: '개발자', current: 0, max: 3 }],
+      content: 'c',
+      status: '01',
     });
 
     mockGetServerSession.mockResolvedValue({
@@ -122,8 +167,20 @@ describe('GET /api/admin/stats', () => {
     });
 
     await Application.create([
-      { projectId: project._id, applicantId: user1._id, role: '개발자', message: 'm', status: 'accepted' },
-      { projectId: project._id, applicantId: user2._id, role: '개발자', message: 'm', status: 'pending' },
+      {
+        projectId: project._id,
+        applicantId: user1._id,
+        role: '개발자',
+        message: 'm',
+        status: 'accepted',
+      },
+      {
+        projectId: project._id,
+        applicantId: user2._id,
+        role: '개발자',
+        message: 'm',
+        status: 'pending',
+      },
     ]);
 
     const response = await GET();

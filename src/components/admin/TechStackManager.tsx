@@ -161,7 +161,9 @@ export default function TechStackManager() {
             <select
               className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm"
               value={addForm.category}
-              onChange={(e) => setAddForm((f) => ({ ...f, category: e.target.value as TechCategory }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, category: e.target.value as TechCategory }))
+              }
             >
               {CATEGORIES.filter((c) => c.value !== 'all').map(({ value, label }) => (
                 <option key={value} value={value}>
@@ -266,7 +268,7 @@ export default function TechStackManager() {
                         ))}
                       </select>
                     ) : (
-                      CATEGORIES.find((c) => c.value === stack.category)?.label ?? stack.category
+                      (CATEGORIES.find((c) => c.value === stack.category)?.label ?? stack.category)
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground text-xs max-w-xs truncate">

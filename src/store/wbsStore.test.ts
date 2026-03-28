@@ -51,21 +51,22 @@ const createServerTask = (overrides: Partial<any> = {}): any => ({
 });
 
 /** 클라이언트 형태의 Task (id 포함) */
-const createClientTask = (overrides: Partial<Task> = {}): Task => ({
-  id: 'task-001',
-  title: '테스트 작업',
-  startDate: '2024-06-01' as any,
-  endDate: '2024-06-10' as any,
-  progress: 0,
-  assignee: { _id: 'user-001', nName: 'Alice' },
-  dependencies: [],
-  projectPid: 1,
-  ...overrides,
-} as Task);
+const createClientTask = (overrides: Partial<Task> = {}): Task =>
+  ({
+    id: 'task-001',
+    title: '테스트 작업',
+    startDate: '2024-06-01' as any,
+    endDate: '2024-06-10' as any,
+    progress: 0,
+    assignee: { _id: 'user-001', nName: 'Alice' },
+    dependencies: [],
+    projectPid: 1,
+    ...overrides,
+  }) as Task;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('wbsStore', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   beforeEach(() => {
     resetStore();
@@ -77,7 +78,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('초기 상태', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('tasks는 빈 배열이다', () => {
       expect(useWbsStore.getState().tasks).toEqual([]);
@@ -102,7 +103,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('fetchTasks', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('API 호출 성공 시 tasks를 업데이트한다', async () => {
       const serverTasks = [
@@ -124,7 +125,9 @@ describe('wbsStore', () => {
       // fetch를 지연시켜 isLoading 상태를 캡처
       let resolveFetch: (value: any) => void;
       global.fetch = vi.fn().mockReturnValue(
-        new Promise((resolve) => { resolveFetch = resolve; })
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
       );
 
       const promise = useWbsStore.getState().fetchTasks(1);
@@ -193,7 +196,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('addTask', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     const newTaskInput: Omit<Task, 'id'> = {
       title: '새 작업',
@@ -209,7 +212,9 @@ describe('wbsStore', () => {
       // fetch를 지연시켜 optimistic 상태를 관찰
       let resolveFetch: (value: any) => void;
       global.fetch = vi.fn().mockReturnValue(
-        new Promise((resolve) => { resolveFetch = resolve; })
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
       );
 
       const promise = useWbsStore.getState().addTask(newTaskInput);
@@ -226,10 +231,11 @@ describe('wbsStore', () => {
       // 완료
       resolveFetch!({
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: createServerTask({ _id: 'saved-001', title: '새 작업' }),
-        }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: createServerTask({ _id: 'saved-001', title: '새 작업' }),
+          }),
       });
       await promise;
     });
@@ -264,10 +270,7 @@ describe('wbsStore', () => {
 
       await useWbsStore.getState().addTask(newTaskInput);
 
-      expect(mockSocket.emit).not.toHaveBeenCalledWith(
-        'wbs-create-task',
-        expect.anything()
-      );
+      expect(mockSocket.emit).not.toHaveBeenCalledWith('wbs-create-task', expect.anything());
     });
 
     it('API 실패 시 임시 작업이 롤백된다', async () => {
@@ -294,7 +297,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('updateTask', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     beforeEach(() => {
       useWbsStore.setState({
@@ -308,7 +311,9 @@ describe('wbsStore', () => {
     it('Optimistic Update로 즉시 상태가 변경된다', async () => {
       let resolveFetch: (value: any) => void;
       global.fetch = vi.fn().mockReturnValue(
-        new Promise((resolve) => { resolveFetch = resolve; })
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
       );
 
       const promise = useWbsStore.getState().updateTask('task-001', { title: '변경된 제목' });
@@ -320,10 +325,11 @@ describe('wbsStore', () => {
 
       resolveFetch!({
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: createServerTask({ _id: 'task-001', title: '변경된 제목' }),
-        }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: createServerTask({ _id: 'task-001', title: '변경된 제목' }),
+          }),
       });
       await promise;
     });
@@ -372,14 +378,11 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('deleteTask', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     beforeEach(() => {
       useWbsStore.setState({
-        tasks: [
-          createClientTask({ id: 'task-001' }),
-          createClientTask({ id: 'task-002' }),
-        ],
+        tasks: [createClientTask({ id: 'task-001' }), createClientTask({ id: 'task-002' })],
         selectedTaskId: 'task-001',
       });
     });
@@ -387,7 +390,9 @@ describe('wbsStore', () => {
     it('Optimistic Update로 즉시 목록에서 제거된다', async () => {
       let resolveFetch: (value: any) => void;
       global.fetch = vi.fn().mockReturnValue(
-        new Promise((resolve) => { resolveFetch = resolve; })
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
       );
 
       const promise = useWbsStore.getState().deleteTask('task-001');
@@ -432,10 +437,10 @@ describe('wbsStore', () => {
 
       await useWbsStore.getState().deleteTask('task-001');
 
-      expect(mockSocket.emit).toHaveBeenCalledWith(
-        'wbs-delete-task',
-        { projectId: '3', taskId: 'task-001' }
-      );
+      expect(mockSocket.emit).toHaveBeenCalledWith('wbs-delete-task', {
+        projectId: '3',
+        taskId: 'task-001',
+      });
     });
 
     it('API 실패 시 원래 목록으로 롤백된다', async () => {
@@ -450,7 +455,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('updateTaskDates', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     beforeEach(() => {
       useWbsStore.setState({
@@ -461,7 +466,9 @@ describe('wbsStore', () => {
     it('Optimistic Update로 날짜가 즉시 변경된다', async () => {
       let resolveFetch: (value: any) => void;
       global.fetch = vi.fn().mockReturnValue(
-        new Promise((resolve) => { resolveFetch = resolve; })
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
       );
 
       const newStart = new Date('2024-08-01');
@@ -474,10 +481,11 @@ describe('wbsStore', () => {
 
       resolveFetch!({
         ok: true,
-        json: () => Promise.resolve({
-          success: true,
-          data: createServerTask({ _id: 'task-001' }),
-        }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            data: createServerTask({ _id: 'task-001' }),
+          }),
       });
       await promise;
     });
@@ -499,11 +507,9 @@ describe('wbsStore', () => {
     it('API 실패 시 원래 날짜로 롤백된다', async () => {
       mockFetchFailure();
 
-      await useWbsStore.getState().updateTaskDates(
-        'task-001',
-        new Date('2024-08-01'),
-        new Date('2024-08-15')
-      );
+      await useWbsStore
+        .getState()
+        .updateTaskDates('task-001', new Date('2024-08-01'), new Date('2024-08-15'));
 
       const task = useWbsStore.getState().tasks[0];
       expect(task.startDate).toBe('2024-06-01');
@@ -513,11 +519,9 @@ describe('wbsStore', () => {
       mockFetchSuccess(createServerTask());
       useWbsStore.setState({ currentPid: 7 });
 
-      await useWbsStore.getState().updateTaskDates(
-        'task-001',
-        new Date('2024-08-01'),
-        new Date('2024-08-15')
-      );
+      await useWbsStore
+        .getState()
+        .updateTaskDates('task-001', new Date('2024-08-01'), new Date('2024-08-15'));
 
       expect(mockSocket.emit).toHaveBeenCalledWith(
         'wbs-update-task',
@@ -528,7 +532,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('selectTask', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('작업 ID를 설정한다', () => {
       useWbsStore.getState().selectTask('task-001');
@@ -550,7 +554,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('setViewMode', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('day 모드로 변경할 수 있다', () => {
       useWbsStore.getState().setViewMode('day');
@@ -571,7 +575,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('initSocket', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('currentPid를 설정한다', () => {
       useWbsStore.getState().initSocket(42);
@@ -656,7 +660,7 @@ describe('wbsStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('cleanupSocket', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('leave 이벤트를 emit한다', () => {
       useWbsStore.setState({ currentPid: 42 });

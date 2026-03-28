@@ -34,10 +34,12 @@ const PostSchema: Schema = new Schema(
       type: Number,
       default: 0,
     },
-    likedBy: [{
-      type: String,
-      trim: true,
-    }],
+    likedBy: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
   },
   {
     timestamps: true,
@@ -46,4 +48,3 @@ const PostSchema: Schema = new Schema(
 
 // posts 컬렉션 사용
 export default mongoose.models.Post || mongoose.model<IPost>('Post', PostSchema, 'posts');
-

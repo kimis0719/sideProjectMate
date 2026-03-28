@@ -243,7 +243,6 @@ export default function GanttChart({
     >
       {/* ── 내부 래퍼 (전체 너비 확보) ── */}
       <div style={{ minWidth: LEFT_PANEL_WIDTH + svgWidth }}>
-
         {/* ── 헤더 행 (sticky top) ── */}
         {/*
           z-index 계층:
@@ -313,7 +312,9 @@ export default function GanttChart({
                       <span className="text-yellow-500 flex-shrink-0 text-xs">◆</span>
                     )}
                     {hasConflict && (
-                      <span className="text-orange-500 flex-shrink-0 text-xs" title="일정 충돌">⚠</span>
+                      <span className="text-orange-500 flex-shrink-0 text-xs" title="일정 충돌">
+                        ⚠
+                      </span>
                     )}
                     <span className="text-sm text-foreground truncate">{task.title}</span>
                   </div>

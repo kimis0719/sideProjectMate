@@ -27,7 +27,6 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json({ success: true, signature });
-
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: '이미지 업로드 서명 생성에 실패했습니다.', error: error.message },

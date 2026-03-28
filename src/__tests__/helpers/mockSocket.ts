@@ -30,7 +30,10 @@ export const createMockSocket = () => {
         listeners.delete(event);
       } else {
         const handlers = listeners.get(event) || [];
-        listeners.set(event, handlers.filter((h) => h !== handler));
+        listeners.set(
+          event,
+          handlers.filter((h) => h !== handler)
+        );
       }
     }),
     disconnect: vi.fn(),

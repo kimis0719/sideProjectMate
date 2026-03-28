@@ -149,4 +149,3 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string):
 
 // memberbasics 컬렉션 사용
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema, 'memberbasics');
-

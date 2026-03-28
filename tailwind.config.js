@@ -55,7 +55,14 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+        sans: [
+          'Pretendard',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'system-ui',
+          'Roboto',
+          'sans-serif',
+        ],
       },
       container: {
         center: true,
@@ -74,4 +81,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};

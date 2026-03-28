@@ -39,89 +39,140 @@ const makeConflict = (overlapDays: number, taskCount: number): ScheduleConflict 
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('isDateRangeOverlap', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('날짜가 겹치면 true를 반환한다', () => {
     // 1/1~1/10 과 1/5~1/15 → 5일 겹침
-    expect(isDateRangeOverlap(d('2024-01-01'), d('2024-01-10'), d('2024-01-05'), d('2024-01-15'))).toBe(true);
+    expect(
+      isDateRangeOverlap(d('2024-01-01'), d('2024-01-10'), d('2024-01-05'), d('2024-01-15'))
+    ).toBe(true);
   });
 
   it('날짜가 겹치지 않으면 false를 반환한다', () => {
     // 1/1~1/10 과 1/11~1/20 → 겹침 없음
-    expect(isDateRangeOverlap(d('2024-01-01'), d('2024-01-10'), d('2024-01-11'), d('2024-01-20'))).toBe(false);
+    expect(
+      isDateRangeOverlap(d('2024-01-01'), d('2024-01-10'), d('2024-01-11'), d('2024-01-20'))
+    ).toBe(false);
   });
 
   it('경계값: end1 === start2이면 겹치는 것으로 판단한다', () => {
     // 1/1~1/10 과 1/10~1/20 → 1/10이 경계에서 일치 → true
-    expect(isDateRangeOverlap(d('2024-01-01'), d('2024-01-10'), d('2024-01-10'), d('2024-01-20'))).toBe(true);
+    expect(
+      isDateRangeOverlap(d('2024-01-01'), d('2024-01-10'), d('2024-01-10'), d('2024-01-20'))
+    ).toBe(true);
   });
 
   it('경계값: end1 < start2이면 겹치지 않는다', () => {
     // 1/1~1/9 와 1/10~1/20 → false
-    expect(isDateRangeOverlap(d('2024-01-01'), d('2024-01-09'), d('2024-01-10'), d('2024-01-20'))).toBe(false);
+    expect(
+      isDateRangeOverlap(d('2024-01-01'), d('2024-01-09'), d('2024-01-10'), d('2024-01-20'))
+    ).toBe(false);
   });
 
   it('정확히 같은 날짜 범위는 겹친다', () => {
-    expect(isDateRangeOverlap(d('2024-01-01'), d('2024-01-10'), d('2024-01-01'), d('2024-01-10'))).toBe(true);
+    expect(
+      isDateRangeOverlap(d('2024-01-01'), d('2024-01-10'), d('2024-01-01'), d('2024-01-10'))
+    ).toBe(true);
   });
 
   it('하루짜리 작업 두 개가 같은 날이면 겹친다', () => {
-    expect(isDateRangeOverlap(d('2024-01-05'), d('2024-01-05'), d('2024-01-05'), d('2024-01-05'))).toBe(true);
+    expect(
+      isDateRangeOverlap(d('2024-01-05'), d('2024-01-05'), d('2024-01-05'), d('2024-01-05'))
+    ).toBe(true);
   });
 
   it('하루짜리 작업 두 개가 다른 날이면 겹치지 않는다', () => {
-    expect(isDateRangeOverlap(d('2024-01-05'), d('2024-01-05'), d('2024-01-06'), d('2024-01-06'))).toBe(false);
+    expect(
+      isDateRangeOverlap(d('2024-01-05'), d('2024-01-05'), d('2024-01-06'), d('2024-01-06'))
+    ).toBe(false);
   });
 
   it('한 범위가 다른 범위를 완전히 포함하면 겹친다', () => {
     // 1/1~1/20이 1/5~1/10을 완전히 포함
-    expect(isDateRangeOverlap(d('2024-01-01'), d('2024-01-20'), d('2024-01-05'), d('2024-01-10'))).toBe(true);
+    expect(
+      isDateRangeOverlap(d('2024-01-01'), d('2024-01-20'), d('2024-01-05'), d('2024-01-10'))
+    ).toBe(true);
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('getOverlapRange', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('겹치지 않는 범위는 null을 반환한다', () => {
-    const result = getOverlapRange(d('2024-01-01'), d('2024-01-10'), d('2024-01-11'), d('2024-01-20'));
+    const result = getOverlapRange(
+      d('2024-01-01'),
+      d('2024-01-10'),
+      d('2024-01-11'),
+      d('2024-01-20')
+    );
     expect(result).toBeNull();
   });
 
   it('겹치는 범위의 시작일을 올바르게 반환한다', () => {
     // 1/1~1/10 과 1/8~1/15 → 겹침 1/8~1/10
-    const result = getOverlapRange(d('2024-01-01'), d('2024-01-10'), d('2024-01-08'), d('2024-01-15'));
+    const result = getOverlapRange(
+      d('2024-01-01'),
+      d('2024-01-10'),
+      d('2024-01-08'),
+      d('2024-01-15')
+    );
     expect(result).not.toBeNull();
     expect(result!.start).toEqual(d('2024-01-08'));
   });
 
   it('겹치는 범위의 종료일을 올바르게 반환한다', () => {
-    const result = getOverlapRange(d('2024-01-01'), d('2024-01-10'), d('2024-01-08'), d('2024-01-15'));
+    const result = getOverlapRange(
+      d('2024-01-01'),
+      d('2024-01-10'),
+      d('2024-01-08'),
+      d('2024-01-15')
+    );
     expect(result!.end).toEqual(d('2024-01-10'));
   });
 
   it('겹치는 일수를 올바르게 계산한다 (1/8~1/10 = 3일)', () => {
     // conflictingTasks fixture와 동일한 구조
-    const result = getOverlapRange(d('2024-01-01'), d('2024-01-10'), d('2024-01-08'), d('2024-01-15'));
+    const result = getOverlapRange(
+      d('2024-01-01'),
+      d('2024-01-10'),
+      d('2024-01-08'),
+      d('2024-01-15')
+    );
     expect(result!.days).toBe(3); // 8일, 9일, 10일
   });
 
   it('정확히 같은 날짜 범위는 전체 기간이 겹침이다', () => {
-    const result = getOverlapRange(d('2024-01-01'), d('2024-01-10'), d('2024-01-01'), d('2024-01-10'));
+    const result = getOverlapRange(
+      d('2024-01-01'),
+      d('2024-01-10'),
+      d('2024-01-01'),
+      d('2024-01-10')
+    );
     expect(result).not.toBeNull();
     expect(result!.start).toEqual(d('2024-01-01'));
     expect(result!.end).toEqual(d('2024-01-10'));
   });
 
   it('하루짜리 작업이 같은 날이면 겹침 일수는 1이다', () => {
-    const result = getOverlapRange(d('2024-01-05'), d('2024-01-05'), d('2024-01-05'), d('2024-01-05'));
+    const result = getOverlapRange(
+      d('2024-01-05'),
+      d('2024-01-05'),
+      d('2024-01-05'),
+      d('2024-01-05')
+    );
     expect(result).not.toBeNull();
     expect(result!.days).toBe(1);
   });
 
   it('경계 겹침 (end1 === start2): 겹침 일수는 1이다', () => {
     // 1/1~1/10 과 1/10~1/20 → 겹침은 1/10 하루
-    const result = getOverlapRange(d('2024-01-01'), d('2024-01-10'), d('2024-01-10'), d('2024-01-20'));
+    const result = getOverlapRange(
+      d('2024-01-01'),
+      d('2024-01-10'),
+      d('2024-01-10'),
+      d('2024-01-20')
+    );
     expect(result).not.toBeNull();
     expect(result!.days).toBe(1);
   });
@@ -129,7 +180,7 @@ describe('getOverlapRange', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('calculateTaskDuration', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('하루짜리 작업(startDate = endDate)의 기간은 1이다', () => {
     expect(calculateTaskDuration(d('2024-01-05'), d('2024-01-05'))).toBe(1);
@@ -151,7 +202,7 @@ describe('calculateTaskDuration', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('checkScheduleConflict', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('기존 목록이 빈 배열이면 충돌이 없다', () => {
     const result = checkScheduleConflict(conflictingTasks[0], []);
@@ -160,7 +211,7 @@ describe('checkScheduleConflict', () => {
 
   it('동일 담당자 + 날짜 겹침 → 충돌을 반환한다', () => {
     // 앨리스 작업 A에 대해, 기존에 앨리스 작업 B가 날짜가 겹침
-    const newTask = conflictingTasks[0];   // 앨리스 1/1~1/10
+    const newTask = conflictingTasks[0]; // 앨리스 1/1~1/10
     const existing = [conflictingTasks[1]]; // 앨리스 1/8~1/15
 
     const result = checkScheduleConflict(newTask, existing);
@@ -218,13 +269,25 @@ describe('checkScheduleConflict', () => {
   it('excludeTaskId가 지정된 작업은 충돌 검사에서 제외된다', () => {
     // 앨리스 작업 3개: A(1/1~1/10), B(1/8~1/15), C(1/5~1/20)
     const taskA: ConflictTask = {
-      id: 'ex-A', title: 'A', startDate: d('2024-01-01'), endDate: d('2024-01-10'), assignee: ASSIGNEES.alice,
+      id: 'ex-A',
+      title: 'A',
+      startDate: d('2024-01-01'),
+      endDate: d('2024-01-10'),
+      assignee: ASSIGNEES.alice,
     };
     const taskB: ConflictTask = {
-      id: 'ex-B', title: 'B', startDate: d('2024-01-08'), endDate: d('2024-01-15'), assignee: ASSIGNEES.alice,
+      id: 'ex-B',
+      title: 'B',
+      startDate: d('2024-01-08'),
+      endDate: d('2024-01-15'),
+      assignee: ASSIGNEES.alice,
     };
     const taskC: ConflictTask = {
-      id: 'ex-C', title: 'C', startDate: d('2024-01-05'), endDate: d('2024-01-20'), assignee: ASSIGNEES.alice,
+      id: 'ex-C',
+      title: 'C',
+      startDate: d('2024-01-05'),
+      endDate: d('2024-01-20'),
+      assignee: ASSIGNEES.alice,
     };
 
     // B를 exclude하면 C만 검사 → A와 C가 겹침 → 충돌 1건
@@ -253,7 +316,7 @@ describe('checkScheduleConflict', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('generateAdjustmentSuggestions', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('충돌이 없으면 빈 배열을 반환한다', () => {
     const result = generateAdjustmentSuggestions(conflictingTasks[0], []);
@@ -265,7 +328,7 @@ describe('generateAdjustmentSuggestions', () => {
     const conflicts = checkScheduleConflict(newTask, [conflictingTasks[0]]);
 
     const suggestions = generateAdjustmentSuggestions(newTask, conflicts);
-    const delayTypes = suggestions.map(s => s.type);
+    const delayTypes = suggestions.map((s) => s.type);
     expect(delayTypes).toContain('delay');
   });
 
@@ -274,7 +337,7 @@ describe('generateAdjustmentSuggestions', () => {
     const conflicts = checkScheduleConflict(newTask, [conflictingTasks[0]]);
 
     const suggestions = generateAdjustmentSuggestions(newTask, conflicts);
-    const types = suggestions.map(s => s.type);
+    const types = suggestions.map((s) => s.type);
     expect(types).toContain('parallel');
   });
 
@@ -284,19 +347,22 @@ describe('generateAdjustmentSuggestions', () => {
     const conflicts = checkScheduleConflict(newTask, [conflictingTasks[0]]);
 
     const suggestions = generateAdjustmentSuggestions(newTask, conflicts);
-    const types = suggestions.map(s => s.type);
+    const types = suggestions.map((s) => s.type);
     expect(types).toContain('split');
   });
 
   it('작업 기간이 3일 이하면 split 제안이 없다', () => {
     const shortTask: ConflictTask = {
-      id: 'short', title: '짧은 작업', startDate: d('2024-01-08'), endDate: d('2024-01-10'),
+      id: 'short',
+      title: '짧은 작업',
+      startDate: d('2024-01-08'),
+      endDate: d('2024-01-10'),
       assignee: ASSIGNEES.alice, // 3일 작업
     };
     const conflicts = checkScheduleConflict(shortTask, [conflictingTasks[0]]);
 
     const suggestions = generateAdjustmentSuggestions(shortTask, conflicts);
-    const types = suggestions.map(s => s.type);
+    const types = suggestions.map((s) => s.type);
     expect(types).not.toContain('split');
   });
 
@@ -305,7 +371,7 @@ describe('generateAdjustmentSuggestions', () => {
     const conflicts = checkScheduleConflict(newTask, [conflictingTasks[0]]);
 
     const suggestions = generateAdjustmentSuggestions(newTask, conflicts);
-    const delaySuggestion = suggestions.find(s => s.type === 'delay');
+    const delaySuggestion = suggestions.find((s) => s.type === 'delay');
 
     expect(delaySuggestion?.suggestedStartDate).toBeDefined();
     // overlapEnd(1/10) + 1 = 1/11
@@ -317,7 +383,7 @@ describe('generateAdjustmentSuggestions', () => {
     const conflicts = checkScheduleConflict(newTask, [conflictingTasks[0]]);
 
     const suggestions = generateAdjustmentSuggestions(newTask, conflicts);
-    suggestions.forEach(s => {
+    suggestions.forEach((s) => {
       expect(typeof s.description).toBe('string');
       expect(s.description.length).toBeGreaterThan(0);
     });
@@ -326,7 +392,7 @@ describe('generateAdjustmentSuggestions', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('checkAllScheduleConflicts', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('빈 배열 → 빈 Map', () => {
     const result = checkAllScheduleConflicts([]);
@@ -372,7 +438,7 @@ describe('checkAllScheduleConflicts', () => {
     const result = checkAllScheduleConflicts(conflictingTasks);
     const aliceConflicts = result.get(ASSIGNEES.alice._id)!;
 
-    aliceConflicts.forEach(conflict => {
+    aliceConflicts.forEach((conflict) => {
       expect(Array.isArray(conflict.conflictingTasks)).toBe(true);
       expect(conflict.conflictingTasks.length).toBeGreaterThan(0);
     });
@@ -386,7 +452,7 @@ describe('checkAllScheduleConflicts', () => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('calculateConflictSeverity', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   it('겹침 1일 + 충돌 작업 1개 → 심각도 35', () => {
     // daysFactor = min(1*10, 50) = 10, tasksFactor = min(1*25, 50) = 25
@@ -401,13 +467,13 @@ describe('calculateConflictSeverity', () => {
   });
 
   it('겹침 6일 이상이면 daysFactor는 50으로 고정된다', () => {
-    const six = calculateConflictSeverity(makeConflict(6, 1));   // 50+25=75
-    const ten = calculateConflictSeverity(makeConflict(10, 1));  // 50+25=75
+    const six = calculateConflictSeverity(makeConflict(6, 1)); // 50+25=75
+    const ten = calculateConflictSeverity(makeConflict(10, 1)); // 50+25=75
     expect(six).toBe(ten); // 모두 daysFactor=50으로 cap
   });
 
   it('충돌 작업 2개 이상이면 tasksFactor는 50으로 고정된다', () => {
-    const two   = calculateConflictSeverity(makeConflict(1, 2)); // 10+50=60
+    const two = calculateConflictSeverity(makeConflict(1, 2)); // 10+50=60
     const three = calculateConflictSeverity(makeConflict(1, 3)); // 10+50=60
     expect(two).toBe(three);
   });

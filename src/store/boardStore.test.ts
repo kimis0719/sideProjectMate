@@ -10,7 +10,9 @@ const { mockSocket, emitFromServer } = vi.hoisted(() => {
       handlers.push(handler);
       listeners.set(event, handlers);
     }),
-    off: vi.fn((event: string) => { listeners.delete(event); }),
+    off: vi.fn((event: string) => {
+      listeners.delete(event);
+    }),
     disconnect: vi.fn(),
     connected: true,
     id: 'mock-socket-id',
@@ -57,7 +59,11 @@ const resetStore = () => {
     isRemoteUpdate: false,
   });
   // temporal 히스토리 초기화
-  try { useBoardStore.temporal.getState().clear(); } catch { /* ignore */ }
+  try {
+    useBoardStore.temporal.getState().clear();
+  } catch {
+    /* ignore */
+  }
 };
 
 const mockFetchSuccess = (data: any, status = 200) => {
@@ -103,7 +109,7 @@ const createSection = (overrides: Partial<Section> = {}): Section => ({
 
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('boardStore', () => {
-// ═══════════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   beforeEach(() => {
     resetStore();
@@ -115,7 +121,7 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('초기 상태', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('boardId는 null이다', () => {
       expect(useBoardStore.getState().boardId).toBeNull();
@@ -148,22 +154,47 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('initBoard', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('API 호출로 board, notes, sections를 초기화한다', async () => {
       const boardData = { _id: 'board-001', title: 'Test Board', owner: 'user-001' };
       const notesData = [
-        { _id: 'note-001', text: '노트 1', x: 10, y: 10, width: 200, height: 140, color: '#FFFB8F', boardId: 'board-001', tags: [] },
+        {
+          _id: 'note-001',
+          text: '노트 1',
+          x: 10,
+          y: 10,
+          width: 200,
+          height: 140,
+          color: '#FFFB8F',
+          boardId: 'board-001',
+          tags: [],
+        },
       ];
       const sectionsData = [
-        { _id: 'section-001', title: '섹션 1', x: 0, y: 0, width: 500, height: 400, boardId: 'board-001' },
+        {
+          _id: 'section-001',
+          title: '섹션 1',
+          x: 0,
+          y: 0,
+          width: 500,
+          height: 400,
+          boardId: 'board-001',
+        },
       ];
 
-      global.fetch = vi.fn()
-        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: boardData }) })     // boards
-        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: notesData }) })     // notes
-        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true, data: sectionsData }) }) // sections
-        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true, members: [] }) }); // members
+      global.fetch = vi
+        .fn()
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: boardData }) }) // boards
+        .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: notesData }) }) // notes
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ success: true, data: sectionsData }),
+        }) // sections
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ success: true, members: [] }),
+        }); // members
 
       await useBoardStore.getState().initBoard(1);
 
@@ -187,7 +218,7 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('노트 CRUD', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     describe('addNote', () => {
       beforeEach(() => {
@@ -197,7 +228,9 @@ describe('boardStore', () => {
       it('Optimistic Update로 임시 노트가 즉시 추가된다', async () => {
         let resolveFetch: (value: any) => void;
         global.fetch = vi.fn().mockReturnValue(
-          new Promise((resolve) => { resolveFetch = resolve; })
+          new Promise((resolve) => {
+            resolveFetch = resolve;
+          })
         );
 
         const promise = useBoardStore.getState().addNote();
@@ -209,16 +242,37 @@ describe('boardStore', () => {
 
         resolveFetch!({
           ok: true,
-          json: () => Promise.resolve({
-            success: true,
-            data: { _id: 'saved-note-001', text: '새 노트', x: 120, y: 120, width: 200, height: 140, color: '#FFFB8F', boardId: 'board-001', tags: [] },
-          }),
+          json: () =>
+            Promise.resolve({
+              success: true,
+              data: {
+                _id: 'saved-note-001',
+                text: '새 노트',
+                x: 120,
+                y: 120,
+                width: 200,
+                height: 140,
+                color: '#FFFB8F',
+                boardId: 'board-001',
+                tags: [],
+              },
+            }),
         });
         await promise;
       });
 
       it('서버 응답 후 임시 ID가 실제 ID로 교체된다', async () => {
-        const savedNote = { _id: 'saved-note-001', text: '새 노트', x: 120, y: 120, width: 200, height: 140, color: '#FFFB8F', boardId: 'board-001', tags: [] };
+        const savedNote = {
+          _id: 'saved-note-001',
+          text: '새 노트',
+          x: 120,
+          y: 120,
+          width: 200,
+          height: 140,
+          color: '#FFFB8F',
+          boardId: 'board-001',
+          tags: [],
+        };
         mockFetchSuccess(savedNote);
 
         await useBoardStore.getState().addNote();
@@ -227,11 +281,24 @@ describe('boardStore', () => {
       });
 
       it('서버 응답 후 소켓으로 create-note 이벤트를 emit한다', async () => {
-        mockFetchSuccess({ _id: 'saved-001', text: '새 노트', x: 120, y: 120, width: 200, height: 140, color: '#FFFB8F', boardId: 'board-001', tags: [] });
+        mockFetchSuccess({
+          _id: 'saved-001',
+          text: '새 노트',
+          x: 120,
+          y: 120,
+          width: 200,
+          height: 140,
+          color: '#FFFB8F',
+          boardId: 'board-001',
+          tags: [],
+        });
 
         await useBoardStore.getState().addNote();
 
-        expect(mockSocket.emit).toHaveBeenCalledWith('create-note', expect.objectContaining({ boardId: 'board-001' }));
+        expect(mockSocket.emit).toHaveBeenCalledWith(
+          'create-note',
+          expect.objectContaining({ boardId: 'board-001' })
+        );
       });
 
       it('boardId가 없으면 노트를 추가하지 않는다', async () => {
@@ -251,7 +318,17 @@ describe('boardStore', () => {
       });
 
       it('spawnIndex가 증가한다', async () => {
-        mockFetchSuccess({ _id: 'saved-001', text: '새 노트', x: 120, y: 120, width: 200, height: 140, color: '#FFFB8F', boardId: 'board-001', tags: [] });
+        mockFetchSuccess({
+          _id: 'saved-001',
+          text: '새 노트',
+          x: 120,
+          y: 120,
+          width: 200,
+          height: 140,
+          color: '#FFFB8F',
+          boardId: 'board-001',
+          tags: [],
+        });
 
         await useBoardStore.getState().addNote();
 
@@ -259,7 +336,17 @@ describe('boardStore', () => {
       });
 
       it('nextColorIndex가 증가한다', async () => {
-        mockFetchSuccess({ _id: 'saved-001', text: '새 노트', x: 120, y: 120, width: 200, height: 140, color: '#FFFB8F', boardId: 'board-001', tags: [] });
+        mockFetchSuccess({
+          _id: 'saved-001',
+          text: '새 노트',
+          x: 120,
+          y: 120,
+          width: 200,
+          height: 140,
+          color: '#FFFB8F',
+          boardId: 'board-001',
+          tags: [],
+        });
 
         await useBoardStore.getState().addNote();
 
@@ -279,7 +366,9 @@ describe('boardStore', () => {
       it('Optimistic Update로 즉시 제거된다', async () => {
         let resolveFetch: (value: any) => void;
         global.fetch = vi.fn().mockReturnValue(
-          new Promise((resolve) => { resolveFetch = resolve; })
+          new Promise((resolve) => {
+            resolveFetch = resolve;
+          })
         );
 
         const promise = useBoardStore.getState().removeNote('note-001');
@@ -304,7 +393,10 @@ describe('boardStore', () => {
 
         await useBoardStore.getState().removeNote('note-001');
 
-        expect(mockSocket.emit).toHaveBeenCalledWith('delete-note', { boardId: 'board-001', noteId: 'note-001' });
+        expect(mockSocket.emit).toHaveBeenCalledWith('delete-note', {
+          boardId: 'board-001',
+          noteId: 'note-001',
+        });
       });
 
       it('API 실패 시 원래 목록으로 롤백된다', async () => {
@@ -371,7 +463,10 @@ describe('boardStore', () => {
 
         useBoardStore.getState().moveNote('note-001', 200, 300);
 
-        expect(mockSocket.emit).toHaveBeenCalledWith('update-note', expect.objectContaining({ boardId: 'board-001' }));
+        expect(mockSocket.emit).toHaveBeenCalledWith(
+          'update-note',
+          expect.objectContaining({ boardId: 'board-001' })
+        );
       });
 
       it('노트 중심이 섹션 내부이면 sectionId가 설정된다', () => {
@@ -429,7 +524,10 @@ describe('boardStore', () => {
 
         useBoardStore.getState().updateNote('note-001', { color: '#FFD6E7' });
 
-        expect(mockSocket.emit).toHaveBeenCalledWith('update-note', expect.objectContaining({ boardId: 'board-001' }));
+        expect(mockSocket.emit).toHaveBeenCalledWith(
+          'update-note',
+          expect.objectContaining({ boardId: 'board-001' })
+        );
       });
 
       it('존재하지 않는 노트는 무시한다', () => {
@@ -448,16 +546,13 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('선택 (Selection)', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     beforeEach(() => {
       useBoardStore.setState({
         boardId: 'board-001',
         currentUserId: 'user-001',
-        notes: [
-          createNote({ id: 'note-001' }),
-          createNote({ id: 'note-002' }),
-        ],
+        notes: [createNote({ id: 'note-001' }), createNote({ id: 'note-002' })],
       });
     });
 
@@ -509,7 +604,7 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('섹션 CRUD', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     beforeEach(() => {
       useBoardStore.setState({ boardId: 'board-001' });
@@ -524,7 +619,10 @@ describe('boardStore', () => {
 
     it('addSection 후 소켓으로 create-section 이벤트를 emit한다', () => {
       useBoardStore.getState().addSection(createSection());
-      expect(mockSocket.emit).toHaveBeenCalledWith('create-section', expect.objectContaining({ boardId: 'board-001' }));
+      expect(mockSocket.emit).toHaveBeenCalledWith(
+        'create-section',
+        expect.objectContaining({ boardId: 'board-001' })
+      );
     });
 
     it('updateSection으로 섹션을 부분 업데이트한다', () => {
@@ -534,7 +632,9 @@ describe('boardStore', () => {
     });
 
     it('removeSection으로 섹션을 제거한다', () => {
-      useBoardStore.setState({ sections: [createSection({ id: 'sec-001' }), createSection({ id: 'sec-002' })] });
+      useBoardStore.setState({
+        sections: [createSection({ id: 'sec-001' }), createSection({ id: 'sec-002' })],
+      });
       useBoardStore.getState().removeSection('sec-001');
       expect(useBoardStore.getState().sections).toHaveLength(1);
       expect(useBoardStore.getState().sections[0].id).toBe('sec-002');
@@ -543,7 +643,10 @@ describe('boardStore', () => {
     it('removeSection 후 소켓으로 delete-section 이벤트를 emit한다', () => {
       useBoardStore.setState({ sections: [createSection({ id: 'sec-001' })] });
       useBoardStore.getState().removeSection('sec-001');
-      expect(mockSocket.emit).toHaveBeenCalledWith('delete-section', { boardId: 'board-001', sectionId: 'sec-001' });
+      expect(mockSocket.emit).toHaveBeenCalledWith('delete-section', {
+        boardId: 'board-001',
+        sectionId: 'sec-001',
+      });
     });
 
     it('moveSection으로 섹션과 내부 노트를 함께 이동한다', () => {
@@ -568,7 +671,7 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('잠금 (Lock)', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     beforeEach(() => {
       useBoardStore.setState({ boardId: 'board-001' });
@@ -577,33 +680,45 @@ describe('boardStore', () => {
     it('lockNote가 소켓으로 request-lock 이벤트를 emit한다', () => {
       useBoardStore.getState().lockNote('note-001', 'user-001');
       expect(mockSocket.emit).toHaveBeenCalledWith('request-lock', {
-        boardId: 'board-001', id: 'note-001', type: 'note', userId: 'user-001',
+        boardId: 'board-001',
+        id: 'note-001',
+        type: 'note',
+        userId: 'user-001',
       });
     });
 
     it('unlockNote가 소켓으로 release-lock 이벤트를 emit한다', () => {
       useBoardStore.getState().unlockNote('note-001');
       expect(mockSocket.emit).toHaveBeenCalledWith('release-lock', {
-        boardId: 'board-001', id: 'note-001', type: 'note',
+        boardId: 'board-001',
+        id: 'note-001',
+        type: 'note',
       });
     });
 
     it('lockSection이 소켓으로 request-lock 이벤트를 emit한다', () => {
       useBoardStore.getState().lockSection('sec-001', 'user-001');
       expect(mockSocket.emit).toHaveBeenCalledWith('request-lock', {
-        boardId: 'board-001', id: 'sec-001', type: 'section', userId: 'user-001',
+        boardId: 'board-001',
+        id: 'sec-001',
+        type: 'section',
+        userId: 'user-001',
       });
     });
 
     it('unlockSection이 소켓으로 release-lock 이벤트를 emit한다', () => {
       useBoardStore.getState().unlockSection('sec-001');
       expect(mockSocket.emit).toHaveBeenCalledWith('release-lock', {
-        boardId: 'board-001', id: 'sec-001', type: 'section',
+        boardId: 'board-001',
+        id: 'sec-001',
+        type: 'section',
       });
     });
 
     it('setNoteLock으로 잠금 정보를 설정한다', () => {
-      useBoardStore.getState().setNoteLock('note-001', { userId: 'user-002', socketId: 'sock-002' });
+      useBoardStore
+        .getState()
+        .setNoteLock('note-001', { userId: 'user-002', socketId: 'sock-002' });
       expect(useBoardStore.getState().lockedNotes['note-001']).toEqual({
         userId: 'user-002',
         socketId: 'sock-002',
@@ -627,7 +742,7 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('뷰 컨트롤', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('setZoom으로 줌 레벨을 변경한다', () => {
       useBoardStore.getState().setZoom(1.5);
@@ -674,7 +789,7 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('Remote Actions (소켓 수신)', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('applyRemoteNoteCreation으로 원격 노트를 추가한다', () => {
       const note = createNote({ id: 'remote-001' });
@@ -685,18 +800,24 @@ describe('boardStore', () => {
 
     it('이미 존재하는 노트의 creation은 무시한다', () => {
       useBoardStore.setState({ notes: [createNote({ id: 'existing-001' })] });
-      useBoardStore.getState().applyRemoteNoteCreation(createNote({ id: 'existing-001', text: '중복' }));
+      useBoardStore
+        .getState()
+        .applyRemoteNoteCreation(createNote({ id: 'existing-001', text: '중복' }));
       expect(useBoardStore.getState().notes).toHaveLength(1);
     });
 
     it('applyRemoteNoteUpdate로 원격 노트를 업데이트한다', () => {
       useBoardStore.setState({ notes: [createNote({ id: 'note-001', text: '원래 텍스트' })] });
-      useBoardStore.getState().applyRemoteNoteUpdate(createNote({ id: 'note-001', text: '원격 수정' }));
+      useBoardStore
+        .getState()
+        .applyRemoteNoteUpdate(createNote({ id: 'note-001', text: '원격 수정' }));
       expect(useBoardStore.getState().notes[0].text).toBe('원격 수정');
     });
 
     it('applyRemoteNoteDeletion으로 원격 노트를 삭제한다', () => {
-      useBoardStore.setState({ notes: [createNote({ id: 'note-001' }), createNote({ id: 'note-002' })] });
+      useBoardStore.setState({
+        notes: [createNote({ id: 'note-001' }), createNote({ id: 'note-002' })],
+      });
       useBoardStore.getState().applyRemoteNoteDeletion('note-001');
       expect(useBoardStore.getState().notes).toHaveLength(1);
       expect(useBoardStore.getState().notes[0].id).toBe('note-002');
@@ -709,7 +830,9 @@ describe('boardStore', () => {
 
     it('applyRemoteSectionUpdate로 원격 섹션을 업데이트한다', () => {
       useBoardStore.setState({ sections: [createSection({ id: 'sec-001', title: '원래' })] });
-      useBoardStore.getState().applyRemoteSectionUpdate(createSection({ id: 'sec-001', title: '변경' }));
+      useBoardStore
+        .getState()
+        .applyRemoteSectionUpdate(createSection({ id: 'sec-001', title: '변경' }));
       expect(useBoardStore.getState().sections[0].title).toBe('변경');
     });
 
@@ -732,7 +855,7 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('Undo/Redo', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     it('undo로 이전 상태로 되돌린다', () => {
       useBoardStore.setState({ boardId: 'board-001', notes: [] });
@@ -786,7 +909,7 @@ describe('boardStore', () => {
 
   // ───────────────────────────────────────────────────────────────────────────
   describe('initSocket 이벤트 핸들러', () => {
-  // ───────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────────
 
     beforeEach(() => {
       useBoardStore.setState({ boardId: 'board-001' });
@@ -800,7 +923,10 @@ describe('boardStore', () => {
     it('userInfo가 있으면 user-activity 이벤트를 emit한다', () => {
       const userInfo = { _id: 'u1', nName: 'Alice' };
       useBoardStore.getState().initSocket(userInfo);
-      expect(mockSocket.emit).toHaveBeenCalledWith('user-activity', { boardId: 'board-001', user: userInfo });
+      expect(mockSocket.emit).toHaveBeenCalledWith('user-activity', {
+        boardId: 'board-001',
+        user: userInfo,
+      });
     });
 
     it('note-created 소켓 이벤트 핸들러를 등록한다', () => {

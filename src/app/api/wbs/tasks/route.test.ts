@@ -31,9 +31,27 @@ describe('GET /api/wbs/tasks', () => {
   it('pid로 해당 프로젝트의 작업만 조회한다', async () => {
     const user = await createTestUser();
     await Task.create([
-      { pid: 1, title: '작업A', assignee: user._id, startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05') },
-      { pid: 1, title: '작업B', assignee: user._id, startDate: new Date('2024-01-06'), endDate: new Date('2024-01-10') },
-      { pid: 2, title: '다른프로젝트', assignee: user._id, startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05') },
+      {
+        pid: 1,
+        title: '작업A',
+        assignee: user._id,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-01-05'),
+      },
+      {
+        pid: 1,
+        title: '작업B',
+        assignee: user._id,
+        startDate: new Date('2024-01-06'),
+        endDate: new Date('2024-01-10'),
+      },
+      {
+        pid: 2,
+        title: '다른프로젝트',
+        assignee: user._id,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-01-05'),
+      },
     ]);
 
     const request = createMockNextRequest(`${BASE_URL}?pid=1`);
@@ -49,8 +67,20 @@ describe('GET /api/wbs/tasks', () => {
   it('startDate 기준 오름차순으로 정렬된다', async () => {
     const user = await createTestUser();
     await Task.create([
-      { pid: 1, title: '나중작업', assignee: user._id, startDate: new Date('2024-02-01'), endDate: new Date('2024-02-05') },
-      { pid: 1, title: '먼저작업', assignee: user._id, startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05') },
+      {
+        pid: 1,
+        title: '나중작업',
+        assignee: user._id,
+        startDate: new Date('2024-02-01'),
+        endDate: new Date('2024-02-05'),
+      },
+      {
+        pid: 1,
+        title: '먼저작업',
+        assignee: user._id,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-01-05'),
+      },
     ]);
 
     const request = createMockNextRequest(`${BASE_URL}?pid=1`);
@@ -70,8 +100,11 @@ describe('GET /api/wbs/tasks', () => {
       password: 'test1234',
     });
     await Task.create({
-      pid: 1, title: '작업', assignee: user._id,
-      startDate: new Date('2024-01-01'), endDate: new Date('2024-01-05'),
+      pid: 1,
+      title: '작업',
+      assignee: user._id,
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-05'),
     });
 
     const request = createMockNextRequest(`${BASE_URL}?pid=1`);

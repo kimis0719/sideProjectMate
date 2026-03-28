@@ -20,10 +20,10 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        authorEmail: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        authorEmail: { label: 'Email', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials: Record<"authorEmail" | "password", string> | undefined) {
+      async authorize(credentials: Record<'authorEmail' | 'password', string> | undefined) {
         if (!credentials) {
           throw new Error('이메일과 비밀번호를 입력해주세요.');
         }
@@ -46,8 +46,8 @@ export const authOptions: NextAuthOptions = {
         } else {
           throw new Error('이메일 또는 비밀번호가 일치하지 않습니다.');
         }
-      }
-    })
+      },
+    }),
   ],
   session: {
     strategy: 'jwt',
@@ -175,7 +175,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       session.user = token as any;
       return session;
-    }
+    },
   },
   pages: {
     signIn: '/login',

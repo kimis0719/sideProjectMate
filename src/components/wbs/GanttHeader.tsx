@@ -135,7 +135,10 @@ export default function GanttHeader({
 
       {/* 상단/하단 구분선 */}
       <line
-        x1={0} y1={rowH} x2={width} y2={rowH}
+        x1={0}
+        y1={rowH}
+        x2={width}
+        y2={rowH}
         style={{ stroke: 'var(--border)', strokeWidth: 1 }}
       />
 
@@ -143,7 +146,10 @@ export default function GanttHeader({
       {topIntervals.map((interval, i) => (
         <g key={`top-${i}`}>
           <line
-            x1={interval.x} y1={0} x2={interval.x} y2={rowH}
+            x1={interval.x}
+            y1={0}
+            x2={interval.x}
+            y2={rowH}
             style={{ stroke: 'var(--border)', strokeWidth: 1 }}
           />
           {interval.w > 24 && (
@@ -164,7 +170,10 @@ export default function GanttHeader({
       {bottomIntervals.map((interval, i) => (
         <g key={`bot-${i}`}>
           <line
-            x1={interval.x} y1={rowH} x2={interval.x} y2={height}
+            x1={interval.x}
+            y1={rowH}
+            x2={interval.x}
+            y2={height}
             style={{ stroke: 'var(--border)', strokeWidth: 0.5 }}
           />
           {interval.w > 14 && (
@@ -183,7 +192,10 @@ export default function GanttHeader({
 
       {/* 하단 경계선 */}
       <line
-        x1={0} y1={height} x2={width} y2={height}
+        x1={0}
+        y1={height}
+        x2={width}
+        y2={height}
         style={{ stroke: 'var(--border)', strokeWidth: 1 }}
       />
     </g>

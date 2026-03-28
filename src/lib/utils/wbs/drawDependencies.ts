@@ -37,14 +37,14 @@ export const createCurvePath = (
  */
 export const getTaskPositions = (ganttContainer: HTMLElement): Map<string, TaskPosition> => {
   const positions = new Map<string, TaskPosition>();
-  
+
   const svg = ganttContainer.querySelector('svg') as SVGSVGElement | null;
   if (!svg) return positions;
 
   // gantt-task-react는 각 작업을 g[data-id] 로 감싸고, 그 안에 rect를 포함
   // 작업 그룹 찾기: <g data-id="taskId">
   const groups = svg.querySelectorAll('g[data-id]');
-  
+
   groups.forEach((group) => {
     const taskId = group.getAttribute('data-id');
     if (!taskId) return;
@@ -97,7 +97,12 @@ export const drawDependencyLines = (
   if (!mainSvg) return;
 
   // 의존관계 정보 수집
-  const dependencyLinks: Array<{ from: string; to: string; fromPos: TaskPosition; toPos: TaskPosition }> = [];
+  const dependencyLinks: Array<{
+    from: string;
+    to: string;
+    fromPos: TaskPosition;
+    toPos: TaskPosition;
+  }> = [];
 
   taskMap.forEach((task) => {
     if (!task.dependencies || task.dependencies.length === 0) return;
@@ -135,19 +140,22 @@ export const drawDependencyLines = (
   // 오버레이 SVG 생성
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.id = 'dependency-lines-svg';
-  
+
   // viewBox 설정 (메인 SVG와 동일하게)
   const viewBox = mainSvg.getAttribute('viewBox');
   if (viewBox) {
     svg.setAttribute('viewBox', viewBox);
   }
-  
+
   const width = mainSvg.getAttribute('width');
   const height = mainSvg.getAttribute('height');
   if (width) svg.setAttribute('width', width);
   if (height) svg.setAttribute('height', height);
-  
-  svg.setAttribute('style', 'position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1;');
+
+  svg.setAttribute(
+    'style',
+    'position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1;'
+  );
   svg.setAttribute('class', 'dependency-lines');
 
   // Defs에 화살표 마커 추가
@@ -201,7 +209,7 @@ export const highlightDependencies = (
   type: 'from' | 'to' | 'both' = 'both'
 ) => {
   const lines = ganttContainer.querySelectorAll('.dependency-line');
-  
+
   lines.forEach((line) => {
     const className = line.getAttribute('class') || '';
     const isFrom = className.includes(`dependency-from-${taskId}`);
@@ -236,7 +244,7 @@ export const debugDependencyInfo = (
   taskPositions: Map<string, TaskPosition>
 ) => {
   console.group('🔗 Dependency Line Debug Info');
-  
+
   // Task 정보 출력
   const taskInfo = Array.from(taskMap.entries()).map(([id, task]) => {
     const deps = task.dependencies || [];
@@ -270,7 +278,7 @@ export const debugDependencyInfo = (
     if (!task.dependencies || task.dependencies.length === 0) return;
 
     task.dependencies.forEach((dep: any) => {
-      const depId = typeof dep === 'string' ? dep : (typeof dep === 'object' ? dep.taskId : null);
+      const depId = typeof dep === 'string' ? dep : typeof dep === 'object' ? dep.taskId : null;
       if (!depId) return;
 
       const hasFrom = taskPositions.has(depId);
@@ -288,8 +296,8 @@ export const debugDependencyInfo = (
 
   console.log('🔍 Dependency Links:', {
     total: linkValidation.length,
-    drawable: linkValidation.filter(l => l.canDraw).length,
-    issues: linkValidation.filter(l => !l.canDraw),
+    drawable: linkValidation.filter((l) => l.canDraw).length,
+    issues: linkValidation.filter((l) => !l.canDraw),
   });
 
   console.groupEnd();
@@ -301,11 +309,10 @@ export const debugDependencyInfo = (
 export const clearHighlightDependencies = (ganttContainer: HTMLElement) => {
   const lines = ganttContainer.querySelectorAll('.dep-line');
   const isDarkMode = document.documentElement.classList.contains('dark');
-  
+
   lines.forEach((line) => {
     (line as SVGPathElement).setAttribute('stroke-width', '2');
     (line as SVGPathElement).setAttribute('opacity', '0.7');
     (line as SVGPathElement).setAttribute('stroke', isDarkMode ? '#9ca3af' : '#9ca3af');
   });
 };
-

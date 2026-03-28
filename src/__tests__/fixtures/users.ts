@@ -124,13 +124,13 @@ export const mockUserDeleted = {
 
 /** 모든 항목 완성 (100점 기대) */
 export const fullProfile: ProfileCompletenessParams = {
-  avatarUrl: 'https://example.com/avatar.png',       // +15
-  position: '프론트엔드 개발자',                       // +10
-  career: '3년차',                                    // +5
+  avatarUrl: 'https://example.com/avatar.png', // +15
+  position: '프론트엔드 개발자', // +10
+  career: '3년차', // +5
   introduction: '안녕하세요, 10자 이상의 소개글입니다.', // +20
-  techTags: ['React', 'TypeScript'],                  // +20
+  techTags: ['React', 'TypeScript'], // +20
   socialLinks: { github: 'https://github.com/user' }, // +15 (소셜 1개 이상)
-  schedule: [new Date('2024-01-01')],                 // +15
+  schedule: [new Date('2024-01-01')], // +15
 };
 
 /** 아무것도 없는 빈 프로필 (0점 기대) */
@@ -144,5 +144,5 @@ export const avatarOnlyProfile: ProfileCompletenessParams = {
 /** 소개글이 10자 미만 (소개글 점수 미부여) */
 export const shortIntroProfile: ProfileCompletenessParams = {
   avatarUrl: 'https://example.com/avatar.png', // +15
-  introduction: '짧은소개',                    // 10자 미만 → +0
+  introduction: '짧은소개', // 10자 미만 → +0
 };

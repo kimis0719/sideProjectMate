@@ -1,19 +1,14 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "outDir": "dist",
-        "target": "ES2019",
-        "lib": [
-            "ES2019",
-            "DOM"
-        ],
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "noEmit": false
-    },
-    "include": [
-        "server.ts"
-    ]
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "target": "ES2019",
+    "lib": ["ES2019", "DOM"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "noEmit": false
+  },
+  "include": ["server.ts"]
 }

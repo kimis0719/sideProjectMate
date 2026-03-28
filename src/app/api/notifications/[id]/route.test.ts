@@ -74,7 +74,11 @@ describe('PUT/DELETE /api/notifications/[id]', () => {
       const user = await createTestUser();
       const sender = await createTestUser({ authorEmail: 'sender@test.com', uid: 99999 });
       const project = await createTestProject(user._id.toString());
-      const notification = await createTestNotification(user._id.toString(), sender._id.toString(), project._id.toString());
+      const notification = await createTestNotification(
+        user._id.toString(),
+        sender._id.toString(),
+        project._id.toString()
+      );
 
       mockGetServerSession.mockResolvedValue({ user: { _id: user._id.toString() } });
 
@@ -99,10 +103,9 @@ describe('PUT/DELETE /api/notifications/[id]', () => {
       mockGetServerSession.mockResolvedValue({ user: { _id: user._id.toString() } });
 
       const fakeId = new mongoose.Types.ObjectId().toString();
-      const response = await PUT(
-        new Request('http://localhost:3000/api/notifications/' + fakeId),
-        { params: { id: fakeId } }
-      );
+      const response = await PUT(new Request('http://localhost:3000/api/notifications/' + fakeId), {
+        params: { id: fakeId },
+      });
       const body = await response.json();
 
       expect(response.status).toBe(404);
@@ -115,7 +118,11 @@ describe('PUT/DELETE /api/notifications/[id]', () => {
       const otherUser = await createTestUser({ authorEmail: 'other@test.com', uid: 88888 });
       const sender = await createTestUser({ authorEmail: 'sender2@test.com', uid: 77777 });
       const project = await createTestProject(owner._id.toString());
-      const notification = await createTestNotification(owner._id.toString(), sender._id.toString(), project._id.toString());
+      const notification = await createTestNotification(
+        owner._id.toString(),
+        sender._id.toString(),
+        project._id.toString()
+      );
 
       // 다른 유저로 인증
       mockGetServerSession.mockResolvedValue({ user: { _id: otherUser._id.toString() } });
@@ -136,10 +143,9 @@ describe('PUT/DELETE /api/notifications/[id]', () => {
       mockGetServerSession.mockResolvedValue(null);
 
       const fakeId = new mongoose.Types.ObjectId().toString();
-      const response = await PUT(
-        new Request('http://localhost:3000/api/notifications/' + fakeId),
-        { params: { id: fakeId } }
-      );
+      const response = await PUT(new Request('http://localhost:3000/api/notifications/' + fakeId), {
+        params: { id: fakeId },
+      });
       const body = await response.json();
 
       expect(response.status).toBe(401);
@@ -155,7 +161,11 @@ describe('PUT/DELETE /api/notifications/[id]', () => {
       const user = await createTestUser();
       const sender = await createTestUser({ authorEmail: 'sender3@test.com', uid: 66666 });
       const project = await createTestProject(user._id.toString());
-      const notification = await createTestNotification(user._id.toString(), sender._id.toString(), project._id.toString());
+      const notification = await createTestNotification(
+        user._id.toString(),
+        sender._id.toString(),
+        project._id.toString()
+      );
 
       mockGetServerSession.mockResolvedValue({ user: { _id: user._id.toString() } });
 
@@ -196,7 +206,11 @@ describe('PUT/DELETE /api/notifications/[id]', () => {
       const otherUser = await createTestUser({ authorEmail: 'other2@test.com', uid: 55555 });
       const sender = await createTestUser({ authorEmail: 'sender4@test.com', uid: 44444 });
       const project = await createTestProject(owner._id.toString());
-      const notification = await createTestNotification(owner._id.toString(), sender._id.toString(), project._id.toString());
+      const notification = await createTestNotification(
+        owner._id.toString(),
+        sender._id.toString(),
+        project._id.toString()
+      );
 
       mockGetServerSession.mockResolvedValue({ user: { _id: otherUser._id.toString() } });
 

@@ -15,7 +15,10 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?._id) {
-      return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
     }
 
     await dbConnect();

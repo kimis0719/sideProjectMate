@@ -11,11 +11,11 @@ const STATUS_COLORS: Record<string, { bg: string; progress: string; text: string
 
 interface GanttBarProps {
   task: Task;
-  x: number;            // 바 왼쪽 끝 X
-  rowY: number;         // 행 Y (SVG body 기준)
-  barWidth: number;     // 바 너비 (px)
-  rowHeight: number;    // 행 높이
-  barHeight: number;    // 바 높이
+  x: number; // 바 왼쪽 끝 X
+  rowY: number; // 행 Y (SVG body 기준)
+  barWidth: number; // 바 너비 (px)
+  rowHeight: number; // 행 높이
+  barHeight: number; // 바 높이
   hasConflict: boolean;
   dragOffsetPx: number; // 드래그 중 이동량 (px)
   onBarMouseDown: (e: React.MouseEvent) => void;
@@ -97,7 +97,12 @@ export default function GanttBar({
       {/* clipPath for text */}
       <defs>
         <clipPath id={clipId}>
-          <rect x={bx + RESIZE_HANDLE_W} y={by} width={Math.max(bw - RESIZE_HANDLE_W * 2, 0)} height={barHeight} />
+          <rect
+            x={bx + RESIZE_HANDLE_W}
+            y={by}
+            width={Math.max(bw - RESIZE_HANDLE_W * 2, 0)}
+            height={barHeight}
+          />
         </clipPath>
       </defs>
 

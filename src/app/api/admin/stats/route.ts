@@ -45,9 +45,7 @@ export async function GET() {
       // 프로젝트 통계
       Project.countDocuments({}),
       Project.countDocuments({ createdAt: { $gte: startOfWeek } }),
-      Project.aggregate([
-        { $group: { _id: '$status', count: { $sum: 1 } } },
-      ]),
+      Project.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
       Project.find({})
         .select('pid title status createdAt author views')
         .populate('author', 'nName')
@@ -86,9 +84,7 @@ export async function GET() {
 
     // 수락률 계산
     const acceptanceRate =
-      totalApplications > 0
-        ? Math.round((acceptedApplications / totalApplications) * 100)
-        : 0;
+      totalApplications > 0 ? Math.round((acceptedApplications / totalApplications) * 100) : 0;
 
     return NextResponse.json({
       success: true,

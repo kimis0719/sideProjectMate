@@ -57,7 +57,14 @@ type BoardState = {
   openPaletteNoteId: string | null;
   spawnIndex: number;
   nextColorIndex: number;
-  members: Array<{ _id: string; nName: string; email: string; position?: string; role: string; avatarUrl?: string }>;
+  members: Array<{
+    _id: string;
+    nName: string;
+    email: string;
+    position?: string;
+    role: string;
+    avatarUrl?: string;
+  }>;
   alignmentGuides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[];
   lockedNotes: Record<string, { userId: string; socketId: string }>;
   lockedSections: Record<string, { userId: string; socketId: string }>;
@@ -86,7 +93,9 @@ type BoardState = {
   setZoom: (z: number) => void;
   setPan: (x: number, y: number) => void;
   fitToContent: (containerWidth: number, containerHeight?: number) => void;
-  setAlignmentGuides: (guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[]) => void;
+  setAlignmentGuides: (
+    guides: { type: 'vertical' | 'horizontal'; x?: number; y?: number }[]
+  ) => void;
 
   // Locking Actions
   lockNote: (noteId: string, userId: string) => void;
@@ -119,7 +128,9 @@ type BoardState = {
   applyRemoteSectionUpdate: (section: Section) => void;
   applyRemoteSectionDeletion: (sectionId: string) => void;
   applyRemoteBoardSync: (data: { notes: Note[]; sections: Section[] }) => void;
-  setActiveUsers: (users: Array<{ _id: string; nName: string; avatarUrl?: string; color?: string }>) => void;
+  setActiveUsers: (
+    users: Array<{ _id: string; nName: string; avatarUrl?: string; color?: string }>
+  ) => void;
 };
 
 const transformDoc = (doc: any) => {
@@ -180,7 +191,7 @@ export const useBoardStore = create<BoardState>()(
                 dueDate: n.dueDate ? new Date(n.dueDate) : undefined,
                 assigneeId: n.assigneeId || undefined,
                 creatorId: n.creatorId,
-                updaterId: n.updaterId
+                updaterId: n.updaterId,
               }));
               set({ notes: parsedNotes });
             }
@@ -200,7 +211,6 @@ export const useBoardStore = create<BoardState>()(
 
             // 4. 멤버 및 보드 데이터 관련 추가 정보 초기화
             get().fetchMembers(board.id);
-
           } catch (error) {
             console.error(error);
             set({ notes: [], sections: [], boardId: null });
@@ -235,7 +245,6 @@ export const useBoardStore = create<BoardState>()(
             socket.emit('user-activity', { boardId, user: userInfo });
           }
 
-
           // Note Events
           socket.off('note-created');
           socket.on('note-created', (note: any) => {
@@ -254,20 +263,23 @@ export const useBoardStore = create<BoardState>()(
 
           socket.off('notes-deleted-batch');
           socket.on('notes-deleted-batch', (noteIds: string[]) => {
-            noteIds.forEach(noteId => get().applyRemoteNoteDeletion(noteId));
+            noteIds.forEach((noteId) => get().applyRemoteNoteDeletion(noteId));
           });
 
           // Lock Events
           socket.off('note-locked');
           socket.on('note-locked', (data: { id: string; userId: string; socketId: string }) => {
-            set(state => ({
-              lockedNotes: { ...state.lockedNotes, [data.id]: { userId: data.userId, socketId: data.socketId } }
+            set((state) => ({
+              lockedNotes: {
+                ...state.lockedNotes,
+                [data.id]: { userId: data.userId, socketId: data.socketId },
+              },
             }));
           });
 
           socket.off('note-unlocked');
           socket.on('note-unlocked', (data: { id: string }) => {
-            set(state => {
+            set((state) => {
               const newLocked = { ...state.lockedNotes };
               delete newLocked[data.id];
               return { lockedNotes: newLocked };
@@ -276,14 +288,17 @@ export const useBoardStore = create<BoardState>()(
 
           socket.off('section-locked');
           socket.on('section-locked', (data: { id: string; userId: string; socketId: string }) => {
-            set(state => ({
-              lockedSections: { ...state.lockedSections, [data.id]: { userId: data.userId, socketId: data.socketId } }
+            set((state) => ({
+              lockedSections: {
+                ...state.lockedSections,
+                [data.id]: { userId: data.userId, socketId: data.socketId },
+              },
             }));
           });
 
           socket.off('section-unlocked');
           socket.on('section-unlocked', (data: { id: string }) => {
-            set(state => {
+            set((state) => {
               const newLocked = { ...state.lockedSections };
               delete newLocked[data.id];
               return { lockedSections: newLocked };
@@ -308,27 +323,38 @@ export const useBoardStore = create<BoardState>()(
 
           // Peer Selection
           socket.off('note-selected');
-          socket.on('note-selected', (data: { noteIds: string[]; userId: string; color: string; socketId: string }) => {
-            set((state) => {
-              const newPeerSelections = { ...state.peerSelections };
-              Object.keys(newPeerSelections).forEach(key => {
-                newPeerSelections[key] = newPeerSelections[key].filter(s => s.socketId !== data.socketId);
-                if (newPeerSelections[key].length === 0) delete newPeerSelections[key];
+          socket.on(
+            'note-selected',
+            (data: { noteIds: string[]; userId: string; color: string; socketId: string }) => {
+              set((state) => {
+                const newPeerSelections = { ...state.peerSelections };
+                Object.keys(newPeerSelections).forEach((key) => {
+                  newPeerSelections[key] = newPeerSelections[key].filter(
+                    (s) => s.socketId !== data.socketId
+                  );
+                  if (newPeerSelections[key].length === 0) delete newPeerSelections[key];
+                });
+                data.noteIds.forEach((id) => {
+                  if (!newPeerSelections[id]) newPeerSelections[id] = [];
+                  newPeerSelections[id].push({
+                    userId: data.userId,
+                    color: data.color,
+                    socketId: data.socketId,
+                  });
+                });
+                return { peerSelections: newPeerSelections };
               });
-              data.noteIds.forEach(id => {
-                if (!newPeerSelections[id]) newPeerSelections[id] = [];
-                newPeerSelections[id].push({ userId: data.userId, color: data.color, socketId: data.socketId });
-              });
-              return { peerSelections: newPeerSelections };
-            });
-          });
+            }
+          );
 
           socket.off('note-deselected');
           socket.on('note-deselected', (data: { userId: string; socketId: string }) => {
             set((state) => {
               const newPeerSelections = { ...state.peerSelections };
-              Object.keys(newPeerSelections).forEach(key => {
-                newPeerSelections[key] = newPeerSelections[key].filter(s => s.socketId !== data.socketId);
+              Object.keys(newPeerSelections).forEach((key) => {
+                newPeerSelections[key] = newPeerSelections[key].filter(
+                  (s) => s.socketId !== data.socketId
+                );
                 if (newPeerSelections[key].length === 0) delete newPeerSelections[key];
               });
               return { peerSelections: newPeerSelections };
@@ -337,7 +363,7 @@ export const useBoardStore = create<BoardState>()(
 
           // [Undo/Redo Sync]
           socket.off('board-synced');
-          socket.on('board-synced', (data: { notes: Note[], sections: Section[] }) => {
+          socket.on('board-synced', (data: { notes: Note[]; sections: Section[] }) => {
             get().applyRemoteBoardSync(data);
           });
 
@@ -358,8 +384,8 @@ export const useBoardStore = create<BoardState>()(
           if (containerWidth && containerHeight) {
             const centerX = containerWidth / 2;
             const centerY = containerHeight / 2;
-            x = (centerX - pan.x) / zoom - (OFFSET_STEP * 2);
-            y = (centerY - pan.y) / zoom - (OFFSET_STEP * 2);
+            x = (centerX - pan.x) / zoom - OFFSET_STEP * 2;
+            y = (centerY - pan.y) / zoom - OFFSET_STEP * 2;
             x += (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
             y += (spawnIndex % OFFSET_CYCLE) * OFFSET_STEP;
           }
@@ -414,7 +440,6 @@ export const useBoardStore = create<BoardState>()(
 
             const socket = socketClient.connect();
             socket.emit('create-note', { boardId, note: savedNote });
-
           } catch (error) {
             console.error(error);
             set({ notes });
@@ -484,12 +509,12 @@ export const useBoardStore = create<BoardState>()(
               boardId,
               tags: [...targetNote.tags],
               dueDate: targetNote.dueDate,
-              assigneeId: targetNote.assigneeId
+              assigneeId: targetNote.assigneeId,
             };
 
             set((state) => ({
               notes: [...state.notes, newNote],
-              selectedNoteIds: [newId]
+              selectedNoteIds: [newId],
             }));
 
             fetch('/api/kanban/notes', {
@@ -509,13 +534,15 @@ export const useBoardStore = create<BoardState>()(
                 assigneeId: newNote.assigneeId,
               }),
             })
-              .then(res => res.json())
-              .then(json => {
+              .then((res) => res.json())
+              .then((json) => {
                 if (json?.success && json.data) {
                   const savedNote = json.data;
-                  set(state => ({
-                    notes: state.notes.map(n => n.id === newId ? { ...savedNote, id: savedNote._id } : n),
-                    selectedNoteIds: [savedNote._id]
+                  set((state) => ({
+                    notes: state.notes.map((n) =>
+                      n.id === newId ? { ...savedNote, id: savedNote._id } : n
+                    ),
+                    selectedNoteIds: [savedNote._id],
                   }));
                 }
               })
@@ -525,62 +552,69 @@ export const useBoardStore = create<BoardState>()(
 
         duplicateNotes: (ids) => {
           const { duplicateNote } = get();
-          ids.forEach(id => duplicateNote(id));
+          ids.forEach((id) => duplicateNote(id));
         },
 
-        moveNote: (id, x, y) => set((state) => {
-          const { boardId } = get();
-          const targetNote = state.notes.find((n) => n.id === id);
-          if (!targetNote) return state;
+        moveNote: (id, x, y) =>
+          set((state) => {
+            const { boardId } = get();
+            const targetNote = state.notes.find((n) => n.id === id);
+            if (!targetNote) return state;
 
-          const NOTE_W = targetNote.width || 200;
-          const NOTE_H = targetNote.height || 140;
-          const centerX = x + NOTE_W / 2;
-          const centerY = y + NOTE_H / 2;
+            const NOTE_W = targetNote.width || 200;
+            const NOTE_H = targetNote.height || 140;
+            const centerX = x + NOTE_W / 2;
+            const centerY = y + NOTE_H / 2;
 
-          const containingSection = state.sections.find(
-            (s) =>
-              centerX >= s.x &&
-              centerX <= s.x + s.width &&
-              centerY >= s.y &&
-              centerY <= s.y + s.height
-          );
+            const containingSection = state.sections.find(
+              (s) =>
+                centerX >= s.x &&
+                centerX <= s.x + s.width &&
+                centerY >= s.y &&
+                centerY <= s.y + s.height
+            );
 
-          const updatedNote = { ...targetNote, x, y, sectionId: containingSection ? containingSection.id : null };
+            const updatedNote = {
+              ...targetNote,
+              x,
+              y,
+              sectionId: containingSection ? containingSection.id : null,
+            };
 
-          if (boardId) {
-            const socket = socketClient.connect();
-            socket.emit('update-note', { boardId, note: updatedNote });
-          }
-
-          return {
-            notes: state.notes.map((n) => (n.id === id ? updatedNote : n)),
-          };
-        }),
-
-        moveNotes: (ids, dx, dy) => set((state) => {
-          const { boardId } = get();
-          const updatedNotes = state.notes
-            .filter((n) => ids.includes(n.id))
-            .map((n) => ({
-              ...n,
-              x: n.x + dx,
-              y: n.y + dy,
-            }));
-
-          if (boardId && updatedNotes.length > 0) {
-            const socket = socketClient.connect();
-            updatedNotes.forEach(updatedNote => {
+            if (boardId) {
+              const socket = socketClient.connect();
               socket.emit('update-note', { boardId, note: updatedNote });
-            })
-          }
+            }
 
-          return {
-            notes: state.notes.map((n) =>
-              ids.includes(n.id) ? { ...n, x: n.x + dx, y: n.y + dy } : n
-            )
-          }
-        }),
+            return {
+              notes: state.notes.map((n) => (n.id === id ? updatedNote : n)),
+            };
+          }),
+
+        moveNotes: (ids, dx, dy) =>
+          set((state) => {
+            const { boardId } = get();
+            const updatedNotes = state.notes
+              .filter((n) => ids.includes(n.id))
+              .map((n) => ({
+                ...n,
+                x: n.x + dx,
+                y: n.y + dy,
+              }));
+
+            if (boardId && updatedNotes.length > 0) {
+              const socket = socketClient.connect();
+              updatedNotes.forEach((updatedNote) => {
+                socket.emit('update-note', { boardId, note: updatedNote });
+              });
+            }
+
+            return {
+              notes: state.notes.map((n) =>
+                ids.includes(n.id) ? { ...n, x: n.x + dx, y: n.y + dy } : n
+              ),
+            };
+          }),
 
         updateNote: (id, patch) => {
           const { boardId } = get();
@@ -606,9 +640,9 @@ export const useBoardStore = create<BoardState>()(
                     recipientId: patch.assigneeId,
                     type: 'assign_note',
                     projectPid: pid,
-                    metadata: { noteId: id }
-                  })
-                }).catch(err => console.error('Failed to send notification:', err));
+                    metadata: { noteId: id },
+                  }),
+                }).catch((err) => console.error('Failed to send notification:', err));
 
                 // Socket Emit
                 if (boardId) {
@@ -617,7 +651,7 @@ export const useBoardStore = create<BoardState>()(
                     targetUserId: patch.assigneeId,
                     type: 'assign_note',
                     projectPid: pid,
-                    noteId: id
+                    noteId: id,
                   });
                 }
               }
@@ -683,7 +717,12 @@ export const useBoardStore = create<BoardState>()(
                 const c = (hash & 0x00ffffff).toString(16).toUpperCase();
                 const color = '#' + '00000'.substring(0, 6 - c.length) + c;
 
-                socket.emit('select-note', { boardId, noteIds: newSelectedIds, userId: currentUserId, color });
+                socket.emit('select-note', {
+                  boardId,
+                  noteIds: newSelectedIds,
+                  userId: currentUserId,
+                  color,
+                });
               } else {
                 socket.emit('deselect-note', { boardId, userId: currentUserId });
               }
@@ -725,7 +764,10 @@ export const useBoardStore = create<BoardState>()(
             return;
           }
 
-          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          let minX = Infinity,
+            minY = Infinity,
+            maxX = -Infinity,
+            maxY = -Infinity;
 
           notes.forEach((n) => {
             minX = Math.min(minX, n.x);
@@ -774,7 +816,7 @@ export const useBoardStore = create<BoardState>()(
         updateSection: (id, patch) => {
           const { boardId } = get();
           set((state) => {
-            const targetSection = state.sections.find(s => s.id === id);
+            const targetSection = state.sections.find((s) => s.id === id);
             if (!targetSection) return state;
             const updatedSection = { ...targetSection, ...patch };
 
@@ -829,7 +871,7 @@ export const useBoardStore = create<BoardState>()(
           if (boardId) {
             const socket = socketClient.connect();
             socket.emit('update-section', { boardId, section: updatedSection });
-            affectedNotes.forEach(note => {
+            affectedNotes.forEach((note) => {
               socket.emit('update-note', { boardId, note });
             });
           }
@@ -868,7 +910,7 @@ export const useBoardStore = create<BoardState>()(
         },
 
         setNoteLock: (noteId, info) => {
-          set(state => {
+          set((state) => {
             const newLocked = { ...state.lockedNotes };
             if (info) {
               newLocked[noteId] = info;
@@ -888,8 +930,8 @@ export const useBoardStore = create<BoardState>()(
           const socket = socketClient.connect();
 
           // 1. 변경된 노트들만 식별하여 전송 (Differential Sync)
-          newNotes.forEach(note => {
-            const oldNote = oldNotes.find(on => on.id === note.id);
+          newNotes.forEach((note) => {
+            const oldNote = oldNotes.find((on) => on.id === note.id);
             // 과거 스냅샷과 현재가 다르면 해당 노트만 전송
             if (!oldNote || JSON.stringify(oldNote) !== JSON.stringify(note)) {
               socket.emit('update-note', { boardId, note });
@@ -897,37 +939,37 @@ export const useBoardStore = create<BoardState>()(
           });
 
           // 2. Undo로 인해 다시 생겨난 노트 (원래 삭제했었으나 Undo)
-          newNotes.forEach(note => {
-            if (!oldNotes.find(on => on.id === note.id)) {
+          newNotes.forEach((note) => {
+            if (!oldNotes.find((on) => on.id === note.id)) {
               socket.emit('create-note', { boardId, note });
             }
           });
 
           // 3. Undo로 인해 사라진 노트 (원래 생성했었으나 Undo)
-          oldNotes.forEach(oldNote => {
-            if (!newNotes.find(n => n.id === oldNote.id)) {
+          oldNotes.forEach((oldNote) => {
+            if (!newNotes.find((n) => n.id === oldNote.id)) {
               socket.emit('delete-note', { boardId, noteId: oldNote.id });
             }
           });
 
           // 4. 변경된 섹션 동기화
-          newSections.forEach(section => {
-            const oldSection = oldSections.find(os => os.id === section.id);
+          newSections.forEach((section) => {
+            const oldSection = oldSections.find((os) => os.id === section.id);
             if (!oldSection || JSON.stringify(oldSection) !== JSON.stringify(section)) {
               socket.emit('update-section', { boardId, section });
             }
           });
 
           // 5. Undo로 인해 다시 생겨난 섹션
-          newSections.forEach(section => {
-            if (!oldSections.find(os => os.id === section.id)) {
+          newSections.forEach((section) => {
+            if (!oldSections.find((os) => os.id === section.id)) {
               socket.emit('create-section', { boardId, section });
             }
           });
 
           // 6. Undo로 인해 사라진 섹션
-          oldSections.forEach(oldSection => {
-            if (!newSections.find(s => s.id === oldSection.id)) {
+          oldSections.forEach((oldSection) => {
+            if (!newSections.find((s) => s.id === oldSection.id)) {
               socket.emit('delete-section', { boardId, sectionId: oldSection.id });
             }
           });
@@ -942,45 +984,45 @@ export const useBoardStore = create<BoardState>()(
           const socket = socketClient.connect();
 
           // Undo와 동일한 로직으로 변경된 페이로드만 전송
-          newNotes.forEach(note => {
-            const oldNote = oldNotes.find(on => on.id === note.id);
+          newNotes.forEach((note) => {
+            const oldNote = oldNotes.find((on) => on.id === note.id);
             if (!oldNote || JSON.stringify(oldNote) !== JSON.stringify(note)) {
               socket.emit('update-note', { boardId, note });
             }
           });
 
           // Redo로 인해 다시 생겨난 노트
-          newNotes.forEach(note => {
-            if (!oldNotes.find(on => on.id === note.id)) {
+          newNotes.forEach((note) => {
+            if (!oldNotes.find((on) => on.id === note.id)) {
               socket.emit('create-note', { boardId, note });
             }
           });
 
           // Redo로 인해 사라진 노트
-          oldNotes.forEach(oldNote => {
-            if (!newNotes.find(n => n.id === oldNote.id)) {
+          oldNotes.forEach((oldNote) => {
+            if (!newNotes.find((n) => n.id === oldNote.id)) {
               socket.emit('delete-note', { boardId, noteId: oldNote.id });
             }
           });
 
           // 변경된 섹션 동기화
-          newSections.forEach(section => {
-            const oldSection = oldSections.find(os => os.id === section.id);
+          newSections.forEach((section) => {
+            const oldSection = oldSections.find((os) => os.id === section.id);
             if (!oldSection || JSON.stringify(oldSection) !== JSON.stringify(section)) {
               socket.emit('update-section', { boardId, section });
             }
           });
 
           // Redo로 인해 다시 생겨난 섹션
-          newSections.forEach(section => {
-            if (!oldSections.find(os => os.id === section.id)) {
+          newSections.forEach((section) => {
+            if (!oldSections.find((os) => os.id === section.id)) {
               socket.emit('create-section', { boardId, section });
             }
           });
 
           // Redo로 인해 사라진 섹션
-          oldSections.forEach(oldSection => {
-            if (!newSections.find(s => s.id === oldSection.id)) {
+          oldSections.forEach((oldSection) => {
+            if (!newSections.find((s) => s.id === oldSection.id)) {
               socket.emit('delete-section', { boardId, sectionId: oldSection.id });
             }
           });
@@ -1001,7 +1043,7 @@ export const useBoardStore = create<BoardState>()(
             const inject = (s: any) => ({ ...s, notes: [...s.notes, note] });
             (useBoardStore.temporal as any).setState({
               pastStates: pastStates.map(inject),
-              futureStates: futureStates.map(inject)
+              futureStates: futureStates.map(inject),
             });
           }
         },
@@ -1010,7 +1052,7 @@ export const useBoardStore = create<BoardState>()(
           // 1. 현재 상태 업데이트 (기록 제외)
           useBoardStore.temporal.getState().pause();
           set((state) => ({
-            notes: state.notes.map((n) => n.id === note.id ? { ...n, ...note } : n)
+            notes: state.notes.map((n) => (n.id === note.id ? { ...n, ...note } : n)),
           }));
           useBoardStore.temporal.getState().resume();
 
@@ -1018,11 +1060,11 @@ export const useBoardStore = create<BoardState>()(
           const { pastStates, futureStates } = useBoardStore.temporal.getState();
           const patch = (s: any) => ({
             ...s,
-            notes: s.notes.map((n: any) => n.id === note.id ? { ...n, ...note } : n)
+            notes: s.notes.map((n: any) => (n.id === note.id ? { ...n, ...note } : n)),
           });
           (useBoardStore.temporal as any).setState({
             pastStates: pastStates.map(patch),
-            futureStates: futureStates.map(patch)
+            futureStates: futureStates.map(patch),
           });
         },
 
@@ -1030,7 +1072,7 @@ export const useBoardStore = create<BoardState>()(
           // 1. 현재 상태 업데이트 (기록 제외)
           useBoardStore.temporal.getState().pause();
           set((state) => ({
-            notes: state.notes.filter((n) => n.id !== noteId)
+            notes: state.notes.filter((n) => n.id !== noteId),
           }));
           useBoardStore.temporal.getState().resume();
 
@@ -1039,7 +1081,7 @@ export const useBoardStore = create<BoardState>()(
           const filter = (s: any) => ({ ...s, notes: s.notes.filter((n: any) => n.id !== noteId) });
           (useBoardStore.temporal as any).setState({
             pastStates: pastStates.map(filter),
-            futureStates: futureStates.map(filter)
+            futureStates: futureStates.map(filter),
           });
         },
 
@@ -1054,7 +1096,7 @@ export const useBoardStore = create<BoardState>()(
             const inject = (s: any) => ({ ...s, sections: [...s.sections, section] });
             (useBoardStore.temporal as any).setState({
               pastStates: pastStates.map(inject),
-              futureStates: futureStates.map(inject)
+              futureStates: futureStates.map(inject),
             });
           }
         },
@@ -1062,58 +1104,63 @@ export const useBoardStore = create<BoardState>()(
         applyRemoteSectionUpdate: (section) => {
           useBoardStore.temporal.getState().pause();
           set((state) => ({
-            sections: state.sections.map((s) => s.id === section.id ? { ...s, ...section } : s)
+            sections: state.sections.map((s) => (s.id === section.id ? { ...s, ...section } : s)),
           }));
           useBoardStore.temporal.getState().resume();
 
           const { pastStates, futureStates } = useBoardStore.temporal.getState();
           const patch = (s: any) => ({
             ...s,
-            sections: s.sections.map((sec: any) => sec.id === section.id ? { ...sec, ...section } : sec)
+            sections: s.sections.map((sec: any) =>
+              sec.id === section.id ? { ...sec, ...section } : sec
+            ),
           });
           (useBoardStore.temporal as any).setState({
             pastStates: pastStates.map(patch),
-            futureStates: futureStates.map(patch)
+            futureStates: futureStates.map(patch),
           });
         },
 
         applyRemoteSectionDeletion: (sectionId) => {
           useBoardStore.temporal.getState().pause();
           set((state) => ({
-            sections: state.sections.filter((s) => s.id !== sectionId)
+            sections: state.sections.filter((s) => s.id !== sectionId),
           }));
           useBoardStore.temporal.getState().resume();
 
           const { pastStates, futureStates } = useBoardStore.temporal.getState();
-          const filter = (s: any) => ({ ...s, sections: s.sections.filter((s: any) => s.id !== sectionId) });
+          const filter = (s: any) => ({
+            ...s,
+            sections: s.sections.filter((s: any) => s.id !== sectionId),
+          });
           (useBoardStore.temporal as any).setState({
             pastStates: pastStates.map(filter),
-            futureStates: futureStates.map(filter)
+            futureStates: futureStates.map(filter),
           });
         },
 
         applyRemoteBoardSync: (data) => {
           const syncedNotes = data.notes.map((n: any) => ({
             ...n,
-            dueDate: n.dueDate ? new Date(n.dueDate) : undefined
+            dueDate: n.dueDate ? new Date(n.dueDate) : undefined,
           }));
           useBoardStore.temporal.getState().pause();
           set({
             notes: syncedNotes,
-            sections: data.sections
+            sections: data.sections,
           });
           useBoardStore.temporal.getState().resume();
 
-          // 전체 동기화의 경우 히스토리를 덮어쓰거나 무시할 수 있으나, 
+          // 전체 동기화의 경우 히스토리를 덮어쓰거나 무시할 수 있으나,
           // 안전을 위해 히스토리를 비우거나 최신으로 보정하는 전략 선택
           // 여기서는 모든 히스토리 스냅샷에 동기화된 데이터를 일단 주입
           const { pastStates, futureStates } = useBoardStore.temporal.getState();
           const sync = () => ({ notes: syncedNotes, sections: data.sections });
           (useBoardStore.temporal as any).setState({
             pastStates: pastStates.map(sync),
-            futureStates: futureStates.map(sync)
+            futureStates: futureStates.map(sync),
           });
-        }
+        },
       }),
       {
         limit: 50,
@@ -1124,12 +1171,13 @@ export const useBoardStore = create<BoardState>()(
         },
         partialize: (state) => ({
           notes: state.notes,
-          sections: state.sections
+          sections: state.sections,
         }),
         equality: (pastState, currentState) => {
           // notes와 sections의 변화를 심층 비교하되, height 변화는 무시
           // 1. Sections 비교 (단순 JSON Stringify or depth check)
-          const sectionsChanged = JSON.stringify(pastState.sections) !== JSON.stringify(currentState.sections);
+          const sectionsChanged =
+            JSON.stringify(pastState.sections) !== JSON.stringify(currentState.sections);
           if (sectionsChanged) return false; // 다르면 저장 (false = 저장)
 
           // 2. Notes 비교
@@ -1141,10 +1189,10 @@ export const useBoardStore = create<BoardState>()(
             // 다른 필드가 하나라도 다르면 true (저장해야 함)
             // height만 다르고 나머지가 같으면 false (저장 안 함 -> 결과적으로 전체가 '같다'고 판단)
 
-            // id 체크 (순서가 바뀌었을 수도 있으므로 id로 매칭하는게 안전하지만, 여기선 인덱스 매칭 가정하자니 위험할 수 있음. 
+            // id 체크 (순서가 바뀌었을 수도 있으므로 id로 매칭하는게 안전하지만, 여기선 인덱스 매칭 가정하자니 위험할 수 있음.
             // 하지만 보통 순서는 안바뀜. zundo equality는 전체 state 비교임.)
 
-            // 더 안전한 방법: 
+            // 더 안전한 방법:
             if (pastNote.id !== currentNote.id) return true; // 다름
 
             // 비교할 키 목록 (height 제외)
@@ -1155,7 +1203,8 @@ export const useBoardStore = create<BoardState>()(
               if (pastNote[key] !== currentNote[key]) {
                 // Date 객체 비교
                 if (pastNote[key] instanceof Date && currentNote[key] instanceof Date) {
-                  if ((pastNote[key] as Date).getTime() !== (currentNote[key] as Date).getTime()) return true;
+                  if ((pastNote[key] as Date).getTime() !== (currentNote[key] as Date).getTime())
+                    return true;
                 } else {
                   return true; // 다른게 있음
                 }
@@ -1165,7 +1214,7 @@ export const useBoardStore = create<BoardState>()(
           });
 
           return !isDifferent; // 다르지 않으면(같으면) true 반환 -> 저장 안 함
-        }
+        },
       }
     )
   )

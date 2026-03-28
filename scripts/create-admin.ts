@@ -24,7 +24,10 @@ if (fs.existsSync(envPath)) {
     const eqIdx = trimmed.indexOf('=');
     if (eqIdx === -1) continue;
     const key = trimmed.slice(0, eqIdx).trim();
-    const val = trimmed.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '');
+    const val = trimmed
+      .slice(eqIdx + 1)
+      .trim()
+      .replace(/^['"]|['"]$/g, '');
     if (key && !process.env[key]) process.env[key] = val;
   }
 } else {
@@ -47,11 +50,11 @@ async function main() {
   console.log('\n🔐 Side Project Mate — 관리자 계정 생성\n');
 
   // CLI 인자로 전달된 경우 (npx ts-node ... email name password)
-  const [,, argEmail, argName, argPassword] = process.argv;
+  const [, , argEmail, argName, argPassword] = process.argv;
 
-  const email = argEmail ?? await ask('이메일: ');
-  const name = argName ?? await ask('이름: ');
-  const password = argPassword ?? await ask('비밀번호 (최소 6자): ');
+  const email = argEmail ?? (await ask('이메일: '));
+  const name = argName ?? (await ask('이름: '));
+  const password = argPassword ?? (await ask('비밀번호 (최소 6자): '));
 
   rl.close();
 

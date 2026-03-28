@@ -7,16 +7,19 @@
 ## ✨ 주요 기능
 
 ### 🔐 인증 (Authentication)
+
 - 이메일 & 비밀번호 기반 회원가입/로그인
 - JWT 기반 세션 관리 (next-auth)
 - bcryptjs 비밀번호 해싱 및 미들웨어 접근 제어
 
 ### 📁 프로젝트 관리 (Project Management)
+
 - **프로젝트 생성**: 썸네일 드래그 & 드롭 업로드(Cloudinary), 기술 스택 태그 선택, Tiptap 기반 리치 텍스트 에디터 지원
 - **프로젝트 조회**: 카테고리 / 상태 / 정렬 필터링 및 키워드 검색
 - **통합 대시보드**: 프로젝트별 칸반 보드와 WBS를 한 화면에서 관리
 
 ### 👤 마이페이지 & 프로필 (Profile & Stats)
+
 - **온보딩 위저드**: 초기 진입 시 직군, 경력 등 필수 정보를 입력받는 단계별 가이드
 - **프로필 관리**: 기본 정보 및 커뮤니케이션 성향(MBTI, 온/오프라인 선호도) 관리
 - **기술 스택 (Skill Stack)**: `skillicons.dev` 기반의 직관적인 아이콘 UI, 주요 기술 및 숙련도 시각화
@@ -28,10 +31,12 @@
 - **마이페이지**: 본인이 제출한 지원 내역(지원 프로젝트, 역할, 상태) 확인
 
 ### 🤝 지원 시스템 (Application System)
+
 - **지원하기**: 희망 역할 선택 및 지원 메시지 작성
 - **지원자 관리**: 프로젝트 작성자가 지원자 목록 확인 및 수락/거절 처리
 
 ### 📊 협업 도구 (Collab Tools)
+
 - **칸반 보드 (Kanban Board)**:
   - `dnd-kit` 기반의 To Do / In Progress / Done 업무 관리
   - 드래그 & 드롭으로 직관적인 상태 변경
@@ -44,6 +49,7 @@
 - **실시간 동기화**: `Socket.io` 기반의 노트 생성/수정/삭제/선택 상태 실시간 전파
 
 ### 💬 채팅 (Chat) — UI 프로토타입
+
 > 현재 UI 프로토타입 단계입니다. 백엔드 API 및 모델은 구현 완료, 실시간 연동 작업 진행 중입니다.
 
 - **채팅방 유형**: INQUIRY(문의), RECRUIT(인터뷰), TEAM(팀 채팅방), DM(1:1), SYSTEM(가이드 봇)
@@ -51,6 +57,7 @@
 - DM 중복 방지 로직 (동일 참여자 구성의 방 재활용)
 
 ### 🔔 알림 (Notifications)
+
 - 실시간 알림 시스템 (지원 결과, 새 지원자 알림 등)
 - Zustand 기반 알림 스토어
 
@@ -59,35 +66,38 @@
 ## 🛠 기술 스택
 
 ### Frontend
-| 분류 | 기술 |
-|------|------|
-| Framework | Next.js 14.2 (App Router) |
-| Language | TypeScript 5.3 |
-| Styling | Tailwind CSS 3.4, Styled Components 6 |
-| State Management | Zustand 4.5, Zundo (Undo/Redo) |
-| 드래그 & 드롭 | dnd-kit (칸반), gantt-task-react (WBS) |
-| 에디터 | Tiptap 2 (Rich Text Editor, Code Block) |
-| 일정 | react-schedule-selector |
-| 기타 UI | react-slick (캐러셀), react-markdown |
+
+| 분류             | 기술                                    |
+| ---------------- | --------------------------------------- |
+| Framework        | Next.js 14.2 (App Router)               |
+| Language         | TypeScript 5.3                          |
+| Styling          | Tailwind CSS 3.4, Styled Components 6   |
+| State Management | Zustand 4.5, Zundo (Undo/Redo)          |
+| 드래그 & 드롭    | dnd-kit (칸반), gantt-task-react (WBS)  |
+| 에디터           | Tiptap 2 (Rich Text Editor, Code Block) |
+| 일정             | react-schedule-selector                 |
+| 기타 UI          | react-slick (캐러셀), react-markdown    |
 
 ### Backend & Database
-| 분류 | 기술 |
-|------|------|
-| Runtime | Node.js 20.x |
-| Server | Next.js API Routes + Express (Socket.io 전용) |
-| Database | MongoDB Atlas (Mongoose 8.x) |
-| 실시간 | Socket.io 4.8 |
-| 인증 | next-auth 4, jsonwebtoken, bcryptjs |
-| 이미지 | Cloudinary 2 |
-| GraphQL | graphql-request (GitHub API 연동) |
-| RSS | rss-parser (Tech Blog 연동) |
-| OG | open-graph-scraper |
+
+| 분류     | 기술                                          |
+| -------- | --------------------------------------------- |
+| Runtime  | Node.js 20.x                                  |
+| Server   | Next.js API Routes + Express (Socket.io 전용) |
+| Database | MongoDB Atlas (Mongoose 8.x)                  |
+| 실시간   | Socket.io 4.8                                 |
+| 인증     | next-auth 4, jsonwebtoken, bcryptjs           |
+| 이미지   | Cloudinary 2                                  |
+| GraphQL  | graphql-request (GitHub API 연동)             |
+| RSS      | rss-parser (Tech Blog 연동)                   |
+| OG       | open-graph-scraper                            |
 
 ### DevOps & Tools
-| 분류 | 기술 |
-|------|------|
-| Linting | ESLint 8.56, Prettier |
-| Dev Server | nodemon + ts-node |
+
+| 분류       | 기술                   |
+| ---------- | ---------------------- |
+| Linting    | ESLint 8.56, Prettier  |
+| Dev Server | nodemon + ts-node      |
 | Deployment | Render.com (Free Plan) |
 
 ---
@@ -102,12 +112,14 @@
 ### 개발 환경 설정
 
 **1. 저장소 클론**
+
 ```bash
 git clone https://github.com/kimis0719/sideProjectMate.git
 cd sideProjectMate
 ```
 
 **2. 의존성 설치**
+
 ```bash
 npm install
 ```
@@ -132,6 +144,7 @@ CLOUDINARY_API_SECRET=...
 ```
 
 **4. 개발 서버 실행**
+
 ```bash
 # 개발 모드 (nodemon + ts-node, 포트 3000)
 npm run dev
@@ -142,6 +155,7 @@ npm run start
 ```
 
 **5. 브라우저 확인**
+
 ```
 http://localhost:3000
 ```
@@ -233,21 +247,21 @@ sideProjectMate/
 
 개발 서버는 Express + Socket.io 커스텀 서버(`server.ts`)로 구동됩니다.
 
-| 이벤트 (Client → Server) | 설명 |
-|--------------------------|------|
-| `join-board` | 칸반 보드 룸 접속 |
-| `user-activity` | 보드 Presence 정보 전송 (접속자 목록 갱신) |
-| `leave-board` | 칸반 보드 룸 이탈 |
-| `update-note` / `create-note` / `delete-note` | 노트 변경 실시간 전파 |
-| `update-section` / `create-section` / `delete-section` | 섹션 변경 실시간 전파 |
-| `request-lock` / `release-lock` | 노트/섹션 편집 잠금 (충돌 방지) |
-| `sync-board` | Undo/Redo 시 전체 보드 동기화 |
-| `select-note` / `deselect-note` | 실시간 노트 선택 상태 공유 |
-| `join-project` | 프로젝트 룸 접속 (온라인 상태 등록) |
-| `resource-update` | 프로젝트 리소스 변경 알림 |
-| `project-update` | 프로젝트 상태/개요 변경 알림 |
-| `join-chat-room` / `leave-chat-room` | 채팅방 룸 접속/이탈 |
-| `send-notification` | 실시간 알림 전송 |
+| 이벤트 (Client → Server)                               | 설명                                       |
+| ------------------------------------------------------ | ------------------------------------------ |
+| `join-board`                                           | 칸반 보드 룸 접속                          |
+| `user-activity`                                        | 보드 Presence 정보 전송 (접속자 목록 갱신) |
+| `leave-board`                                          | 칸반 보드 룸 이탈                          |
+| `update-note` / `create-note` / `delete-note`          | 노트 변경 실시간 전파                      |
+| `update-section` / `create-section` / `delete-section` | 섹션 변경 실시간 전파                      |
+| `request-lock` / `release-lock`                        | 노트/섹션 편집 잠금 (충돌 방지)            |
+| `sync-board`                                           | Undo/Redo 시 전체 보드 동기화              |
+| `select-note` / `deselect-note`                        | 실시간 노트 선택 상태 공유                 |
+| `join-project`                                         | 프로젝트 룸 접속 (온라인 상태 등록)        |
+| `resource-update`                                      | 프로젝트 리소스 변경 알림                  |
+| `project-update`                                       | 프로젝트 상태/개요 변경 알림               |
+| `join-chat-room` / `leave-chat-room`                   | 채팅방 룸 접속/이탈                        |
+| `send-notification`                                    | 실시간 알림 전송                           |
 
 ---
 
@@ -279,13 +293,16 @@ npm run format   # Prettier 포맷팅
 ## ⚠️ 트러블슈팅
 
 **"Unsupported Server Component type" 에러**
+
 - 클라이언트 훅(`useState`, `useEffect` 등)을 사용하는 컴포넌트 최상단에 `'use client'` 지시어가 있는지 확인하세요.
 
 **Socket.io 연결 실패**
+
 - `npm run dev` 실행 후 터미널에서 `> Ready on http://localhost:3000` 메시지를 확인하세요.
 - 클라이언트 측 Socket.io 경로(`/api/socket/io`)가 `server.ts`의 `path` 설정과 일치하는지 확인하세요.
 
 **채팅 기능이 동작하지 않아요**
+
 - 현재 채팅 UI는 Mock 데이터 기반 프로토타입입니다. DB 연동 작업이 진행 중입니다.
 
 ---

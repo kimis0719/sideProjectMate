@@ -10,7 +10,7 @@ import OnboardingWizard from '@/components/profile/onboarding/OnboardingWizard';
  * @page ProfilePage (나의 프로필)
  * @description
  * 사용자가 자신의 프로필을 보고 수정할 수 있는 페이지입니다.
- * 
+ *
  * [리팩토링 변경사항]
  * 기존의 거대한 UI 로직을 `ProfileView` 컴포넌트로 분리했습니다.
  * 이 페이지는 오직 "데이터 패칭(Fetching)"과 "권한 체크(Auth)"만 담당합니다.
@@ -44,7 +44,7 @@ export default function ProfilePage() {
         // 세션 이미지(GitHub 프로필 등)를 avatarUrl로 병합
         const dataWithAvatar = {
           ...data.data,
-          avatarUrl: data.data.avatarUrl // DB에 저장된 값을 우선 사용
+          avatarUrl: data.data.avatarUrl, // DB에 저장된 값을 우선 사용
         };
         setUserData(dataWithAvatar);
       } else {
@@ -69,8 +69,6 @@ export default function ProfilePage() {
   if (!session || !userData) {
     return null;
   }
-
-
 
   // 필수 정보가 없으면 온보딩 위저드 실행
   // 조건: 포지션이나 경력이 없고, 스킵하지도 않았을 때
