@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/admin/projects', label: '프로젝트 모더레이션', icon: '📁' },
   { href: '/admin/common-codes', label: '공통 코드 관리', icon: '🔖' },
   { href: '/admin/tech-stacks', label: '기술 스택 관리', icon: '🛠️' },
+  { href: '/admin/ai-settings', label: 'AI 지시서 설정', icon: '🤖' },
 ];
 
 export default function AdminSidebar() {

@@ -9,6 +9,9 @@ import Minimap from '@/components/board/Minimap';
 import ShortcutHandler from '@/components/board/ShortcutHandler';
 import ZoomController from '@/components/board/ZoomController';
 import ShortcutModal from '@/components/board/ShortcutModal';
+import InstructionModal from '@/components/board/InstructionModal';
+import HistoryModal from '@/components/board/HistoryModal';
+import { useInstructionStore } from '@/store/instructionStore';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import type { Section, Note } from '@/store/boardStore';
@@ -289,6 +292,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
   } | null>(null);
 
   const [isShortcutModalOpen, setIsShortcutModalOpen] = React.useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = React.useState(false);
 
   const handleBackgroundClick = () => {
     selectNote(null);
@@ -589,6 +593,31 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
           <div className="h-6 w-px bg-border mx-1 hidden sm:block"></div>
 
+          {/* AI 지시서 생성 버튼 */}
+          {viewMode === 'active' && (
+            <button
+              onClick={() => {
+                const bid = useBoardStore.getState().boardId;
+                if (bid) useInstructionStore.getState().openModal(bid);
+              }}
+              className="px-3 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 shadow-sm transition-colors hidden sm:flex items-center gap-1.5"
+              title="AI 지시서 생성"
+            >
+              <span>📄</span>
+              <span>지시서</span>
+            </button>
+          )}
+          <button
+            onClick={() => setIsHistoryModalOpen(true)}
+            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium
+                       hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors hidden sm:flex items-center gap-1.5
+                       text-gray-700 dark:text-gray-300"
+            title="지시서 히스토리"
+          >
+            <span>📜</span>
+            <span>히스토리</span>
+          </button>
+
           <button
             onClick={() => setIsShortcutModalOpen(true)}
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors"
@@ -611,34 +640,32 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             </svg>
           </button>
 
-          {viewMode === 'active' && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (containerRef.current) {
-                    addNote(containerRef.current.clientWidth, containerRef.current.clientHeight);
-                  } else {
-                    addNote();
-                  }
-                }}
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 shadow-sm transition-colors"
-              >
-                <span className="hidden sm:inline">+ 노트 추가</span>
-                <span className="sm:hidden">+</span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddSection();
-                }}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-sm transition-colors"
-              >
-                <span className="hidden sm:inline">+ 섹션 추가</span>
-                <span className="sm:hidden">+</span>
-              </button>
-            </>
-          )}
+          <div className={`flex items-center gap-3 ${viewMode !== 'active' ? 'invisible' : ''}`}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (containerRef.current) {
+                  addNote(containerRef.current.clientWidth, containerRef.current.clientHeight);
+                } else {
+                  addNote();
+                }
+              }}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 shadow-sm transition-colors"
+            >
+              <span className="hidden sm:inline">+ 노트 추가</span>
+              <span className="sm:hidden">+</span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddSection();
+              }}
+              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-sm transition-colors"
+            >
+              <span className="hidden sm:inline">+ 섹션 추가</span>
+              <span className="sm:hidden">+</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -700,6 +727,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
       <ShortcutHandler />
       <ShortcutModal isOpen={isShortcutModalOpen} onClose={() => setIsShortcutModalOpen(false)} />
+      <InstructionModal />
+      <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} />
 
       <main
         ref={containerRef}
