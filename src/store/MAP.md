@@ -29,5 +29,6 @@ export const useFooStore = create<FooState & FooActions>()(
 > 마지막 갱신: 2026-03-29
 
 - `boardStore.ts`
+- `instructionStore.ts`
 - `modalStore.ts`
 - `wbsStore.ts`
