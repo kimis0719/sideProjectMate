@@ -93,4 +93,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| .eslintrc.json, .lintstagedrc.js, src/ | FFLINA-PC | 🟡 작업 중 | ESLint Warning/Error 점진적 개선 및 lint-staged 활성화 |
+| (현재 작업 중인 항목 없음) | — | 🟢 자유 | — |

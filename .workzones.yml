@@ -15,9 +15,4 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones:
-  - path: '.eslintrc.json, .lintstagedrc.js, src/'
-    owner: 'FFLINA-PC'
-    status: 'active'
-    reason: 'ESLint Warning/Error 점진적 개선 및 lint-staged 활성화'
-    expires: '2026-04-05'
+zones: []
