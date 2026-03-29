@@ -30,9 +30,7 @@ async function handleGet() {
       newProjectsThisWeek,
       projectsByStatus,
       recentProjects,
-      totalApplications,
-      pendingApplications,
-      acceptedApplications,
+      applicationStats,
       topTechStacksRaw,
     ] = await Promise.all([
       // 유저 통계
@@ -55,10 +53,17 @@ async function handleGet() {
         .limit(5)
         .lean(),
 
-      // 지원 통계
-      Application.countDocuments({}),
-      Application.countDocuments({ status: 'pending' }),
-      Application.countDocuments({ status: 'accepted' }),
+      // 지원 통계 (3개 countDocuments → 1개 aggregation으로 통합)
+      Application.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            pending: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] } },
+            accepted: { $sum: { $cond: [{ $eq: ['$status', 'accepted'] }, 1, 0] } },
+          },
+        },
+      ]),
 
       // 인기 기술 스택 (프로젝트 tags 기준 Top 10)
       Project.aggregate([
@@ -84,6 +89,12 @@ async function handleGet() {
     for (const item of projectsByStatus) {
       statusCountMap[item._id] = item.count;
     }
+
+    // 지원 통계 추출
+    const appStats = applicationStats[0] || { total: 0, pending: 0, accepted: 0 };
+    const totalApplications = appStats.total;
+    const pendingApplications = appStats.pending;
+    const acceptedApplications = appStats.accepted;
 
     // 수락률 계산
     const acceptanceRate =

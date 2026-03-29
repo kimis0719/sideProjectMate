@@ -56,7 +56,7 @@ async function handleGet(request: NextRequest) {
       query._id = { $in: memberProjects };
     }
 
-    let sortOptions: Record<string, number> = { createdAt: -1 };
+    let sortOptions: Record<string, 1 | -1> = { createdAt: -1 };
     if (sortBy === 'deadline') {
       sortOptions = { deadline: 1 };
     }

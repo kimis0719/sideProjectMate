@@ -26,26 +26,26 @@ async function handleGet(request: Request, { params }: { params: { pid: string }
       );
     }
 
-    const project = await Project.findOneAndUpdate(
-      { pid: pidNum },
-      { $inc: { views: 1 } },
-      { new: true }
-    )
-      .populate(
-        'author',
-        'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl'
-      )
-      .populate('tags')
-      .populate({
-        path: 'projectMembers',
-        strictPopulate: false,
-        populate: {
-          path: 'userId',
-          select:
-            'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl',
-        },
-      })
-      .lean();
+    // views 증가와 데이터 조회를 병렬 실행
+    const [, project] = await Promise.all([
+      Project.updateOne({ pid: pidNum }, { $inc: { views: 1 } }),
+      Project.findOne({ pid: pidNum })
+        .populate(
+          'author',
+          'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl'
+        )
+        .populate('tags')
+        .populate({
+          path: 'projectMembers',
+          strictPopulate: false,
+          populate: {
+            path: 'userId',
+            select:
+              'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl',
+          },
+        })
+        .lean(),
+    ]);
 
     if (!project) {
       return NextResponse.json(

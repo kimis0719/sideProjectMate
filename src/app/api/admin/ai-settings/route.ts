@@ -13,8 +13,8 @@ async function handleGet() {
 
   try {
     await dbConnect();
-    const settings = await AiSettings.getInstance();
-    return NextResponse.json({ success: true, data: settings });
+    const settings = await AiSettings.findOne().lean();
+    return NextResponse.json({ success: true, data: settings || {} });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : '알 수 없는 오류';
     return NextResponse.json(

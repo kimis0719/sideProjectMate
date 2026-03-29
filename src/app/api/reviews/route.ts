@@ -63,7 +63,7 @@ async function handlePost(request: Request) {
     return NextResponse.json({ success: true, data: review }, { status: 201 });
   } catch (error: unknown) {
     // 중복 리뷰 (unique index 위반)
-    if (error.code === 11000) {
+    if (error instanceof Error && 'code' in error && (error as { code: number }).code === 11000) {
       return NextResponse.json(
         { success: false, message: '이미 해당 팀원에게 리뷰를 작성했습니다.' },
         { status: 409 }

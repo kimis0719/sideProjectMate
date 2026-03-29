@@ -53,7 +53,7 @@ async function handlePost(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: newStack }, { status: 201 });
   } catch (error: unknown) {
-    if (error.code === 11000) {
+    if (error instanceof Error && 'code' in error && (error as { code: number }).code === 11000) {
       return NextResponse.json(
         { success: false, message: '이미 존재하는 기술 스택 이름입니다.' },
         { status: 409 }

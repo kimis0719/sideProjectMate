@@ -60,7 +60,7 @@ async function handlePost(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: newCode }, { status: 201 });
   } catch (error: unknown) {
-    if (error.code === 11000) {
+    if (error instanceof Error && 'code' in error && (error as { code: number }).code === 11000) {
       return NextResponse.json(
         { success: false, message: '동일한 그룹에 같은 코드가 이미 존재합니다.' },
         { status: 409 }

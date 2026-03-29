@@ -8,7 +8,12 @@ export interface IResource {
   type: 'LINK' | 'TEXT'; // 리소스 형태 (링크형, 텍스트형)
   category: 'CODE' | 'DESIGN' | 'DOCS' | 'ENV' | 'ACCOUNT' | 'OTHER'; // 리소스 분류
   content: string; // URL 또는 텍스트 내용
-  metadata?: Record<string, unknown>; // OG 태그 정보나 추가 설명을 위한 메타데이터
+  metadata?: {
+    title?: string;
+    image?: string;
+    description?: string;
+    [key: string]: string | undefined;
+  }; // OG 태그 정보
   userId?: string | mongoose.Types.ObjectId; // ✨ [추가] 리소스 등록자 ID
   _id?: string; // 클라이언트 식별용
 }

@@ -86,12 +86,15 @@ async function handleGet(req: NextRequest, { params }: { params: { id: string } 
     console.error('[API] Public Profile Fetch Error:', error);
 
     // ObjectId 형식이 아닐 때 발생하는 CastError 처리
-    if (error.name === 'CastError') {
+    if (error instanceof Error && error.name === 'CastError') {
       return NextResponse.json({ error: '잘못된 사용자 ID 형식입니다.' }, { status: 400 });
     }
 
     return NextResponse.json(
-      { error: '서버 내부 오류가 발생했습니다.', details: error.message },
+      {
+        error: '서버 내부 오류가 발생했습니다.',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
