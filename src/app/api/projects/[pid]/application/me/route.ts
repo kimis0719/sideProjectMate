@@ -5,11 +5,12 @@ import dbConnect from '@/lib/mongodb';
 import Application from '@/lib/models/Application';
 import Project from '@/lib/models/Project';
 import { headers } from 'next/headers';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // 현재 사용자의 특정 프로젝트 지원 여부 확인 API
-export async function GET(request: Request, { params }: { params: { pid: string } }) {
+async function handleGet(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -40,10 +41,16 @@ export async function GET(request: Request, { params }: { params: { pid: string 
       applied: !!application, // 지원 내역 존재 여부
       data: application,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '지원 내역 확인 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '지원 내역 확인 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/projects/[pid]/application/me');

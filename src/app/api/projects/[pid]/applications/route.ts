@@ -6,10 +6,11 @@ import Project from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import User from '@/lib/models/User';
 import { headers } from 'next/headers';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: { params: { pid: string } }) {
+async function handleGet(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -35,20 +36,21 @@ export async function GET(request: Request, { params }: { params: { pid: string 
       );
     }
 
-    const applications = await Application.find({ projectId: project._id }).populate(
-      'applicantId',
-      'nName authorEmail'
-    );
+    const applications = await Application.find({ projectId: project._id })
+      .populate('applicantId', 'nName authorEmail')
+      .lean();
 
     return NextResponse.json({ success: true, data: applications });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '지원자 목록을 불러오는 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/projects/[pid]/applications');

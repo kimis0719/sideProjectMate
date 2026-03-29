@@ -5,10 +5,11 @@ import Project from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import TechStack from '@/lib/models/TechStack';
 import { requireAdmin } from '@/lib/adminAuth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+async function handleGet() {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -40,7 +41,8 @@ export async function GET() {
       User.find({ delYn: { $ne: true } })
         .select('nName authorEmail avatarUrl createdAt memberType')
         .sort({ createdAt: -1 })
-        .limit(5),
+        .limit(5)
+        .lean(),
 
       // 프로젝트 통계
       Project.countDocuments({}),
@@ -50,7 +52,8 @@ export async function GET() {
         .select('pid title status createdAt author views')
         .populate('author', 'nName')
         .sort({ createdAt: -1 })
-        .limit(5),
+        .limit(5)
+        .lean(),
 
       // 지원 통계
       Application.countDocuments({}),
@@ -112,10 +115,16 @@ export async function GET() {
         topTechStacks: topTechStacksRaw as { name: string; count: number }[],
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '통계를 불러오는 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '통계를 불러오는 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/admin/stats');

@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ interface GeminiModel {
 }
 
 // GET /api/admin/ai-settings/models?provider=gemini — 사용 가능한 모델 목록
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -72,3 +73,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/admin/ai-settings/models');

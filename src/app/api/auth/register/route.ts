@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
+import { withApiLogging } from '@/lib/apiLogger';
 
 interface RegisterRequestBody {
   authorEmail: string;
@@ -9,7 +10,7 @@ interface RegisterRequestBody {
   mblNo?: string;
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     await dbConnect();
 
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('회원가입 오류:', error);
 
     // 중복 이메일 확인
@@ -93,3 +94,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const POST = withApiLogging(handlePost, '/api/auth/register');

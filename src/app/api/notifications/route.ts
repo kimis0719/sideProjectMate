@@ -6,13 +6,14 @@ import Notification from '@/lib/models/Notification';
 import User from '@/lib/models/User';
 import Project from '@/lib/models/Project';
 import { headers } from 'next/headers';
+import { withApiLogging } from '@/lib/apiLogger';
 
 // 모델 등록을 보장하기 위해 임시 변수 할당 (Tree-shaking 방지)
 const _models = { User, Project };
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   headers(); // 이 라우트가 동적임을 명시적으로 알림
   try {
     const session = await getServerSession(authOptions);
@@ -22,22 +23,42 @@ export async function GET(request: Request) {
 
     await dbConnect();
 
-    const notifications = await Notification.find({ recipient: session.user._id })
-      .sort({ createdAt: -1 })
-      .populate('sender', 'nName')
-      .populate('project', 'title pid');
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
+    const cursor = searchParams.get('cursor'); // createdAt 기반 커서
 
-    return NextResponse.json({ success: true, data: notifications });
-  } catch (error: any) {
+    const query: Record<string, unknown> = { recipient: session.user._id };
+    if (cursor) {
+      query.createdAt = { $lt: new Date(cursor) };
+    }
+
+    const notifications = await Notification.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('sender', 'nName')
+      .populate('project', 'title pid')
+      .lean();
+
+    const nextCursor =
+      notifications.length === limit
+        ? (notifications[notifications.length - 1] as Record<string, unknown>).createdAt
+        : null;
+
+    return NextResponse.json({ success: true, data: notifications, nextCursor });
+  } catch (error: unknown) {
     console.error('[NOTIFICATIONS API ERROR]', error);
     return NextResponse.json(
-      { success: false, message: '알림을 불러오는 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '알림을 불러오는 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -80,21 +101,27 @@ export async function POST(request: Request) {
 
     await newNotification.save();
 
-    // Populate for response
-    await newNotification.populate('sender', 'nName');
-    await newNotification.populate('project', 'title pid');
+    // Populate for response (체인으로 통합)
+    await newNotification.populate([
+      { path: 'sender', select: 'nName' },
+      { path: 'project', select: 'title pid' },
+    ]);
 
     return NextResponse.json({ success: true, data: newNotification });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[NOTIFICATIONS CREATE ERROR]', error);
     return NextResponse.json(
-      { success: false, message: '알림 생성 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '알림 생성 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(request: Request) {
+async function handleDelete(request: Request) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -108,11 +135,19 @@ export async function DELETE(request: Request) {
     await Notification.deleteMany({ recipient: session.user._id });
 
     return NextResponse.json({ success: true, message: '모든 알림이 삭제되었습니다.' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[NOTIFICATIONS DELETE ERROR]', error);
     return NextResponse.json(
-      { success: false, message: '알림 삭제 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '알림 삭제 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/notifications');
+export const POST = withApiLogging(handlePost, '/api/notifications');
+export const DELETE = withApiLogging(handleDelete, '/api/notifications');

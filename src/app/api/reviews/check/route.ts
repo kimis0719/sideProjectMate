@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/reviews/check?projectId=xxx&revieweeId=xxx
  * 현재 로그인 유저가 특정 프로젝트에서 특정 유저를 이미 리뷰했는지 확인
  */
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?._id) {
@@ -41,11 +42,17 @@ export async function GET(request: Request) {
     }).lean();
 
     return NextResponse.json({ success: true, data: { hasReviewed: !!existing } });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[GET /api/reviews/check] 오류:', error);
     return NextResponse.json(
-      { success: false, message: '확인 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '확인 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/reviews/check');

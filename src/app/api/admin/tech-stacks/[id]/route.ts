@@ -2,11 +2,12 @@ import { NextResponse, NextRequest } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import TechStack from '@/lib/models/TechStack';
 import { requireAdmin } from '@/lib/adminAuth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // PUT /api/admin/tech-stacks/[id] — 기술 스택 수정
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+async function handlePut(request: NextRequest, { params }: { params: { id: string } }) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -29,7 +30,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     return NextResponse.json({ success: true, data: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error.code === 11000) {
       return NextResponse.json(
         { success: false, message: '이미 존재하는 기술 스택 이름입니다.' },
@@ -37,14 +38,18 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       );
     }
     return NextResponse.json(
-      { success: false, message: '기술 스택 수정 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '기술 스택 수정 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
 // DELETE /api/admin/tech-stacks/[id] — 기술 스택 삭제
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+async function handleDelete(_request: NextRequest, { params }: { params: { id: string } }) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -60,10 +65,17 @@ export async function DELETE(_request: NextRequest, { params }: { params: { id: 
     }
 
     return NextResponse.json({ success: true, message: '기술 스택이 삭제되었습니다.' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '기술 스택 삭제 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '기술 스택 삭제 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const PUT = withApiLogging(handlePut, '/api/admin/tech-stacks/[id]');
+export const DELETE = withApiLogging(handleDelete, '/api/admin/tech-stacks/[id]');

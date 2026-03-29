@@ -5,10 +5,11 @@ import dbConnect from '@/lib/mongodb';
 import Application from '@/lib/models/Application';
 import Project from '@/lib/models/Project';
 import User from '@/lib/models/User';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: { params: { pid: string } }) {
+async function handleGet(request: Request, { params }: { params: { pid: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
@@ -32,27 +33,37 @@ export async function GET(request: Request, { params }: { params: { pid: string 
       .populate('applicantId', 'nName authorEmail');
 
     // 응답 단순화: 필요한 필드만 반환
-    const data = applications.map((app: any) => ({
-      _id: app._id.toString(),
-      status: app.status,
-      role: app.role,
-      createdAt: app.createdAt,
-      applicant: {
-        _id: app.applicantId?._id?.toString(),
-        nName: app.applicantId?.nName || app.applicantId?.authorEmail,
-        email: app.applicantId?.authorEmail,
-      },
-    }));
+    const data = applications.map(
+      (app: {
+        _id: { toString(): string };
+        status: string;
+        role: string;
+        createdAt: Date;
+        applicantId?: { _id?: { toString(): string }; nName?: string; authorEmail?: string };
+      }) => ({
+        _id: app._id.toString(),
+        status: app.status,
+        role: app.role,
+        createdAt: app.createdAt,
+        applicant: {
+          _id: app.applicantId?._id?.toString(),
+          nName: app.applicantId?.nName || app.applicantId?.authorEmail,
+          email: app.applicantId?.authorEmail,
+        },
+      })
+    );
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '프로젝트 지원자 조회 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/applications/by-project/[pid]');

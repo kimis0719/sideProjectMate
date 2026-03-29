@@ -13,7 +13,7 @@ export interface INotification extends Document {
     | 'review_request'; // 알림 종류
   project: IProject['_id']; // 관련 프로젝트
   read: boolean; // 읽음 여부
-  metadata?: Record<string, any>; // 추가 데이터 (예: noteId)
+  metadata?: Record<string, unknown>; // 추가 데이터 (예: noteId)
   createdAt: Date;
 }
 
@@ -57,6 +57,11 @@ const NotificationSchema: Schema = new Schema(
   },
   { timestamps: true }
 );
+
+// 인덱스: 알림 목록 조회 (recipient별 최신순)
+NotificationSchema.index({ recipient: 1, createdAt: -1 });
+// 인덱스: 안읽은 알림 카운트
+NotificationSchema.index({ recipient: 1, read: 1 });
 
 export default mongoose.models.Notification ||
   mongoose.model<INotification>('Notification', NotificationSchema);

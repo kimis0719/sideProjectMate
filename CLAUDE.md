@@ -45,24 +45,47 @@
 ## API Route 필수 패턴
 
 ```ts
+import { withApiLogging } from '@/lib/apiLogger';
+
 export const dynamic = 'force-dynamic';
-await dbConnect();
-// 인증 필요 시:
-const session = await getServerSession(authOptions);
-if (!session?.user?._id)
-  return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
-// 성공 응답:
-return NextResponse.json({ success: true, data: { ... } });
-// 실패 응답:
-return NextResponse.json({ success: false, message: '...' }, { status: 400 });
+
+// 핸들러는 export 하지 않고, withApiLogging 래퍼로 감싸서 export
+async function _GET(request: NextRequest) {
+  await dbConnect();
+  // 인증 필요 시:
+  const session = await getServerSession(authOptions);
+  if (!session?.user?._id)
+    return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
+  // 성공 응답:
+  return NextResponse.json({ success: true, data: { ... } });
+  // 실패 응답:
+  return NextResponse.json({ success: false, message: '...' }, { status: 400 });
+}
+
+export const GET = withApiLogging(_GET, '/api/도메인/경로');
 ```
+
+> **주의**: Streaming 응답(`Response` 반환)을 사용하는 API는 래퍼 적용 불가 (예: `ai/generate-instruction`)
+
+### 성능 관련 환경변수
+
+| 환경변수 | 기본값 | 설명 |
+|---------|--------|------|
+| `API_LOGGING` | 활성화 | `false`로 설정 시 API 로깅/집계 비활성화 |
+| `MONGODB_DEBUG` | 비활성화 | `true`로 설정 시 Mongoose 쿼리 로그 출력 |
+
+### 성능 모니터링
+
+- `/api/health` — 서버 가동 이후 누적된 API 응답시간 통계 확인
+- 500ms 초과 API는 `[SLOW API]` 로그로 자동 경고
 
 ---
 
 ## 코드 생성 체크리스트
 
 - [ ] `'use client'` 선언 (클라이언트 컴포넌트)
-- [ ] API Route: `dynamic` + `dbConnect()` + 인증 체크
+- [ ] API Route: `dynamic` + `dbConnect()` + 인증 체크 + `withApiLogging` 래퍼
+- [ ] API Route: 읽기 전용 쿼리에 `.lean()` 사용
 - [ ] 응답 형식 `{ success, data | message }` 통일
 - [ ] Mongoose 모델 중복 등록 방지 패턴
 - [ ] Zustand 스토어에 `devtools` 미들웨어
@@ -93,4 +116,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| (현재 작업 중인 항목 없음) | — | 🟢 자유 | — |
+| src/app/api/, src/lib/models/, src/lib/auth.ts | FFLINA-PC | 🟡 작업 중 | API 성능 모니터링 미들웨어 구축 및 전체 API 쿼리 최적화 |

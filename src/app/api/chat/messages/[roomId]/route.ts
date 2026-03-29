@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/dbConnect';
 import ChatMessage from '@/lib/models/ChatMessage';
 import ChatRoom from '@/lib/models/ChatRoom';
 import mongoose from 'mongoose';
 
-export async function GET(req: Request, { params }: { params: { roomId: string } }) {
+async function handleGet(req: Request, { params }: { params: { roomId: string } }) {
   try {
     await dbConnect();
     const { roomId } = params;
@@ -149,3 +150,5 @@ export async function GET(req: Request, { params }: { params: { roomId: string }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/chat/messages/[roomId]');

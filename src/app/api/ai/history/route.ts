@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
@@ -7,7 +8,7 @@ import AiInstructionHistory from '@/lib/models/AiInstructionHistory';
 export const dynamic = 'force-dynamic';
 
 // GET /api/ai/history?boardId=xxx&page=1&limit=20 — 히스토리 목록
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?._id) {
     return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
@@ -52,3 +53,5 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/ai/history');

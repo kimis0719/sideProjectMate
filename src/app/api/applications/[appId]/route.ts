@@ -2,15 +2,16 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
-import Project from '@/lib/models/Project';
+import Project, { IProject } from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import Notification from '@/lib/models/Notification';
 import ProjectMember from '@/lib/models/ProjectMember';
 import { headers } from 'next/headers';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function PUT(request: Request, { params }: { params: { appId: string } }) {
+async function handlePut(request: Request, { params }: { params: { appId: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -37,7 +38,7 @@ export async function PUT(request: Request, { params }: { params: { appId: strin
       );
     }
 
-    const project = application.projectId as any;
+    const project = application.projectId as IProject;
 
     if (project.author.toString() !== session.user._id) {
       return NextResponse.json(
@@ -67,12 +68,16 @@ export async function PUT(request: Request, { params }: { params: { appId: strin
       });
 
       // 프로젝트의 members 배열에서 해당 역할의 current 값 증가
-      const memberIndex = project.members.findIndex((m: any) => m.role === application.role);
+      const memberIndex = project.members.findIndex(
+        (m: { role: string; current: number; max: number }) => m.role === application.role
+      );
       if (memberIndex !== -1) {
         project.members[memberIndex].current += 1;
 
         // 모든 역할의 모집이 완료되었는지 확인
-        const isAllFull = project.members.every((m: any) => m.current >= m.max);
+        const isAllFull = project.members.every(
+          (m: { role: string; current: number; max: number }) => m.current >= m.max
+        );
         if (isAllFull) {
           project.status = '02'; // 진행중으로 변경
         }
@@ -89,15 +94,19 @@ export async function PUT(request: Request, { params }: { params: { appId: strin
     });
 
     return NextResponse.json({ success: true, data: application });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '지원서 처리 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '지원서 처리 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { appId: string } }) {
+async function handleDelete(request: Request, { params }: { params: { appId: string } }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
@@ -115,7 +124,7 @@ export async function DELETE(request: Request, { params }: { params: { appId: st
       );
     }
 
-    const project = application.projectId as any;
+    const project = application.projectId as IProject;
     const isOwner = project.author.toString() === session.user._id;
     const isApplicant = application.applicantId.toString() === session.user._id;
 
@@ -136,10 +145,17 @@ export async function DELETE(request: Request, { params }: { params: { appId: st
     await Application.findByIdAndDelete(appId);
 
     return NextResponse.json({ success: true, message: '지원서가 삭제되었습니다.' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '지원서 삭제 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '지원서 삭제 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const PUT = withApiLogging(handlePut, '/api/applications/[appId]');
+export const DELETE = withApiLogging(handleDelete, '/api/applications/[appId]');

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/mongodb';
 import Task from '@/lib/models/wbs/TaskModel';
 
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
  * @param request - Next.js 요청 객체 (body에 updates 배열 포함)
  * @returns 수정 성공 메시지 (JSON)
  */
-export async function PATCH(request: NextRequest) {
+async function handlePatch(request: NextRequest) {
   try {
     // MongoDB 연결
     await dbConnect();
@@ -71,7 +72,7 @@ export async function PATCH(request: NextRequest) {
  * @param request - Next.js 요청 객체 (body에 ids 배열 포함)
  * @returns 삭제 성공 메시지 (JSON)
  */
-export async function DELETE(request: NextRequest) {
+async function handleDelete(request: NextRequest) {
   try {
     // MongoDB 연결
     await dbConnect();
@@ -114,3 +115,6 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+export const PATCH = withApiLogging(handlePatch, '/api/wbs/tasks/batch');
+export const DELETE = withApiLogging(handleDelete, '/api/wbs/tasks/batch');

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
@@ -7,7 +8,7 @@ import ChatRoom from '@/lib/models/ChatRoom';
 // Step 9.4: 채팅방 나가기
 // - 참여자 배열에서 현재 사용자 제거
 // - 참여자가 0명이 되면 채팅방 자체를 삭제
-export async function DELETE(_request: Request, { params }: { params: { roomId: string } }) {
+async function handleDelete(_request: Request, { params }: { params: { roomId: string } }) {
   try {
     // 1. 인증 확인
     const session = await getServerSession(authOptions);
@@ -33,7 +34,9 @@ export async function DELETE(_request: Request, { params }: { params: { roomId: 
     }
 
     // 4. 내가 이 방의 참여자인지 확인
-    const isParticipant = room.participants.some((p: any) => p.toString() === currentUserId);
+    const isParticipant = room.participants.some(
+      (p: { toString(): string }) => p.toString() === currentUserId
+    );
     if (!isParticipant) {
       return NextResponse.json(
         { success: false, message: '해당 채팅방의 참여자가 아닙니다.' },
@@ -42,7 +45,9 @@ export async function DELETE(_request: Request, { params }: { params: { roomId: 
     }
 
     // 5. 참여자 배열에서 현재 사용자 제거
-    room.participants = room.participants.filter((p: any) => p.toString() !== currentUserId);
+    room.participants = room.participants.filter(
+      (p: { toString(): string }) => p.toString() !== currentUserId
+    );
 
     if (room.participants.length === 0) {
       // 6a. 참여자가 0명이 되면 방 자체 삭제
@@ -61,10 +66,16 @@ export async function DELETE(_request: Request, { params }: { params: { roomId: 
         data: { deleted: false },
       });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '채팅방 나가기 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '채팅방 나가기 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const DELETE = withApiLogging(handleDelete, '/api/chat/rooms/[roomId]');

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/mongodb';
 import Task from '@/lib/models/wbs/TaskModel';
 
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
  * @param request - Next.js 요청 객체
  * @returns 작업 목록 배열 (JSON)
  */
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     // MongoDB 연결
     await dbConnect();
@@ -32,8 +33,9 @@ export async function GET(request: NextRequest) {
     // startDate 기준으로 오름차순 정렬 (간트차트에서 시간 순서대로 표시)
     // assignee 필드를 populate하여 담당자 정보도 함께 가져옴
     const tasks = await Task.find({ pid: parseInt(pid) })
-      .populate('assignee', 'nName email') // 담당자의 이름과 이메일만 가져옴
-      .sort({ startDate: 1 });
+      .populate('assignee', 'nName email')
+      .sort({ startDate: 1 })
+      .lean();
 
     return NextResponse.json({ success: true, data: tasks });
   } catch (error) {
@@ -52,7 +54,7 @@ export async function GET(request: NextRequest) {
  * @param request - Next.js 요청 객체 (body에 작업 정보 포함)
  * @returns 생성된 작업 객체 (JSON)
  */
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     // MongoDB 연결
     await dbConnect();
@@ -110,9 +112,9 @@ export async function POST(request: NextRequest) {
     });
 
     // 생성된 작업을 populate하여 담당자 정보와 함께 반환
-    const populatedTask = await Task.findById(newTask._id).populate('assignee', 'nName email');
+    await newTask.populate('assignee', 'nName email');
 
-    return NextResponse.json({ success: true, data: populatedTask }, { status: 201 });
+    return NextResponse.json({ success: true, data: newTask }, { status: 201 });
   } catch (error) {
     console.error('작업 생성 실패:', error);
     return NextResponse.json(
@@ -121,3 +123,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/wbs/tasks');
+export const POST = withApiLogging(handlePost, '/api/wbs/tasks');

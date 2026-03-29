@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/dbConnect';
 import Note from '@/lib/models/kanban/NoteModel';
 import mongoose from 'mongoose';
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
  * @param request - URL 쿼리 파라미터로 'boardId'를 포함해야 합니다.
  * 예: /api/kanban/notes?boardId=65a...
  */
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   try {
     await dbConnect();
 
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
     }
 
     const status = searchParams.get('status') || 'active';
-    const notes = await Note.find({ boardId, status }).sort({ createdAt: 1 });
+    const notes = await Note.find({ boardId, status }).sort({ createdAt: 1 }).lean();
 
     return NextResponse.json({ success: true, data: notes });
   } catch (error) {
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
 /**
  * 새 노트를 생성하는 API (POST)
  */
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     await dbConnect();
 
@@ -94,3 +95,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/kanban/notes');
+export const POST = withApiLogging(handlePost, '/api/kanban/notes');

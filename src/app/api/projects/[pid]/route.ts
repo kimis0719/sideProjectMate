@@ -8,10 +8,11 @@ import ProjectMember from '@/lib/models/ProjectMember';
 import User from '@/lib/models/User';
 import TechStack from '@/lib/models/TechStack';
 import Notification from '@/lib/models/Notification';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: { params: { pid: string } }) {
+async function handleGet(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     await dbConnect();
@@ -37,13 +38,14 @@ export async function GET(request: Request, { params }: { params: { pid: string 
       .populate('tags')
       .populate({
         path: 'projectMembers',
-        strictPopulate: false, // 오류를 해결하기 위해 이 옵션을 추가
+        strictPopulate: false,
         populate: {
           path: 'userId',
           select:
             'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl',
         },
-      });
+      })
+      .lean();
 
     if (!project) {
       return NextResponse.json(
@@ -53,16 +55,20 @@ export async function GET(request: Request, { params }: { params: { pid: string 
     }
 
     return NextResponse.json({ success: true, data: project });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[API ERROR: GET /api/projects/${params.pid}]`, error);
     return NextResponse.json(
-      { success: false, message: '서버 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '서버 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { pid: string } }) {
+async function handlePut(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -102,15 +108,19 @@ export async function PUT(request: Request, { params }: { params: { pid: string 
     });
 
     return NextResponse.json({ success: true, data: updatedProject });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '프로젝트 수정 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 수정 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { pid: string } }) {
+async function handleDelete(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -146,16 +156,20 @@ export async function DELETE(request: Request, { params }: { params: { pid: stri
     await Project.findByIdAndDelete(project._id);
 
     return NextResponse.json({ success: true, message: '프로젝트가 삭제되었습니다.' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '프로젝트 삭제 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 삭제 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
 // ✨ [PATCH] 프로젝트 상태 및 개요 부분 업데이트
-export async function PATCH(request: Request, { params }: { params: { pid: string } }) {
+async function handlePatch(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -201,7 +215,7 @@ export async function PATCH(request: Request, { params }: { params: { pid: strin
     }
 
     // 업데이트 객체 구성
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (status) updateData.status = status;
     if (overview !== undefined) updateData.overview = overview; // 빈 문자열 허용
 
@@ -251,11 +265,20 @@ export async function PATCH(request: Request, { params }: { params: { pid: strin
     }
 
     return NextResponse.json({ success: true, data: updatedProject });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[API ERROR: PATCH /api/projects/${params.pid}]`, error);
     return NextResponse.json(
-      { success: false, message: '프로젝트 수정 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 수정 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/projects/[pid]');
+export const PUT = withApiLogging(handlePut, '/api/projects/[pid]');
+export const DELETE = withApiLogging(handleDelete, '/api/projects/[pid]');
+export const PATCH = withApiLogging(handlePatch, '/api/projects/[pid]');

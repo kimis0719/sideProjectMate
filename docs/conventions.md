@@ -31,15 +31,44 @@ return NextResponse.json(
 ## API Route 필수 패턴
 
 ```ts
-export const dynamic = 'force-dynamic'; // 캐시 방지
-await dbConnect(); // DB 연결 필수
+import { withApiLogging } from '@/lib/apiLogger';
 
-// 인증이 필요한 엔드포인트:
-const session = await getServerSession(authOptions);
-if (!session || !session.user?._id) {
-  return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
+export const dynamic = 'force-dynamic'; // 캐시 방지
+
+// 핸들러는 export 하지 않고, 래퍼로 감싸서 export
+async function _GET(request: NextRequest) {
+  await dbConnect(); // DB 연결 필수
+
+  // 인증이 필요한 엔드포인트:
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user?._id) {
+    return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
+  }
+
+  // 읽기 전용 쿼리는 반드시 .lean() 사용
+  const data = await Model.find(query).lean();
+
+  return NextResponse.json({ success: true, data });
 }
+
+export const GET = withApiLogging(_GET, '/api/도메인/경로');
 ```
+
+### API 성능 로깅 규칙
+
+- **모든 API Route**에 `withApiLogging` 래퍼를 적용합니다.
+- 래퍼는 응답시간을 측정하여 콘솔 로그 + 메모리 집계에 기록합니다.
+- 500ms 초과 시 `[SLOW API]` 경고 로그가 출력됩니다.
+- 환경변수 `API_LOGGING=false`로 래퍼를 비활성화할 수 있습니다.
+- **예외**: Streaming 응답(`Response` 반환)을 사용하는 API는 래퍼 적용 불가 (예: `ai/generate-instruction`)
+- `/api/health`에서 서버 가동 이후 누적된 API 응답시간 통계를 확인할 수 있습니다.
+
+### 쿼리 성능 규칙
+
+- **읽기 전용 쿼리**에는 반드시 `.lean()`을 사용합니다 (Mongoose Document 오버헤드 제거).
+- 독립적인 쿼리 2개 이상은 `Promise.all()`로 병렬 실행합니다.
+- 무제한 조회 API에는 반드시 페이지네이션(`.limit()`)을 적용합니다.
+- 자주 조회하는 필드 조합에는 Mongoose 모델에 복합 인덱스를 추가합니다.
 
 ## Mongoose 모델 정의 패턴
 

@@ -7,10 +7,11 @@ import Counter from '@/lib/models/Counter';
 import TechStack from '@/lib/models/TechStack';
 import ProjectMember from '@/lib/models/ProjectMember';
 import { headers } from 'next/headers';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   headers();
   try {
     await dbConnect();
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'latest';
     const authorId = searchParams.get('authorId');
 
-    const query: any = { delYn: { $ne: true } };
+    const query: Record<string, unknown> = { delYn: { $ne: true } };
     if (searchTerm) {
       query.$or = [
         { title: { $regex: searchTerm, $options: 'i' } },
@@ -55,19 +56,21 @@ export async function GET(request: NextRequest) {
       query._id = { $in: memberProjects };
     }
 
-    let sortOptions: any = { createdAt: -1 };
+    let sortOptions: Record<string, number> = { createdAt: -1 };
     if (sortBy === 'deadline') {
       sortOptions = { deadline: 1 };
     }
 
-    const projects = await Project.find(query)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limit)
-      .populate('author', 'nName')
-      .populate('tags');
-
-    const total = await Project.countDocuments(query);
+    const [projects, total] = await Promise.all([
+      Project.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .populate('author', 'nName')
+        .populate('tags')
+        .lean(),
+      Project.countDocuments(query),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -78,19 +81,19 @@ export async function GET(request: NextRequest) {
         limit,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '프로젝트를 불러오는 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -141,23 +144,28 @@ export async function POST(request: Request) {
         role: '작성자',
         status: 'active',
       });
-    } catch (memberError: any) {
+    } catch (memberError: unknown) {
       console.error('[ERROR] Failed to add author to ProjectMember:', memberError);
       // 멤버 등록 실패 시에도 프로젝트 생성은 성공으로 처리하되, 에러 로그는 남김
     }
 
-    const populatedProject = await Project.findById(newProject._id)
-      .populate('author', 'nName')
-      .populate('tags');
+    await newProject.populate([{ path: 'author', select: 'nName' }, { path: 'tags' }]);
 
     return NextResponse.json(
-      { success: true, message: '프로젝트가 성공적으로 생성되었습니다.', data: populatedProject },
+      { success: true, message: '프로젝트가 성공적으로 생성되었습니다.', data: newProject },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '프로젝트 생성 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 생성 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/projects');
+export const POST = withApiLogging(handlePost, '/api/projects');

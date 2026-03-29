@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/mongodb';
 import Section from '@/lib/models/kanban/SectionModel';
 import Note from '@/lib/models/kanban/NoteModel';
@@ -6,7 +7,7 @@ import Note from '@/lib/models/kanban/NoteModel';
 // Helper to get ID from params
 // Next.js 13+ Route Handlers dynamic params
 // params is a Promise in recent versions, but usually passed as second arg
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+async function handlePatch(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const id = params.id;
     const body = await req.json();
@@ -29,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+async function handleDelete(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const id = params.id;
     const searchParams = req.nextUrl.searchParams;
@@ -44,7 +45,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     // 자식 섹션 목록 조회
     const childSections = await Section.find({ parentSectionId: id }).lean();
-    const childSectionIds = childSections.map((cs: any) => cs._id.toString());
+    const childSectionIds = childSections.map((cs) => String(cs._id));
 
     // 1. 부모 섹션 삭제
     await Section.findByIdAndDelete(id);
@@ -81,3 +82,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     );
   }
 }
+
+export const PATCH = withApiLogging(handlePatch, '/api/kanban/sections/[id]');
+export const DELETE = withApiLogging(handleDelete, '/api/kanban/sections/[id]');

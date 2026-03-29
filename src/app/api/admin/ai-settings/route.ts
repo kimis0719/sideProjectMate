@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import AiSettings from '@/lib/models/AiSettings';
 import { requireAdmin } from '@/lib/adminAuth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/admin/ai-settings — 현재 AI 설정 조회
-export async function GET() {
+async function handleGet() {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -24,7 +25,7 @@ export async function GET() {
 }
 
 // PATCH /api/admin/ai-settings — AI 설정 변경
-export async function PATCH(request: Request) {
+async function handlePatch(request: Request) {
   const { error, session } = await requireAdmin();
   if (error) return error;
 
@@ -85,3 +86,6 @@ export async function PATCH(request: Request) {
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/admin/ai-settings');
+export const PATCH = withApiLogging(handlePatch, '/api/admin/ai-settings');

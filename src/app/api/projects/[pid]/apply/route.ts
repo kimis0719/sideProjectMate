@@ -6,10 +6,11 @@ import Project from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import Notification from '@/lib/models/Notification';
 import { headers } from 'next/headers';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request, { params }: { params: { pid: string } }) {
+async function handlePost(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -44,7 +45,9 @@ export async function POST(request: Request, { params }: { params: { pid: string
       );
     }
 
-    const targetRole = project.members.find((m: any) => m.role === role);
+    const targetRole = project.members.find(
+      (m: { role: string; current: number; max: number }) => m.role === role
+    );
     if (!targetRole) {
       return NextResponse.json(
         { success: false, message: '모집하지 않는 역할입니다.' },
@@ -83,10 +86,16 @@ export async function POST(request: Request, { params }: { params: { pid: string
       { success: true, message: '프로젝트에 성공적으로 지원했습니다.' },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '지원 처리 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '지원 처리 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const POST = withApiLogging(handlePost, '/api/projects/[pid]/apply');

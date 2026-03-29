@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/dbConnect';
 import ChatMessage from '@/lib/models/ChatMessage';
 import ChatRoom from '@/lib/models/ChatRoom';
 
-export async function POST(req: Request) {
+async function handlePost(req: Request) {
   try {
     await dbConnect();
 
@@ -51,11 +52,17 @@ export async function POST(req: Request) {
       { success: true, message: '메시지가 성공적으로 저장되었습니다.', data: newMessage },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Save message error:', error);
     return NextResponse.json(
-      { success: false, message: '메시지 저장 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '메시지 저장 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const POST = withApiLogging(handlePost, '/api/chat/messages');
