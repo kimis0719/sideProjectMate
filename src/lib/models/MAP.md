@@ -13,6 +13,10 @@
 | `CommonCode.ts`    | `commoncodes`     | group, code, label                              |
 | `Review.ts`        | `reviews`         | reviewerId, revieweeId, projectId, rating       |
 | `Availability.ts`  | `availabilities`  | userId, schedule                                |
+| `AiSettings.ts`    | `aisettings`      | provider, modelPriority, systemPromptTemplate, defaultPresets |
+| `AiUsage.ts`       | `aiusages`        | userId, projectId, provider, inputTokens        |
+| `AiPreset.ts`      | `aipresets`       | projectId, name, roleInstruction                |
+| `AiInstructionHistory.ts` | `aiinstructionhistories` | projectId, boardId, target, resultMarkdown |
 | `kanban/`          | —                 | Board, Section, Note                            |
 | `wbs/`             | —                 | WBS Task                                        |
 
@@ -30,8 +34,12 @@ Hot Reload 대비 중복 등록 방지 패턴 필수.
 
 ## 자동 생성 파일 목록
 
-> 마지막 갱신: 2026-03-28
+> 마지막 갱신: 2026-03-29
 
+- `AiInstructionHistory.ts`
+- `AiPreset.ts`
+- `AiSettings.ts`
+- `AiUsage.ts`
 - `Application.ts`
 - `Availability.ts`
 - `ChatMessage.ts`
