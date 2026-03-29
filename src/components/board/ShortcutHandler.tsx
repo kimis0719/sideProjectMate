@@ -9,23 +9,9 @@ export default function ShortcutHandler() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      console.log(
-        'Key pressed:',
-        e.key,
-        'Code:',
-        e.code,
-        'Ctrl:',
-        e.ctrlKey,
-        'Shift:',
-        e.shiftKey,
-        'Meta:',
-        e.metaKey
-      );
-
       // 입력 요소(input, textarea)에 포커스가 있으면 단축키 무시
       const target = e.target as HTMLElement;
       if (['INPUT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable) {
-        console.log('Ignored due to input focus');
         if (e.key === 'Escape') {
           target.blur(); // 포커스 해제
         }
@@ -126,7 +112,6 @@ export default function ShortcutHandler() {
         !e.shiftKey &&
         (e.key.toLowerCase() === 'z' || e.code === 'KeyZ')
       ) {
-        console.log('Undo Triggered (ShortcutHandler)');
         e.preventDefault();
         undo();
       }
@@ -138,7 +123,6 @@ export default function ShortcutHandler() {
           (e.key.toLowerCase() === 'z' || e.code === 'KeyZ')) ||
         ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || e.code === 'KeyY'))
       ) {
-        console.log('Redo Triggered (ShortcutHandler)');
         e.preventDefault();
         redo();
       }

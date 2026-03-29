@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
         rssUrl = `https://v2.velog.io/rss/${username}`;
       } else {
         // 아이디가 없는 메인 페이지 등의 경우 빈 배열 반환
-        console.log('Velog 아이디를 찾을 수 없습니다.');
+        console.warn('Velog 아이디를 찾을 수 없습니다.');
         return NextResponse.json([]);
       }
     }

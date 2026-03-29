@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import AdminStatCard from '@/components/admin/AdminStatCard';
 import { getIconSlug } from '@/lib/iconUtils';
@@ -166,10 +167,13 @@ export default function AdminDashboard() {
                 return (
                   <li key={stack.name} className="flex items-center gap-3">
                     <span className="text-xs text-muted-foreground w-4 text-right">{idx + 1}</span>
-                    <img
+                    <Image
                       src={`https://skillicons.dev/icons?i=${slug}`}
                       alt={stack.name}
+                      width={20}
+                      height={20}
                       className="w-5 h-5 object-contain"
+                      unoptimized
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { getSocket } from '@/lib/socket';
 
 interface Member {
@@ -79,10 +80,13 @@ export default function MemberWidget({ members, currentUserId, projectId }: Memb
                 <div className="relative">
                   <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                     {member.image ? (
-                      <img
+                      <Image
                         src={member.image}
                         alt={displayName}
+                        width={32}
+                        height={32}
                         className="w-full h-full rounded-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       initial

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 interface Reviewer {
   _id: string;
@@ -82,10 +83,13 @@ function ReviewCard({ review }: { review: ReviewData }) {
       {/* 리뷰어 정보 */}
       <div className="flex items-center gap-2 pt-1 border-t border-gray-100 dark:border-gray-700">
         {reviewer?.avatarUrl ? (
-          <img
+          <Image
             src={reviewer.avatarUrl}
             alt={reviewer.nName}
+            width={24}
+            height={24}
             className="w-6 h-6 rounded-full object-cover"
+            unoptimized
           />
         ) : (
           <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">

@@ -10,6 +10,22 @@ export interface TaskPosition {
   height: number;
 }
 
+/** drawDependencies 내부에서 사용하는 WBS 작업 타입 */
+interface WbsTask {
+  id: string;
+  title?: string;
+  dependencies?: (string | { taskId?: string; _id?: string })[];
+}
+
+/** 의존관계 검증 정보 */
+interface LinkValidation {
+  from: string | null;
+  to: string;
+  fromFound: boolean;
+  toFound: boolean;
+  canDraw: boolean;
+}
+
 /**
  * SVG에 곡선 경로를 생성하는 함수
  * Bezier 곡선으로 매끄러운 연결선 생성
@@ -78,7 +94,7 @@ export const getTaskPositions = (ganttContainer: HTMLElement): Map<string, TaskP
  */
 export const drawDependencyLines = (
   ganttContainer: HTMLElement,
-  taskMap: Map<string, any>,
+  taskMap: Map<string, WbsTask>,
   taskPositions: Map<string, TaskPosition>,
   isDarkMode: boolean
 ) => {
@@ -110,7 +126,7 @@ export const drawDependencyLines = (
     const toPosition = taskPositions.get(task.id);
     if (!toPosition) return;
 
-    task.dependencies.forEach((dep: any) => {
+    task.dependencies.forEach((dep) => {
       // dependencies 형식이 다양할 수 있으므로 정확히 처리
       let depTaskId = '';
       if (typeof dep === 'string') {
@@ -240,10 +256,10 @@ export const highlightDependencies = (
  */
 export const debugDependencyInfo = (
   ganttContainer: HTMLElement,
-  taskMap: Map<string, any>,
+  taskMap: Map<string, WbsTask>,
   taskPositions: Map<string, TaskPosition>
 ) => {
-  console.group('🔗 Dependency Line Debug Info');
+  console.warn('🔗 Dependency Line Debug Info');
 
   // Task 정보 출력
   const taskInfo = Array.from(taskMap.entries()).map(([id, task]) => {
@@ -254,31 +270,36 @@ export const debugDependencyInfo = (
       dependenciesRaw: deps,
       dependenciesCount: deps.length,
       // 의존관계를 정확히 추출
-      dependencyIds: deps.map((dep: any) => {
+      dependencyIds: deps.map((dep) => {
         if (typeof dep === 'string') return dep;
-        if (typeof dep === 'object' && dep.taskId) return dep.taskId;
+        if (typeof dep === 'object' && dep !== null && dep.taskId) return dep.taskId;
         return '(unknown)';
       }),
     };
   });
 
-  console.log('📊 Task Map:', {
+  console.warn('📊 Task Map:', {
     total: taskMap.size,
     tasks: taskInfo,
   });
 
-  console.log('📍 Task Positions Found:', {
+  console.warn('📍 Task Positions Found:', {
     total: taskPositions.size,
     ids: Array.from(taskPositions.keys()),
   });
 
   // 의존관계 연결 가능 여부 검증
-  const linkValidation: any[] = [];
+  const linkValidation: LinkValidation[] = [];
   taskMap.forEach((task) => {
     if (!task.dependencies || task.dependencies.length === 0) return;
 
-    task.dependencies.forEach((dep: any) => {
-      const depId = typeof dep === 'string' ? dep : typeof dep === 'object' ? dep.taskId : null;
+    task.dependencies.forEach((dep) => {
+      const depId =
+        typeof dep === 'string'
+          ? dep
+          : typeof dep === 'object' && dep !== null
+            ? (dep.taskId ?? null)
+            : null;
       if (!depId) return;
 
       const hasFrom = taskPositions.has(depId);
@@ -294,13 +315,13 @@ export const debugDependencyInfo = (
     });
   });
 
-  console.log('🔍 Dependency Links:', {
+  console.warn('🔍 Dependency Links:', {
     total: linkValidation.length,
     drawable: linkValidation.filter((l) => l.canDraw).length,
     issues: linkValidation.filter((l) => !l.canDraw),
   });
 
-  console.groupEnd();
+  // groupEnd removed with group
 };
 
 /**

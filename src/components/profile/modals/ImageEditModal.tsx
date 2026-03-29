@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useModal } from '@/hooks/useModal';
 
 interface ImageEditModalProps {
@@ -89,7 +90,7 @@ export default function ImageEditModal({
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 dark:border-muted shadow-inner">
               {previewUrl ? (
-                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                <Image src={previewUrl} alt="Preview" fill className="object-cover" unoptimized />
               ) : (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
                   No Image

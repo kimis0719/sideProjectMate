@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useBoardStore } from '@/store/boardStore';
 import { socketClient } from '@/lib/socket';
 import NoteItem from '@/components/board/NoteItem';
@@ -407,7 +408,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     const viewportCenterY = -pan.y / zoom + window.innerHeight / 2 / zoom;
 
     const newSection = {
-      boardId: boardId as any,
+      boardId,
       title: '새 섹션',
       x: viewportCenterX - 150,
       y: viewportCenterY - 150,
@@ -565,11 +566,14 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
               .map((user) => (
                 <div key={user._id} className="relative group">
                   {user.avatarUrl ? (
-                    <img
+                    <Image
                       src={user.avatarUrl}
                       alt={user.nName}
                       title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
+                      width={32}
+                      height={32}
                       className={`w-8 h-8 rounded-full border-2 border-background object-cover z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'border-primary' : 'bg-secondary'}`}
+                      unoptimized
                     />
                   ) : (
                     <div

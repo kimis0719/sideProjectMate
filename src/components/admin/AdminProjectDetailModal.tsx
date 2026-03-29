@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { useModal } from '@/hooks/useModal';
 import AdminUserDetailModal from '@/components/admin/AdminUserDetailModal';
@@ -68,7 +69,7 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
         const res = await fetch(`/api/admin/projects/${pid}`, { signal: controller.signal });
         const json = await res.json();
         if (!cancelled && json.success) setProject(json.data);
-      } catch (err: any) {
+      } catch {
         // AbortError는 cleanup 시 정상 발생 — 무시
       } finally {
         if (!cancelled) setLoading(false);
@@ -245,10 +246,13 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
                   {project.author ? (
                     <div className="flex items-center gap-3">
                       {project.author.avatarUrl ? (
-                        <img
+                        <Image
                           src={project.author.avatarUrl}
                           alt={project.author.nName}
+                          width={36}
+                          height={36}
                           className="w-9 h-9 rounded-full object-cover border border-border"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm text-muted-foreground border border-border">

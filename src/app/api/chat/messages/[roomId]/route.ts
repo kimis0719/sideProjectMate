@@ -83,7 +83,7 @@ export async function GET(req: Request, { params }: { params: { roomId: string }
     }
 
     // 1. 해당 방의 메시지 내역을 DB에서 조회 (최신순 정렬)
-    let query: any = { roomId };
+    const query: { roomId: string; _id?: { $lt: string } } = { roomId };
 
     // 📜 [Step 8.1] 커서가 존재하면, 그 커서(메시지 ID)보다 "더 옛날에" 만들어진 메시지만 검색
     if (cursor && mongoose.Types.ObjectId.isValid(cursor)) {
@@ -140,10 +140,11 @@ export async function GET(req: Request, { params }: { params: { roomId: string }
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Fetch messages error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { success: false, message: '메시지 내역을 불러오지 못했습니다.', error: error.message },
+      { success: false, message: '메시지 내역을 불러오지 못했습니다.', error: message },
       { status: 500 }
     );
   }

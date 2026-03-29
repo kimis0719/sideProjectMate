@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 /**
  * Open Graph API 응답 데이터 타입 정의
@@ -101,10 +102,12 @@ export default function PortfolioCard({ url, onDelete, readOnly = false }: Portf
         {/* 썸네일 이미지 */}
         <div className="w-28 h-full flex-shrink-0 bg-gray-100 relative overflow-hidden">
           {data.image ? (
-            <img
+            <Image
               src={data.image}
               alt={data.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              unoptimized
               onError={(e) => {
                 // 이미지 로드 실패 시 회색 박스로 대체
                 (e.target as HTMLImageElement).style.display = 'none';

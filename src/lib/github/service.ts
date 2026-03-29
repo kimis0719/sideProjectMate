@@ -1,6 +1,7 @@
 import User from '@/lib/models/User';
 import { githubClient } from '@/lib/github/client';
 import { GET_USER_STATS } from '@/lib/github/queries';
+import { GitHubUserResponse } from '@/lib/github/types';
 import { calculateGitHubStats } from '@/lib/github/utils';
 
 /**
@@ -20,10 +21,10 @@ export async function updateUserGithubStats(userId: string, githubUrl: string): 
       return false;
     }
 
-    console.log(`[GitHub Service] Syncing stats for: ${username} (User: ${userId})`);
+    console.warn(`[GitHub Service] Syncing stats for: ${username} (User: ${userId})`);
 
     // GitHub API 호출
-    const data = await githubClient.request<any>(GET_USER_STATS, { username });
+    const data = await githubClient.request<GitHubUserResponse>(GET_USER_STATS, { username });
     const stats = calculateGitHubStats(data);
 
     if (!stats) {
@@ -64,7 +65,7 @@ export async function updateUserGithubStats(userId: string, githubUrl: string): 
     user.level = stats.level.value;
 
     await user.save();
-    console.log(`[GitHub Service] Successfully updated stats for ${username}`);
+    console.warn(`[GitHub Service] Successfully updated stats for ${username}`);
     return true;
   } catch (error) {
     console.error(`[GitHub Service] Error updating stats:`, error);

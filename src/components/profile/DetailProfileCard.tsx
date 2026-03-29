@@ -246,10 +246,13 @@ export default function DetailProfileCard({
             )}
             {user.socialLinks?.solvedAc && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-green-600 transition-colors">
-                <img
+                <Image
                   src="https://static.solved.ac/logo.svg"
                   alt="solved.ac"
+                  width={14}
+                  height={14}
                   className="w-3.5 h-3.5 opacity-70"
+                  unoptimized
                 />
                 <span>@{user.socialLinks.solvedAc}</span>
               </div>

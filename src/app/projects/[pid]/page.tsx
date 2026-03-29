@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
@@ -19,24 +20,45 @@ const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider
   loading: () => <div className="aspect-video bg-gray-100 rounded-lg animate-pulse" />,
 });
 
+// 프로젝트 작성자 populate된 타입
+interface PopulatedAuthor {
+  _id: string;
+  nName: string;
+  position?: string;
+  career?: string;
+  level?: number;
+  introduction?: string;
+  techTags?: string[];
+  status?: string;
+  avatarUrl?: string;
+  socialLinks?: {
+    github?: string;
+    blog?: string;
+    linkedin?: string;
+    other?: string;
+    solvedAc?: string;
+  };
+}
+
+// 프로젝트 멤버 populate된 타입
+interface PopulatedProjectMember {
+  userId?: { _id: string; nName?: string; avatarUrl?: string; position?: string } | string;
+  role: string;
+  status: 'active' | 'inactive' | 'removed';
+}
+
+// 공통 코드 항목 타입
+interface CommonCodeItem {
+  code: string;
+  label: string;
+}
+
 // 프로젝트 데이터 타입 확장 (populate된 필드 포함)
 interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
-  author:
-    | {
-        _id: string;
-        nName: string;
-        position?: string;
-        career?: string;
-        level?: number;
-        introduction?: string;
-        techTags?: string[];
-        status?: string;
-        socialLinks?: any;
-      }
-    | string;
+  author: PopulatedAuthor | string;
   tags: { _id: string; name: string; category: string }[];
   likesCount: number;
-  projectMembers?: any[]; // projectMembers 필드 추가
+  projectMembers?: PopulatedProjectMember[];
 }
 
 interface ProjectPageProps {
@@ -81,9 +103,11 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     project.author._id === session.user._id;
 
   // 현재 사용자가 프로젝트 멤버인지 확인
-  const isMember = project?.projectMembers?.some(
-    (m: any) => m.userId && (m.userId._id === session?.user?._id || m.userId === session?.user?._id)
-  );
+  const isMember = project?.projectMembers?.some((m: PopulatedProjectMember) => {
+    if (!m.userId) return false;
+    const userId = typeof m.userId === 'object' ? m.userId._id : m.userId;
+    return userId === session?.user?._id;
+  });
 
   useEffect(() => {
     if (!pid) return;
@@ -111,7 +135,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           const categoryRes = await fetch('/api/common-codes?group=CATEGORY');
           const categoryData = await categoryRes.json();
           if (categoryData.success) {
-            const matchedCategory = categoryData.data.find((c: any) => c.code === project.category);
+            const matchedCategory = categoryData.data.find(
+              (c: CommonCodeItem) => c.code === project.category
+            );
             setCategoryLabel(matchedCategory ? matchedCategory.label : project.category);
           }
         } catch (e) {
@@ -124,7 +150,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           const statusRes = await fetch('/api/common-codes?group=STATUS');
           const statusData = await statusRes.json();
           if (statusData.success) {
-            const matchedStatus = statusData.data.find((c: any) => c.code === project.status);
+            const matchedStatus = statusData.data.find(
+              (c: CommonCodeItem) => c.code === project.status
+            );
             setStatusLabel(matchedStatus ? matchedStatus.label : project.status);
           }
         } catch (e) {
@@ -144,8 +172,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             console.error('지원 내역 확인 실패', e);
           }
         }
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
       } finally {
         setIsLoading(false);
       }
@@ -184,23 +212,25 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
     // 프로젝트 작성자
     if (typeof project.author === 'object' && project.author._id !== session.user._id) {
+      const author = project.author as PopulatedAuthor;
       users.push({
-        _id: project.author._id,
-        nName: (project.author as any).nName || '작성자',
-        avatarUrl: (project.author as any).avatarUrl,
-        position: (project.author as any).position,
+        _id: author._id,
+        nName: author.nName || '작성자',
+        avatarUrl: author.avatarUrl,
+        position: author.position,
       });
     }
 
     // 활성 팀원
-    project.projectMembers?.forEach((m: any) => {
-      const userId = m.userId?._id || m.userId;
+    project.projectMembers?.forEach((m: PopulatedProjectMember) => {
+      const memberUser = typeof m.userId === 'object' ? m.userId : null;
+      const userId = memberUser?._id || (typeof m.userId === 'string' ? m.userId : undefined);
       if (userId && userId !== session.user?._id && m.status === 'active') {
         users.push({
           _id: userId,
-          nName: m.userId?.nName || '팀원',
-          avatarUrl: m.userId?.avatarUrl,
-          position: m.userId?.position,
+          nName: memberUser?.nName || '팀원',
+          avatarUrl: memberUser?.avatarUrl,
+          position: memberUser?.position,
         });
       }
     });
@@ -249,9 +279,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           : data.message || '채팅방 생성에 실패했습니다.';
         await alert('오류', errorMsg);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      await alert('오류', `문의하기 요청 중 문제가 발생했습니다.\n${e.message}`);
+      await alert(
+        '오류',
+        `문의하기 요청 중 문제가 발생했습니다.\n${e instanceof Error ? e.message : '알 수 없는 오류'}`
+      );
     }
   };
 
@@ -293,8 +326,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         } else {
           throw new Error(data.message || '삭제에 실패했습니다.');
         }
-      } catch (err: any) {
-        await alert('에러', err.message);
+      } catch (err: unknown) {
+        await alert('에러', err instanceof Error ? err.message : '삭제 중 오류가 발생했습니다.');
       }
     }
   };
@@ -346,8 +379,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       } else {
         throw new Error(data.message || '지원에 실패했습니다.');
       }
-    } catch (err: any) {
-      await alert('에러', err.message);
+    } catch (err: unknown) {
+      await alert('에러', err instanceof Error ? err.message : '지원 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -465,7 +498,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               {project.images && project.images.length > 0 ? (
                 <ProjectImageSlider images={project.images} title={project.title} />
               ) : (
-                <div className="aspect-video bg-muted rounded-lg mb-8 overflow-hidden">
+                <div className="relative aspect-video bg-muted rounded-lg mb-8 overflow-hidden">
                   <ProjectThumbnail
                     src={null}
                     alt={project.title}
@@ -610,10 +643,13 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                           <div key={u._id} className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                               {u.avatarUrl ? (
-                                <img
+                                <Image
                                   src={u.avatarUrl}
                                   alt={u.nName}
+                                  width={28}
+                                  height={28}
                                   className="w-7 h-7 rounded-full object-cover shrink-0"
+                                  unoptimized
                                 />
                               ) : (
                                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

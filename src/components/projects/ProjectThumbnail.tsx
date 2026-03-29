@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface ProjectThumbnailProps {
   src: string | null;
@@ -35,10 +36,12 @@ export default function ProjectThumbnail({
   }
 
   return (
-    <img
+    <Image
       src={currentSrc}
       alt={alt}
-      className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${className || ''}`}
+      fill
+      className={`object-cover transition-transform duration-300 group-hover:scale-105 ${className || ''}`}
+      unoptimized
       onError={() => setError(true)}
     />
   );

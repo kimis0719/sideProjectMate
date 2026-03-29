@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { IResource } from '@/lib/models/Project';
 import { useModalStore } from '@/store/modalStore';
+
+// 리소스 메타데이터 타입
+interface ResourceMetadata {
+  title?: string;
+  image?: string;
+  [key: string]: string | undefined;
+}
+
+// 리소스 카테고리 타입
+type ResourceCategory = 'CODE' | 'DESIGN' | 'DOCS' | 'ENV' | 'ACCOUNT' | 'OTHER';
 
 interface ResourceModalProps {
   isOpen: boolean;
@@ -10,14 +21,14 @@ interface ResourceModalProps {
     type: 'LINK' | 'TEXT',
     category: string,
     content: string,
-    metadata?: any
+    metadata?: ResourceMetadata
   ) => Promise<void>;
   onDeleteResource: (resourceId: string) => Promise<void>;
   onUpdateResource: (
     resourceId: string,
     category: string,
     content: string,
-    metadata?: any
+    metadata?: ResourceMetadata
   ) => Promise<void>;
   currentUserId: string; // ✨ 현재 로그인한 유저 ID
   projectAuthorId: string; // ✨ 프로젝트 생성자(PM) ID
@@ -152,7 +163,7 @@ export default function ResourceModal({
       setTitle(editingResource.metadata?.title || '');
 
       setDetectedType(editingResource.type);
-      setDetectedCategory(editingResource.category as any);
+      setDetectedCategory(editingResource.category as ResourceCategory);
       setIsManualCategory(true); // 수정 시엔 자동 감지 끄기
     }
   }, [editingResource]);
@@ -199,7 +210,7 @@ export default function ResourceModal({
       return;
     }
 
-    const finalMetadata: any = {};
+    const finalMetadata: ResourceMetadata = {};
     if (title.trim()) {
       finalMetadata.title = title;
     }
@@ -226,7 +237,7 @@ export default function ResourceModal({
 
   // 카테고리 선택 핸들러
   const handleCategorySelect = (cat: string) => {
-    setDetectedCategory(cat as any);
+    setDetectedCategory(cat as ResourceCategory);
     setIsManualCategory(true); // 수동 선택 활성화 (자동 감지 잠금)
     setFilterCategory(cat); // 목록 필터링도 연동
 
@@ -329,10 +340,10 @@ export default function ResourceModal({
               )}
             </div>
           ) : (
-            filteredResources.map((res: any) => {
+            filteredResources.map((res: IResource) => {
               const accountInfo =
                 res.category === 'ACCOUNT' ? parseAccountContent(res.content) : null;
-              const isPwVisible = visiblePasswords[res._id] || false;
+              const isPwVisible = (res._id && visiblePasswords[res._id]) || false;
 
               // ✨ 권한 체크 (본인 작성 or 프로젝트 관리자)
               const isOwner =
@@ -404,10 +415,13 @@ export default function ResourceModal({
                       >
                         <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-500 dark:text-blue-400 shrink-0">
                           {res.metadata?.image ? (
-                            <img
+                            <Image
                               src={res.metadata.image}
                               alt=""
+                              width={32}
+                              height={32}
                               className="w-full h-full object-cover rounded-lg"
+                              unoptimized
                             />
                           ) : (
                             <span className="text-sm">🔗</span>
