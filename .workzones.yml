@@ -15,19 +15,4 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones:
-  - path: 'src/app/api/'
-    owner: 'FFLINA-PC'
-    status: 'active'
-    reason: 'API 성능 모니터링 미들웨어 구축 및 전체 API 쿼리 최적화'
-    expires: '2026-04-05'
-  - path: 'src/lib/models/'
-    owner: 'FFLINA-PC'
-    status: 'active'
-    reason: 'DB 인덱스 추가 (Notification, Project, User)'
-    expires: '2026-04-05'
-  - path: 'src/lib/auth.ts'
-    owner: 'FFLINA-PC'
-    status: 'active'
-    reason: 'Auth jwt 콜백 최적화'
-    expires: '2026-04-05'
+zones: []

@@ -17,6 +17,7 @@
 | 기술스택   | `api/tech-stacks/`     | GET 기술스택 목록         |
 | 리뷰       | `api/reviews/`         | POST 리뷰, GET check      |
 | Cloudinary | `api/cloudinary/sign/` | POST 업로드 서명 발급     |
+| 헬스체크   | `api/health/`          | GET API 성능 통계 모니터링 |
 | 유틸       | `api/utils/og/`        | GET OG 태그 파싱          |
 
 ## 공통 패턴 (모든 Route 적용)
