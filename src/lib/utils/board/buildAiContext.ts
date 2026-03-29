@@ -96,7 +96,7 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
   }
 
   // ── 참조 노트 수집 ──
-  let referenceNotes: LeanNote[] = [];
+  const referenceNotes: LeanNote[] = [];
   if (reference?.sectionIds?.length) {
     const refBySections = (await Note.find({
       boardId,

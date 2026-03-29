@@ -403,7 +403,7 @@ export default function NoteItem({
         lockNote(id, myUserId);
       }
     },
-    [text, id, selectNote, isLockedByOther, lockNote, myUserId]
+    [text, id, selectNote, isLockedByOther, isDoneView, lockNote, myUserId]
   );
 
   const saveEdit = React.useCallback(() => {
@@ -767,8 +767,6 @@ export default function NoteItem({
       saveChanges,
       id,
       updateNote,
-      width,
-      height,
       selectedNoteIds,
       isSelected,
       setAlignmentGuides,
