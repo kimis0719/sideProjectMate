@@ -20,5 +20,5 @@ services:
     ignoredPaths:
       - work-logs/**
       - docs/**
-      - "**/*.md"
+      - '**/*.md'
       - .claude/**
