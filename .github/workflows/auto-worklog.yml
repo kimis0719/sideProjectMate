@@ -1,9 +1,7 @@
 name: Auto Work Log
 
 on:
-  push:
-    branches-ignore:
-      - main
+  workflow_dispatch: # 비활성화 — spm-done 스킬이 work-log 생성을 담당함
 
 jobs:
   generate-worklog:
