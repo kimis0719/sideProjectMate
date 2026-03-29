@@ -11,3 +11,10 @@ dist/
 out/
 build/
 coverage/
+
+# 자동 생성된 리포트 파일
+*_report.html
+*-review.html
+
+# 마크다운 파일 (work-logs, docs, MAP.md 등 자동생성/수동관리)
+**/*.md
