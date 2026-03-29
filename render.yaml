@@ -17,3 +17,8 @@ services:
         sync: false
     plan: free
     healthCheckPath: /api/status
+    ignoredPaths:
+      - work-logs/**
+      - docs/**
+      - "**/*.md"
+      - .claude/**

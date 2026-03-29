@@ -26,20 +26,18 @@ gh auth status
 
 ## 1단계: work-log 목록 표시
 
-`work-logs/` 디렉토리의 파일 목록을 읽어 표시합니다.
-각 파일의 첫 줄(날짜 + 작업자 + 브랜치 + SHA)과 "작업 요약" 섹션을 파싱합니다.
+`work-logs/` 디렉토리의 파일 목록을 읽어 각 파일의 첫 줄(날짜 + 작업자 + 브랜치 + SHA)과 "작업 요약" 섹션을 파싱합니다.
 
-```
-되돌릴 작업을 선택하세요:
+최대 4개까지 `AskUserQuestion` 도구로 선택지를 제시합니다 (최신순 정렬):
 
-1. 2026-03-28 — HJ (feature/180-spm-improve) `a1b2c3d`
-   요약: SPM 스킬 체계 개편 및 GitHub Actions CI 수정
+- question: "되돌릴 작업을 선택하세요."
+- header: "work-log"
+- options (각 work-log 항목):
+  - label: "[날짜] [작업자] ([브랜치])"
+  - description: "[작업 요약 한 줄]"
+- preview 활용: 선택한 work-log의 전체 내용을 표시
 
-2. 2026-03-25 — YJ (fix/175-drag-bug) `e4f5g6h`
-   요약: 드래그 앤 드롭 좌표 계산 버그 수정
-
-선택 (번호):
-```
+work-log가 5개 이상이면 "Other를 선택해 SHA를 직접 입력하세요"라고 안내합니다.
 
 ---
 
@@ -47,19 +45,14 @@ gh auth status
 
 선택한 work-log의 "건드리면 안 되는 부분" 섹션을 먼저 표시합니다.
 
-```
-⚠️ 롤백 전 주의사항
-이 파일들은 충돌 시 특히 주의하세요:
+`AskUserQuestion` 도구로 롤백 진행 여부를 확인합니다:
 
-| 파일 | 위치 | 이유 |
-|---|---|---|
-| SectionItem.tsx | childNodeCacheRef | 성능 최적화 핵심 |
-| boardStore.ts | applyRemote* 함수들 | Undo/Redo 동기화 로직 |
-
-없음인 경우: 특별한 주의사항이 없습니다.
-
-계속 진행하시겠습니까? (y/n)
-```
+- question: "선택한 작업을 롤백합니다. 계속 진행할까요?"
+- header: "롤백 확인"
+- options:
+  - label: "롤백 진행 (Recommended)", description: "git revert를 실행하고 PR을 생성합니다"
+  - label: "취소", description: "롤백을 중단합니다"
+- preview 활용: "건드리면 안 되는 부분" 표 + 작업 요약을 표시 (항목 없으면 "특별한 주의사항이 없습니다")
 
 ---
 
@@ -108,23 +101,24 @@ git push
 
 revert 커밋의 SHA를 수집하고, 선택한 work-log 내용을 기반으로 PR 초안을 작성합니다.
 
-```
-📝 PR 초안:
-─────────────────────────────
-제목: revert: [되돌린 작업 요약]
-본문:
-## 롤백 대상
-- 커밋: [원본 SHA]
-- 작업: [work-log 작업 요약]
+롤백 사유를 `AskUserQuestion` 도구로 먼저 입력받습니다:
 
-## 롤백 사유
-(사용자에게 롤백 사유를 간단히 입력받습니다)
+- question: "롤백 사유를 선택하거나 직접 입력하세요."
+- header: "롤백 사유"
+- options:
+  - label: "기능 오류 (Recommended)", description: "배포 후 기능이 정상 동작하지 않음"
+  - label: "성능 저하", description: "해당 작업 이후 성능 문제 발생"
+  - label: "충돌 발생", description: "다른 작업과 충돌하여 롤백 필요"
+  - label: "기획 변경", description: "기획 변경으로 해당 기능 불필요"
 
-## 주의사항
-[건드리면 안 되는 부분 내용]
-─────────────────────────────
-이대로 PR을 생성할까요?
-```
+입력받은 사유로 PR 초안을 작성한 뒤 `AskUserQuestion` 도구로 확인을 요청합니다:
+
+- question: "PR 초안을 확인해주세요."
+- header: "PR 확인"
+- options:
+  - label: "이대로 생성 (Recommended)", description: "PR을 생성합니다"
+  - label: "수정 후 생성", description: "Other를 선택해 수정할 내용을 입력하세요"
+- preview 활용: PR 제목 + 본문 전체를 표시
 
 확인 후 PR 생성:
 
