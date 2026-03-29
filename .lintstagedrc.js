@@ -1,7 +1,8 @@
 module.exports = {
-  // TypeScript/TSX: 포맷 자동 수정 (lint는 npm run lint로 별도 확인)
-  // TODO: 기존 코드 lint 정리 완료 후 'eslint --fix' 추가 예정
-  '*.{ts,tsx}': ['prettier --write'],
+  // TypeScript/TSX: ESLint 자동 수정 + Prettier 포맷
+  // no-explicit-any, exhaustive-deps를 warn + max-warnings 0으로 설정
+  // → 수정한 파일에 any나 deps 누락이 있으면 커밋 차단됨 (점진적 제거 강제)
+  '*.{ts,tsx}': ['eslint --fix --max-warnings 0', 'prettier --write'],
   // JS/JSX: 포맷만
   '*.{js,jsx,mjs,cjs}': ['prettier --write'],
   // 기타 파일: 포맷만

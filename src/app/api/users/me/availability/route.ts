@@ -24,12 +24,13 @@ export async function GET(request: Request) {
       success: true,
       data: availability || { schedule: [], preference: 50, personalityTags: [] },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       {
         success: false,
         message: '가용성 정보를 불러오는 중 오류가 발생했습니다.',
-        error: error.message,
+        error: message,
       },
       { status: 500 }
     );
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     const { schedule, preference, personalityTags } = body;
 
     // 데이터 크기 확인용 로그 (전체 출력 대신 요약)
-    console.log(
+    console.warn(
       `[API] Saving Availability: ${schedule?.length || 0} days, Preference: ${preference}`
     );
 
@@ -73,9 +74,10 @@ export async function POST(request: Request) {
       message: '가용성 정보가 저장되었습니다.',
       data: availability,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { success: false, message: '가용성 정보 저장 중 오류가 발생했습니다.', error: error.message },
+      { success: false, message: '가용성 정보 저장 중 오류가 발생했습니다.', error: message },
       { status: 500 }
     );
   }

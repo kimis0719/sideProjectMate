@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { getIconSlug, getSkillCategory, CATEGORY_ORDER, SkillCategory } from '@/lib/iconUtils';
 import { useModal } from '@/hooks/useModal';
 
@@ -100,10 +101,13 @@ export default function SkillSection({
                     >
                       {/* 스킬 아이콘 */}
                       <div className="relative w-6 h-6 flex-shrink-0">
-                        <img
+                        <Image
                           src={iconUrl}
                           alt={skill.name}
+                          width={24}
+                          height={24}
                           className="w-full h-full object-contain"
+                          unoptimized
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { getCategoryColor } from '@/constants/chat';
 import { IChatRoomClient, IChatMessageClient } from '@/types/chat';
+import Image from 'next/image';
 import { useChatSocket } from '@/hooks/useChatSocket';
 import { useModalStore } from '@/store/modalStore';
 
@@ -271,6 +272,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
   // 최초 렌더링 시 대화 내역 로드
   useEffect(() => {
     fetchInitialMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- room._id/currentUserId 변경 시에만 재로드; fetchInitialMessages를 deps에 추가하면 매 렌더마다 재호출됨
   }, [room._id, currentUserId]);
 
   // 🔧 버그 3 수정: 오프라인 중 전송못한 메시지를 쌓아두는 임시 큐
@@ -332,6 +334,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchInitialMessages/flushPendingMessages/emit을 deps에 넣으면 소켓 재연결 무한루프 위험
   }, [room._id, currentUserId]);
 
   // 📜 Step 8.1: 무한 스크롤 - 스크롤 최상단 도달 시 과거 메시지 로드
@@ -410,7 +413,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
         setMessages((prev) =>
           prev.map((msg) => {
             // sender가 populate된 객체일 수도, 순수 문자열 ID일 수도 있어서 타입 가드로 ID를 안전하게 추출!
-            const getSenderId = (sender: any): string =>
+            const getSenderId = (sender: string | { _id?: string }): string =>
               typeof sender === 'string' ? sender : (sender?._id ?? '');
             const isMine = getSenderId(msg.sender) === currentUserId;
             if (isMine && msg.readBy && !msg.readBy.includes(readByUserId)) {
@@ -428,6 +431,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
     };
     // 🔑 currentUserId를 의존성 배열에 꼭 넣어야 해!
     // 없으면 클로저가 초기값('')을 캡처해버려서 isMine 판별이 영원히 false가 됨
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- emit은 useChatSocket에서 안정적 참조; deps에 추가하면 소켓 재구독 루프 위험
   }, [subscribe, room._id, currentUserId]);
 
   // 🚀 Step 6.2: 메시지 전송 로직 (SEND_MESSAGE)
@@ -596,10 +600,13 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                     {room.participants.map((p) => (
                       <li key={p._id} className="flex items-center gap-2.5 px-4 py-2">
                         {p.avatarUrl ? (
-                          <img
+                          <Image
                             src={p.avatarUrl}
+                            width={28}
+                            height={28}
                             className="w-7 h-7 rounded-full object-cover"
-                            alt={p.nName}
+                            alt={p.nName || ''}
+                            unoptimized
                           />
                         ) : (
                           <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">
@@ -822,7 +829,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
           }
 
           return displayMessages.map((msg, idx) => {
-            const getSenderId = (sender: any): string =>
+            const getSenderId = (sender: string | { _id?: string }): string =>
               typeof sender === 'string' ? sender : (sender?._id ?? '');
             const senderId = getSenderId(msg.sender);
             const isMine = senderId === currentUserId;
@@ -844,10 +851,13 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
               >
                 {/* 프로필 아바타 */}
                 {senderAvatar ? (
-                  <img
+                  <Image
                     src={senderAvatar}
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full shrink-0 object-cover"
                     alt={senderName}
+                    unoptimized
                   />
                 ) : (
                   <div

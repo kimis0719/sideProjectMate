@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useModal } from '@/hooks/useModal';
 
 interface UserDetail {
@@ -52,7 +53,7 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
         const res = await fetch(`/api/admin/users/${userId}`, { signal: controller.signal });
         const json = await res.json();
         if (!cancelled && json.success) setUser(json.data);
-      } catch (err: any) {
+      } catch {
         // AbortError는 cleanup 시 정상 발생 — 무시
       } finally {
         if (!cancelled) setLoading(false);
@@ -139,10 +140,13 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
               {/* 프로필 상단 */}
               <div className="flex items-center gap-4">
                 {user.avatarUrl ? (
-                  <img
+                  <Image
                     src={user.avatarUrl}
                     alt={user.nName || ''}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-full object-cover border border-border"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl text-muted-foreground border border-border">

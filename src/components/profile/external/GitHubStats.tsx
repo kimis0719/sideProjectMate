@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { GitHubStats } from '@/lib/github/utils';
+import Image from 'next/image';
 import { getIconSlug } from '@/lib/iconUtils';
 
 interface GitHubStatsProps {
@@ -168,10 +169,13 @@ export default function GitHubStatsSection({ githubUrl }: GitHubStatsProps) {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-muted border border-border flex items-center justify-center p-0.5">
-                        <img
+                        <Image
                           src={iconUrl}
                           alt={tier.name}
+                          width={32}
+                          height={32}
                           className="w-full h-full object-contain"
+                          unoptimized
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}

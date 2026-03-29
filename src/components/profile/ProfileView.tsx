@@ -22,8 +22,44 @@ import ReviewSection from '@/components/profile/ReviewSection';
  * @interface ProfileViewProps
  * @description ProfileView 컴포넌트가 받을 Props 정의
  */
+/** 프로필 사용자 데이터 타입 */
+interface ProfileUserData {
+  _id: string;
+  nName: string;
+  authorEmail?: string;
+  position?: string;
+  career?: string;
+  status?: string;
+  avatarUrl?: string;
+  introduction?: string;
+  socialLinks?: {
+    github?: string;
+    blog?: string;
+    linkedin?: string;
+    other?: string;
+    solvedAc?: string;
+  };
+  portfolioLinks?: string[];
+  techTags?: string[];
+  githubStats?: {
+    followers: number;
+    following: number;
+    totalStars: number;
+    totalCommits: number;
+    totalPRs: number;
+    totalIssues: number;
+    contributions: number;
+    techStack: string[];
+  };
+  level?: number;
+  schedule?: { day: string; timeRanges: { start: string; end: string }[] }[];
+  preference?: number;
+  personalityTags?: string[];
+  [key: string]: unknown;
+}
+
 interface ProfileViewProps {
-  initialUserData: any; // 초기 사용자 데이터 (SSR 또는 상위 컴포넌트에서 전달)
+  initialUserData: ProfileUserData; // 초기 사용자 데이터 (SSR 또는 상위 컴포넌트에서 전달)
   readOnly: boolean; // 수정 가능 여부 (true: 타인 프로필, false: 내 프로필)
 }
 
@@ -43,13 +79,15 @@ interface ProfileViewProps {
 export default function ProfileView({ initialUserData, readOnly }: ProfileViewProps) {
   const { alert } = useModal();
   // 사용자 데이터 상태
-  const [userData, setUserData] = useState<any>(initialUserData);
+  const [userData, setUserData] = useState<ProfileUserData>(initialUserData);
 
   // [Inline Edit] 상시 수정 모드 (내 프로필이면 항상 true)
   const isEditing = !readOnly;
 
   // 하위 컴포넌트 상태들
-  const [schedule, setSchedule] = useState<any[]>(initialUserData?.schedule || []);
+  const [schedule, setSchedule] = useState<
+    { day: string; timeRanges: { start: string; end: string }[] }[]
+  >(initialUserData?.schedule || []);
   const [preference, setPreference] = useState<number>(initialUserData?.preference ?? 50);
   const [personalityTags, setPersonalityTags] = useState<string[]>(
     initialUserData?.personalityTags || []
@@ -121,7 +159,7 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
   const handleSaveAvailability = async () => {
     try {
       // 실제 API 호출 로직은 여기에 구현 (현재는 로그만 출력)
-      console.log('가용성 정보 저장:', { schedule, preference, personalityTags });
+      console.warn('가용성 정보 저장:', { schedule, preference, personalityTags });
 
       // TODO: API 구현 필요 (Availability 테이블 등)
       // 임시로 user collection에 저장한다고 가정
@@ -158,16 +196,19 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
       } else {
         throw new Error(data.message);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save intro:', error);
-      await alert('에러', `저장 실패: ${error.message}`);
+      await alert(
+        '에러',
+        `저장 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+      );
     }
   };
 
   const handleUpdateSkills = async (newTags: string[]) => {
     // 즉시 반영
     setTechTags(newTags);
-    setUserData((prev: any) => ({ ...prev, techTags: newTags }));
+    setUserData((prev: ProfileUserData) => ({ ...prev, techTags: newTags }));
 
     try {
       const res = await fetch('/api/users/me', {
@@ -243,7 +284,7 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
   // 기본 정보(직군, 경력) 수정 및 자동 저장
   const handleUpdateBasicInfo = async (field: string, value: string) => {
     // 1. 상태 즉시 업데이트 (UI 반응성)
-    setUserData((prev: any) => ({ ...prev, [field]: value }));
+    setUserData((prev: ProfileUserData) => ({ ...prev, [field]: value }));
 
     // 2. API 저장 (De-bouncing 없이 일단 단순 구현, 필요시 최적화)
     // 실제로는 텍스트 입력의 경우 Debounce가 필요하지만, 여기선 간단히 처리
@@ -310,7 +351,7 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
           <BlogPostCard blogUrl={userData.socialLinks?.blog} />
         </div>
         <div className="lg:col-span-3">
-          <SolvedAcCard handle={userData.socialLinks?.solvedAc} />
+          <SolvedAcCard handle={userData.socialLinks?.solvedAc ?? ''} />
         </div>
       </section>
 

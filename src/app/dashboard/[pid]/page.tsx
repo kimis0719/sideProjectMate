@@ -6,12 +6,32 @@ import { IProject } from '@/lib/models/Project';
 import { getSocket } from '@/lib/socket';
 import { useModalStore } from '@/store/modalStore';
 
+// 프로젝트 멤버 populate된 타입
+interface PopulatedProjectMember {
+  userId?: { _id: string; nName?: string; authorEmail?: string; avatarUrl?: string };
+  role: string;
+  status: 'active' | 'inactive' | 'removed';
+}
+
+// 공통 코드 항목 타입
+interface CommonCodeItem {
+  code: string;
+  label: string;
+}
+
+// 리소스 메타데이터 타입
+interface ResourceMetadata {
+  title?: string;
+  image?: string;
+  [key: string]: string | undefined;
+}
+
 // 프로젝트 데이터 타입 확장
 interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
   author: { _id: string; nName: string } | string;
   tags: { _id: string; name: string; category: string }[];
   likesCount: number;
-  projectMembers?: any[];
+  projectMembers?: PopulatedProjectMember[];
 }
 
 import ProjectHeader from '@/components/dashboard/ProjectHeader';
@@ -45,14 +65,16 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
         const categoryRes = await fetch('/api/common-codes?group=CATEGORY');
         const categoryData = await categoryRes.json();
         if (categoryData.success) {
-          const matchedCategory = categoryData.data.find((c: any) => c.code === project.category);
+          const matchedCategory = categoryData.data.find(
+            (c: CommonCodeItem) => c.code === project.category
+          );
           setCategoryLabel(matchedCategory ? matchedCategory.label : project.category);
         }
       } catch (e) {
         setCategoryLabel(project.category);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -60,6 +82,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
 
   useEffect(() => {
     if (pid) fetchProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pid 변경 시에만 프로젝트 재조회; fetchProject를 deps에 넣으면 매 렌더마다 재호출
   }, [pid]);
 
   // ✨ 소켓 연결 및 프로젝트 입장
@@ -79,7 +102,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
 
     // ✨ 리소스/프로젝트 실시간 동기화
     const handleSync = () => {
-      console.log('Real-time sync triggered');
+      console.warn('Real-time sync triggered');
       fetchProject();
     };
 
@@ -90,6 +113,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
       socket.off('resource-updated', handleSync);
       socket.off('project-updated', handleSync);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchProject를 deps에 추가하면 소켓 리스너가 매 렌더마다 재등록되어 성능 저하; pid/session 변경 시에만 재설정
   }, [pid, session?.user?._id]);
 
   // ✨ 프로젝트 정보 업데이트 핸들러
@@ -121,7 +145,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
     type: 'LINK' | 'TEXT',
     category: string,
     content: string,
-    metadata?: any
+    metadata?: ResourceMetadata
   ) => {
     try {
       const res = await fetch(`/api/projects/${pid}/resources`, {
@@ -175,7 +199,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
     resourceId: string,
     category: string,
     content: string,
-    metadata?: any
+    metadata?: ResourceMetadata
   ) => {
     try {
       const res = await fetch(`/api/projects/${pid}/resources`, {
@@ -208,8 +232,8 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
 
     // 현재 프로젝트의 모든 멤버 ID 추출 (본인 포함)
     const memberIds = project.projectMembers
-      .map((pm: any) => pm.userId?._id)
-      .filter((id: string) => id);
+      .map((pm: PopulatedProjectMember) => pm.userId?._id)
+      .filter((id): id is string => !!id);
 
     // 유효성 검사: 멤버가 너무 적으면 팀 채팅 의미가 없음 (옵션)
     if (memberIds.length < 2) {
@@ -248,9 +272,12 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
           : data.message || '팀 채팅방 입장에 실패했습니다.';
         await openAlert('오류', errorMsg);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      await openAlert('오류', `요청 중 문제가 발생했습니다.\n${e.message}`);
+      await openAlert(
+        '오류',
+        `요청 중 문제가 발생했습니다.\n${e instanceof Error ? e.message : '알 수 없는 오류'}`
+      );
     }
   };
 
@@ -299,14 +326,14 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
           {project && session?.user && (
             <MemberWidget
               members={(project.projectMembers || [])
-                .map((pm: any) => ({
-                  _id: pm.userId?._id,
+                .filter((pm: PopulatedProjectMember) => pm.userId?._id)
+                .map((pm: PopulatedProjectMember) => ({
+                  _id: pm.userId!._id,
                   nName: pm.userId?.nName,
                   email: pm.userId?.authorEmail,
                   image: pm.userId?.avatarUrl,
                   role: pm.role,
-                }))
-                .filter((m) => m._id)} // 유효한 유저만 필터링
+                }))}
               currentUserId={session.user._id}
               projectId={pid}
             />

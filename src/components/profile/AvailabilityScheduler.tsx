@@ -63,7 +63,7 @@ export default function AvailabilityScheduler({
 
     // 초기 데이터가 있고, 현재 로컬 상태가 비어있을 때만 동기화 (또는 강제 리셋 로직 필요 시 추가)
     if (initialSchedule && initialSchedule.length > 0) {
-      console.log('초기 스케줄 로드 중:', initialSchedule);
+      console.warn('초기 스케줄 로드 중:', initialSchedule);
       const newSchedule: Date[] = [];
 
       initialSchedule.forEach((daySch) => {
@@ -95,12 +95,12 @@ export default function AvailabilityScheduler({
       const uniqueTimestamps = Array.from(new Set(newSchedule.map((d) => d.getTime())));
       const uniqueSchedule = uniqueTimestamps.map((t) => new Date(t));
 
-      console.log('변환된 스케줄 (Before Set):', uniqueSchedule);
+      console.warn('변환된 스케줄 (Before Set):', uniqueSchedule);
 
       // 데이터가 도착하면 무조건 업데이트 (최적화 제거)
       setSchedule(uniqueSchedule);
     }
-  }, [initialSchedule]);
+  }, [initialSchedule, startDate]);
 
   const handleChange = useCallback(
     (newSchedule: Date[]) => {

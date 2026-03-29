@@ -47,8 +47,8 @@ export async function GET() {
       const projects = await Project.find({ _id: { $in: projectIds } })
         .select('_id title')
         .lean();
-      projects.forEach((p: any) => {
-        projectMap[p._id.toString()] = p.title;
+      projects.forEach((p) => {
+        projectMap[String(p._id)] = p.title;
       });
     }
 
@@ -67,14 +67,15 @@ export async function GET() {
       }
 
       // unreadCounts는 Map 전체를 클라이언트에 노출할 필요가 없으므로 제거
-      const { unreadCounts: _, ...rest } = room as any;
+      const { unreadCounts: _, ...rest } = room as Record<string, unknown>;
       return { ...rest, myUnreadCount, projectName };
     });
 
     return NextResponse.json({ success: true, data: enrichedRooms });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { success: false, message: '채팅방 목록 조회 중 오류가 발생했습니다.', error: error.message },
+      { success: false, message: '채팅방 목록 조회 중 오류가 발생했습니다.', error: message },
       { status: 500 }
     );
   }
@@ -107,7 +108,7 @@ export async function POST(request: Request) {
 
     // 4. 참여자 검증
     // participants 배열이 없으면 빈 배열로 초기화
-    let uniqueParticipants = new Set<string>(participants || []);
+    const uniqueParticipants = new Set<string>(participants || []);
 
     // SYSTEM 카테고리가 아니면 본인(생성자)을 필수 참여자로 추가
     // (SYSTEM은 봇이 생성하거나, 혹은 관리자가 생성할 수 있으므로 로직에 따라 다름.
@@ -212,10 +213,11 @@ export async function POST(request: Request) {
       { success: true, message: '채팅방이 생성되었습니다.', data: newRoom },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API ERROR: POST /api/chat/rooms]', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { success: false, message: '채팅방 생성 중 오류가 발생했습니다.', error: error.message },
+      { success: false, message: '채팅방 생성 중 오류가 발생했습니다.', error: message },
       { status: 500 }
     );
   }

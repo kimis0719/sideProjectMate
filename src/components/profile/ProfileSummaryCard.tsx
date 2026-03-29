@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
 interface ProfileSummaryCardProps {
   user: {
@@ -29,9 +30,15 @@ export default function ProfileSummaryCard({ user, onClick }: ProfileSummaryCard
     >
       {/* 아바타 영역 */}
       <div className="relative">
-        <div className="w-14 h-14 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
+        <div className="relative w-14 h-14 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
           {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt={user.nName} className="w-full h-full object-cover" />
+            <Image
+              src={user.avatarUrl}
+              alt={user.nName}
+              fill
+              className="object-cover"
+              unoptimized
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xl bg-gradient-to-br from-gray-100 to-gray-200">
               {user.nName.charAt(0)}

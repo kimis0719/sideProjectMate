@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface ProfileHeaderProps {
@@ -27,7 +28,13 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
         <div className="flex-shrink-0">
           <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-md border border-gray-100 dark:border-border">
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.nName} className="w-full h-full object-cover" />
+              <Image
+                src={user.avatarUrl}
+                alt={user.nName || ''}
+                fill
+                className="object-cover"
+                unoptimized
+              />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
                 {user.nName ? user.nName.substring(0, 1).toUpperCase() : 'U'}

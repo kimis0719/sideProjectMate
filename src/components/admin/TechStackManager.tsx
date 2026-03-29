@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useModal } from '@/hooks/useModal';
 import { getIconSlug } from '@/lib/iconUtils';
 
@@ -183,10 +184,13 @@ export default function TechStackManager() {
           </div>
           {addForm.name && (
             <div className="flex items-center gap-2">
-              <img
+              <Image
                 src={getIconUrl(addForm.name, addForm.logoUrl)}
                 alt={addForm.name}
+                width={32}
+                height={32}
                 className="w-8 h-8 object-contain"
+                unoptimized
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
@@ -229,13 +233,16 @@ export default function TechStackManager() {
               {stacks.map((stack) => (
                 <tr key={stack._id} className="hover:bg-muted/30">
                   <td className="px-4 py-3">
-                    <img
+                    <Image
                       src={getIconUrl(
                         editingId === stack._id ? (editForm.name ?? stack.name) : stack.name,
                         editingId === stack._id ? editForm.logoUrl : stack.logoUrl
                       )}
                       alt={stack.name}
+                      width={28}
+                      height={28}
                       className="w-7 h-7 object-contain"
+                      unoptimized
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { REVIEW_TAGS } from '@/constants/review';
 import { useModal } from '@/hooks/useModal';
 
@@ -114,10 +115,13 @@ export default function ReviewModal({
         {/* 대상자 미니 프로필 */}
         <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
           {reviewee.avatarUrl ? (
-            <img
+            <Image
               src={reviewee.avatarUrl}
               alt={reviewee.nName}
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full object-cover shrink-0"
+              unoptimized
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

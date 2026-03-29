@@ -61,8 +61,8 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
         } else {
           throw new Error(data.message || '프로젝트를 불러오는데 실패했습니다.');
         }
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : '프로젝트를 불러오는데 실패했습니다.');
       } finally {
         setIsLoading(false);
       }
@@ -228,7 +228,7 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
                   href={`/projects/${project.pid}`}
                   className="bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer border border-border"
                 >
-                  <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                  <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
                     <ProjectThumbnail
                       src={project.images && project.images.length > 0 ? project.images[0] : null}
                       alt={project.title}
