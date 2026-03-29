@@ -52,40 +52,34 @@ git rev-parse --abbrev-ref HEAD   # main/master가 아닌 경우
 
 **미종료 작업 감지 시:**
 
-```
-⚠️ 종료되지 않은 작업이 있습니다.
+브랜치명과 마지막 커밋 정보를 출력한 뒤, `AskUserQuestion` 도구로 선택지를 제시합니다:
 
-브랜치: [현재 브랜치명]
-마지막 커밋: [날짜] "[커밋 메시지]"
-
-어떻게 할까요?
-1. 지금 이전 작업 종료하기 (/spm-done 실행)
-2. 이전 작업 보류하고 새 작업 시작
-3. 이전 작업 강제 종료 (work-log 미생성 경고 후 진행)
-```
+- question: "종료되지 않은 작업이 있습니다 ([브랜치명], 마지막 커밋: [메시지]). 어떻게 할까요?"
+- header: "이전 작업"
+- options:
+  - label: "지금 종료하기", description: "/spm-done을 실행하고 새 작업을 시작합니다"
+  - label: "보류하고 시작", description: "이전 작업을 paused 상태로 두고 새 작업을 시작합니다"
+  - label: "강제 종료", description: "work-log 없이 워크존만 해제하고 진행합니다 (기록 유실 위험)"
 
 각 선택지 처리:
 
-- **[1 선택]** → `/spm-done` 플로우 실행 후 새 작업 시작
-- **[2 선택]** → `.workzones.yml`에 `status: "paused"` 기록 후 새 작업 시작
-- **[3 선택]** → 워크존만 해제, work-log 미생성 경고 표시 후 진행
+- **[지금 종료하기]** → `/spm-done` 플로우 실행 후 새 작업 시작
+- **[보류하고 시작]** → `.workzones.yml`에 `status: "paused"` 기록 후 새 작업 시작
+- **[강제 종료]** → 워크존만 해제, work-log 미생성 경고 표시 후 진행
 
 ---
 
 ## 2단계: 작업 유형 선택
 
-인자가 없으면 아래 선택지를 제시합니다.
-인자가 있으면 내용을 분석해 feature/fix 중 적절한 유형을 자동 판단하고, 사용자에게 확인합니다.
+`AskUserQuestion` 도구로 선택지를 제시합니다.
+인자가 있으면 내용을 분석해 적절한 유형을 추천 옵션(Recommended)으로 표시합니다.
 
-```
-어떤 작업을 시작할까요?
-
-1. 신규 기능 개발 (feature)
-2. 버그 수정 (fix)
-3. 기존 이슈 이어받기
-
-선택해주세요 (1/2/3):
-```
+- question: "어떤 작업을 시작할까요?"
+- header: "작업 유형"
+- options:
+  - label: "신규 기능 개발 (Recommended)", description: "GitHub 이슈 생성 → feature/이슈번호 브랜치 생성"
+  - label: "버그 수정", description: "GitHub 이슈 생성(bug 라벨) → fix/이슈번호 브랜치 생성"
+  - label: "기존 이슈 이어받기", description: "오픈 이슈 목록에서 선택 → 기존 브랜치 checkout"
 
 ---
 
@@ -93,25 +87,24 @@ git rev-parse --abbrev-ref HEAD   # main/master가 아닌 경우
 
 **a. 계획서 파일 확인**
 
-```
-docs/plans/ 에 관련 계획서 파일이 있나요? (있으면 파일명, 없으면 엔터)
-```
+`AskUserQuestion` 도구로 선택지를 제시합니다:
 
-- **있음**: 해당 파일을 읽고 이슈 제목/본문 초안 작성
-- **없음**: 작업 내용을 자연어로 받아 이슈 초안 작성
+- question: "관련 계획서 파일이 docs/plans/에 있나요?"
+- header: "계획서"
+- options:
+  - label: "있음", description: "파일을 선택하면 AI가 읽고 이슈 초안을 작성합니다"
+  - label: "없음", description: "작업 내용을 직접 설명하면 AI가 이슈 초안을 작성합니다"
 
-AI가 이슈 초안을 작성한 뒤 사용자에게 미리보기 및 확인 요청:
+**있음** 선택 시: `docs/plans/` 파일 목록을 보여주고 선택받습니다 (AskUserQuestion, 최대 4개, 초과 시 번호 직접 입력).
+**없음** 선택 시: 작업 내용을 자연어로 받아 이슈 초안 작성.
 
-```
-📝 GitHub 이슈 초안:
-─────────────────────────────
-제목: [이슈 제목]
-본문:
-[이슈 본문]
-라벨: enhancement
-─────────────────────────────
-이대로 이슈를 생성할까요? (수정이 필요하면 내용을 알려주세요)
-```
+AI가 이슈 초안을 작성한 뒤 `AskUserQuestion` 도구로 확인을 요청합니다:
+
+- question: "이슈 초안을 확인해주세요.\n제목: [이슈 제목]\n라벨: enhancement"
+- header: "이슈 확인"
+- options:
+  - label: "이대로 생성 (Recommended)", description: "초안 내용으로 GitHub 이슈를 생성합니다"
+  - label: "수정 후 생성", description: "Other를 선택해 수정할 내용을 입력하세요"
 
 확인 후 이슈 생성:
 
@@ -136,16 +129,13 @@ git push -u origin feature/[이슈번호]-[슬러그]
 
 버그 내용을 한 줄로 입력받습니다.
 
-AI가 이슈 초안 작성 후 확인:
+AI가 이슈 초안 작성 후 `AskUserQuestion` 도구로 확인을 요청합니다:
 
-```
-📝 GitHub 이슈 초안:
-─────────────────────────────
-제목: fix: [버그 내용]
-라벨: bug
-─────────────────────────────
-이대로 이슈를 생성할까요?
-```
+- question: "이슈 초안을 확인해주세요.\n제목: fix: [버그 내용]\n라벨: bug"
+- header: "이슈 확인"
+- options:
+  - label: "이대로 생성 (Recommended)", description: "초안 내용으로 GitHub 이슈를 생성합니다"
+  - label: "수정 후 생성", description: "Other를 선택해 수정할 내용을 입력하세요"
 
 확인 후 이슈 생성:
 

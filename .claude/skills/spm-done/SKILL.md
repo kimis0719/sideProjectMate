@@ -62,19 +62,14 @@ git diff origin/main...HEAD --stat        # 변경 통계
 - 실시간 동기화(Socket) 관련 로직
 - Undo/Redo 히스토리 관련 로직
 
-감지 결과를 표 형식 초안으로 작성하고 사용자에게 확인을 요청합니다:
+감지 결과를 표 형식 초안으로 작성한 뒤 `AskUserQuestion` 도구로 확인을 요청합니다:
 
-```
-🔍 건드리면 안 되는 부분 초안:
-─────────────────────────────
-| 파일 | 위치 | 이유 |
-|---|---|---|
-| SectionItem.tsx | childNodeCacheRef | 성능 최적화 핵심, 드래그 성능에 직결 |
-| boardStore.ts | applyRemote* 함수들 | Undo/Redo 동기화 로직, 변경 시 히스토리 깨짐 |
-─────────────────────────────
-추가하거나 수정할 항목이 있으면 알려주세요.
-항목이 없으면 "없음"으로 확정합니다.
-```
+- question: "건드리면 안 되는 부분 초안을 확인해주세요."
+- header: "주의 항목"
+- options:
+  - label: "확정 (Recommended)", description: "초안 내용을 work-log에 반영합니다"
+  - label: "수정·추가", description: "Other를 선택해 수정하거나 추가할 항목을 입력하세요"
+- preview 활용: 감지된 표 초안을 preview 필드에 표시 (항목 없으면 "없음")
 
 사용자 확인 후 내용을 확정합니다. 항목이 없어도 "없음"으로 반드시 명시합니다.
 
@@ -145,16 +140,29 @@ Closes #[이슈번호]
 이대로 PR을 생성할까요?
 ```
 
-확인 후 PR 생성:
+`AskUserQuestion` 도구로 PR 초안 확인을 요청합니다:
+
+- question: "PR 초안을 확인해주세요."
+- header: "PR 확인"
+- options:
+  - label: "이대로 생성 (Recommended)", description: "PR을 생성하고 auto-merge를 등록합니다"
+  - label: "수정 후 생성", description: "Other를 선택해 수정할 내용을 입력하세요"
+- preview 활용: PR 제목 + 본문 전체를 preview 필드에 표시
+
+확인 후 PR 생성 및 auto-merge 등록:
 
 ```bash
 gh pr create \
   --title "[PR 제목]" \
   --body "[PR 본문]" \
   --base main
+
+gh pr merge --auto --merge
 ```
 
-PR URL을 출력합니다.
+- PR URL을 출력합니다.
+- auto-merge 등록 완료 메시지: `✅ CI 통과 시 자동 머지됩니다.`
+- branch protection rule이 없으면 즉시 머지, 있으면 CI + approve 후 자동 머지.
 
 ---
 

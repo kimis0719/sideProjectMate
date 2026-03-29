@@ -48,7 +48,13 @@ git diff HEAD               # 전체 diff 내용
 커버리지 기준: src/__tests__/ 또는 파일명.test.ts 패턴
 ```
 
-테스트 작성이 불필요한 경우 (UI 전용 변경, 설정 파일 수정 등) 사용자가 명시적으로 "테스트 없이 진행"을 요청하면 건너뜁니다.
+테스트 작성이 불필요한 경우, `AskUserQuestion` 도구로 확인을 요청합니다:
+
+- question: "다음 항목에 테스트가 없습니다: [함수명]. 어떻게 할까요?"
+- header: "테스트 누락"
+- options:
+  - label: "테스트 작성 (Recommended)", description: "테스트 작성 후 /spm-commit을 다시 실행하세요"
+  - label: "건너뛰기", description: "UI 전용 변경 등 테스트가 불필요한 경우에만 선택하세요"
 
 ---
 
@@ -89,16 +95,21 @@ feat: 섹션 중첩 캡처 로직 추가 및 zIndex 3단 계층 재설계
 - `docs`: 문서 변경
 - `chore`: 설정, 의존성 등 기타
 
-초안을 사용자에게 미리보기로 보여주고 확인을 요청합니다:
+초안을 작성한 뒤 `AskUserQuestion` 도구로 확인을 요청합니다:
+
+- question: "커밋 메시지 초안을 확인해주세요."
+- header: "커밋 확인"
+- options:
+  - label: "이대로 커밋 (Recommended)", description: "초안 메시지로 git commit + push를 실행합니다"
+  - label: "수정 후 커밋", description: "Other를 선택해 수정할 내용을 입력하세요"
+- preview 활용: 커밋 메시지 전체를 preview 필드에 표시
 
 ```
-📝 커밋 메시지 초안:
-─────────────────────────────
+preview 예시:
 feat: 섹션 중첩 캡처 로직 추가
 
 - SectionModel에 parentSectionId, depth 필드 추가
-─────────────────────────────
-이대로 커밋할까요? (수정이 필요하면 수정 내용을 알려주세요)
+- BoardShell zIndex 계산 로직 개선
 ```
 
 ---
