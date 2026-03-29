@@ -633,6 +633,12 @@ export default function SectionItem({ section, readOnly = false }: Props) {
     const secX = currentVisual.current.x;
     const secY = currentVisual.current.y;
 
+    // 부모 섹션인 경우: 자식 섹션 목록을 미리 조회 (자식 섹션 안의 노트는 캡처하지 않음)
+    const allSectionsForCapture = useBoardStore.getState().sections;
+    const childSectionIds = allSectionsForCapture
+      .filter((s) => s.parentSectionId === section.id)
+      .map((s) => s.id);
+
     currentNotes.forEach((note) => {
       const noteCenterX = note.x + NOTE_WIDTH / 2;
       const noteCenterY = note.y + NOTE_HEIGHT / 2;
@@ -644,12 +650,38 @@ export default function SectionItem({ section, readOnly = false }: Props) {
         noteCenterY <= secY + finalHeight;
 
       if (isInside) {
-        if (note.sectionId === null) {
+        // 부모 섹션이 캡처하려 할 때: 노트가 자식 섹션 안에 있으면 건너뜀
+        if (childSectionIds.length > 0 && note.sectionId === null) {
+          const isInsideChild = allSectionsForCapture.some((cs) => {
+            if (cs.parentSectionId !== section.id) return false;
+            return (
+              noteCenterX >= cs.x &&
+              noteCenterX <= cs.x + cs.width &&
+              noteCenterY >= cs.y &&
+              noteCenterY <= cs.y + cs.height
+            );
+          });
+          if (isInsideChild) return; // 자식 섹션이 캡처할 노트이므로 부모는 건너뜀
+        }
+        if (note.sectionId === null || note.sectionId === undefined) {
           updates.push({ id: note.id, changes: { sectionId: section.id } });
         }
       } else {
         if (note.sectionId === section.id) {
-          updates.push({ id: note.id, changes: { sectionId: null } });
+          // 릴리즈 시: 노트가 자식 섹션 안에 있으면 자식 섹션으로 재할당
+          const targetChild = allSectionsForCapture.find((cs) => {
+            if (cs.parentSectionId !== section.id) return false;
+            return (
+              noteCenterX >= cs.x &&
+              noteCenterX <= cs.x + cs.width &&
+              noteCenterY >= cs.y &&
+              noteCenterY <= cs.y + cs.height
+            );
+          });
+          updates.push({
+            id: note.id,
+            changes: { sectionId: targetChild ? targetChild.id : null },
+          });
         }
       }
     });

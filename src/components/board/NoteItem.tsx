@@ -539,7 +539,6 @@ export default function NoteItem({
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
-      if (isDoneView) return;
       if (isEditing) return;
       if (isLockedByOther) return;
 
@@ -894,7 +893,7 @@ export default function NoteItem({
         boxShadow: finalShadow,
         borderRadius: 12,
         padding: 0,
-        cursor: isDoneView ? 'default' : isEditing ? 'text' : 'grab',
+        cursor: isEditing ? 'text' : 'grab',
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
@@ -1377,7 +1376,7 @@ export default function NoteItem({
       </div>
 
       {/* Resize Handle (Bottom-Right) */}
-      {!isEditing && !isLockedByOther && (
+      {!isEditing && !isLockedByOther && !isDoneView && (
         <div
           onPointerDown={onResizePointerDown}
           style={{

@@ -218,20 +218,43 @@ export const useBoardStore = create<BoardState>()(
               set({ notes: parsedNotes });
             }
 
-            // 3. 섹션 조회
+            // 3. 섹션 조회 (parentSectionId/depth 기본값 보정)
             const sectionsRes = await fetch(`/api/kanban/sections?boardId=${board.id}`);
             if (sectionsRes.ok) {
               const sectionDocs = await sectionsRes.json();
               if (sectionDocs.success) {
-                const sections = sectionDocs.data.map(transformDoc);
+                const sections = sectionDocs.data.map((doc: any) => {
+                  const transformed = transformDoc(doc);
+                  return {
+                    ...transformed,
+                    parentSectionId: transformed.parentSectionId ?? null,
+                    depth: transformed.depth ?? 0,
+                  };
+                });
                 set({ sections });
               }
             }
 
+            // 4. 완료 노트 카운트 조회 (탭 전환 전에도 건수 표시용)
+            fetch(`/api/kanban/notes?boardId=${board.id}&status=done`)
+              .then((r) => (r.ok ? r.json() : null))
+              .then((json) => {
+                if (json?.data) {
+                  const notes = (json.data || []).map((n: any) => ({
+                    ...n,
+                    id: n._id || n.id,
+                    tags: n.tags || [],
+                    completedAt: n.completedAt ? new Date(n.completedAt) : undefined,
+                  }));
+                  set({ completedNotes: notes, completedNotesLoaded: true });
+                }
+              })
+              .catch(() => {});
+
             // 초기화 직후 히스토리 비우기
             useBoardStore.temporal.getState().clear();
 
-            // 4. 멤버 및 보드 데이터 관련 추가 정보 초기화
+            // 5. 멤버 및 보드 데이터 관련 추가 정보 초기화
             get().fetchMembers(board.id);
           } catch (error) {
             console.error(error);
@@ -631,13 +654,21 @@ export const useBoardStore = create<BoardState>()(
             const centerX = x + NOTE_W / 2;
             const centerY = y + NOTE_H / 2;
 
-            const containingSection = state.sections.find(
+            // 중첩 섹션에서 가장 안쪽(자식) 섹션을 우선 매칭
+            const matchingSections = state.sections.filter(
               (s) =>
                 centerX >= s.x &&
                 centerX <= s.x + s.width &&
                 centerY >= s.y &&
                 centerY <= s.y + s.height
             );
+            // depth가 큰(자식) 섹션 우선, 같으면 zIndex 높은 것 우선
+            const containingSection =
+              matchingSections.length > 0
+                ? matchingSections.sort(
+                    (a, b) => (b.depth ?? 0) - (a.depth ?? 0) || (b.zIndex ?? 0) - (a.zIndex ?? 0)
+                  )[0]
+                : null;
 
             const updatedNote = {
               ...targetNote,
