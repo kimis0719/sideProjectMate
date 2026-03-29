@@ -131,7 +131,7 @@ export default function HistoryModal({
             <div className="text-center py-12">
               <p className="text-gray-400 dark:text-gray-500">생성된 지시서가 없습니다.</p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                보드 헤더의 "지시서" 버튼으로 첫 지시서를 생성해보세요.
+                보드 헤더의 &ldquo;지시서&rdquo; 버튼으로 첫 지시서를 생성해보세요.
               </p>
             </div>
           )}

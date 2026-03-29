@@ -5,6 +5,7 @@
 | `boardStore.ts` | 칸반 보드/섹션/노트 | fetchBoard, addNote, moveNote, setFilterLabel      |
 | `wbsStore.ts`   | WBS 태스크 트리     | fetchTasks, addTask, updateTask, undo/redo (zundo) |
 | `modalStore.ts` | 전역 모달 상태      | openModal, closeModal                              |
+| `instructionStore.ts` | AI 지시서 모달/생성 | openModal, generate (SSE), setTarget, setPreset |
 
 ## 공통 패턴
 
