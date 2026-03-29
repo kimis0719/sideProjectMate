@@ -81,7 +81,7 @@ async function handlePost(request: Request) {
     console.error('회원가입 오류:', error);
 
     // 중복 이메일 확인
-    if (error.code === 11000) {
+    if (error instanceof Error && 'code' in error && (error as { code: number }).code === 11000) {
       return NextResponse.json(
         { success: false, error: '이미 존재하는 이메일입니다.' },
         { status: 409 }

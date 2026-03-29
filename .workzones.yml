@@ -15,4 +15,9 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones: []
+zones:
+  - path: 'src/app/api/'
+    owner: 'FFLINA-PC'
+    status: 'active'
+    reason: '/api/health 로그 및 Render Logs 분석 후 API 오류 수정 및 개선'
+    expires: '2026-04-05'

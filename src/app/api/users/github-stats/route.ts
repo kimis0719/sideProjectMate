@@ -40,7 +40,7 @@ async function handleGet(req: NextRequest) {
     return NextResponse.json(stats);
   } catch (error: unknown) {
     // 2. API 호출 실패 시 (유저가 없거나, 토큰 문제 등) => 로그만 남기고 '빈 데이터' 반환
-    console.error('GitHub API Error:', error?.message || 'Unknown error');
+    console.error('GitHub API Error:', error instanceof Error ? error.message : 'Unknown error');
     // 개발 중 디버깅을 위해 토큰 상태는 로그에 남겨둠
     // console.log('Token Status:', process.env.GITHUB_ACCESS_TOKEN ? 'Present' : 'Missing');
 
