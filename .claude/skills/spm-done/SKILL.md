@@ -115,58 +115,7 @@ git diff origin/main...HEAD --stat        # 변경 통계
 
 ---
 
-## 6단계: GitHub PR 자동 생성
-
-현재 브랜치와 연결된 이슈 번호를 브랜치명에서 추출합니다 (예: `feature/180-spm-improve` → `#180`).
-
-work-log 내용을 기반으로 PR 초안을 작성하고 사용자에게 확인을 요청합니다:
-
-```
-📝 PR 초안:
-─────────────────────────────
-제목: [이슈 제목 기반 자동 작성]
-본문:
-## 작업 요약
-[work-log 요약 내용]
-
-## 변경된 파일
-[work-log 변경 파일 목록]
-
-## 테스트 결과
-[work-log 테스트 결과]
-
-Closes #[이슈번호]
-─────────────────────────────
-이대로 PR을 생성할까요?
-```
-
-`AskUserQuestion` 도구로 PR 초안 확인을 요청합니다:
-
-- question: "PR 초안을 확인해주세요."
-- header: "PR 확인"
-- options:
-  - label: "이대로 생성 (Recommended)", description: "PR을 생성하고 auto-merge를 등록합니다"
-  - label: "수정 후 생성", description: "Other를 선택해 수정할 내용을 입력하세요"
-- preview 활용: PR 제목 + 본문 전체를 preview 필드에 표시
-
-확인 후 PR 생성 및 auto-merge 등록:
-
-```bash
-gh pr create \
-  --title "[PR 제목]" \
-  --body "[PR 본문]" \
-  --base main
-
-gh pr merge --auto --merge
-```
-
-- PR URL을 출력합니다.
-- auto-merge 등록 완료 메시지: `✅ CI 통과 시 자동 머지됩니다.`
-- branch protection rule이 없으면 즉시 머지, 있으면 CI + approve 후 자동 머지.
-
----
-
-## 7단계: 프로젝트 문서 자동 갱신 (TODO-010)
+## 6단계: 프로젝트 문서 자동 갱신 (TODO-010)
 
 이번 작업에서 추가/수정/삭제된 파일을 감지해 아래 문서를 갱신합니다.
 
@@ -198,14 +147,14 @@ gh pr merge --auto --merge
 
 ---
 
-## 8단계: .workzones.yml 정리
+## 7단계: .workzones.yml 정리
 
 `.workzones.yml`에서 현재 작업자(`owner`)에 해당하는 모든 항목을 제거합니다.
 남은 항목이 없으면 `zones: []`로 설정합니다.
 
 ---
 
-## 9단계: CLAUDE.md 현황 표 복원
+## 8단계: CLAUDE.md 현황 표 복원
 
 `CLAUDE.md`의 "현재 진행 중인 작업 현황" 표에서 현재 작업자의 행을 삭제합니다.
 표에 남은 항목이 없으면 기본 행을 복원합니다:
@@ -216,7 +165,54 @@ gh pr merge --auto --merge
 
 ---
 
-## 10단계: 완료 메시지 출력
+## 9단계: 변경사항 전체 커밋 & 푸시
+
+work-log, 문서 갱신, .workzones.yml, CLAUDE.md 변경을 **한 번에** 커밋하고 푸시합니다.
+
+```bash
+git add work-logs/ CLAUDE.md .workzones.yml [갱신된 MAP.md 등]
+git commit -m "chore: work-log 추가 및 세션 정리 ([브랜치명])"
+git push
+```
+
+> ⚠️ 이 단계가 완료된 후에만 PR을 생성합니다.
+> PR 생성 전 모든 커밋이 원격에 반영되어야 auto-merge 시 누락이 없습니다.
+
+---
+
+## 10단계: GitHub PR 자동 생성
+
+현재 브랜치와 연결된 이슈 번호를 브랜치명에서 추출합니다 (예: `feature/180-spm-improve` → `#180`).
+
+work-log 내용을 기반으로 PR 초안을 작성하고 사용자에게 확인을 요청합니다:
+
+`AskUserQuestion` 도구로 PR 초안 확인을 요청합니다:
+
+- question: "PR 초안을 확인해주세요."
+- header: "PR 확인"
+- options:
+  - label: "이대로 생성 (Recommended)", description: "PR을 생성하고 auto-merge를 등록합니다"
+  - label: "수정 후 생성", description: "Other를 선택해 수정할 내용을 입력하세요"
+- preview 활용: PR 제목 + 본문 전체를 preview 필드에 표시
+
+확인 후 PR 생성 및 auto-merge 등록:
+
+```bash
+gh pr create \
+  --title "[PR 제목]" \
+  --body "[PR 본문]" \
+  --base main
+
+gh pr merge --auto --merge
+```
+
+- PR URL을 출력합니다.
+- auto-merge 등록 완료 메시지: `✅ CI 통과 시 자동 머지됩니다.`
+- branch protection rule이 없으면 즉시 머지, 있으면 CI + approve 후 자동 머지.
+
+---
+
+## 11단계: 완료 메시지 출력
 
 ```
 ✅ SPM 세션 종료
