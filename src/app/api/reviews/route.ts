@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/reviews — 리뷰 작성
  * Body: { projectId, revieweeId, rating, tags, comment?, isPublic? }
  */
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?._id) {
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, data: review }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 중복 리뷰 (unique index 위반)
     if (error.code === 11000) {
       return NextResponse.json(
@@ -70,7 +71,11 @@ export async function POST(request: Request) {
     }
     console.error('[POST /api/reviews] 오류:', error);
     return NextResponse.json(
-      { success: false, message: '리뷰 작성 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '리뷰 작성 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
@@ -79,7 +84,7 @@ export async function POST(request: Request) {
 /**
  * GET /api/reviews?revieweeId=xxx — 특정 유저가 받은 공개 리뷰 목록
  */
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   try {
     await dbConnect();
 
@@ -103,11 +108,18 @@ export async function GET(request: Request) {
       .lean();
 
     return NextResponse.json({ success: true, data: reviews });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[GET /api/reviews] 오류:', error);
     return NextResponse.json(
-      { success: false, message: '리뷰 조회 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '리뷰 조회 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const POST = withApiLogging(handlePost, '/api/reviews');
+export const GET = withApiLogging(handleGet, '/api/reviews');

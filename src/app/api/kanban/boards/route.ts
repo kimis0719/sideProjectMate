@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/dbConnect';
 import Board from '@/lib/models/kanban/BoardModel';
 import Project from '@/lib/models/Project';
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
  * @param request - URL 쿼리 파라미터로 'pid'를 포함해야 합니다.
  * 예: /api/kanban/boards?pid=123
  */
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   const { searchParams } = new URL(request.url);
   const pid = searchParams.get('pid');
 
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
     await dbConnect();
 
     // 1. pid로 보드를 찾습니다.
-    let board = await Board.findOne({ pid: projectId });
+    let board = await Board.findOne({ pid: projectId }).lean();
 
     // 2. 보드를 찾지 못하면, 해당 pid를 가지는 프로젝트를 찾고
     // 해당 프로젝트의 정보로 새로운 보드를 생성합니다.
@@ -55,3 +56,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/kanban/boards');

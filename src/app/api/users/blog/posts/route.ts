@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLatestBlogPosts } from '@/lib/blog/rss';
+import { withApiLogging } from '@/lib/apiLogger';
 
-export async function GET(req: NextRequest) {
+async function handleGet(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const blogUrl = searchParams.get('url');
 
@@ -52,3 +53,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json([]);
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/users/blog/posts');

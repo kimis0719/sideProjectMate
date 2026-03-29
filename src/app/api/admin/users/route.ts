@@ -2,11 +2,12 @@ import { NextResponse, NextRequest } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { requireAdmin } from '@/lib/adminAuth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/admin/users — 사용자 목록 (검색, 정렬, 페이지네이션)
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const search = searchParams.get('search') || '';
 
-    const query: Record<string, any> = {};
+    const query: Record<string, unknown> = {};
     if (search) {
       query.$or = [
         { nName: { $regex: search, $options: 'i' } },
@@ -31,17 +32,18 @@ export async function GET(request: NextRequest) {
         .select('nName authorEmail memberType delYn createdAt avatarUrl uid')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       User.countDocuments(query),
     ]);
 
     return NextResponse.json({ success: true, data: { users, total, page, limit } });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '사용자 목록을 불러오는 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
@@ -49,7 +51,7 @@ export async function GET(request: NextRequest) {
 }
 
 // PATCH /api/admin/users — 사용자 일괄 상태 변경 (delYn)
-export async function PATCH(request: NextRequest) {
+async function handlePatch(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -72,10 +74,17 @@ export async function PATCH(request: NextRequest) {
       message: `${result.modifiedCount}명의 상태가 변경되었습니다.`,
       data: { modifiedCount: result.modifiedCount },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '사용자 일괄 처리 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '사용자 일괄 처리 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/admin/users');
+export const PATCH = withApiLogging(handlePatch, '/api/admin/users');

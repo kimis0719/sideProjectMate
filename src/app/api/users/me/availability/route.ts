@@ -3,10 +3,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Availability from '@/lib/models/Availability';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?._id) {
@@ -82,3 +83,6 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/users/me/availability');
+export const POST = withApiLogging(handlePost, '/api/users/me/availability');

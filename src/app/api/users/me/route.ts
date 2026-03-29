@@ -4,14 +4,15 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import Availability from '@/lib/models/Availability';
 import { authOptions } from '@/lib/auth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 /**
  * @api {get} /api/users/me 내 프로필 정보 조회
  * @description 로그인한 사용자의 상세 프로필 정보와 가용성 정보를 통합하여 반환합니다.
  */
-export async function GET(req: NextRequest) {
+async function handleGet(req: NextRequest) {
   try {
-    const session = (await getServerSession(authOptions)) as any;
+    const session = await getServerSession(authOptions);
 
     if (!session || !session.user || !session.user._id) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
@@ -19,15 +20,18 @@ export async function GET(req: NextRequest) {
 
     await dbConnect();
 
-    // 1. 사용자 기본 정보 조회 (GitHub Stats, Tech Tags 등 포함)
-    const user: any = await User.findById(session.user._id).select('-password -__v').lean();
+    // 1. 사용자 기본 정보 + 가용성 정보를 병렬 조회
+    const [user, availability] = (await Promise.all([
+      User.findById(session.user._id).select('-password -__v').lean(),
+      Availability.findOne({ userId: session.user._id }).lean(),
+    ])) as [
+      Record<string, unknown> | null,
+      { schedule?: unknown[]; preference?: number; personalityTags?: string[] } | null,
+    ];
 
     if (!user) {
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
-
-    // 2. 가용성 정보 조회
-    const availability: any = await Availability.findOne({ userId: session.user._id }).lean();
 
     // 3. 데이터 통합
     const responseData = {
@@ -45,9 +49,12 @@ export async function GET(req: NextRequest) {
     responseData.profileCompleteness = calculateProfileCompleteness(responseData);
 
     return NextResponse.json({ success: true, data: responseData });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch my profile:', error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
   }
 }
 
@@ -55,9 +62,9 @@ export async function GET(req: NextRequest) {
  * @api {patch} /api/users/me 내 프로필 정보 수정
  * @description 로그인한 사용자의 프로필 정보를 수정합니다. (자기소개, 기술스택, 포지션 등)
  */
-export async function PATCH(req: NextRequest) {
+async function handlePatch(req: NextRequest) {
   try {
-    const session = (await getServerSession(authOptions)) as any;
+    const session = await getServerSession(authOptions);
 
     if (!session || !session.user || !session.user._id) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
@@ -69,7 +76,7 @@ export async function PATCH(req: NextRequest) {
     await dbConnect();
 
     // 업데이트할 필드만 구성
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (introduction !== undefined) updateData.introduction = introduction;
     if (techTags !== undefined) updateData.techTags = techTags;
     if (position !== undefined) updateData.position = position;
@@ -85,7 +92,7 @@ export async function PATCH(req: NextRequest) {
       { new: true, runValidators: true }
     )
       .select('-password -__v')
-      .lean()) as any;
+      .lean()) as { socialLinks?: { github?: string } } | null;
 
     if (!updatedUser) {
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
@@ -103,8 +110,14 @@ export async function PATCH(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data: updatedUser });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to update profile:', error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/users/me');
+export const PATCH = withApiLogging(handlePatch, '/api/users/me');

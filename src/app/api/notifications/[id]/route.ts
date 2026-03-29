@@ -4,11 +4,12 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Notification from '@/lib/models/Notification';
 import { headers } from 'next/headers';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // 알림 읽음 처리 (기존 로직 유지)
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+async function handlePut(request: Request, { params }: { params: { id: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -35,16 +36,20 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     await notification.save();
 
     return NextResponse.json({ success: true, data: notification });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '알림 업데이트 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '알림 업데이트 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
 // 개별 알림 삭제
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+async function handleDelete(request: Request, { params }: { params: { id: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -70,10 +75,17 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     await Notification.findByIdAndDelete(id);
 
     return NextResponse.json({ success: true, message: '알림이 삭제되었습니다.' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '알림 삭제 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '알림 삭제 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const PUT = withApiLogging(handlePut, '/api/notifications/[id]');
+export const DELETE = withApiLogging(handleDelete, '/api/notifications/[id]');

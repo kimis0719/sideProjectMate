@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/dbConnect';
 import NoteModel from '@/lib/models/kanban/NoteModel';
 
-export async function PATCH(req: NextRequest) {
+async function handlePatch(req: NextRequest) {
   try {
     await dbConnect();
     const body = await req.json();
@@ -20,7 +21,7 @@ export async function PATCH(req: NextRequest) {
     // 현재 규모에서는 Promise.all로도 충분하며 구현이 간단함.
     // Mongoose의 bulkWrite를 사용하려면 updateOne 오퍼레이션을 배열로 만들어야 함.
 
-    const bulkOps = updates.map((update: { id: string; changes: any }) => ({
+    const bulkOps = updates.map((update: { id: string; changes: Record<string, unknown> }) => ({
       updateOne: {
         filter: { _id: update.id },
         update: { $set: update.changes },
@@ -38,7 +39,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-export async function DELETE(req: NextRequest) {
+async function handleDelete(req: NextRequest) {
   try {
     await dbConnect();
     const body = await req.json();
@@ -61,3 +62,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export const PATCH = withApiLogging(handlePatch, '/api/kanban/notes/batch');
+export const DELETE = withApiLogging(handleDelete, '/api/kanban/notes/batch');

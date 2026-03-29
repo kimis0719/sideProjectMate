@@ -6,11 +6,12 @@ import Project from '@/lib/models/Project';
 import { headers } from 'next/headers';
 import mongoose from 'mongoose';
 import { fetchOGMetadata, validateResource } from '@/lib/utils/resourceUtils';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // 리소스 수정
-export async function PUT(request: Request, { params }: { params: { pid: string } }) {
+async function handlePut(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -61,7 +62,7 @@ export async function PUT(request: Request, { params }: { params: { pid: string 
     }
 
     // 리소스 업데이트
-    const updateFields: any = {
+    const updateFields: Record<string, unknown> = {
       'resources.$.content': content,
       'resources.$.category': category,
     };
@@ -82,17 +83,21 @@ export async function PUT(request: Request, { params }: { params: { pid: string 
       message: '리소스가 수정되었습니다.',
       data: updatedProject.resources,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[API ERROR: PUT /api/projects/${params.pid}/resources]`, error);
     return NextResponse.json(
-      { success: false, message: '리소스 수정 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '리소스 수정 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
 // 리소스 추가
-export async function POST(request: Request, { params }: { params: { pid: string } }) {
+async function handlePost(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -166,17 +171,21 @@ export async function POST(request: Request, { params }: { params: { pid: string
     );
 
     return NextResponse.json({ success: true, data: updatedProject.resources });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[API ERROR: POST /api/projects/${params.pid}/resources]`, error);
     return NextResponse.json(
-      { success: false, message: '리소스 추가 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '리소스 추가 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
 // 리소스 삭제
-export async function DELETE(request: Request, { params }: { params: { pid: string } }) {
+async function handleDelete(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -244,11 +253,19 @@ export async function DELETE(request: Request, { params }: { params: { pid: stri
       message: '리소스가 삭제되었습니다.',
       data: updatedProject.resources,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[API ERROR: DELETE /api/projects/${params.pid}/resources]`, error);
     return NextResponse.json(
-      { success: false, message: '리소스 삭제 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '리소스 삭제 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const POST = withApiLogging(handlePost, '/api/projects/[pid]/resources');
+export const PUT = withApiLogging(handlePut, '/api/projects/[pid]/resources');
+export const DELETE = withApiLogging(handleDelete, '/api/projects/[pid]/resources');

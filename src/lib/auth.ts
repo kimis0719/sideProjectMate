@@ -1,4 +1,4 @@
-import { NextAuthOptions } from 'next-auth';
+import { NextAuthOptions, Session } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GitHubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
@@ -63,12 +63,14 @@ export const authOptions: NextAuthOptions = {
           const dbUser = await User.findOne({ authorEmail: user.email });
 
           if (dbUser?.socialLinks?.github) {
-            try {
-              const { updateUserGithubStats } = await import('@/lib/github/service');
-              await updateUserGithubStats(dbUser._id.toString(), dbUser.socialLinks.github);
-            } catch (serviceError) {
-              console.error('[NextAuth] GitHub Stats Service Error:', serviceError);
-            }
+            // fire-and-forget: 로그인 블로킹 제거
+            import('@/lib/github/service')
+              .then(({ updateUserGithubStats }) =>
+                updateUserGithubStats(dbUser._id.toString(), dbUser.socialLinks.github)
+              )
+              .catch((serviceError) =>
+                console.error('[NextAuth] GitHub Stats Service Error:', serviceError)
+              );
           }
         } catch (error) {
           console.error('[NextAuth] Failed to update GitHub stats during sign-in:', error);
@@ -149,7 +151,14 @@ export const authOptions: NextAuthOptions = {
       // ── OAuth 첫 로그인: DB에서 _id·memberType 가져와 토큰에 주입
       if (account?.type === 'oauth') {
         await dbConnect();
-        const dbUser = await User.findOne({ authorEmail: token.email?.toLowerCase() });
+        const dbUser = (await User.findOne({ authorEmail: token.email?.toLowerCase() })
+          .select('_id nName memberType avatarUrl')
+          .lean()) as {
+          _id: { toString(): string };
+          nName?: string;
+          memberType?: string;
+          avatarUrl?: string;
+        } | null;
         if (dbUser) {
           return {
             ...token,
@@ -173,7 +182,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      session.user = token as any;
+      session.user = token as Session['user'];
       return session;
     },
   },

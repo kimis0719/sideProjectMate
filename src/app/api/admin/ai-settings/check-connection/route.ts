@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // POST /api/admin/ai-settings/check-connection — 모델 연결 상태 확인
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -92,3 +93,5 @@ export async function POST(request: Request) {
     });
   }
 }
+
+export const POST = withApiLogging(handlePost, '/api/admin/ai-settings/check-connection');

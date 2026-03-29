@@ -4,10 +4,11 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import { headers } from 'next/headers';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request, { params }: { params: { pid: string } }) {
+async function handlePost(request: Request, { params }: { params: { pid: string } }) {
   headers();
   try {
     const session = await getServerSession(authOptions);
@@ -41,19 +42,25 @@ export async function POST(request: Request, { params }: { params: { pid: string
       update = { $addToSet: { likes: userId } };
     }
 
-    const updatedProject = await Project.findByIdAndUpdate(project._id, update, { new: true })
-      .populate('author', 'nName')
-      .populate('tags');
+    const updatedProject = (await Project.findByIdAndUpdate(project._id, update, { new: true })
+      .select('likes')
+      .lean()) as { likes?: string[] } | null;
 
     return NextResponse.json({
       success: true,
-      data: updatedProject,
+      data: { likes: updatedProject?.likes || [], likesCount: updatedProject?.likes?.length || 0 },
       message: isLiked ? '좋아요를 취소했습니다.' : '좋아요를 눌렀습니다.',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '서버 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '서버 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const POST = withApiLogging(handlePost, '/api/projects/[pid]/like');

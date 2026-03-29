@@ -1,10 +1,11 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/mongodb';
 import CommonCode from '@/lib/models/CommonCode';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
@@ -23,10 +24,16 @@ export async function GET(request: NextRequest) {
       success: true,
       data: codes,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: 'Failed to fetch common codes', error: error.message },
+      {
+        success: false,
+        message: 'Failed to fetch common codes',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/common-codes');

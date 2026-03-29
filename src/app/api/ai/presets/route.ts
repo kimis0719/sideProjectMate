@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
@@ -7,7 +8,7 @@ import AiPreset from '@/lib/models/AiPreset';
 export const dynamic = 'force-dynamic';
 
 // GET /api/ai/presets?projectId=123 — 프리셋 목록 (글로벌 + 프로젝트별)
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?._id) {
     return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/ai/presets — 프리셋 생성
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?._id) {
     return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
@@ -69,3 +70,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/ai/presets');
+export const POST = withApiLogging(handlePost, '/api/ai/presets');

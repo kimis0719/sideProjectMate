@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/dbConnect';
 import Board from '@/lib/models/kanban/BoardModel';
 import Project from '@/lib/models/Project';
@@ -9,7 +10,7 @@ import { authOptions } from '@/lib/auth';
  * 프로젝트 멤버 조회 API (GET /api/kanban/boards/[boardId]/members)
  * 해당 보드가 속한 프로젝트의 멤버 리스트를 반환합니다.
  */
-export async function GET(request: Request, { params }: { params: { boardId: string } }) {
+async function handleGet(request: Request, { params }: { params: { boardId: string } }) {
   try {
     await dbConnect();
     const { boardId } = params;
@@ -47,8 +48,22 @@ export async function GET(request: Request, { params }: { params: { boardId: str
     // 4. 멤버 데이터 가공
     // project.projectMembers는 가상 필드로 populate 된 상태
     // (타입스크립트 이슈가 있을 수 있어 any로 캐스팅하거나 방어코드 작성)
+    interface PopulatedProjectMember {
+      userId: {
+        _id: string;
+        nName: string;
+        authorEmail: string;
+        position: string;
+        avatarUrl: string;
+      };
+      role: string;
+    }
+
+    const projectWithMembers = project as typeof project & {
+      projectMembers?: PopulatedProjectMember[];
+    };
     const members =
-      (project as any).projectMembers?.map((pm: any) => ({
+      projectWithMembers.projectMembers?.map((pm: PopulatedProjectMember) => ({
         _id: pm.userId._id, // User ID (assigneeId로 사용될 값)
         nName: pm.userId.nName,
         email: pm.userId.authorEmail,
@@ -63,3 +78,5 @@ export async function GET(request: Request, { params }: { params: { boardId: str
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/kanban/boards/[boardId]/members');

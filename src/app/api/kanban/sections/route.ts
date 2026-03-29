@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/mongodb';
 import Section from '@/lib/models/kanban/SectionModel';
 import Note from '@/lib/models/kanban/NoteModel';
 
-export async function GET(req: NextRequest) {
+async function handleGet(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
     const boardId = searchParams.get('boardId');
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   try {
     const body = await req.json();
     const { boardId, title, x, y, width, height, color, zIndex, parentSectionId } = body;
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     // depth 결정: parentSectionId가 있으면 자식(1), 없으면 최상위(0)
     let depth = 0;
     if (parentSectionId) {
-      const parent = (await Section.findById(parentSectionId).lean()) as any;
+      const parent = (await Section.findById(parentSectionId).lean()) as { depth: number } | null;
       if (!parent) {
         return NextResponse.json(
           { success: false, error: 'Parent section not found' },
@@ -108,15 +109,18 @@ export async function POST(req: NextRequest) {
       capturedCount: updateResult.modifiedCount,
       capturedNoteIds: capturedNoteIds,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to create section:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to create section',
-        details: error.message || String(error),
+        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/kanban/sections');
+export const POST = withApiLogging(handlePost, '/api/kanban/sections');

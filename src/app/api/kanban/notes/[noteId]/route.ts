@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/dbConnect';
 import Note from '@/lib/models/kanban/NoteModel';
 import mongoose from 'mongoose';
@@ -6,7 +7,7 @@ import mongoose from 'mongoose';
 /**
  * 특정 노트를 수정하는 API (PATCH)
  */
-export async function PATCH(request: Request, { params }: { params: { noteId: string } }) {
+async function handlePatch(request: Request, { params }: { params: { noteId: string } }) {
   const { noteId } = params;
   if (!noteId || !mongoose.Types.ObjectId.isValid(noteId)) {
     return NextResponse.json(
@@ -45,7 +46,7 @@ export async function PATCH(request: Request, { params }: { params: { noteId: st
 /**
  * 특정 노트를 삭제하는 API (DELETE)
  */
-export async function DELETE(request: Request, { params }: { params: { noteId: string } }) {
+async function handleDelete(request: Request, { params }: { params: { noteId: string } }) {
   const { noteId } = params;
   if (!noteId || !mongoose.Types.ObjectId.isValid(noteId)) {
     return NextResponse.json(
@@ -71,3 +72,6 @@ export async function DELETE(request: Request, { params }: { params: { noteId: s
     return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export const PATCH = withApiLogging(handlePatch, '/api/kanban/notes/[noteId]');
+export const DELETE = withApiLogging(handleDelete, '/api/kanban/notes/[noteId]');

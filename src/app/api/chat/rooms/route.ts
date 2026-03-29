@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 // Step 9.2: 내가 참여 중인 채팅방 목록 조회
 // 최신 메시지(updatedAt) 기준 정렬하여 반환
-export async function GET() {
+async function handleGet() {
   try {
     // 1. 인증 확인
     const session = await getServerSession(authOptions);
@@ -81,7 +82,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     // 1. 인증 확인
     const session = await getServerSession(authOptions);
@@ -222,3 +223,6 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/chat/rooms');
+export const POST = withApiLogging(handlePost, '/api/chat/rooms');

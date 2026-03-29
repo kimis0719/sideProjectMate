@@ -8,8 +8,8 @@ export interface IResource {
   type: 'LINK' | 'TEXT'; // 리소스 형태 (링크형, 텍스트형)
   category: 'CODE' | 'DESIGN' | 'DOCS' | 'ENV' | 'ACCOUNT' | 'OTHER'; // 리소스 분류
   content: string; // URL 또는 텍스트 내용
-  metadata?: Record<string, any>; // OG 태그 정보나 추가 설명을 위한 메타데이터
-  userId?: string | any; // ✨ [추가] 리소스 등록자 ID
+  metadata?: Record<string, unknown>; // OG 태그 정보나 추가 설명을 위한 메타데이터
+  userId?: string | mongoose.Types.ObjectId; // ✨ [추가] 리소스 등록자 ID
   _id?: string; // 클라이언트 식별용
 }
 
@@ -112,5 +112,14 @@ ProjectSchema.virtual('projectMembers', {
 
 ProjectSchema.set('toJSON', { virtuals: true });
 ProjectSchema.set('toObject', { virtuals: true });
+
+// 인덱스: 기본 목록 조회 (최신순)
+ProjectSchema.index({ delYn: 1, createdAt: -1 });
+// 인덱스: 카테고리 + 상태 필터 조회
+ProjectSchema.index({ delYn: 1, category: 1, status: 1 });
+// 인덱스: 작성자 필터
+ProjectSchema.index({ author: 1 });
+// 인덱스: 마감일 정렬
+ProjectSchema.index({ delYn: 1, deadline: 1 });
 
 export default mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema);

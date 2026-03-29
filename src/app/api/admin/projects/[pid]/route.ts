@@ -2,11 +2,12 @@ import { NextResponse, NextRequest } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import { requireAdmin } from '@/lib/adminAuth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/admin/projects/[pid] — 프로젝트 상세 조회
-export async function GET(_request: NextRequest, { params }: { params: { pid: string } }) {
+async function handleGet(_request: NextRequest, { params }: { params: { pid: string } }) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -23,7 +24,8 @@ export async function GET(_request: NextRequest, { params }: { params: { pid: st
 
     const project = await Project.findOne({ pid })
       .populate('author', 'nName authorEmail avatarUrl')
-      .populate('tags', 'name logoUrl category');
+      .populate('tags', 'name logoUrl category')
+      .lean();
 
     if (!project) {
       return NextResponse.json(
@@ -33,12 +35,12 @@ export async function GET(_request: NextRequest, { params }: { params: { pid: st
     }
 
     return NextResponse.json({ success: true, data: project });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '프로젝트 정보 조회 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
@@ -46,7 +48,7 @@ export async function GET(_request: NextRequest, { params }: { params: { pid: st
 }
 
 // PATCH /api/admin/projects/[pid] — 프로젝트 비활성화/재활성화
-export async function PATCH(request: NextRequest, { params }: { params: { pid: string } }) {
+async function handlePatch(request: NextRequest, { params }: { params: { pid: string } }) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -83,12 +85,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { pid: s
     }
 
     return NextResponse.json({ success: true, data: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '프로젝트 상태 변경 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
@@ -96,7 +98,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { pid: s
 }
 
 // DELETE /api/admin/projects/[pid] — 프로젝트 강제 삭제 (pid 기준)
-export async function DELETE(_request: NextRequest, { params }: { params: { pid: string } }) {
+async function handleDelete(_request: NextRequest, { params }: { params: { pid: string } }) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -121,10 +123,18 @@ export async function DELETE(_request: NextRequest, { params }: { params: { pid:
     }
 
     return NextResponse.json({ success: true, message: `프로젝트 #${pid}가 삭제되었습니다.` });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { success: false, message: '프로젝트 삭제 중 오류가 발생했습니다.', error: error.message },
+      {
+        success: false,
+        message: '프로젝트 삭제 중 오류가 발생했습니다.',
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/admin/projects/[pid]');
+export const DELETE = withApiLogging(handleDelete, '/api/admin/projects/[pid]');
+export const PATCH = withApiLogging(handlePatch, '/api/admin/projects/[pid]');

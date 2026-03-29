@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/mongodb';
 import TechStack from '@/lib/models/TechStack';
 
 // 모든 기술 스택 목록을 가져오는 GET API
-export async function GET() {
+async function handleGet() {
   try {
     await dbConnect();
 
@@ -13,14 +14,16 @@ export async function GET() {
       success: true,
       data: techStacks,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '기술 스택을 불러오는 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/tech-stacks');

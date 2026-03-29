@@ -127,6 +127,9 @@ const UserSchema: Schema = new Schema(
   }
 );
 
+// 인덱스: 관리자 유저 목록 조회
+UserSchema.index({ delYn: 1, createdAt: -1 });
+
 // 비밀번호 해싱 미들웨어
 UserSchema.pre('save', async function (next) {
   const user = this as unknown as IUser;
@@ -137,7 +140,7 @@ UserSchema.pre('save', async function (next) {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt);
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
     next(error);
   }
 });

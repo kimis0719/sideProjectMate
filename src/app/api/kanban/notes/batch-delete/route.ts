@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/apiLogger';
 import dbConnect from '@/lib/dbConnect';
 import Note from '@/lib/models/kanban/NoteModel';
 
@@ -6,7 +7,7 @@ import Note from '@/lib/models/kanban/NoteModel';
  * 노트 일괄 삭제 API (POST /api/kanban/notes/batch-delete)
  * body: { noteIds: string[], boardId: string }
  */
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     await dbConnect();
     const { noteIds, boardId } = await request.json();
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
     }
 
     // boardId 검증 (선택적이지만 안전을 위해)
-    const query: any = { _id: { $in: noteIds } };
+    const query: Record<string, unknown> = { _id: { $in: noteIds } };
     if (boardId) {
       query.boardId = boardId;
     }
@@ -39,3 +40,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export const POST = withApiLogging(handlePost, '/api/kanban/notes/batch-delete');

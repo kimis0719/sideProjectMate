@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User, { IUser } from '@/lib/models/User';
 import Availability, { IAvailability } from '@/lib/models/Availability';
+import { withApiLogging } from '@/lib/apiLogger';
 
 /**
  * @api {get} /api/users/[id] 사용자 상세 정보 조회
@@ -9,7 +10,7 @@ import Availability, { IAvailability } from '@/lib/models/Availability';
  * 특정 사용자의 공개 프로필 정보를 조회합니다.
  * DB에서 User 정보와 Availability 정보를 함께 조회하여 반환합니다.
  */
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+async function handleGet(req: NextRequest, { params }: { params: { id: string } }) {
   // 1. URL Parameter에서 ID 추출
   const userId = params.id;
 
@@ -20,21 +21,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   try {
     await dbConnect(); // DB 연결
 
-    // 2. 사용자 기본 정보 조회 (비밀번호 제외)
-    // lean()을 사용하여 데이터를 POJO(Plain Object)로 가져옵니다.
-    // Explicitly cast to unknown then IUser to handle potential Mongoose type mismatches with lean()
-    const user = (await User.findById(userId).select('-password').lean()) as unknown as IUser;
+    // 2. 사용자 기본 정보 + 가용성 정보를 병렬 조회
+    const [user, availability] = await Promise.all([
+      User.findById(userId).select('-password').lean() as Promise<IUser | null>,
+      Availability.findOne({ userId }).lean() as Promise<IAvailability | null>,
+    ]);
 
     if (!user) {
       return NextResponse.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 });
     }
-
-    // 3. 가용성(Availability) 정보 조회
-    // User 모델의 _id를 참조하고 있다고 가정합니다.
-    // findOne could return null, so we cast to IAvailability | null
-    const availability = (await Availability.findOne({
-      userId: user._id,
-    }).lean()) as unknown as IAvailability | null;
 
     // 4. Client가 사용하기 편한 형태로 데이터 구조화
     const profileData = {
@@ -87,7 +82,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     profileData.profileCompleteness = calculateProfileCompleteness(profileData);
 
     return NextResponse.json({ success: true, data: profileData });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Public Profile Fetch Error:', error);
 
     // ObjectId 형식이 아닐 때 발생하는 CastError 처리
@@ -101,3 +96,5 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/users/[id]');

@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
+import { withApiLogging } from '@/lib/apiLogger';
 
-export async function GET() {
+async function handleGet() {
   try {
     await dbConnect();
 
-    const users = await User.find({}).select('-password'); // 鍮꾨?踰덊샇 ?쒖쇅
+    const users = await User.find({}).select('-password').lean();
 
     return NextResponse.json({ success: true, data: users });
   } catch (error) {
@@ -14,7 +15,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     await dbConnect();
 
@@ -22,7 +23,13 @@ export async function POST(request: Request) {
     const user = await User.create(body);
 
     return NextResponse.json({ success: true, data: user }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : String(error) },
+      { status: 400 }
+    );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/users');
+export const POST = withApiLogging(handlePost, '/api/users');

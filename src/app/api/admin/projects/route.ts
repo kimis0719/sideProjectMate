@@ -2,11 +2,12 @@ import { NextResponse, NextRequest } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import { requireAdmin } from '@/lib/adminAuth';
+import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/admin/projects — 프로젝트 목록 (상태 필터, 페이지네이션)
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status'); // '01' | '02' | '03'
     const search = searchParams.get('search') || '';
 
-    const query: Record<string, any> = {};
+    const query: Record<string, unknown> = {};
     if (status && ['01', '02', '03'].includes(status)) query.status = status;
     if (search) query.title = { $regex: search, $options: 'i' };
 
@@ -29,17 +30,18 @@ export async function GET(request: NextRequest) {
         .populate('author', 'nName authorEmail')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       Project.countDocuments(query),
     ]);
 
     return NextResponse.json({ success: true, data: { projects, total, page, limit } });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '프로젝트 목록을 불러오는 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
@@ -47,7 +49,7 @@ export async function GET(request: NextRequest) {
 }
 
 // PATCH /api/admin/projects — 프로젝트 일괄 비활성화/재활성화 (delYn)
-export async function PATCH(request: NextRequest) {
+async function handlePatch(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -70,12 +72,12 @@ export async function PATCH(request: NextRequest) {
       message: `${result.modifiedCount}개 프로젝트의 상태가 변경되었습니다.`,
       data: { modifiedCount: result.modifiedCount },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '프로젝트 일괄 처리 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
@@ -83,7 +85,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 // DELETE /api/admin/projects — 프로젝트 일괄 영구 삭제
-export async function DELETE(request: NextRequest) {
+async function handleDelete(request: NextRequest) {
   const { error } = await requireAdmin();
   if (error) return error;
 
@@ -106,14 +108,18 @@ export async function DELETE(request: NextRequest) {
       message: `${result.deletedCount}개 프로젝트가 삭제되었습니다.`,
       data: { deletedCount: result.deletedCount },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
         message: '프로젝트 일괄 삭제 중 오류가 발생했습니다.',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/admin/projects');
+export const DELETE = withApiLogging(handleDelete, '/api/admin/projects');
+export const PATCH = withApiLogging(handlePatch, '/api/admin/projects');

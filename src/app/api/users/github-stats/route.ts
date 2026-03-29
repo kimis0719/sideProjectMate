@@ -3,6 +3,7 @@ import { githubClient } from '@/lib/github/client';
 import { GET_USER_STATS } from '@/lib/github/queries';
 import { calculateGitHubStats, GitHubStats } from '@/lib/github/utils';
 import { GitHubUserResponse } from '@/lib/github/types';
+import { withApiLogging } from '@/lib/apiLogger';
 
 // [핵심] 연결 안 된 경우 보여줄 '0점' 짜리 기본 데이터 정의
 const EMPTY_STATS: GitHubStats = {
@@ -23,7 +24,7 @@ const EMPTY_STATS: GitHubStats = {
   topRepos: [],
 };
 
-export async function GET(req: NextRequest) {
+async function handleGet(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const username = searchParams.get('username');
 
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
     const stats: GitHubStats = calculateGitHubStats(data);
 
     return NextResponse.json(stats);
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 2. API 호출 실패 시 (유저가 없거나, 토큰 문제 등) => 로그만 남기고 '빈 데이터' 반환
     console.error('GitHub API Error:', error?.message || 'Unknown error');
     // 개발 중 디버깅을 위해 토큰 상태는 로그에 남겨둠
@@ -47,3 +48,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(EMPTY_STATS);
   }
 }
+
+export const GET = withApiLogging(handleGet, '/api/users/github-stats');
