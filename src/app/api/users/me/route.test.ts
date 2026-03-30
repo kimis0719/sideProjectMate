@@ -6,7 +6,7 @@ vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }));
 
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 
@@ -198,7 +198,7 @@ describe('PATCH /api/users/me', () => {
     expect(json.data.introduction).toBe('새로운 자기소개입니다');
 
     // DB에 실제 저장 확인
-    const saved = (await User.findById(user._id).lean()) as any;
+    const saved = (await User.findById(user._id).lean()) as Record<string, unknown>;
     expect(saved.introduction).toBe('새로운 자기소개입니다');
   });
 

@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { WORK_STYLES, WorkStyle, LAUNCH_STYLES, LaunchStyle } from '@/constants/user';
 
 export interface IUser extends Document {
   authorEmail: string;
@@ -14,7 +15,7 @@ export interface IUser extends Document {
   position?: string;
   career?: string;
   status?: string;
-  avatarUrl?: string; // 프로필 이미지 URL
+  avatarUrl?: string;
   introduction?: string;
   socialLinks?: {
     github?: string;
@@ -36,6 +37,13 @@ export interface IUser extends Document {
   };
   techTags?: string[];
   level?: number;
+  // Phase 1 신규 필드
+  bio?: string;
+  domains?: string[];
+  workStyle?: WorkStyle[];
+  weeklyAvailability?: number;
+  preferLaunchStyle?: LaunchStyle;
+  onboardingStep?: number;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -77,15 +85,13 @@ const UserSchema: Schema = new Schema(
       required: true,
       unique: true,
     },
-    // 인증 방식 ('credentials', 'github', 'google')
     providers: {
       type: [String],
       default: [],
     },
-    // 프로필 확장 필드 스키마
     position: { type: String, default: '' },
-    career: { type: String, default: '' }, // 예: 'Junior', 'Senior', '3년차' 등
-    status: { type: String, default: '구직중' }, // 예: '구직중', '재직중', '팀빌딩중'
+    career: { type: String, default: '' },
+    status: { type: String, default: '구직중' },
     avatarUrl: { type: String, default: '' },
     introduction: { type: String, default: '' },
     socialLinks: {
@@ -95,12 +101,10 @@ const UserSchema: Schema = new Schema(
       other: { type: String, default: '' },
       solvedAc: { type: String, default: '' },
     },
-    // 포트폴리오 링크 배열
     portfolioLinks: {
       type: [String],
       default: [],
     },
-    // GitHub 통계 정보
     githubStats: {
       followers: { type: Number, default: 0 },
       following: { type: Number, default: 0 },
@@ -111,26 +115,36 @@ const UserSchema: Schema = new Schema(
       contributions: { type: Number, default: 0 },
       techStack: { type: [String], default: [] },
     },
-    // 기술 스택 태그
     techTags: {
       type: [String],
       default: [],
     },
-    // 개발자 레벨 (1~10)
     level: {
       type: Number,
       default: 1,
     },
+    // Phase 1 신규 필드
+    bio: { type: String, maxlength: 200, default: '' },
+    domains: { type: [String], default: [] },
+    workStyle: {
+      type: [String],
+      enum: WORK_STYLES,
+      default: [],
+    },
+    weeklyAvailability: { type: Number, default: 0 },
+    preferLaunchStyle: { type: String, enum: LAUNCH_STYLES },
+    onboardingStep: { type: Number, default: 0, min: 0, max: 4 },
   },
   {
     timestamps: true,
   }
 );
 
-// 인덱스: 관리자 유저 목록 조회
 UserSchema.index({ delYn: 1, createdAt: -1 });
+UserSchema.index({ domains: 1 });
+UserSchema.index({ workStyle: 1 });
+UserSchema.index({ onboardingStep: 1 });
 
-// 비밀번호 해싱 미들웨어
 UserSchema.pre('save', async function (next) {
   const user = this as unknown as IUser;
 
@@ -145,10 +159,8 @@ UserSchema.pre('save', async function (next) {
   }
 });
 
-// 비밀번호 검증 메소드
 UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// memberbasics 컬렉션 사용
-export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema, 'memberbasics');
+export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

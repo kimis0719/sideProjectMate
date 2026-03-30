@@ -6,7 +6,7 @@ vi.mock('@/lib/dbConnect', () => ({ default: vi.fn() }));
 
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 

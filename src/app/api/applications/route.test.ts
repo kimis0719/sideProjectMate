@@ -5,7 +5,7 @@ vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }));
 
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 
@@ -39,15 +39,16 @@ describe('GET /api/applications', () => {
       pid: 1,
       title: '프로젝트',
       category: 'WEB',
-      author: user._id,
-      members: [{ role: '개발자', current: 0, max: 1 }],
-      content: '내용',
-      status: '01',
+      ownerId: user._id,
+      members: [],
+      description: '내용',
+      status: 'recruiting',
     });
     await Application.create({
       projectId: project._id,
       applicantId: user._id,
-      role: '개발자',
+      motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+      weeklyHours: 10,
       message: '지원합니다',
     });
 
@@ -63,7 +64,7 @@ describe('GET /api/applications', () => {
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data).toHaveLength(1);
-    expect(body.data[0].role).toBe('개발자');
+    expect(body.data[0].weeklyHours).toBe(10);
   });
 
   it('다른 유저의 지원 내역은 포함되지 않는다', async () => {
@@ -73,21 +74,23 @@ describe('GET /api/applications', () => {
       pid: 2,
       title: '프로젝트',
       category: 'WEB',
-      author: user1._id,
-      members: [{ role: '개발자', current: 0, max: 2 }],
-      content: '내용',
-      status: '01',
+      ownerId: user1._id,
+      members: [],
+      description: '내용',
+      status: 'recruiting',
     });
     await Application.create({
       projectId: project._id,
       applicantId: user1._id,
-      role: '개발자',
+      motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+      weeklyHours: 10,
       message: '지원1',
     });
     await Application.create({
       projectId: project._id,
       applicantId: user2._id,
-      role: '개발자',
+      motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+      weeklyHours: 10,
       message: '지원2',
     });
 
@@ -123,31 +126,33 @@ describe('GET /api/applications', () => {
       pid: 3,
       title: '프로젝트1',
       category: 'WEB',
-      author: user._id,
-      members: [{ role: '백엔드', current: 0, max: 1 }],
-      content: '내용',
-      status: '01',
+      ownerId: user._id,
+      members: [],
+      description: '내용',
+      status: 'recruiting',
     });
     const project2 = await Project.create({
       pid: 4,
       title: '프로젝트2',
       category: 'APP',
-      author: user._id,
-      members: [{ role: '프론트엔드', current: 0, max: 1 }],
-      content: '내용',
-      status: '01',
+      ownerId: user._id,
+      members: [],
+      description: '내용',
+      status: 'recruiting',
     });
     await Application.create({
       projectId: project1._id,
       applicantId: user._id,
-      role: '백엔드',
+      motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+      weeklyHours: 10,
       message: '먼저',
       createdAt: new Date('2024-01-01'),
     });
     await Application.create({
       projectId: project2._id,
       applicantId: user._id,
-      role: '프론트엔드',
+      motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+      weeklyHours: 10,
       message: '나중에',
       createdAt: new Date('2024-02-01'),
     });
@@ -185,15 +190,16 @@ describe('GET /api/applications', () => {
       pid: 5,
       title: '팝테스트',
       category: 'WEB',
-      author: user._id,
-      members: [{ role: '개발자', current: 0, max: 1 }],
-      content: '내용',
-      status: '01',
+      ownerId: user._id,
+      members: [],
+      description: '내용',
+      status: 'recruiting',
     });
     await Application.create({
       projectId: project._id,
       applicantId: user._id,
-      role: '개발자',
+      motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+      weeklyHours: 10,
       message: '지원',
     });
 

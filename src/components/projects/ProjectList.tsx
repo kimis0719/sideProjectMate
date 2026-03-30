@@ -216,11 +216,8 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {projects.map((project) => {
               const membersArray = Array.isArray(project.members) ? project.members : [];
-              const totalMax = membersArray.reduce((sum, member) => sum + (member.max || 0), 0);
-              const totalCurrent = membersArray.reduce(
-                (sum, member) => sum + (member.current || 0),
-                0
-              );
+              const totalCurrent = membersArray.filter((m) => m.status === 'active').length;
+              const totalMax = project.maxMembers ?? 4;
 
               return (
                 <Link
@@ -237,13 +234,10 @@ function ProjectListContent({ categoryCodes, statusCodes }: ProjectListProps) {
                   </div>
                   <div className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="px-2.5 py-1 bg-muted text-muted-foreground text-xs font-semibold rounded">
-                        {categoryCodes.find((c) => c.code === project.category)?.label ||
-                          project.category}
-                      </span>
+                      {/* TODO(Phase 3): domain 태그로 교체 */}
                       <span
                         className={`px-2.5 py-1 text-xs font-semibold rounded ${
-                          project.status === '01'
+                          project.status === 'recruiting'
                             ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
                             : 'bg-muted text-muted-foreground'
                         }`}

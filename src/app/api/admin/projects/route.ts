@@ -16,18 +16,19 @@ async function handleGet(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const status = searchParams.get('status'); // '01' | '02' | '03'
+    const status = searchParams.get('status'); // 'recruiting' | 'in_progress' | 'completed' | 'paused'
     const search = searchParams.get('search') || '';
 
     const query: Record<string, unknown> = {};
-    if (status && ['01', '02', '03'].includes(status)) query.status = status;
+    if (status && ['recruiting', 'in_progress', 'completed', 'paused'].includes(status))
+      query.status = status;
     if (search) query.title = { $regex: search, $options: 'i' };
 
     const skip = (page - 1) * limit;
     const [projects, total] = await Promise.all([
       Project.find(query)
-        .select('pid title status delYn views likes createdAt author members')
-        .populate('author', 'nName authorEmail')
+        .select('pid title status delYn views likeCount createdAt ownerId members')
+        .populate('ownerId', 'nName authorEmail')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

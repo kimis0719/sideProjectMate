@@ -46,7 +46,7 @@ async function handleGet(request: Request) {
       board = await Board.create({
         pid: projectId,
         name: project.title,
-        ownerId: project.author,
+        ownerId: project.ownerId,
       });
     }
 

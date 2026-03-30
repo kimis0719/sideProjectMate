@@ -4,7 +4,7 @@ interface ProjectHeaderProps {
   project: IProject;
   categoryLabel?: string;
   isAuthor: boolean;
-  onStatusChange: (newStatus: '01' | '02' | '03') => Promise<void>;
+  onStatusChange: (newStatus: string) => Promise<void>;
 }
 
 export default function ProjectHeader({
@@ -16,23 +16,29 @@ export default function ProjectHeader({
   // 상태 코드에 따른 라벨 및 스타일 매핑
   const getStatusInfo = (status: string) => {
     switch (status) {
-      case '01':
+      case 'recruiting':
         return {
           label: '모집중',
           color:
             'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800',
         };
-      case '02':
+      case 'in_progress':
         return {
           label: '진행중',
           color:
             'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
         };
-      case '03':
+      case 'completed':
         return {
           label: '완료',
           color:
             'bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
+        };
+      case 'paused':
+        return {
+          label: '일시정지',
+          color:
+            'bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700',
         };
       default:
         return {
@@ -46,7 +52,7 @@ export default function ProjectHeader({
   const statusInfo = getStatusInfo(project.status);
 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value as '01' | '02' | '03';
+    const newStatus = e.target.value;
     if (confirm(`프로젝트 상태를 '${getStatusInfo(newStatus).label}'(으)로 변경하시겠습니까?`)) {
       await onStatusChange(newStatus);
     } else {
@@ -68,22 +74,28 @@ export default function ProjectHeader({
                 className={`appearance-none pl-3 pr-8 py-0.5 rounded-full text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${statusInfo.color}`}
               >
                 <option
-                  value="01"
+                  value="recruiting"
                   className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100"
                 >
                   모집중
                 </option>
                 <option
-                  value="02"
+                  value="in_progress"
                   className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100"
                 >
                   진행중
                 </option>
                 <option
-                  value="03"
+                  value="completed"
                   className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100"
                 >
                   완료
+                </option>
+                <option
+                  value="paused"
+                  className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100"
+                >
+                  일시정지
                 </option>
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500 dark:text-slate-400">
@@ -105,9 +117,9 @@ export default function ProjectHeader({
             </span>
           )}
 
-          <span className="text-sm text-slate-500 dark:text-slate-400">
-            {categoryLabel || project.category}
-          </span>
+          {categoryLabel && (
+            <span className="text-sm text-slate-500 dark:text-slate-400">{categoryLabel}</span>
+          )}
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
           {project.title}

@@ -11,13 +11,13 @@ interface ProjectOverviewProps {
 
 export default function ProjectOverview({ project, isAuthor, onUpdate }: ProjectOverviewProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [overview, setOverview] = useState(project.overview || project.content || '');
+  const [overview, setOverview] = useState(project.overview || project.description || '');
   const [isLoading, setIsLoading] = useState(false);
 
   // ✨ 프로젝트 데이터가 변경되면 로컬 상태도 업데이트해야 함
   useEffect(() => {
-    setOverview(project.overview || project.content || '');
-  }, [project.overview, project.content]);
+    setOverview(project.overview || project.description || '');
+  }, [project.overview, project.description]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -33,7 +33,7 @@ export default function ProjectOverview({ project, isAuthor, onUpdate }: Project
   };
 
   const handleCancel = () => {
-    setOverview(project.overview || project.content || '');
+    setOverview(project.overview || project.description || '');
     setIsEditing(false);
   };
 

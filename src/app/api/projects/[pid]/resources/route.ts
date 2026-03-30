@@ -51,7 +51,7 @@ async function handlePut(request: Request, { params }: { params: { pid: string }
     }
 
     // 권한 확인: 프로젝트 생성자(PM) 이거나 리소스 등록자 본인만 수정 가능
-    const isProjectAuthor = project.author.toString() === session.user._id;
+    const isProjectAuthor = project.ownerId.toString() === session.user._id;
     const isResourceOwner = resource.userId?.toString() === session.user._id;
 
     if (!isProjectAuthor && !isResourceOwner) {
@@ -120,7 +120,7 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
     // 권한 확인: 프로젝트 멤버라면 누구나 등록 가능!
     // 1. 프로젝트 생성자(PM)인지 확인 (패스)
     // 2. 멤버 리스트(ProjectMember)에 있는지 확인
-    const isProjectAuthor = project.author.toString() === session.user._id;
+    const isProjectAuthor = project.ownerId.toString() === session.user._id;
 
     // * ProjectMember 모델을 동적 import 하거나 상단에서 import 필요 (여기서는 상단 추가 가정하거나 직접 쿼리)
     // 간단하게 ProjectMember collection 직접 조회
@@ -227,7 +227,7 @@ async function handleDelete(request: Request, { params }: { params: { pid: strin
     // 권한 확인
     // 1. 프로젝트 생성자(PM): 모든 리소스 삭제 가능
     // 2. 리소스 등록자(Owner): 본인 리소스만 삭제 가능
-    const isProjectAuthor = project.author.toString() === session.user._id;
+    const isProjectAuthor = project.ownerId.toString() === session.user._id;
     const isResourceOwner = resource.userId?.toString() === session.user._id;
 
     // 기존 데이터 호환성: userId가 없는 레거시 데이터는 PM만 삭제 가능

@@ -185,7 +185,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
   // 프로젝트 완료 상태이고 팀원/작성자인 경우 기존 리뷰 여부 조회
   useEffect(() => {
-    if (!project || project.status !== '03' || !session?.user?._id) return;
+    if (!project || project.status !== 'completed' || !session?.user?._id) return;
     if (!isMember && !isOwner) return;
 
     const reviewableUsers = getReviewableUsers();
@@ -349,10 +349,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       router.push('/login');
       return;
     }
-    const availableRole = project?.members.find((m) => m.current < m.max);
-    if (availableRole) {
-      setSelectedRole(availableRole.role);
-    }
     setIsApplyModalOpen(true);
   };
 
@@ -418,7 +414,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   } else if (hasApplied) {
     buttonText = '지원완료';
     isButtonDisabled = true;
-  } else if (project.status !== '01') {
+  } else if (project.status !== 'recruiting') {
     // 모집중이 아닌 경우 (진행중, 완료 등)
     buttonText = '모집 마감';
     isButtonDisabled = true;
@@ -508,7 +504,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                 </div>
               )}
               <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">
-                {project.content}
+                {project.description}
               </p>
             </div>
 
@@ -583,22 +579,18 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground">모집 현황</p>
                   <ul className="space-y-1 mt-1">
-                    {Array.isArray(project.members) &&
-                      project.members.map((member, index) => (
-                        <li key={index} className="flex justify-between text-foreground">
-                          <span>{member.role}</span>
-                          <span className="font-semibold">
-                            {member.current} / {member.max}
-                          </span>
-                        </li>
-                      ))}
+                    {/* TODO(Phase 3): 새 팀원 모집 UI로 교체 */}
+                    <li className="text-foreground">
+                      팀원 {project.members?.filter((m) => m.status === 'active').length ?? 0} /{' '}
+                      {project.maxMembers ?? 4}명
+                    </li>
                   </ul>
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground">상태</p>
                   {/* 동적으로 가져온 상태 라벨 표시 */}
                   <span
-                    className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === '01' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-muted text-muted-foreground'}`}
+                    className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === 'recruiting' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-muted text-muted-foreground'}`}
                   >
                     {statusLabel || project.status}
                   </span>
@@ -630,7 +622,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               </button>
 
               {/* 팀원 리뷰 섹션 — 완료 프로젝트의 멤버/작성자에게만 표시 */}
-              {project.status === '03' &&
+              {project.status === 'completed' &&
                 (isMember || isOwner) &&
                 (() => {
                   const reviewable = getReviewableUsers();
@@ -722,13 +714,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   <option value="" disabled>
                     역할을 선택하세요
                   </option>
-                  {project.members
-                    .filter((m) => m.current < m.max)
-                    .map((member) => (
-                      <option key={member.role} value={member.role}>
-                        {member.role} ({member.current}/{member.max})
-                      </option>
-                    ))}
+                  {/* TODO(Phase 5): 지원 플로우 개편 후 역할 선택 제거 */}
+                  <option value="member">팀원</option>
                 </select>
               </div>
               <div className="mb-6">

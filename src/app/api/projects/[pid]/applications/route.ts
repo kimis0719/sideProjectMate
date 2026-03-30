@@ -29,7 +29,7 @@ async function handleGet(request: Request, { params }: { params: { pid: string }
       );
     }
 
-    if (project.author.toString() !== session.user._id) {
+    if (project.ownerId.toString() !== session.user._id) {
       return NextResponse.json(
         { success: false, message: '지원자 목록을 볼 권한이 없습니다.' },
         { status: 403 }

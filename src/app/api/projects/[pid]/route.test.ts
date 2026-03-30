@@ -6,7 +6,7 @@ vi.mock('next/headers', () => ({ headers: vi.fn() }));
 
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 
@@ -34,10 +34,10 @@ async function createTestProject(
     pid,
     title: `프로젝트 ${pid}`,
     category: 'WEB',
-    author: authorId,
-    members: [{ role: '프론트엔드', current: 0, max: 2 }],
-    content: '테스트 프로젝트',
-    status: '01',
+    ownerId: authorId,
+    members: [],
+    description: '테스트 프로젝트',
+    status: 'recruiting',
     ...overrides,
   });
 }
@@ -99,7 +99,7 @@ describe('GET /api/projects/[pid]', () => {
     const response = await GET(request, { params: { pid: '102' } });
     const body = await response.json();
 
-    expect(body.data.author.nName).toBe('프로젝트작성자');
+    expect(body.data.ownerId.nName).toBe('프로젝트작성자');
   });
 });
 
@@ -245,13 +245,13 @@ describe('PATCH /api/projects/[pid]', () => {
     const request = new Request('http://localhost:3000/api/projects/400', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: '02' }),
+      body: JSON.stringify({ status: 'in_progress' }),
     });
     const response = await PATCH(request, { params: { pid: '400' } });
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.data.status).toBe('02');
+    expect(body.data.status).toBe('in_progress');
   });
 
   it('overview를 업데이트할 수 있다', async () => {
@@ -312,7 +312,7 @@ describe('PATCH /api/projects/[pid]', () => {
     const request = new Request('http://localhost:3000/api/projects/400', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: '02' }),
+      body: JSON.stringify({ status: 'in_progress' }),
     });
     const response = await PATCH(request, { params: { pid: '400' } });
     expect(response.status).toBe(401);
@@ -330,7 +330,7 @@ describe('PATCH /api/projects/[pid]', () => {
     const request = new Request('http://localhost:3000/api/projects/404', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: '02' }),
+      body: JSON.stringify({ status: 'in_progress' }),
     });
     const response = await PATCH(request, { params: { pid: '404' } });
     expect(response.status).toBe(403);

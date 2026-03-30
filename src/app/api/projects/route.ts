@@ -4,8 +4,6 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Counter from '@/lib/models/Counter';
-import TechStack from '@/lib/models/TechStack';
-import ProjectMember from '@/lib/models/ProjectMember';
 import { headers } from 'next/headers';
 import { withApiLogging } from '@/lib/apiLogger';
 
@@ -22,38 +20,24 @@ async function handleGet(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     const searchTerm = searchParams.get('search');
-    const category = searchParams.get('category');
     const status = searchParams.get('status');
     const sortBy = searchParams.get('sortBy') || 'latest';
-    const authorId = searchParams.get('authorId');
+    const ownerId = searchParams.get('authorId') || searchParams.get('ownerId');
 
     const query: Record<string, unknown> = { delYn: { $ne: true } };
     if (searchTerm) {
       query.$or = [
         { title: { $regex: searchTerm, $options: 'i' } },
-        { content: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } },
       ];
     }
 
-    // 카테고리와 상태는 이제 코드로 직접 조회
-    if (category && category !== 'all') {
-      query.category = category;
-    }
     if (status && status !== 'all') {
       query.status = status;
     }
 
-    if (authorId) {
-      query.author = authorId;
-    }
-
-    const memberId = searchParams.get('memberId');
-    if (memberId) {
-      const memberProjects = await ProjectMember.find({
-        userId: memberId,
-        status: 'active',
-      }).distinct('projectId');
-      query._id = { $in: memberProjects };
+    if (ownerId) {
+      query.ownerId = ownerId;
     }
 
     let sortOptions: Record<string, 1 | -1> = { createdAt: -1 };
@@ -66,8 +50,7 @@ async function handleGet(request: NextRequest) {
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
-        .populate('author', 'nName')
-        .populate('tags')
+        .populate('ownerId', 'nName')
         .lean(),
       Project.countDocuments(query),
     ]);
@@ -106,16 +89,16 @@ async function handlePost(request: Request) {
 
     await dbConnect();
     const body = await request.json();
-    const { title, category, content, members, deadline, images, tags } = body;
+    const { title, description, weeklyHours, status, deadline, images } = body;
 
-    if (!title || !content || !category || !members || members.length === 0) {
+    if (!title || !description) {
       return NextResponse.json(
         { success: false, message: '필수 입력 항목이 누락되었습니다.' },
         { status: 400 }
       );
     }
 
-    const authorId = session.user._id;
+    const ownerId = session.user._id;
 
     const counter = await Counter.findOneAndUpdate(
       { _id: 'project_pid' },
@@ -126,30 +109,24 @@ async function handlePost(request: Request) {
     const newProject = await Project.create({
       pid: counter!.seq,
       title,
-      category,
-      author: authorId,
-      members,
+      description,
+      ownerId,
+      weeklyHours,
       deadline,
       images: images && images.length > 0 ? images : ['🚀'],
-      tags,
-      content,
-      status: '01', // 01: 모집중
+      status: status || 'recruiting',
+      // 작성자를 첫 번째 멤버로 자동 등록
+      members: [
+        {
+          userId: ownerId,
+          role: 'member',
+          status: 'active',
+          joinedAt: new Date(),
+        },
+      ],
     });
 
-    // 작성자를 프로젝트 멤버로 자동 등록
-    try {
-      await ProjectMember.create({
-        projectId: newProject._id,
-        userId: session.user._id,
-        role: '작성자',
-        status: 'active',
-      });
-    } catch (memberError: unknown) {
-      console.error('[ERROR] Failed to add author to ProjectMember:', memberError);
-      // 멤버 등록 실패 시에도 프로젝트 생성은 성공으로 처리하되, 에러 로그는 남김
-    }
-
-    await newProject.populate([{ path: 'author', select: 'nName' }, { path: 'tags' }]);
+    await newProject.populate({ path: 'ownerId', select: 'nName' });
 
     return NextResponse.json(
       { success: true, message: '프로젝트가 성공적으로 생성되었습니다.', data: newProject },
