@@ -15,4 +15,9 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones: []
+zones:
+  - path: 'src/app/projects/[pid]/'
+    owner: 'FFLINA-CTT'
+    status: 'active'
+    reason: 'fix: 프로젝트 상세 페이지 Phase 1 필드명 불일치 긴급 수정 (#205)'
+    expires: '2026-04-07'
