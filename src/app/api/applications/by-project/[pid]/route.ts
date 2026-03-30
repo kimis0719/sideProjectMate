@@ -37,13 +37,17 @@ async function handleGet(request: Request, { params }: { params: { pid: string }
       (app: {
         _id: { toString(): string };
         status: string;
-        role: string;
+        motivation: string;
+        weeklyHours: number;
+        message?: string;
         createdAt: Date;
         applicantId?: { _id?: { toString(): string }; nName?: string; authorEmail?: string };
       }) => ({
         _id: app._id.toString(),
         status: app.status,
-        role: app.role,
+        motivation: app.motivation,
+        weeklyHours: app.weeklyHours,
+        message: app.message,
         createdAt: app.createdAt,
         applicant: {
           _id: app.applicantId?._id?.toString(),

@@ -6,7 +6,7 @@ vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }));
 
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 
@@ -49,10 +49,10 @@ async function createTestProject(authorId: string) {
     pid: 1,
     title: 'P',
     category: 'WEB',
-    author: authorId,
+    ownerId: authorId,
     members: [],
-    content: 'c',
-    status: '01',
+    description: 'c',
+    status: 'recruiting',
   });
 }
 
@@ -219,10 +219,10 @@ describe('GET /api/reviews', () => {
       pid: 2,
       title: 'P2',
       category: 'WEB',
-      author: user3._id,
+      ownerId: user3._id,
       members: [],
-      content: 'c2',
-      status: '01',
+      description: 'c2',
+      status: 'recruiting',
     });
     await Review.create({
       projectId: project2._id,

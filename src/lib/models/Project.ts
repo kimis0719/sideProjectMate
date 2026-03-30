@@ -1,74 +1,93 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import './TechStack';
-import './ProjectMember';
-import { IUser } from './User';
+import {
+  PROJECT_STAGES,
+  ProjectStage,
+  PROJECT_STATUSES,
+  ProjectStatus,
+  EXECUTION_STYLES,
+  ExecutionStyle,
+} from '@/constants/project';
+
+export interface IProjectMember {
+  userId: mongoose.Types.ObjectId;
+  role: string;
+  status: 'active' | 'inactive' | 'removed';
+  joinedAt: Date;
+}
 
 // 📝 [리소스 인터페이스] 프로젝트 내 공유 자원 구조 정의
 export interface IResource {
-  type: 'LINK' | 'TEXT'; // 리소스 형태 (링크형, 텍스트형)
-  category: 'CODE' | 'DESIGN' | 'DOCS' | 'ENV' | 'ACCOUNT' | 'OTHER'; // 리소스 분류
-  content: string; // URL 또는 텍스트 내용
+  type: 'LINK' | 'TEXT';
+  category: 'CODE' | 'DESIGN' | 'DOCS' | 'ENV' | 'ACCOUNT' | 'OTHER';
+  content: string;
   metadata?: {
     title?: string;
     image?: string;
     description?: string;
     [key: string]: string | undefined;
-  }; // OG 태그 정보
-  userId?: string | mongoose.Types.ObjectId; // ✨ [추가] 리소스 등록자 ID
-  _id?: string; // 클라이언트 식별용
+  };
+  userId?: string | mongoose.Types.ObjectId;
+  _id?: string;
 }
 
 export interface IProject extends Document {
   pid: number;
   title: string;
-  category: string;
-  author: IUser['_id'];
-  members: {
-    role: string;
-    current: number;
-    max: number;
-  }[];
-  tags: (mongoose.Types.ObjectId | string)[];
-  images: string[];
-  content: string;
-  status: '01' | '02' | '03'; // 01: 모집중, 02: 진행중, 03: 완료
-  delYn: boolean; // 비활성화 여부 (어드민 소프트 삭제)
-  overview?: string; // ✨ [추가] 프로젝트 개요 (PM 전용 관리 필드)
-  resources: IResource[]; // ✨ [추가] 프로젝트 공유 자원 리스트
+  ownerId: mongoose.Types.ObjectId;
+  members: IProjectMember[];
+  description: string;
+  status: ProjectStatus;
+  delYn: boolean;
+  overview?: string;
+  resources: IResource[];
   deadline?: Date;
   views: number;
-  likes: IUser['_id'][];
+  likeCount: number;
+  techStacks: string[];
+  images: string[];
+  // Phase 1 신규 필드
+  problemStatement: string;
+  currentStage: ProjectStage;
+  executionStyle: ExecutionStyle;
+  domains: string[];
+  lookingFor: string[];
+  weeklyHours: number;
+  durationMonths?: number;
+  maxMembers: number;
+  links?: {
+    github?: string;
+    figma?: string;
+    deploy?: string;
+    notion?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
+
+const ProjectMemberSubSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    role: { type: String, default: 'member' },
+    status: { type: String, enum: ['active', 'inactive', 'removed'], default: 'active' },
+    joinedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
 
 const ProjectSchema: Schema = new Schema(
   {
     pid: { type: Number, required: true, unique: true },
     title: { type: String, required: true, trim: true },
-    category: { type: String, required: true },
-    author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    members: [
-      {
-        role: { type: String, required: true },
-        current: { type: Number, required: true, default: 0 },
-        max: { type: Number, required: true, default: 1 },
-      },
-    ],
-    tags: [{ type: Schema.Types.ObjectId, ref: 'TechStack' }],
-    images: {
-      type: [String],
-      default: ['🚀'],
-    },
-    content: { type: String, required: true },
+    ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    members: { type: [ProjectMemberSubSchema], default: [] },
+    description: { type: String, required: true },
     status: {
       type: String,
-      enum: ['01', '02', '03'], // 01: 모집중, 02: 진행중, 03: 완료
-      default: '01',
+      enum: PROJECT_STATUSES,
+      default: 'recruiting',
     },
     delYn: { type: Boolean, default: false },
-    overview: { type: String }, // ✨ [추가] 프로젝트 개요
-    // ✨ [리소스 필드 스키마]
+    overview: { type: String },
     resources: [
       {
         type: {
@@ -82,49 +101,47 @@ const ProjectSchema: Schema = new Schema(
           required: true,
         },
         content: { type: String, required: true },
-        metadata: { type: Object }, // 유연성을 위해 Object 타입 사용 (OG 정보 등)
-        userId: { type: Schema.Types.ObjectId, ref: 'User' }, // ✨ [추가] 등록자 추적
+        metadata: { type: Object },
+        userId: { type: Schema.Types.ObjectId, ref: 'User' },
       },
     ],
     deadline: { type: Date },
     views: { type: Number, default: 0 },
-    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    likeCount: { type: Number, default: 0 },
+    techStacks: { type: [String], default: [] },
+    images: { type: [String], default: ['🚀'] },
+    // Phase 1 신규 필드
+    problemStatement: { type: String, maxlength: 500 },
+    currentStage: { type: String, enum: PROJECT_STAGES },
+    executionStyle: { type: String, enum: EXECUTION_STYLES },
+    domains: { type: [String], default: [] },
+    lookingFor: { type: [String], default: [] },
+    weeklyHours: { type: Number },
+    durationMonths: { type: Number },
+    maxMembers: { type: Number, default: 4 },
+    links: {
+      github: { type: String },
+      figma: { type: String },
+      deploy: { type: String },
+      notion: { type: String },
+    },
   },
   { timestamps: true }
 );
 
-// 가상 필드 getter에 방어 코드 추가
-ProjectSchema.virtual('membersString').get(function (this: IProject) {
-  if (!this.members) {
-    return '';
-  }
-  return this.members.map((m) => `${m.role} ${m.current}/${m.max}`).join(', ');
-});
-
 ProjectSchema.virtual('likesCount').get(function (this: IProject) {
-  if (!this.likes) {
-    return 0;
-  }
-  return this.likes.length;
-});
-
-// ProjectMember와의 가상 관계 설정
-ProjectSchema.virtual('projectMembers', {
-  ref: 'ProjectMember',
-  localField: '_id',
-  foreignField: 'projectId',
+  return this.likeCount ?? 0;
 });
 
 ProjectSchema.set('toJSON', { virtuals: true });
 ProjectSchema.set('toObject', { virtuals: true });
 
-// 인덱스: 기본 목록 조회 (최신순)
 ProjectSchema.index({ delYn: 1, createdAt: -1 });
-// 인덱스: 카테고리 + 상태 필터 조회
-ProjectSchema.index({ delYn: 1, category: 1, status: 1 });
-// 인덱스: 작성자 필터
-ProjectSchema.index({ author: 1 });
-// 인덱스: 마감일 정렬
+ProjectSchema.index({ delYn: 1, status: 1, createdAt: -1 });
+ProjectSchema.index({ ownerId: 1 });
 ProjectSchema.index({ delYn: 1, deadline: 1 });
+ProjectSchema.index({ domains: 1 });
+ProjectSchema.index({ currentStage: 1 });
+ProjectSchema.index({ executionStyle: 1 });
 
 export default mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema);

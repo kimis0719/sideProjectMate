@@ -31,10 +31,10 @@ async function createTestProject(authorId: string, overrides?: Record<string, un
     pid: Date.now() + Math.floor(Math.random() * 10000),
     title: '테스트 프로젝트',
     category: 'WEB',
-    author: authorId,
-    members: [{ role: 'Frontend', current: 1, max: 3 }],
-    content: '프로젝트 설명입니다.',
-    status: '01',
+    ownerId: authorId,
+    members: [],
+    description: '프로젝트 설명입니다.',
+    status: 'recruiting',
     ...overrides,
   });
 }
@@ -84,13 +84,13 @@ describe('GET /api/admin/projects', () => {
 
   it('상태 필터로 프로젝트를 조회한다', async () => {
     const admin = await createAdminUser();
-    await createTestProject(admin._id.toString(), { status: '01', pid: 2001 });
-    await createTestProject(admin._id.toString(), { status: '02', pid: 2002 });
-    await createTestProject(admin._id.toString(), { status: '01', pid: 2003 });
+    await createTestProject(admin._id.toString(), { status: 'recruiting', pid: 2001 });
+    await createTestProject(admin._id.toString(), { status: 'in_progress', pid: 2002 });
+    await createTestProject(admin._id.toString(), { status: 'recruiting', pid: 2003 });
     mockAdmin(admin._id.toString());
 
     const req = createMockNextRequest(
-      'http://localhost:3000/api/admin/projects?page=1&limit=10&status=01'
+      'http://localhost:3000/api/admin/projects?page=1&limit=10&status=recruiting'
     );
     const res = await GET(req);
     const json = await res.json();
@@ -99,7 +99,7 @@ describe('GET /api/admin/projects', () => {
     expect(json.success).toBe(true);
     expect(json.data.total).toBe(2);
     json.data.projects.forEach((p: { status: string }) => {
-      expect(p.status).toBe('01');
+      expect(p.status).toBe('recruiting');
     });
   });
 

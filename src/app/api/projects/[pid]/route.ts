@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import { headers } from 'next/headers';
-import ProjectMember from '@/lib/models/ProjectMember';
 import User from '@/lib/models/User';
 import TechStack from '@/lib/models/TechStack';
 import Notification from '@/lib/models/Notification';
@@ -31,18 +30,13 @@ async function handleGet(request: Request, { params }: { params: { pid: string }
       Project.updateOne({ pid: pidNum }, { $inc: { views: 1 } }),
       Project.findOne({ pid: pidNum })
         .populate(
-          'author',
+          'ownerId',
           'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl'
         )
-        .populate('tags')
         .populate({
-          path: 'projectMembers',
-          strictPopulate: false,
-          populate: {
-            path: 'userId',
-            select:
-              'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl',
-          },
+          path: 'members.userId',
+          select:
+            'nName authorEmail position career status introduction socialLinks githubStats techTags level avatarUrl',
         })
         .lean(),
     ]);
@@ -94,7 +88,7 @@ async function handlePut(request: Request, { params }: { params: { pid: string }
       );
     }
 
-    if (project.author.toString() !== session.user._id) {
+    if (project.ownerId.toString() !== session.user._id) {
       return NextResponse.json(
         { success: false, message: '수정 권한이 없습니다.' },
         { status: 403 }
@@ -146,7 +140,7 @@ async function handleDelete(request: Request, { params }: { params: { pid: strin
       );
     }
 
-    if (project.author.toString() !== session.user._id) {
+    if (project.ownerId.toString() !== session.user._id) {
       return NextResponse.json(
         { success: false, message: '삭제 권한이 없습니다.' },
         { status: 403 }
@@ -196,7 +190,7 @@ async function handlePatch(request: Request, { params }: { params: { pid: string
     }
 
     // 작성자 권한 체크
-    if (project.author.toString() !== session.user._id) {
+    if (project.ownerId.toString() !== session.user._id) {
       return NextResponse.json(
         { success: false, message: '수정 권한이 없습니다.' },
         { status: 403 }
@@ -207,7 +201,7 @@ async function handlePatch(request: Request, { params }: { params: { pid: string
     const { status, overview } = body; // 업데이트할 필드만 추출
 
     // 상태값 유효성 검사 (변경 시에만)
-    if (status && !['01', '02', '03'].includes(status)) {
+    if (status && !['recruiting', 'in_progress', 'completed', 'paused'].includes(status)) {
       return NextResponse.json(
         { success: false, message: '유효하지 않은 상태 값입니다.' },
         { status: 400 }
@@ -234,18 +228,17 @@ async function handlePatch(request: Request, { params }: { params: { pid: string
       { new: true, runValidators: true }
     );
 
-    // 프로젝트 완료(→'03') 전환 시 팀원들에게 리뷰 요청 알림 발송
-    if (status === '03' && prevStatus !== '03') {
+    // 프로젝트 완료(→'completed') 전환 시 팀원들에게 리뷰 요청 알림 발송
+    if (status === 'completed' && prevStatus !== 'completed') {
       try {
-        const activeMembers = await ProjectMember.find({
-          projectId: project._id,
-          status: 'active',
-        }).lean();
-
-        // 팀원 userId 목록 (프로젝트 작성자 포함, 중복 제거)
+        // embedded members에서 active 팀원 목록
         const recipientIds = new Set<string>();
-        activeMembers.forEach((m) => recipientIds.add(m.userId.toString()));
-        recipientIds.add(project.author.toString());
+        project.members
+          .filter((m: { status: string }) => m.status === 'active')
+          .forEach((m: { userId: { toString(): string } }) =>
+            recipientIds.add(m.userId.toString())
+          );
+        recipientIds.add(project.ownerId.toString());
         // 알림 발신자(status 변경자) 본인은 제외
         recipientIds.delete(session.user._id);
 

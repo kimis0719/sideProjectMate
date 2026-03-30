@@ -40,10 +40,10 @@ describe('GET /api/kanban/boards', () => {
       pid,
       title: 'P1',
       category: 'WEB',
-      author: userId,
+      ownerId: userId,
       members: [],
-      content: 'c',
-      status: '01',
+      description: 'c',
+      status: 'recruiting',
     });
   }
 

@@ -18,7 +18,7 @@ interface ProjectDetail {
   pid: number;
   title: string;
   category: string;
-  status: '01' | '02' | '03';
+  status: string;
   delYn: boolean;
   content: string;
   overview?: string;
@@ -41,15 +41,16 @@ interface Props {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  '01': {
+  recruiting: {
     label: '모집중',
     color: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',
   },
-  '02': {
+  in_progress: {
     label: '진행중',
     color: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400',
   },
-  '03': { label: '완료', color: 'bg-muted text-muted-foreground' },
+  completed: { label: '완료', color: 'bg-muted text-muted-foreground' },
+  paused: { label: '일시정지', color: 'bg-gray-100 dark:bg-gray-800 text-gray-500' },
 };
 
 export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDeleted }: Props) {

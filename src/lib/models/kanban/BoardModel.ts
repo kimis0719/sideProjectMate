@@ -3,7 +3,7 @@ import mongoose, { Schema, models, model, Document } from 'mongoose';
 export interface IBoard extends Document {
   pid: number;
   name: string;
-  ownerId: string; // TODO: User 모델과 연결되면 ObjectId로 변경
+  ownerId: mongoose.Types.ObjectId | string; // string: 'system' 보드 레거시 허용
 }
 
 const BoardSchema: Schema = new Schema(
@@ -20,7 +20,8 @@ const BoardSchema: Schema = new Schema(
       trim: true,
     },
     ownerId: {
-      type: String, // TODO: { type: Schema.Types.ObjectId, ref: 'User' }
+      type: Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
     },
   },

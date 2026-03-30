@@ -22,7 +22,6 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
 
     await dbConnect();
     const { pid } = params;
-    const userId = session.user._id;
 
     const project = await Project.findOne({ pid: Number(pid) });
 
@@ -33,23 +32,19 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
       );
     }
 
-    const isLiked = project.likes.includes(userId);
-
-    let update;
-    if (isLiked) {
-      update = { $pull: { likes: userId } };
-    } else {
-      update = { $addToSet: { likes: userId } };
-    }
-
-    const updatedProject = (await Project.findByIdAndUpdate(project._id, update, { new: true })
-      .select('likes')
-      .lean()) as { likes?: string[] } | null;
+    // Phase 1: likes 배열 → likeCount 숫자. 토글 방식은 Phase 5에서 재설계
+    const updatedProject = (await Project.findByIdAndUpdate(
+      project._id,
+      { $inc: { likeCount: 1 } },
+      { new: true }
+    )
+      .select('likeCount')
+      .lean()) as { likeCount?: number } | null;
 
     return NextResponse.json({
       success: true,
-      data: { likes: updatedProject?.likes || [], likesCount: updatedProject?.likes?.length || 0 },
-      message: isLiked ? '좋아요를 취소했습니다.' : '좋아요를 눌렀습니다.',
+      data: { likeCount: updatedProject?.likeCount ?? 0 },
+      message: '좋아요를 눌렀습니다.',
     });
   } catch (error: unknown) {
     return NextResponse.json(

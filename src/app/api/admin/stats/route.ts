@@ -48,7 +48,7 @@ async function handleGet() {
       Project.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
       Project.find({})
         .select('pid title status createdAt author views')
-        .populate('author', 'nName')
+        .populate('ownerId', 'nName')
         .sort({ createdAt: -1 })
         .limit(5)
         .lean(),
@@ -85,7 +85,12 @@ async function handleGet() {
     ]);
 
     // 상태별 프로젝트 수 매핑
-    const statusCountMap: Record<string, number> = { '01': 0, '02': 0, '03': 0 };
+    const statusCountMap: Record<string, number> = {
+      recruiting: 0,
+      in_progress: 0,
+      completed: 0,
+      paused: 0,
+    };
     for (const item of projectsByStatus) {
       statusCountMap[item._id] = item.count;
     }
@@ -112,9 +117,9 @@ async function handleGet() {
           total: totalProjects,
           newThisWeek: newProjectsThisWeek,
           byStatus: {
-            recruiting: statusCountMap['01'],
-            inProgress: statusCountMap['02'],
-            completed: statusCountMap['03'],
+            recruiting: statusCountMap['recruiting'],
+            inProgress: statusCountMap['in_progress'],
+            completed: statusCountMap['completed'],
           },
           recent: recentProjects,
         },

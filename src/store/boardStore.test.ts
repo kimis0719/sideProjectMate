@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ── Socket Mock 설정 (vi.hoisted로 호이스팅 문제 해결) ────────────────
 const { mockSocket, emitFromServer } = vi.hoisted(() => {
-  const listeners = new Map<string, ((...args: any[]) => void)[]>();
+  const listeners = new Map<string, ((...args: unknown[]) => void)[]>();
   const mockSocket = {
     emit: vi.fn(),
-    on: vi.fn((event: string, handler: (...args: any[]) => void) => {
+    on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
       const handlers = listeners.get(event) || [];
       handlers.push(handler);
       listeners.set(event, handlers);
@@ -17,7 +17,7 @@ const { mockSocket, emitFromServer } = vi.hoisted(() => {
     connected: true,
     id: 'mock-socket-id',
   };
-  const emitFromServer = (event: string, ...args: any[]) => {
+  const emitFromServer = (event: string, ...args: unknown[]) => {
     (listeners.get(event) || []).forEach((h) => h(...args));
   };
   return { mockSocket, emitFromServer };
@@ -66,7 +66,7 @@ const resetStore = () => {
   }
 };
 
-const mockFetchSuccess = (data: any, status = 200) => {
+const mockFetchSuccess = (data: unknown, status = 200) => {
   global.fetch = vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
     status,
@@ -226,7 +226,7 @@ describe('boardStore', () => {
       });
 
       it('Optimistic Update로 임시 노트가 즉시 추가된다', async () => {
-        let resolveFetch: (value: any) => void;
+        let resolveFetch: (value: unknown) => void;
         global.fetch = vi.fn().mockReturnValue(
           new Promise((resolve) => {
             resolveFetch = resolve;
@@ -364,7 +364,7 @@ describe('boardStore', () => {
       });
 
       it('Optimistic Update로 즉시 제거된다', async () => {
-        let resolveFetch: (value: any) => void;
+        let resolveFetch: (value: unknown) => void;
         global.fetch = vi.fn().mockReturnValue(
           new Promise((resolve) => {
             resolveFetch = resolve;

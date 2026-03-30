@@ -6,14 +6,13 @@ vi.mock('next/headers', () => ({ headers: vi.fn() }));
 
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 
 import Application from '@/lib/models/Application';
 import Project from '@/lib/models/Project';
 import User from '@/lib/models/User';
-import ProjectMember from '@/lib/models/ProjectMember';
 import Notification from '@/lib/models/Notification';
 import { PUT, DELETE } from './route';
 
@@ -35,15 +34,16 @@ async function createProjectWithApplicant() {
     pid: Date.now(),
     title: '테스트 프로젝트',
     category: 'WEB',
-    author: owner._id,
-    members: [{ role: '프론트엔드', current: 0, max: 2 }],
-    content: '내용',
-    status: '01',
+    ownerId: owner._id,
+    members: [],
+    description: '내용',
+    status: 'recruiting',
   });
   const application = await Application.create({
     projectId: project._id,
     applicantId: applicant._id,
-    role: '프론트엔드',
+    motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+    weeklyHours: 10,
     message: '지원합니다',
     status: 'pending',
   });
@@ -77,7 +77,7 @@ describe('PUT /api/applications/[appId]', () => {
     expect(body.data.status).toBe('accepted');
   });
 
-  it('수락 시 지원자가 ProjectMember로 등록된다', async () => {
+  it('수락 시 지원자가 project.members embedded에 등록된다', async () => {
     const { owner, applicant, project, application } = await createProjectWithApplicant();
     mockGetServerSession.mockResolvedValue({
       user: { _id: owner._id.toString() },
@@ -91,9 +91,12 @@ describe('PUT /api/applications/[appId]', () => {
     });
     await PUT(request, { params: { appId: application._id.toString() } });
 
-    const member = await ProjectMember.findOne({ userId: applicant._id, projectId: project._id });
+    const updatedProject = await Project.findById(project._id);
+    const member = updatedProject!.members.find(
+      (m: { userId: { toString(): string } }) => m.userId.toString() === applicant._id.toString()
+    );
     expect(member).not.toBeNull();
-    expect(member!.role).toBe('프론트엔드');
+    expect(member!.role).toBe('member');
     expect(member!.status).toBe('active');
   });
 

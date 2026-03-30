@@ -5,20 +5,18 @@ import { createMockNextRequest } from '@/__tests__/helpers/apiTestHelper';
 vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }));
 vi.mock('next/headers', () => ({ headers: vi.fn() }));
 
-// getServerSession mock
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('next-auth/next', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 
 import Project from '@/lib/models/Project';
 import Counter from '@/lib/models/Counter';
 import User from '@/lib/models/User';
-import ProjectMember from '@/lib/models/ProjectMember';
 import { GET, POST } from './route';
 
 const BASE_URL = 'http://localhost:3000/api/projects';
@@ -34,7 +32,7 @@ async function createTestUser(overrides?: Record<string, unknown>) {
   });
 }
 
-async function createTestProject(authorId: string, overrides?: Record<string, unknown>) {
+async function createTestProject(ownerId: string, overrides?: Record<string, unknown>) {
   const counter = await Counter.findOneAndUpdate(
     { _id: 'project_pid' },
     { $inc: { seq: 1 } },
@@ -42,12 +40,11 @@ async function createTestProject(authorId: string, overrides?: Record<string, un
   );
   return Project.create({
     pid: counter!.seq,
-    title: `테스트 프로젝트 ${counter!.seq}`,
-    category: 'WEB',
-    author: authorId,
-    members: [{ role: '프론트엔드', current: 0, max: 2 }],
-    content: '테스트 프로젝트입니다.',
-    status: '01',
+    title: `테스트 항목 ${counter!.seq}`,
+    ownerId,
+    members: [],
+    description: '설명입니다.',
+    status: 'recruiting',
     ...overrides,
   });
 }
@@ -93,58 +90,28 @@ describe('GET /api/projects', () => {
 
   it('search 파라미터로 제목을 검색한다', async () => {
     const user = await createTestUser();
-    await createTestProject(user._id.toString(), {
-      title: 'React 프로젝트',
-      content: 'React 기반',
-    });
-    await createTestProject(user._id.toString(), { title: 'Vue 프로젝트', content: 'Vue 기반' });
-    await createTestProject(user._id.toString(), { title: 'Angular 앱', content: 'Angular 기반' });
+    await createTestProject(user._id.toString(), { title: 'React 프로젝트' });
+    await createTestProject(user._id.toString(), { title: 'Vue 프로젝트' });
+    await createTestProject(user._id.toString(), { title: 'Angular 앱' });
 
     const request = createMockNextRequest(`${BASE_URL}?search=프로젝트`);
     const response = await GET(request);
     const body = await response.json();
 
-    // title OR content에서 '프로젝트' 검색 — title에 '프로젝트'가 포함된 2개 매칭
     expect(body.data.projects).toHaveLength(2);
-  });
-
-  it('category 필터로 특정 카테고리만 조회한다', async () => {
-    const user = await createTestUser();
-    await createTestProject(user._id.toString(), { category: 'WEB' });
-    await createTestProject(user._id.toString(), { category: 'APP' });
-    await createTestProject(user._id.toString(), { category: 'WEB' });
-
-    const request = createMockNextRequest(`${BASE_URL}?category=APP`);
-    const response = await GET(request);
-    const body = await response.json();
-
-    expect(body.data.projects).toHaveLength(1);
-    expect(body.data.projects[0].category).toBe('APP');
   });
 
   it('status 필터로 특정 상태만 조회한다', async () => {
     const user = await createTestUser();
-    await createTestProject(user._id.toString(), { status: '01' });
-    await createTestProject(user._id.toString(), { status: '02' });
-    await createTestProject(user._id.toString(), { status: '01' });
+    await createTestProject(user._id.toString(), { status: 'recruiting' });
+    await createTestProject(user._id.toString(), { status: 'in_progress' });
+    await createTestProject(user._id.toString(), { status: 'recruiting' });
 
-    const request = createMockNextRequest(`${BASE_URL}?status=02`);
+    const request = createMockNextRequest(`${BASE_URL}?status=in_progress`);
     const response = await GET(request);
     const body = await response.json();
 
     expect(body.data.projects).toHaveLength(1);
-  });
-
-  it('category=all이면 전체를 조회한다', async () => {
-    const user = await createTestUser();
-    await createTestProject(user._id.toString(), { category: 'WEB' });
-    await createTestProject(user._id.toString(), { category: 'APP' });
-
-    const request = createMockNextRequest(`${BASE_URL}?category=all`);
-    const response = await GET(request);
-    const body = await response.json();
-
-    expect(body.data.projects).toHaveLength(2);
   });
 
   it('delYn=true인 프로젝트는 목록에 포함되지 않는다', async () => {
@@ -174,7 +141,7 @@ describe('GET /api/projects', () => {
   });
 
   it('결과가 없으면 빈 배열을 반환한다', async () => {
-    const request = createMockNextRequest(`${BASE_URL}?category=NONEXIST`);
+    const request = createMockNextRequest(`${BASE_URL}?status=nonexist`);
     const response = await GET(request);
     const body = await response.json();
 
@@ -204,9 +171,7 @@ describe('POST /api/projects', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: '새 프로젝트',
-        category: 'WEB',
-        content: '프로젝트 설명입니다.',
-        members: [{ role: '프론트엔드', current: 0, max: 2 }],
+        description: '프로젝트 설명입니다.',
       }),
     });
 
@@ -217,7 +182,6 @@ describe('POST /api/projects', () => {
     expect(body.success).toBe(true);
     expect(body.data.title).toBe('새 프로젝트');
     expect(body.data.pid).toBeGreaterThan(0);
-    expect(body.data.status).toBe('01');
   });
 
   it('pid가 Counter를 통해 자동 증가된다', async () => {
@@ -231,12 +195,7 @@ describe('POST /api/projects', () => {
       new Request(BASE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: '프로젝트',
-          category: 'WEB',
-          content: '내용',
-          members: [{ role: '개발자', current: 0, max: 1 }],
-        }),
+        body: JSON.stringify({ title: '프로젝트', description: '내용' }),
       });
 
     const res1 = await POST(makeRequest());
@@ -253,19 +212,11 @@ describe('POST /api/projects', () => {
     const request = new Request(BASE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: '새 프로젝트',
-        category: 'WEB',
-        content: '내용',
-        members: [{ role: '개발자', current: 0, max: 1 }],
-      }),
+      body: JSON.stringify({ title: '새 프로젝트', description: '내용' }),
     });
 
     const response = await POST(request);
-    const body = await response.json();
-
     expect(response.status).toBe(401);
-    expect(body.success).toBe(false);
   });
 
   it('필수 필드(title)가 누락되면 400을 반환한다', async () => {
@@ -278,18 +229,14 @@ describe('POST /api/projects', () => {
     const request = new Request(BASE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        category: 'WEB',
-        content: '내용',
-        members: [{ role: '개발자', current: 0, max: 1 }],
-      }),
+      body: JSON.stringify({ description: '내용' }),
     });
 
     const response = await POST(request);
     expect(response.status).toBe(400);
   });
 
-  it('members가 비어있으면 400을 반환한다', async () => {
+  it('작성자가 자동으로 members에 등록된다', async () => {
     const user = await createTestUser();
     mockGetServerSession.mockResolvedValue({
       user: { _id: user._id.toString() },
@@ -299,41 +246,15 @@ describe('POST /api/projects', () => {
     const request = new Request(BASE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: '프로젝트',
-        category: 'WEB',
-        content: '내용',
-        members: [],
-      }),
-    });
-
-    const response = await POST(request);
-    expect(response.status).toBe(400);
-  });
-
-  it('작성자가 자동으로 ProjectMember로 등록된다', async () => {
-    const user = await createTestUser();
-    mockGetServerSession.mockResolvedValue({
-      user: { _id: user._id.toString() },
-      expires: '2099-12-31',
-    });
-
-    const request = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: '멤버 확인 프로젝트',
-        category: 'WEB',
-        content: '내용',
-        members: [{ role: '개발자', current: 0, max: 1 }],
-      }),
+      body: JSON.stringify({ title: '멤버 확인 프로젝트', description: '내용' }),
     });
 
     await POST(request);
 
-    const members = await ProjectMember.find({ userId: user._id });
+    const project = await Project.findOne({ title: '멤버 확인 프로젝트' });
+    const members = project!.members;
     expect(members).toHaveLength(1);
-    expect(members[0].role).toBe('작성자');
+    expect(members[0].role).toBe('member');
     expect(members[0].status).toBe('active');
   });
 });

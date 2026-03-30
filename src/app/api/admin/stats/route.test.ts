@@ -5,7 +5,7 @@ vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }));
 
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 
@@ -50,15 +50,16 @@ describe('GET /api/admin/stats', () => {
       pid: 1,
       title: '프로젝트1',
       category: 'WEB',
-      author: user._id,
-      members: [{ role: '개발자', current: 0, max: 1 }],
-      content: '내용',
-      status: '01',
+      ownerId: user._id,
+      members: [],
+      description: '내용',
+      status: 'recruiting',
     });
     await Application.create({
       projectId: project._id,
       applicantId: user._id,
-      role: '개발자',
+      motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+      weeklyHours: 10,
       message: '지원',
     });
 
@@ -104,37 +105,37 @@ describe('GET /api/admin/stats', () => {
         pid: 1,
         title: 'P1',
         category: 'WEB',
-        author: user._id,
+        ownerId: user._id,
         members: [],
-        content: 'c',
-        status: '01',
+        description: 'c',
+        status: 'recruiting',
       },
       {
         pid: 2,
         title: 'P2',
         category: 'WEB',
-        author: user._id,
+        ownerId: user._id,
         members: [],
-        content: 'c',
-        status: '01',
+        description: 'c',
+        status: 'recruiting',
       },
       {
         pid: 3,
         title: 'P3',
         category: 'WEB',
-        author: user._id,
+        ownerId: user._id,
         members: [],
-        content: 'c',
-        status: '02',
+        description: 'c',
+        status: 'in_progress',
       },
       {
         pid: 4,
         title: 'P4',
         category: 'WEB',
-        author: user._id,
+        ownerId: user._id,
         members: [],
-        content: 'c',
-        status: '03',
+        description: 'c',
+        status: 'completed',
       },
     ]);
 
@@ -155,10 +156,10 @@ describe('GET /api/admin/stats', () => {
       pid: 10,
       title: 'P',
       category: 'WEB',
-      author: admin._id,
-      members: [{ role: '개발자', current: 0, max: 3 }],
-      content: 'c',
-      status: '01',
+      ownerId: admin._id,
+      members: [],
+      description: 'c',
+      status: 'recruiting',
     });
 
     mockGetServerSession.mockResolvedValue({
@@ -170,14 +171,16 @@ describe('GET /api/admin/stats', () => {
       {
         projectId: project._id,
         applicantId: user1._id,
-        role: '개발자',
+        motivation: '이 문제를 꼭 해결하고 싶어서 지원합니다. 경험이 있습니다.',
+        weeklyHours: 10,
         message: 'm',
         status: 'accepted',
       },
       {
         projectId: project._id,
         applicantId: user2._id,
-        role: '개발자',
+        motivation: '함께 성장할 수 있는 팀을 찾고 있습니다. 적극적으로 참여하겠습니다.',
+        weeklyHours: 8,
         message: 'm',
         status: 'pending',
       },

@@ -6,7 +6,7 @@ vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }));
 
 const mockGetServerSession = vi.fn();
 vi.mock('next-auth', () => ({
-  getServerSession: (...args: any[]) => mockGetServerSession(...args),
+  getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
 }));
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 vi.mock('next/headers', () => ({ headers: vi.fn() }));
@@ -34,10 +34,10 @@ async function createTestProject(authorId: string) {
     pid: Date.now(),
     title: '테스트 프로젝트',
     category: 'WEB',
-    author: authorId,
-    members: [{ role: '개발자', current: 0, max: 1 }],
-    content: '프로젝트 설명',
-    status: '01',
+    ownerId: authorId,
+    members: [],
+    description: '프로젝트 설명',
+    status: 'recruiting',
   });
 }
 

@@ -5,7 +5,6 @@ import dbConnect from '@/lib/mongodb';
 import Project, { IProject } from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import Notification from '@/lib/models/Notification';
-import ProjectMember from '@/lib/models/ProjectMember';
 import { headers } from 'next/headers';
 import { withApiLogging } from '@/lib/apiLogger';
 
@@ -40,7 +39,7 @@ async function handlePut(request: Request, { params }: { params: { appId: string
 
     const project = application.projectId as IProject;
 
-    if (project.author.toString() !== session.user._id) {
+    if (project.ownerId.toString() !== session.user._id) {
       return NextResponse.json(
         { success: false, message: '지원서를 처리할 권한이 없습니다.' },
         { status: 403 }
@@ -58,32 +57,20 @@ async function handlePut(request: Request, { params }: { params: { appId: string
     await application.save();
 
     if (status === 'accepted') {
-      // ProjectMember로 추가
-      // userId를 사용하여 멤버 등록
-      await ProjectMember.create({
-        projectId: project._id,
-        userId: application.applicantId,
-        role: application.role,
-        status: 'active',
-      });
-
-      // 프로젝트의 members 배열에서 해당 역할의 current 값 증가
-      const memberIndex = project.members.findIndex(
-        (m: { role: string; current: number; max: number }) => m.role === application.role
-      );
-      if (memberIndex !== -1) {
-        project.members[memberIndex].current += 1;
-
-        // 모든 역할의 모집이 완료되었는지 확인
-        const isAllFull = project.members.every(
-          (m: { role: string; current: number; max: number }) => m.current >= m.max
-        );
-        if (isAllFull) {
-          project.status = '02'; // 진행중으로 변경
+      // projects.members 배열에 embedded로 추가
+      await Project.updateOne(
+        { _id: project._id },
+        {
+          $push: {
+            members: {
+              userId: application.applicantId,
+              role: 'member',
+              status: 'active',
+              joinedAt: new Date(),
+            },
+          },
         }
-
-        await project.save();
-      }
+      );
     }
 
     await Notification.create({
@@ -125,7 +112,7 @@ async function handleDelete(request: Request, { params }: { params: { appId: str
     }
 
     const project = application.projectId as IProject;
-    const isOwner = project.author.toString() === session.user._id;
+    const isOwner = project.ownerId.toString() === session.user._id;
     const isApplicant = application.applicantId.toString() === session.user._id;
 
     if (!isApplicant && !isOwner) {

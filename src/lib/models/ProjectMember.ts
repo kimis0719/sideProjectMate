@@ -1,3 +1,8 @@
+/**
+ * @deprecated Phase 1 (2026-03-30) — projectmembers 데이터가 projects.members embedded로 통합됨.
+ * 신규 코드에서 이 모델을 import하지 말 것.
+ * 컬렉션 및 파일 삭제는 Phase 7 cleanup에서 처리.
+ */
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IProjectMember extends Document {

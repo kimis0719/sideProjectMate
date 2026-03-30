@@ -14,7 +14,7 @@ interface Project {
   category: string;
   status: string;
   images: string[];
-  members: any[];
+  members: { userId: string; role: string; status: string }[];
 }
 
 export default function DashboardHome() {
@@ -105,7 +105,7 @@ export default function DashboardHome() {
                   </span>
                   <span
                     className={`px-2.5 py-1 text-xs font-semibold rounded ${
-                      project.status === '01'
+                      project.status === 'recruiting'
                         ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                         : 'bg-muted text-muted-foreground'
                     }`}

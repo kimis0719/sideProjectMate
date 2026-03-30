@@ -41,9 +41,10 @@ interface StatsData {
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  '01': { label: '모집중', color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/50' },
-  '02': { label: '진행중', color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/50' },
-  '03': { label: '완료', color: 'text-muted-foreground bg-muted' },
+  recruiting: { label: '모집중', color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/50' },
+  in_progress: { label: '진행중', color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/50' },
+  completed: { label: '완료', color: 'text-muted-foreground bg-muted' },
+  paused: { label: '일시정지', color: 'text-gray-500 bg-gray-100 dark:bg-gray-800' },
 };
 
 export default function AdminDashboard() {

@@ -29,9 +29,10 @@ interface AiContext {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  '01': '모집중',
-  '02': '진행중',
-  '03': '완료',
+  recruiting: '모집중',
+  in_progress: '진행중',
+  completed: '완료',
+  paused: '일시정지',
 };
 
 /**

@@ -30,27 +30,27 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
       );
     }
 
-    if (project.author.toString() === applicantId) {
+    if (project.ownerId.toString() === applicantId) {
       return NextResponse.json(
         { success: false, message: '자신의 프로젝트에는 지원할 수 없습니다.' },
         { status: 400 }
       );
     }
 
-    const { role, message } = await request.json();
-    if (!role || !message) {
+    const { motivation, weeklyHours, message } = await request.json();
+    if (!motivation || !weeklyHours) {
       return NextResponse.json(
-        { success: false, message: '지원 역할과 메시지를 모두 입력해주세요.' },
+        {
+          success: false,
+          message: '지원 동기(motivation)와 주당 참여 가능 시간(weeklyHours)을 입력해주세요.',
+        },
         { status: 400 }
       );
     }
 
-    const targetRole = project.members.find(
-      (m: { role: string; current: number; max: number }) => m.role === role
-    );
-    if (!targetRole) {
+    if (motivation.length < 20) {
       return NextResponse.json(
-        { success: false, message: '모집하지 않는 역할입니다.' },
+        { success: false, message: '지원 동기는 최소 20자 이상 입력해주세요.' },
         { status: 400 }
       );
     }
@@ -58,12 +58,11 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
     const existingApplication = await Application.findOne({
       projectId: project._id,
       applicantId,
-      role,
     });
 
     if (existingApplication) {
       return NextResponse.json(
-        { success: false, message: '이미 해당 역할에 지원했습니다.' },
+        { success: false, message: '이미 이 프로젝트에 지원했습니다.' },
         { status: 409 }
       );
     }
@@ -71,12 +70,13 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
     await Application.create({
       projectId: project._id,
       applicantId,
-      role,
+      motivation,
+      weeklyHours,
       message,
     });
 
     await Notification.create({
-      recipient: project.author,
+      recipient: project.ownerId,
       sender: applicantId,
       type: 'new_applicant',
       project: project._id,

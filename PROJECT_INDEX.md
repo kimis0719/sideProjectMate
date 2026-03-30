@@ -1,6 +1,6 @@
 # Project Index: Side Project Mate
 
-Generated: 2026-03-21
+Generated: 2026-03-30
 
 ## Project Structure
 
@@ -102,10 +102,10 @@ sideProjectMate/
 
 | Model         | Collection     | Key Fields                                   |
 | ------------- | -------------- | -------------------------------------------- |
-| User          | `memberbasics` | uid, nName, authorEmail, memberType          |
-| Project       | projects       | pid, title, authorId, status, category       |
-| Application   | applications   | projectId, applicantId, status               |
-| ProjectMember | projectmembers | projectId, userId, role                      |
+| User          | `users`        | uid, nName, authorEmail, memberType, bio, domains, workStyle, onboardingStep |
+| Project       | projects       | pid, title, ownerId, status (recruiting/in_progress/completed/paused), techStacks, members (embedded) |
+| Application   | applications   | projectId, applicantId, motivation, weeklyHours, status |
+| ProjectMember | projectmembers | **@deprecated** — Phase 7 삭제 예정, projects.members embedded로 대체 |
 | Notification  | notifications  | userId, type, message                        |
 | Counter       | counters       | name, seq (auto-increment)                   |
 | BoardModel    | boards         | projectId, title                             |

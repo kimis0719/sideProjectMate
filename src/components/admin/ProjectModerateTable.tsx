@@ -9,13 +9,13 @@ interface AdminProject {
   _id: string;
   pid: number;
   title: string;
-  status: '01' | '02' | '03';
+  status: string;
   delYn: boolean;
   views: number;
-  likes: string[];
+  likeCount: number;
   createdAt: string;
-  author: { _id: string; nName: string; authorEmail: string } | null;
-  members: { role: string; current: number; max: number }[];
+  ownerId: { _id: string; nName: string; authorEmail: string } | null;
+  members: { userId: string; role: string; status: string }[];
 }
 
 interface PaginatedResult {
@@ -26,22 +26,24 @@ interface PaginatedResult {
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  '01': {
+  recruiting: {
     label: '모집중',
     color: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',
   },
-  '02': {
+  in_progress: {
     label: '진행중',
     color: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400',
   },
-  '03': { label: '완료', color: 'bg-muted text-muted-foreground' },
+  completed: { label: '완료', color: 'bg-muted text-muted-foreground' },
+  paused: { label: '일시정지', color: 'bg-gray-100 dark:bg-gray-800 text-gray-500' },
 };
 
 const STATUS_FILTERS = [
   { value: '', label: '전체' },
-  { value: '01', label: '모집중' },
-  { value: '02', label: '진행중' },
-  { value: '03', label: '완료' },
+  { value: 'recruiting', label: '모집중' },
+  { value: 'in_progress', label: '진행중' },
+  { value: 'completed', label: '완료' },
+  { value: 'paused', label: '일시정지' },
 ];
 
 const LIMIT = 20;
@@ -368,14 +370,14 @@ export default function ProjectModerateTable() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">
-                      {project.author ? (
+                      {project.ownerId ? (
                         <Link
-                          href={`/profile/${project.author._id}`}
+                          href={`/profile/${project.ownerId._id}`}
                           target="_blank"
                           className="hover:text-blue-600 hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {project.author.nName}
+                          {project.ownerId.nName}
                         </Link>
                       ) : (
                         <span className="text-muted-foreground/60">알 수 없음</span>
@@ -389,9 +391,7 @@ export default function ProjectModerateTable() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{project.views}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {project.likes?.length ?? 0}
-                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{project.likeCount ?? 0}</td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">
                       {new Date(project.createdAt).toLocaleDateString('ko-KR')}
                     </td>
