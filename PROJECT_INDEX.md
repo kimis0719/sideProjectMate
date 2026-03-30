@@ -15,7 +15,7 @@ sideProjectMate/
     ├── components/              # React UI components (61 files)
     ├── store/                   # Zustand stores (3)
     ├── hooks/                   # Custom hooks (2)
-    ├── constants/               # Constants & type maps (2)
+    ├── constants/               # Constants & type maps (4)
     ├── types/                   # Global TS declarations (3)
     └── lib/                     # Server utils, models, helpers
 ```

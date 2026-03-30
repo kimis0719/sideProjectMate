@@ -17,6 +17,12 @@ const GROUPS = [
   { group: 'POSITION', groupName: '직군' },
   { group: 'PROJECT_CATEGORY', groupName: '프로젝트 카테고리' },
   { group: 'CAREER', groupName: '경력' },
+  // TODO(Phase 7): 하드코딩 제거 후 DB 동적 로딩으로 전환
+  { group: 'DOMAIN', groupName: '도메인' },
+  { group: 'LOOKING_FOR', groupName: '찾는 사람' },
+  { group: 'WORK_STYLE', groupName: '작업 스타일' },
+  { group: 'PROJECT_STAGE', groupName: '프로젝트 단계' },
+  { group: 'EXECUTION_STYLE', groupName: '실행 방식' },
 ];
 
 const DEFAULT_FORM = { code: '', label: '', order: 0, isActive: true };

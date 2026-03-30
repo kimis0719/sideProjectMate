@@ -8,22 +8,22 @@ const slides = [
   {
     id: 1,
     label: '팀 매칭',
-    title: '함께 만드는\n즐거운 사이드 프로젝트',
-    description: '디자이너, 기획자, 개발자를 위한 팀 매칭 플랫폼',
+    title: '아이디어를 빠르게\n실행할 동료를 찾아요',
+    description: '기술 역할이 아니라 같은 문제에 꽂힌 사람을 찾는 팀 매칭 플랫폼',
     accent: '#4f46e5',
   },
   {
     id: 2,
-    label: '협업 툴',
+    label: 'AI 협업',
     title: '당신의 아이디어를\n현실로 만들어보세요',
-    description: '칸반 보드와 WBS로 팀 협업을 더 스마트하게',
+    description: 'AI 칸반 보드로 혼자서도, 팀으로도 더 빠르게 실행하세요',
     accent: '#7c3aed',
   },
   {
     id: 3,
-    label: '성장',
-    title: '새로운 협업의 시작\nSide Project Mate',
-    description: '열정 넘치는 팀원들과 함께 성장하세요',
+    label: '빠른 실행',
+    title: '같은 문제에 꽂힌 사람과\n함께 만들어가세요',
+    description: '도메인 관심사와 실행 스타일로 진짜 맞는 팀원을 찾아보세요',
     accent: '#0891b2',
   },
 ];
@@ -49,7 +49,7 @@ const features = [
     ),
     title: '팀원 매칭',
     description:
-      '역할별 모집과 기술 스택 필터로 딱 맞는 팀원을 찾아보세요. 프로필로 서로를 더 잘 알 수 있어요.',
+      '도메인 관심사와 실행 스타일로 진짜 맞는 동료를 찾아보세요. 기술 역할이 아닌 같은 문제를 보는 사람과 함께하세요.',
     color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400',
   },
   {

@@ -1192,7 +1192,40 @@ WBS 모델 파일과 DB 컬렉션은 삭제하지 않음 (추후 cleanup PR).
 
 ---
 
-#### 7-D. 고아 리소스 정리 (DB 스키마 분석 기반)
+#### 7-D. 공통코드 그룹 관리 DB화 (Phase 0 하드코딩 해소)
+
+Phase 0에서 `CommonCodeManager.tsx`의 `GROUPS` 배열을 임시 하드코딩으로 확장했다.
+Phase 7에서 이를 DB 기반으로 전환한다.
+
+**`CommonCodeGroup` 모델 신규 생성**
+
+- [ ] `src/lib/models/CommonCodeGroup.ts` 신규 생성
+  ```typescript
+  // { group, groupName, order, isActive }
+  // CommonCode.group 과 동일한 값으로 연결 (ref 없이 string 매칭)
+  ```
+
+**관리자 API 추가**
+
+- [ ] `GET /api/admin/common-codes/groups` — 전체 그룹 목록 조회
+- [ ] `POST /api/admin/common-codes/groups` — 신규 그룹 생성
+- [ ] `PUT /api/admin/common-codes/groups/[id]` — 그룹명·순서·활성화 수정
+- [ ] `DELETE /api/admin/common-codes/groups/[id]` — 그룹 삭제 (하위 코드 없을 때만 허용)
+
+**관리자 화면 개선**
+
+- [ ] `CommonCodeManager.tsx` — `GROUPS` 하드코딩 배열 제거, API에서 동적 로딩으로 교체
+- [ ] 그룹 추가/편집/삭제 UI 추가 (그룹 탭 영역에 [+ 그룹 추가] 버튼)
+
+**DB 초기 데이터 마이그레이션**
+
+- [ ] Phase 0에서 하드코딩으로 추가한 5개 그룹을 `CommonCodeGroup` 컬렉션에 등록
+  - DOMAIN / LOOKING_FOR / WORK_STYLE / PROJECT_STAGE / EXECUTION_STYLE
+- [ ] 기존 3개 그룹도 등록 (POSITION / PROJECT_CATEGORY / CAREER)
+
+---
+
+#### 7-E. 고아 리소스 정리 (DB 스키마 분석 기반)
 
 코드에서 참조하지 않는 완전한 dead resource들을 Phase 7에서 함께 정리한다.
 
@@ -1223,6 +1256,9 @@ WBS 모델 파일과 DB 컬렉션은 삭제하지 않음 (추후 cleanup PR).
 - [ ] WBS API 전체 410 응답
 - [ ] POSITION, CAREER, PROJECT_CATEGORY `isActive = false`
 - [ ] `wbs/` 컴포넌트 및 스토어 파일 삭제 (import 참조 없음 확인 후)
+- [ ] `CommonCodeGroup` 모델 및 CRUD API 구현
+- [ ] `CommonCodeManager.tsx` 하드코딩 `GROUPS` 배열 제거 → 동적 로딩
+- [ ] `CommonCodeGroup` 컬렉션에 8개 그룹 초기 데이터 등록
 
 ---
 
