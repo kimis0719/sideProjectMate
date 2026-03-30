@@ -20,8 +20,8 @@ const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider
   loading: () => <div className="aspect-video bg-gray-100 rounded-lg animate-pulse" />,
 });
 
-// 프로젝트 작성자 populate된 타입
-interface PopulatedAuthor {
+// 프로젝트 소유자 populate된 타입
+interface PopulatedOwner {
   _id: string;
   nName: string;
   position?: string;
@@ -40,8 +40,8 @@ interface PopulatedAuthor {
   };
 }
 
-// 프로젝트 멤버 populate된 타입
-interface PopulatedProjectMember {
+// 프로젝트 멤버 populate된 타입 (embedded)
+interface PopulatedMember {
   userId?: { _id: string; nName?: string; avatarUrl?: string; position?: string } | string;
   role: string;
   status: 'active' | 'inactive' | 'removed';
@@ -54,11 +54,9 @@ interface CommonCodeItem {
 }
 
 // 프로젝트 데이터 타입 확장 (populate된 필드 포함)
-interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
-  author: PopulatedAuthor | string;
-  tags: { _id: string; name: string; category: string }[];
+interface PopulatedProject extends Omit<IProject, 'ownerId'> {
+  ownerId: PopulatedOwner | string;
   likesCount: number;
-  projectMembers?: PopulatedProjectMember[];
 }
 
 interface ProjectPageProps {
@@ -99,11 +97,11 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const { fetchNotifications } = useNotificationStore();
   const isOwner =
     session?.user?._id &&
-    typeof project?.author === 'object' &&
-    project.author._id === session.user._id;
+    typeof project?.ownerId === 'object' &&
+    project.ownerId._id === session.user._id;
 
   // 현재 사용자가 프로젝트 멤버인지 확인
-  const isMember = project?.projectMembers?.some((m: PopulatedProjectMember) => {
+  const isMember = project?.members?.some((m: PopulatedMember) => {
     if (!m.userId) return false;
     const userId = typeof m.userId === 'object' ? m.userId._id : m.userId;
     return userId === session?.user?._id;
@@ -126,9 +124,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         const project = projectData.data;
         setProject(project);
         setLikeCount(project.likesCount || 0);
-        if (session?.user?._id) {
-          setIsLiked(project.likes?.includes(session.user._id) ?? false);
-        }
 
         // 2. 카테고리 라벨 조회 (공통 코드 API 호출)
         try {
@@ -211,18 +206,18 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     const users: { _id: string; nName: string; avatarUrl?: string; position?: string }[] = [];
 
     // 프로젝트 작성자
-    if (typeof project.author === 'object' && project.author._id !== session.user._id) {
-      const author = project.author as PopulatedAuthor;
+    if (typeof project.ownerId === 'object' && project.ownerId._id !== session.user._id) {
+      const owner = project.ownerId as PopulatedOwner;
       users.push({
-        _id: author._id,
-        nName: author.nName || '작성자',
-        avatarUrl: author.avatarUrl,
-        position: author.position,
+        _id: owner._id,
+        nName: owner.nName || '작성자',
+        avatarUrl: owner.avatarUrl,
+        position: owner.position,
       });
     }
 
     // 활성 팀원
-    project.projectMembers?.forEach((m: PopulatedProjectMember) => {
+    project.members?.forEach((m: PopulatedMember) => {
       const memberUser = typeof m.userId === 'object' ? m.userId : null;
       const userId = memberUser?._id || (typeof m.userId === 'string' ? m.userId : undefined);
       if (userId && userId !== session.user?._id && m.status === 'active') {
@@ -245,7 +240,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       return;
     }
 
-    if (!project || typeof project.author !== 'object') {
+    if (!project || typeof project.ownerId !== 'object') {
       await alert('오류', '프로젝트 작성자 정보를 찾을 수 없습니다.');
       return;
     }
@@ -262,7 +257,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           category: 'INQUIRY',
-          participants: [project.author._id], // 작성자 ID (나 자신은 API에서 자동 추가됨)
+          participants: [project.ownerId._id], // 작성자 ID (나 자신은 API에서 자동 추가됨)
           projectId: project._id, // 🔥 프로젝트의 실제 ObjectId (_id)로 수정
         }),
       });
@@ -298,8 +293,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       const response = await fetch(`/api/projects/${pid}/like`, { method: 'POST' });
       const data = await response.json();
       if (data.success) {
-        setLikeCount(data.data.likesCount);
-        setIsLiked(data.data.likes?.includes(session.user._id) ?? false);
+        setLikeCount(data.data.likeCount);
+        setIsLiked(true);
         fetchNotifications();
       } else {
         await alert('알림', data.message || '요청에 실패했습니다.');
@@ -332,14 +327,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     }
   };
 
-  const getAuthorName = (
-    author: { _id: string; nName: string } | string | undefined | null
-  ): string => {
-    if (typeof author === 'object' && author !== null && 'nName' in author) {
-      return author.nName;
+  const getOwnerName = (owner: PopulatedOwner | string | undefined | null): string => {
+    if (typeof owner === 'object' && owner !== null && 'nName' in owner) {
+      return owner.nName;
     }
-    if (typeof author === 'string') {
-      return author;
+    if (typeof owner === 'string') {
+      return owner;
     }
     return '작성자';
   };
@@ -451,7 +444,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{project.title}</h1>
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center">
-              <span>작성자: {getAuthorName(project.author)}</span>
+              <span>작성자: {getOwnerName(project.ownerId)}</span>
               <span className="mx-2">|</span>
               <span>{new Date(project.createdAt).toLocaleString('ko-KR')}</span>
             </div>
@@ -509,18 +502,18 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             </div>
 
             {/* 프로젝트 리더 상세 프로필 */}
-            {project.author && (
+            {project.ownerId && (
               <div className="mt-12 border-t border-border pt-8">
                 <DetailProfileCard
                   title="👑 프로젝트 리더"
                   user={
-                    typeof project.author === 'object'
-                      ? project.author
+                    typeof project.ownerId === 'object'
+                      ? project.ownerId
                       : { _id: '', nName: '알 수 없음' }
                   }
                   onClick={() => {
-                    if (typeof project.author === 'object') {
-                      router.push(`/profile/${project.author._id}`);
+                    if (typeof project.ownerId === 'object') {
+                      router.push(`/profile/${project.ownerId._id}`);
                     }
                   }}
                 />
@@ -598,12 +591,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground mb-2">기술 스택</p>
                   <div className="flex flex-wrap gap-2">
-                    {project.tags.map((tag) => (
+                    {project.techStacks?.map((stack) => (
                       <span
-                        key={tag._id}
+                        key={stack}
                         className="px-3 py-1 bg-card border border-border text-foreground text-sm rounded-full"
                       >
-                        {tag.name}
+                        {stack}
                       </span>
                     ))}
                   </div>
