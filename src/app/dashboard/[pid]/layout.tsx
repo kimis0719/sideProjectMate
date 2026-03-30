@@ -104,6 +104,7 @@ const SidebarContent = ({
         </svg>
         칸반보드
       </Link>
+      {/* TODO(Phase 7): WBS 링크 완전 제거 — Phase 0에서 임시 숨김 처리
       <Link
         href={`/dashboard/${pid}/wbs`}
         onClick={() => onClose?.()}
@@ -129,6 +130,7 @@ const SidebarContent = ({
         </svg>
         WBS (일정)
       </Link>
+      */}
     </nav>
 
     <div className="p-6 border-t border-border bg-muted/10 mt-auto">
