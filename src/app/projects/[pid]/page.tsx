@@ -127,7 +127,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         setProject(project);
         setLikeCount(project.likesCount || 0);
         if (session?.user?._id) {
-          setIsLiked(project.likes.includes(session.user._id));
+          setIsLiked(project.likes?.includes(session.user._id) ?? false);
         }
 
         // 2. 카테고리 라벨 조회 (공통 코드 API 호출)
@@ -299,7 +299,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       const data = await response.json();
       if (data.success) {
         setLikeCount(data.data.likesCount);
-        setIsLiked(data.data.likes.includes(session.user._id));
+        setIsLiked(data.data.likes?.includes(session.user._id) ?? false);
         fetchNotifications();
       } else {
         await alert('알림', data.message || '요청에 실패했습니다.');
