@@ -54,8 +54,9 @@ interface CommonCodeItem {
 }
 
 // 프로젝트 데이터 타입 확장 (populate된 필드 포함)
-interface PopulatedProject extends Omit<IProject, 'ownerId'> {
+interface PopulatedProject extends Omit<IProject, 'ownerId' | 'members'> {
   ownerId: PopulatedOwner | string;
+  members: PopulatedMember[];
   likesCount: number;
 }
 
