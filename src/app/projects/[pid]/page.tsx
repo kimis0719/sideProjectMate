@@ -396,28 +396,45 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   return (
     <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 py-8 md:py-12">
-        {isOwner && (
-          <div className="flex justify-end gap-2 mb-4">
-            <Link
-              href={`/projects/${pid}/manage`}
-              className="px-4 py-2 text-sm font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600"
-            >
-              지원자 관리
-            </Link>
-            <Link
-              href={`/projects/${pid}/edit`}
-              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
-            >
-              수정
-            </Link>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600"
-            >
-              삭제
-            </button>
-          </div>
-        )}
+        {/* 목록으로 돌아가기 */}
+        <div className="mb-4 flex items-center justify-between">
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            목록으로
+          </Link>
+          {isOwner && (
+            <div className="flex gap-2">
+              <Link
+                href={`/projects/${pid}/manage`}
+                className="px-4 py-2 text-sm font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+              >
+                지원자 관리
+              </Link>
+              <Link
+                href={`/projects/${pid}/edit`}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                수정
+              </Link>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600"
+              >
+                삭제
+              </button>
+            </div>
+          )}
+        </div>
         <div className="mb-8 md:mb-12">
           {/* 배지: currentStage + status */}
           <div className="flex items-center gap-2 mb-3">
