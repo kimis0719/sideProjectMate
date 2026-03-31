@@ -13,13 +13,12 @@ export default function Footer() {
   const resourceLinks = [
     { label: '이용약관', href: '/terms' },
     { label: '개인정보처리방침', href: '/privacy' },
-    { label: '공지사항', href: '#' },
   ];
 
   const socialLinks = [
     {
       label: 'GitHub',
-      href: 'https://github.com',
+      href: 'https://github.com/kimis0719/sideProjectMate',
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path
@@ -71,7 +70,7 @@ export default function Footer() {
               <span className="font-bold text-foreground">Side Project Mate</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼
+              아이디어를 빠르게 실행할 동료를 찾는 팀 매칭 플랫폼
             </p>
           </div>
 

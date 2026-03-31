@@ -173,7 +173,7 @@ export default function DashboardLayout({
         return;
       }
 
-      if (session?.user?.id) {
+      if (session?.user?._id || session?.user?.id) {
         try {
           const res = await fetch(`/api/projects/${pid}`);
           if (!res.ok) {

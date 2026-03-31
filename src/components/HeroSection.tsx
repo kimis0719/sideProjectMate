@@ -28,14 +28,23 @@ const slides = [
   },
 ];
 
-const stats = [
-  { value: '200+', label: '등록된 프로젝트', icon: '📋' },
-  { value: '500+', label: '활동 중인 멤버', icon: '👥' },
-  { value: '50+', label: '완성된 팀', icon: '🤝' },
-  { value: '3가지', label: '협업 도구', icon: '⚡' },
-];
-
 const features = [
+  {
+    icon: (
+      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.8}
+          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+        />
+      </svg>
+    ),
+    title: 'AI 지시서',
+    description:
+      'AI가 프로젝트 맥락을 읽고 칸반 보드에 맞는 실행 지시서를 자동으로 생성해줍니다. 무엇부터 시작할지 고민할 필요 없어요.',
+    color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+  },
   {
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,26 +72,10 @@ const features = [
         />
       </svg>
     ),
-    title: '칸반 보드',
+    title: '실시간 칸반 보드',
     description:
       '드래그 앤 드롭으로 할 일을 관리하고, 실시간으로 팀원과 함께 작업 상태를 공유하세요.',
     color: 'bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400',
-  },
-  {
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.8}
-          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-        />
-      </svg>
-    ),
-    title: 'WBS 일정 관리',
-    description:
-      '간트 차트로 프로젝트 일정을 한눈에 파악하고, 태스크 의존성까지 체계적으로 관리하세요.',
-    color: 'bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400',
   },
 ];
 
@@ -99,7 +92,6 @@ export default function HeroSection() {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  // 자동 슬라이드 (4초 간격, hover 시 일시 정지)
   useEffect(() => {
     if (isPaused) return;
     const timer = setInterval(goNext, 4000);
@@ -119,7 +111,6 @@ export default function HeroSection() {
         onMouseLeave={() => setIsPaused(false)}
         aria-label="메인 배너"
       >
-        {/* 배경 장식 */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div
             className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-20 blur-3xl"
@@ -129,7 +120,6 @@ export default function HeroSection() {
             className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-10 blur-3xl"
             style={{ backgroundColor: slide.accent, transition: 'background-color 0.8s ease' }}
           />
-          {/* 그리드 패턴 */}
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
             style={{
@@ -141,7 +131,6 @@ export default function HeroSection() {
 
         <div className="container mx-auto px-4 py-20 md:py-28 relative">
           <div className="max-w-2xl mx-auto text-center">
-            {/* 슬라이드 레이블 */}
             <div
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6"
               style={{ transition: 'all 0.4s ease' }}
@@ -150,7 +139,6 @@ export default function HeroSection() {
               {slide.label}
             </div>
 
-            {/* 메인 타이틀 — SEO h1 */}
             <h1
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-5 leading-tight whitespace-pre-line"
               style={{ transition: 'opacity 0.4s ease' }}
@@ -162,7 +150,6 @@ export default function HeroSection() {
               {slide.description}
             </p>
 
-            {/* CTA — 로그인 상태에 따라 분기 */}
             <div className="flex items-center justify-center gap-3 flex-wrap">
               {session ? (
                 <>
@@ -238,7 +225,6 @@ export default function HeroSection() {
           </svg>
         </button>
 
-        {/* 슬라이드 인디케이터 */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
           {slides.map((_, i) => (
             <button
@@ -256,23 +242,6 @@ export default function HeroSection() {
       </section>
 
       {/* ══════════════════════════════════════
-                통계 섹션
-            ══════════════════════════════════════ */}
-      <section className="border-y border-border bg-card" aria-label="서비스 통계">
-        <div className="container mx-auto px-4 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 md:divide-x md:divide-border">
-            {stats.map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center text-center py-2">
-                <span className="text-2xl mb-1">{stat.icon}</span>
-                <span className="text-2xl md:text-3xl font-bold text-primary">{stat.value}</span>
-                <span className="text-sm text-muted-foreground mt-0.5">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════
                 핵심 기능 소개 섹션
             ══════════════════════════════════════ */}
       <section className="py-16 md:py-20 bg-background" aria-label="주요 기능">
@@ -282,10 +251,10 @@ export default function HeroSection() {
               왜 Side Project Mate인가요?
             </span>
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-              프로젝트 시작부터 완성까지
+              아이디어에서 실행까지, 더 빠르게
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              팀 매칭부터 협업 도구까지, 사이드 프로젝트에 필요한 모든 것을 한 곳에서
+              AI가 실행을 돕고, 맞는 동료를 찾고, 실시간으로 함께 만들어가세요
             </p>
           </div>
 

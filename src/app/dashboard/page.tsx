@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { ICommonCode } from '@/lib/models/CommonCode';
 import ProjectThumbnail from '@/components/projects/ProjectThumbnail';
+import { STATUS_LABELS, ProjectStatus } from '@/constants/project';
 
 interface Project {
   _id: string;
@@ -22,8 +22,6 @@ export default function DashboardHome() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categoryCodes, setCategoryCodes] = useState<ICommonCode[]>([]);
-  const [statusCodes, setStatusCodes] = useState<ICommonCode[]>([]);
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -46,25 +44,7 @@ export default function DashboardHome() {
         }
       };
 
-      const fetchCommonCodes = async () => {
-        try {
-          const [categoryRes, statusRes] = await Promise.all([
-            fetch('/api/common-codes?group=CATEGORY'),
-            fetch('/api/common-codes?group=STATUS'),
-          ]);
-
-          const categoryData = await categoryRes.json();
-          const statusData = await statusRes.json();
-
-          if (categoryData.success) setCategoryCodes(categoryData.data);
-          if (statusData.success) setStatusCodes(statusData.data);
-        } catch (error) {
-          console.error('Failed to fetch common codes:', error);
-        }
-      };
-
       fetchMyProjects();
-      fetchCommonCodes();
     }
   }, [status, session, router]);
 
@@ -86,24 +66,20 @@ export default function DashboardHome() {
             >
               <div className="aspect-video bg-muted relative overflow-hidden">
                 <ProjectThumbnail
-                  src={project.images && project.images.length > 0 ? project.images[0] : null}
+                  src={
+                    project.images && project.images.length > 0 && project.images[0] !== '🚀'
+                      ? project.images[0]
+                      : null
+                  }
                   alt={project.title}
                   fallbackText={project.title.charAt(0)}
                 />
-                <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded backdrop-blur-sm z-10">
-                  {categoryCodes.find((c) => c.code === project.category)?.label ||
-                    project.category}
-                </div>
               </div>
               <div className="p-6">
                 <h2 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
                   {project.title}
                 </h2>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="px-2.5 py-1 bg-muted text-muted-foreground text-xs font-semibold rounded">
-                    {categoryCodes.find((c) => c.code === project.category)?.label ||
-                      project.category}
-                  </span>
                   <span
                     className={`px-2.5 py-1 text-xs font-semibold rounded ${
                       project.status === 'recruiting'
@@ -111,7 +87,7 @@ export default function DashboardHome() {
                         : 'bg-muted text-muted-foreground'
                     }`}
                   >
-                    {statusCodes.find((c) => c.code === project.status)?.label || project.status}
+                    {STATUS_LABELS[project.status as ProjectStatus] || project.status}
                   </span>
                   <span className="text-xs text-muted-foreground ml-auto">
                     멤버 {project.members?.length || 0}명
