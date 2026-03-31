@@ -9,6 +9,8 @@ import {
   EXECUTION_STYLES,
   ProjectStage,
   ExecutionStyle,
+  STAGE_LABELS,
+  STYLE_LABELS,
 } from '@/constants/project';
 
 import {
@@ -100,20 +102,6 @@ const DURATION_OPTIONS = [
   { value: 6, label: '6개월' },
   { value: 0, label: '미정' },
 ] as const;
-
-const STAGE_LABELS: Record<ProjectStage, string> = {
-  idea: '아이디어',
-  prototype: '프로토타입',
-  mvp: 'MVP',
-  beta: '베타',
-  launched: '런칭 완료',
-};
-
-const STYLE_LABELS: Record<ExecutionStyle, string> = {
-  ai_heavy: 'AI 중심',
-  balanced: '밸런스',
-  traditional: '전통적',
-};
 
 const STAGE_DESCRIPTIONS: Record<ProjectStage, string> = {
   idea: '아직 구상 단계에요',

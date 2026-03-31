@@ -25,6 +25,7 @@ interface EmptyStateProps {
   title: string;
   description?: string;
   action?: EmptyStateAction;
+  actions?: React.ReactNode;
   className?: string;
 }
 
@@ -106,6 +107,7 @@ export default function EmptyState({
   title,
   description,
   action,
+  actions,
   className = '',
 }: EmptyStateProps) {
   return (
@@ -133,6 +135,7 @@ export default function EmptyState({
           )}
         </div>
       )}
+      {actions && <div className="mt-6">{actions}</div>}
     </div>
   );
 }

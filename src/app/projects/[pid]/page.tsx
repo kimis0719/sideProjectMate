@@ -13,6 +13,14 @@ import ProjectThumbnail from '@/components/projects/ProjectThumbnail';
 import { useModal } from '@/hooks/useModal';
 import ReviewModal from '@/components/projects/ReviewModal';
 import AdBanner from '@/components/common/AdBanner';
+import {
+  STAGE_LABELS,
+  STYLE_LABELS,
+  STATUS_LABELS,
+  ProjectStage,
+  ExecutionStyle,
+  ProjectStatus,
+} from '@/constants/project';
 
 // 동적 임포트를 사용하여 이미지 슬라이더 컴포넌트를 로드 (SSR 제외)
 const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider'), {
@@ -79,8 +87,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [selectedRole, setSelectedRole] = useState('');
   const [applyMessage, setApplyMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // 카테고리 라벨 표시를 위한 상태
-  const [categoryLabel, setCategoryLabel] = useState('');
   // 상태 라벨 표시를 위한 상태
   const [statusLabel, setStatusLabel] = useState('');
   // 사용자의 지원 여부 상태
@@ -126,35 +132,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         setProject(project);
         setLikeCount(project.likesCount || 0);
 
-        // 2. 카테고리 라벨 조회 (공통 코드 API 호출)
-        try {
-          const categoryRes = await fetch('/api/common-codes?group=CATEGORY');
-          const categoryData = await categoryRes.json();
-          if (categoryData.success) {
-            const matchedCategory = categoryData.data.find(
-              (c: CommonCodeItem) => c.code === project.category
-            );
-            setCategoryLabel(matchedCategory ? matchedCategory.label : project.category);
-          }
-        } catch (e) {
-          console.error('카테고리 정보 로딩 실패', e);
-          setCategoryLabel(project.category);
-        }
-
-        // 3. 상태 라벨 조회 (공통 코드 API 호출)
-        try {
-          const statusRes = await fetch('/api/common-codes?group=STATUS');
-          const statusData = await statusRes.json();
-          if (statusData.success) {
-            const matchedStatus = statusData.data.find(
-              (c: CommonCodeItem) => c.code === project.status
-            );
-            setStatusLabel(matchedStatus ? matchedStatus.label : project.status);
-          }
-        } catch (e) {
-          console.error('상태 정보 로딩 실패', e);
-          setStatusLabel(project.status);
-        }
+        // 상태 라벨은 상수에서 직접 가져옴
+        setStatusLabel(STATUS_LABELS[project.status as ProjectStatus] || project.status);
 
         // 4. 지원 여부 확인 (로그인한 경우)
         if (session?.user?._id) {
@@ -440,8 +419,23 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           </div>
         )}
         <div className="mb-8 md:mb-12">
-          {/* 카테고리 라벨 표시 (예: 개발) */}
-          <p className="text-sm text-muted-foreground mb-2">{categoryLabel}</p>
+          {/* 배지: currentStage + status */}
+          <div className="flex items-center gap-2 mb-3">
+            {project.currentStage && (
+              <span className="px-2.5 py-1 text-xs font-semibold rounded bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
+                {STAGE_LABELS[project.currentStage as ProjectStage] || project.currentStage}
+              </span>
+            )}
+            <span
+              className={`px-2.5 py-1 text-xs font-semibold rounded ${
+                project.status === 'recruiting'
+                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {statusLabel || project.status}
+            </span>
+          </div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{project.title}</h1>
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center">
@@ -484,22 +478,66 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           <div className="lg:col-span-2">
-            <div className="prose dark:prose-invert max-w-none">
-              {project.images && project.images.length > 0 ? (
-                <ProjectImageSlider images={project.images} title={project.title} />
-              ) : (
-                <div className="relative aspect-video bg-muted rounded-lg mb-8 overflow-hidden">
-                  <ProjectThumbnail
-                    src={null}
-                    alt={project.title}
-                    fallbackText={project.title.charAt(0)}
-                    className="text-8xl"
-                  />
+            {/* 프로젝트 동기 (problemStatement) */}
+            {project.problemStatement && (
+              <div className="bg-muted/30 border border-border rounded-lg p-6 mb-8">
+                <h2 className="text-sm font-semibold text-muted-foreground mb-2">프로젝트 동기</h2>
+                <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">
+                  {project.problemStatement}
+                </p>
+              </div>
+            )}
+
+            {/* 실행 방식 + lookingFor */}
+            <div className="flex flex-wrap gap-4 mb-8">
+              {project.executionStyle && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">실행 방식:</span>
+                  <span className="px-2.5 py-1 text-sm font-medium rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
+                    {STYLE_LABELS[project.executionStyle as ExecutionStyle] ||
+                      project.executionStyle}
+                  </span>
                 </div>
               )}
-              <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">
-                {project.description}
-              </p>
+              {project.weeklyHours && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">주당:</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {project.weeklyHours}h
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* lookingFor 태그 */}
+            {project.lookingFor && project.lookingFor.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm font-semibold text-muted-foreground mb-2">찾는 사람</h3>
+                <div className="flex flex-wrap gap-2">
+                  {project.lookingFor.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 이미지 */}
+            <div className="prose dark:prose-invert max-w-none">
+              {project.images && project.images.length > 0 && project.images[0] !== '🚀' ? (
+                <ProjectImageSlider images={project.images} title={project.title} />
+              ) : null}
+
+              {/* 부가 설명 */}
+              {project.description && (
+                <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground mt-6">
+                  {project.description}
+                </p>
+              )}
             </div>
 
             {/* 프로젝트 리더 상세 프로필 */}
@@ -582,26 +620,57 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground">상태</p>
-                  {/* 동적으로 가져온 상태 라벨 표시 */}
                   <span
                     className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === 'recruiting' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-muted text-muted-foreground'}`}
                   >
                     {statusLabel || project.status}
                   </span>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">기술 스택</p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.techStacks?.map((stack) => (
-                      <span
-                        key={stack}
-                        className="px-3 py-1 bg-card border border-border text-foreground text-sm rounded-full"
-                      >
-                        {stack}
-                      </span>
-                    ))}
+                {project.domains && project.domains.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground mb-2">도메인</p>
+                    <div className="flex flex-wrap gap-2">
+                      {project.domains.map((d) => (
+                        <span
+                          key={d}
+                          className="px-3 py-1 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 text-sm rounded-full"
+                        >
+                          {d}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+                {project.techStacks && project.techStacks.length > 0 && (
+                  <details className="group">
+                    <summary className="text-sm font-semibold text-muted-foreground cursor-pointer list-none flex items-center gap-1">
+                      기술 스택 ({project.techStacks.length})
+                      <svg
+                        className="w-3 h-3 transition-transform group-open:rotate-180"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </summary>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {project.techStacks.map((stack) => (
+                        <span
+                          key={stack}
+                          className="px-3 py-1 bg-card border border-border text-foreground text-sm rounded-full"
+                        >
+                          {stack}
+                        </span>
+                      ))}
+                    </div>
+                  </details>
+                )}
               </div>
               <button
                 onClick={handleOpenApplyModal}

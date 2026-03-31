@@ -15,4 +15,14 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones: []
+zones:
+  - path: 'src/app/projects/'
+    owner: 'FFLINA-CTT'
+    status: 'active'
+    reason: 'feat: SPM 서비스 전면 개편 Phase 3 — 프로젝트 카드 & 탐색 UI 개편 (#211)'
+    expires: '2026-04-07'
+  - path: 'src/components/projects/'
+    owner: 'FFLINA-CTT'
+    status: 'active'
+    reason: 'feat: SPM 서비스 전면 개편 Phase 3 — ProjectCard/Filter 개편 (#211)'
+    expires: '2026-04-07'
