@@ -63,6 +63,7 @@ function SortableImage({
         src={url}
         alt="업로드 이미지"
         fill
+        sizes="128px"
         className="rounded-lg object-cover"
         draggable={false}
       />
@@ -87,6 +88,7 @@ function DragOverlayItem({ url }: { url: string }) {
         src={url}
         alt="드래그 중인 이미지"
         fill
+        sizes="128px"
         className="rounded-lg object-cover"
         draggable={false}
       />
