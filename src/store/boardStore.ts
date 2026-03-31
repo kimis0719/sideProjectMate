@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { temporal } from 'zundo';
@@ -132,6 +133,7 @@ type BoardState = {
   setViewMode: (mode: 'active' | 'done') => void;
   fetchCompletedNotes: (boardId: string) => Promise<void>;
   completeNote: (noteId: string, completionNote?: string) => Promise<void>;
+  batchCompleteNotes: (noteIds: string[]) => Promise<void>;
   revertNote: (noteId: string) => Promise<void>;
 
   // Remote-only Actions (Internal use by socket listeners)
@@ -1198,6 +1200,60 @@ export const useBoardStore = create<BoardState>()(
             set((state) => ({
               notes: [...state.notes, note],
               completedNotes: state.completedNotes.filter((n) => n.id !== noteId),
+            }));
+          }
+        },
+
+        batchCompleteNotes: async (noteIds) => {
+          const { notes, completedNotes, completedNotesLoaded, boardId } = get();
+          const realNoteIds = noteIds.filter((id) => !id.startsWith('temp-'));
+          const notesToComplete = notes.filter((n) => realNoteIds.includes(n.id));
+          if (notesToComplete.length === 0) return;
+
+          const completedAt = new Date();
+
+          // Optimistic update
+          set((state) => ({
+            notes: state.notes.filter((n) => !realNoteIds.includes(n.id)),
+            completedNotes: completedNotesLoaded
+              ? [
+                  ...state.completedNotes,
+                  ...notesToComplete.map((n) => ({
+                    ...n,
+                    status: 'done' as const,
+                    completedAt,
+                  })),
+                ]
+              : state.completedNotes,
+            selectedNoteIds: [],
+          }));
+
+          try {
+            const updates = realNoteIds.map((id) => ({
+              id,
+              changes: { status: 'done', completedAt },
+            }));
+
+            await fetch('/api/kanban/notes/batch', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ updates }),
+            });
+
+            if (boardId) {
+              const socket = socketClient.connect();
+              realNoteIds.forEach((noteId) => {
+                socket.emit('complete-note', { boardId, noteId, completedAt });
+              });
+            }
+          } catch (error) {
+            console.error('Failed to batch complete notes:', error);
+            // Rollback
+            set((state) => ({
+              notes: [...state.notes, ...notesToComplete],
+              completedNotes: completedNotesLoaded
+                ? state.completedNotes.filter((n) => !realNoteIds.includes(n.id))
+                : state.completedNotes,
             }));
           }
         },

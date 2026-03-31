@@ -54,9 +54,12 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
   type LeanProject = {
     _id: string;
     title: string;
-    tags?: Array<{ name: string }>;
+    techStacks?: string[];
     status?: string;
     overview?: string;
+    problemStatement?: string;
+    domains?: string[];
+    executionStyle?: string;
     resources?: Array<{ category: string; type: string; content: string }>;
     deadline?: Date;
     members?: Array<{ userId?: { nName?: string } | string; role?: string; status?: string }>;
@@ -71,9 +74,7 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
   if (!board) throw new Error('보드를 찾을 수 없습니다.');
 
   const [project, allSections] = await Promise.all([
-    Project.findOne({ pid: board.pid })
-      .populate('tags', 'name')
-      .lean() as unknown as Promise<LeanProject | null>,
+    Project.findOne({ pid: board.pid }).lean() as unknown as Promise<LeanProject | null>,
     Section.find({ boardId }).lean() as unknown as Promise<LeanSection[]>,
   ]);
 
@@ -115,7 +116,7 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
   }
 
   // ── 프로젝트 메타 변수 ──
-  const techStacks = project?.tags?.map((t) => t.name).join(', ') ?? '';
+  const techStacks = project?.techStacks?.join(', ') ?? '';
 
   let membersText = '';
   if (settings.contextIncludeMembers && project) {
@@ -169,6 +170,9 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
   // ── 템플릿 변수 ──
   const variables: Record<string, string | undefined> = {
     projectTitle: project?.title ?? '알 수 없는 프로젝트',
+    problemStatement: project?.problemStatement ?? undefined,
+    domains: project?.domains?.length ? project.domains.join(', ') : undefined,
+    executionStyle: project?.executionStyle ?? undefined,
     techStacks,
     projectStatus: STATUS_LABELS[project?.status ?? ''] ?? '알 수 없음',
     deadline:

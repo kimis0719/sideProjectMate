@@ -51,9 +51,20 @@ export const DEFAULT_SYSTEM_PROMPT_TEMPLATE = `당신은 프로젝트 관리 보
 
 ## 프로젝트 정보
 - 이름: {{projectTitle}}
-- 기술스택: {{techStacks}}
 - 상태: {{projectStatus}}
 - 마감일: {{deadline}}
+{{#if problemStatement}}
+- 문제/동기: {{problemStatement}}
+{{/if}}
+{{#if domains}}
+- 도메인: {{domains}}
+{{/if}}
+{{#if executionStyle}}
+- 실행 방식: {{executionStyle}}
+{{/if}}
+{{#if techStacks}}
+- 기술스택: {{techStacks}}
+{{/if}}
 
 {{#if overview}}
 ## 프로젝트 개요
