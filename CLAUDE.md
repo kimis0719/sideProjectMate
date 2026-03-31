@@ -116,4 +116,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| src/app/projects/, src/components/projects/ | FFLINA-CTT | 🟡 작업 중 | feat: SPM 전면 개편 Phase 3 — 카드 & 탐색 UI (#211) |
+| (현재 작업 중인 항목 없음) | — | 🟢 자유 | — |
