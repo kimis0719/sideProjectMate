@@ -13,8 +13,8 @@ interface ProjectMember {
 
 interface ProjectData {
   _id: string;
-  author: { _id: string };
-  projectMembers: ProjectMember[];
+  ownerId: { _id: string };
+  members: ProjectMember[];
 }
 
 /**
@@ -188,8 +188,8 @@ export default function DashboardLayout({
 
           const project = data.data as ProjectData;
           const userId = session.user.id;
-          const isAuthor = project.author._id === userId;
-          const isMember = project.projectMembers.some(
+          const isAuthor = project.ownerId._id === userId;
+          const isMember = project.members.some(
             (m) => m.userId._id === userId && m.status === 'active'
           );
 

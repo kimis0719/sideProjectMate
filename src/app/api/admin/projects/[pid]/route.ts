@@ -23,7 +23,7 @@ async function handleGet(_request: NextRequest, { params }: { params: { pid: str
     }
 
     const project = await Project.findOne({ pid })
-      .populate('author', 'nName authorEmail avatarUrl')
+      .populate('ownerId', 'nName authorEmail avatarUrl')
       .populate('tags', 'name logoUrl category')
       .lean();
 
@@ -74,7 +74,7 @@ async function handlePatch(request: NextRequest, { params }: { params: { pid: st
     }
 
     const updated = await Project.findOneAndUpdate({ pid }, { $set: { delYn } }, { new: true })
-      .populate('author', 'nName authorEmail avatarUrl')
+      .populate('ownerId', 'nName authorEmail avatarUrl')
       .populate('tags', 'name logoUrl category');
 
     if (!updated) {

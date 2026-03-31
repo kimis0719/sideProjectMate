@@ -30,7 +30,24 @@ export default function ManageApplicantsPage() {
   const { alert, confirm } = useModal();
 
   // 상태 관리
-  const [project, setProject] = useState<any>(null); // 프로젝트 정보 (멤버 포함)
+  interface ProjectWithMembers {
+    _id: string;
+    members: {
+      _id?: string;
+      userId: {
+        _id: string;
+        nName?: string;
+        position?: string;
+        career?: string;
+        level?: number;
+        techTags?: string[];
+        avatarUrl?: string;
+      };
+      role: string;
+      status: string;
+    }[];
+  }
+  const [project, setProject] = useState<ProjectWithMembers | null>(null); // 프로젝트 정보 (멤버 포함)
   const [applications, setApplications] = useState<Application[]>([]); // 지원자 목록
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,8 +65,8 @@ export default function ManageApplicantsPage() {
       } else {
         throw new Error(data.message || '지원자 목록을 불러오는데 실패했습니다.');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '알 수 없는 오류');
     }
   }, [pid]);
 
@@ -100,8 +117,8 @@ export default function ManageApplicantsPage() {
       } else {
         throw new Error(data.message || '상태 변경에 실패했습니다.');
       }
-    } catch (err: any) {
-      await alert('에러', err.message);
+    } catch (err: unknown) {
+      await alert('에러', err instanceof Error ? err.message : '알 수 없는 오류');
     }
   };
 
@@ -122,8 +139,8 @@ export default function ManageApplicantsPage() {
         } else {
           throw new Error(data.message);
         }
-      } catch (err: any) {
-        await alert('에러', err.message);
+      } catch (err: unknown) {
+        await alert('에러', err instanceof Error ? err.message : '알 수 없는 오류');
       }
     }
   };
@@ -137,13 +154,13 @@ export default function ManageApplicantsPage() {
       <h1 className="text-3xl font-bold mb-8 text-foreground">프로젝트 관리</h1>
 
       {/* 1. 현재 참여 멤버 섹션 */}
-      {project && project.projectMembers && project.projectMembers.length > 0 && (
+      {project && project.members && project.members.length > 0 && (
         <div className="mb-12">
           <h2 className="text-xl font-bold mb-4 text-foreground">
-            현재 참여 멤버 ({project.projectMembers.length}명)
+            현재 참여 멤버 ({project.members.length}명)
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {project.projectMembers.map((pm: any) => {
+            {project.members.map((pm) => {
               const user = pm.userId;
               if (!user) return null;
               return (
@@ -214,7 +231,7 @@ export default function ManageApplicantsPage() {
                           category: 'RECRUIT',
                           participants: [app.applicantId._id],
                           applicationId: app._id,
-                          projectId: project._id, // 🔥 프로젝트의 실제 ObjectId (_id)로 수정
+                          projectId: project?._id, // 🔥 프로젝트의 실제 ObjectId (_id)로 수정
                         }),
                       });
                       const data = await res.json();
@@ -226,8 +243,11 @@ export default function ManageApplicantsPage() {
                           : data.message || '채팅방 생성 실패';
                         await alert('오류', errorMsg);
                       }
-                    } catch (e: any) {
-                      await alert('오류', `요청 중 문제가 발생했습니다.\n${e.message}`);
+                    } catch (e: unknown) {
+                      await alert(
+                        '오류',
+                        `요청 중 문제가 발생했습니다.\n${e instanceof Error ? e.message : '알 수 없는 오류'}`
+                      );
                     }
                   }}
                   className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"

@@ -27,11 +27,11 @@ interface ResourceMetadata {
 }
 
 // 프로젝트 데이터 타입 확장
-interface PopulatedProject extends Omit<IProject, 'tags' | 'author'> {
-  author: { _id: string; nName: string } | string;
+interface PopulatedProject extends Omit<IProject, 'tags' | 'ownerId' | 'members'> {
+  ownerId: { _id: string; nName: string } | string;
   tags: { _id: string; name: string; category: string }[];
   likesCount: number;
-  projectMembers?: PopulatedProjectMember[];
+  members: PopulatedProjectMember[];
 }
 
 import ProjectHeader from '@/components/dashboard/ProjectHeader';
@@ -228,10 +228,10 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
 
   // ✨ 팀 채팅방 입장/생성 핸들러
   const handleTeamChat = async () => {
-    if (!project || !project.projectMembers) return;
+    if (!project || !project.members) return;
 
     // 현재 프로젝트의 모든 멤버 ID 추출 (본인 포함)
-    const memberIds = project.projectMembers
+    const memberIds = project.members
       .map((pm: PopulatedProjectMember) => pm.userId?._id)
       .filter((id): id is string => !!id);
 
@@ -286,7 +286,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
   if (!project) return <div className="p-8">프로젝트를 찾을 수 없습니다.</div>;
 
   // 작성자 권한 확인
-  const authorId = typeof project.author === 'string' ? project.author : project.author._id;
+  const authorId = typeof project.ownerId === 'string' ? project.ownerId : project.ownerId._id;
   const userId = session?.user?._id;
   const isAuthor = userId === authorId;
 
@@ -325,7 +325,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
           {/* Member List Widget (Real-time) */}
           {project && session?.user && (
             <MemberWidget
-              members={(project.projectMembers || [])
+              members={(project.members || [])
                 .filter((pm: PopulatedProjectMember) => pm.userId?._id)
                 .map((pm: PopulatedProjectMember) => ({
                   _id: pm.userId!._id,
