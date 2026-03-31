@@ -15,19 +15,4 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones:
-  - path: 'src/app/profile/'
-    owner: 'FFLINA-CTT'
-    status: 'active'
-    reason: 'feat: SPM 전면 개편 Phase 4 — 프로필 & 온보딩 (#215)'
-    expires: '2026-04-07'
-  - path: 'src/app/onboarding/'
-    owner: 'FFLINA-CTT'
-    status: 'active'
-    reason: 'feat: SPM 전면 개편 Phase 4 — 온보딩 페이지 신규 (#215)'
-    expires: '2026-04-07'
-  - path: 'src/app/api/users/'
-    owner: 'FFLINA-CTT'
-    status: 'active'
-    reason: 'feat: SPM 전면 개편 Phase 4 — 온보딩 API (#215)'
-    expires: '2026-04-07'
+zones: []
