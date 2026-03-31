@@ -89,7 +89,24 @@ async function handlePost(request: Request) {
 
     await dbConnect();
     const body = await request.json();
-    const { title, description, weeklyHours, status, deadline, images } = body;
+    const {
+      title,
+      description,
+      problemStatement,
+      currentStage,
+      executionStyle,
+      weeklyHours,
+      domains,
+      lookingFor,
+      maxMembers,
+      overview,
+      techStacks,
+      durationMonths,
+      links,
+      status,
+      deadline,
+      images,
+    } = body;
 
     if (!title || !description) {
       return NextResponse.json(
@@ -110,8 +127,18 @@ async function handlePost(request: Request) {
       pid: counter!.seq,
       title,
       description,
+      problemStatement,
+      currentStage,
+      executionStyle,
       ownerId,
       weeklyHours,
+      domains: domains || [],
+      lookingFor: lookingFor || [],
+      maxMembers: maxMembers || 4,
+      overview,
+      techStacks: techStacks || [],
+      durationMonths,
+      links,
       deadline,
       images: images && images.length > 0 ? images : ['🚀'],
       status: status || 'recruiting',
