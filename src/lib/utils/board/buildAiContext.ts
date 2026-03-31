@@ -4,7 +4,6 @@ import Project from '@/lib/models/Project';
 import Note from '@/lib/models/kanban/NoteModel';
 import Section from '@/lib/models/kanban/SectionModel';
 import Board from '@/lib/models/kanban/BoardModel';
-import ProjectMember from '@/lib/models/ProjectMember';
 import { renderTemplate } from '@/lib/utils/ai/renderTemplate';
 import { generateBoardMarkdown } from '@/lib/utils/board/generateBoardMarkdown';
 
@@ -60,6 +59,7 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
     overview?: string;
     resources?: Array<{ category: string; type: string; content: string }>;
     deadline?: Date;
+    members?: Array<{ userId?: { nName?: string } | string; role?: string; status?: string }>;
   };
 
   // 병렬로 데이터 수집
@@ -119,11 +119,17 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
 
   let membersText = '';
   if (settings.contextIncludeMembers && project) {
-    const members = (await ProjectMember.find({ projectId: project._id })
-      .populate('userId', 'name')
-      .lean()) as unknown as Array<{ userId?: { name?: string }; role?: string }>;
+    const members = (project.members ?? []) as unknown as Array<{
+      userId?: { nName?: string } | string;
+      role?: string;
+      status?: string;
+    }>;
     membersText = members
-      .map((m) => `- ${m.userId?.name ?? '알 수 없음'} (${m.role ?? '멤버'})`)
+      .filter((m) => m.status === 'active')
+      .map((m) => {
+        const name = typeof m.userId === 'object' ? m.userId?.nName : '멤버';
+        return `- ${name ?? '알 수 없음'} (${m.role ?? '멤버'})`;
+      })
       .join('\n');
   }
 

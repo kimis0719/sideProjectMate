@@ -15,4 +15,9 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones: []
+zones:
+  - path: "src/app/api/wbs/, src/components/wbs/, src/store/wbsStore.ts, src/lib/models/, src/app/api/admin/"
+    owner: "FFLINA-PC"
+    status: "active"
+    reason: "feat: SPM 서비스 전면 개편 Phase 7 — WBS 제거 및 정리 (#221)"
+    expires: "2026-04-07"

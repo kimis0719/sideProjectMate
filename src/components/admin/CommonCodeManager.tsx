@@ -13,31 +13,49 @@ interface CommonCode {
   isActive: boolean;
 }
 
-const GROUPS = [
-  { group: 'POSITION', groupName: '직군' },
-  { group: 'PROJECT_CATEGORY', groupName: '프로젝트 카테고리' },
-  { group: 'CAREER', groupName: '경력' },
-  // TODO(Phase 7): 하드코딩 제거 후 DB 동적 로딩으로 전환
-  { group: 'DOMAIN', groupName: '도메인' },
-  { group: 'LOOKING_FOR', groupName: '찾는 사람' },
-  { group: 'WORK_STYLE', groupName: '작업 스타일' },
-  { group: 'PROJECT_STAGE', groupName: '프로젝트 단계' },
-  { group: 'EXECUTION_STYLE', groupName: '실행 방식' },
-];
+interface CodeGroup {
+  _id: string;
+  group: string;
+  groupName: string;
+  order: number;
+  isActive: boolean;
+}
 
 const DEFAULT_FORM = { code: '', label: '', order: 0, isActive: true };
 
 export default function CommonCodeManager() {
   const { confirm, alert } = useModal();
-  const [activeGroup, setActiveGroup] = useState(GROUPS[0].group);
+  const [groups, setGroups] = useState<CodeGroup[]>([]);
+  const [activeGroup, setActiveGroup] = useState('');
   const [codes, setCodes] = useState<CommonCode[]>([]);
   const [loading, setLoading] = useState(false);
+  const [groupsLoading, setGroupsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<CommonCode>>({});
   const [addForm, setAddForm] = useState({ ...DEFAULT_FORM });
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // 그룹 목록 로딩
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const res = await fetch('/api/admin/common-codes/groups');
+        const json = await res.json();
+        if (json.success && json.data.length > 0) {
+          setGroups(json.data);
+          setActiveGroup(json.data[0].group);
+        }
+      } catch (e) {
+        console.error('그룹 로딩 실패:', e);
+      } finally {
+        setGroupsLoading(false);
+      }
+    };
+    fetchGroups();
+  }, []);
+
   const fetchCodes = useCallback(async () => {
+    if (!activeGroup) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/common-codes?group=${activeGroup}`);
@@ -109,7 +127,7 @@ export default function CommonCodeManager() {
       await alert('입력 오류', '코드와 레이블을 입력해주세요.');
       return;
     }
-    const currentGroup = GROUPS.find((g) => g.group === activeGroup)!;
+    const currentGroup = groups.find((g) => g.group === activeGroup)!;
     const res = await fetch('/api/admin/common-codes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -135,21 +153,27 @@ export default function CommonCodeManager() {
   return (
     <div>
       {/* 그룹 탭 */}
-      <div className="flex gap-2 mb-6 border-b border-border">
-        {GROUPS.map(({ group, groupName }) => (
-          <button
-            key={group}
-            onClick={() => setActiveGroup(group)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeGroup === group
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {groupName}
-          </button>
-        ))}
-      </div>
+      {groupsLoading ? (
+        <p className="text-muted-foreground text-sm py-4">그룹 로딩 중...</p>
+      ) : groups.length === 0 ? (
+        <p className="text-muted-foreground text-sm py-4">등록된 그룹이 없습니다.</p>
+      ) : (
+        <div className="flex gap-2 mb-6 border-b border-border flex-wrap">
+          {groups.map(({ group, groupName, isActive }) => (
+            <button
+              key={group}
+              onClick={() => setActiveGroup(group)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeGroup === group
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              } ${!isActive ? 'opacity-40 line-through' : ''}`}
+            >
+              {groupName}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 추가 버튼 */}
       <div className="flex justify-end mb-4">
