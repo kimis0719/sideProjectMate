@@ -34,4 +34,3 @@ export const useFooStore = create<FooState & FooActions>()(
 - `boardStore.ts`
 - `instructionStore.ts`
 - `modalStore.ts`
-- `wbsStore.ts`
