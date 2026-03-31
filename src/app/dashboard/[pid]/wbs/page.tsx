@@ -35,7 +35,9 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
     cleanupSocket,
   } = useWbsStore();
 
-  const [projectMembers, setProjectMembers] = useState<any[]>([]);
+  const [projectMembers, setProjectMembers] = useState<
+    { _id: string; nName: string; email: string; role: string }[]
+  >([]);
   const [panelTask, setPanelTask] = useState<Task | null>(null); // TaskPanel에 표시할 작업
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -55,6 +57,7 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
     return () => {
       cleanupSocket();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initSocket/cleanupSocket는 store 메서드로 안정적; deps에 넣으면 소켓 재연결 반복
   }, [status, projectId]);
 
   // 프로젝트 작업 목록 및 멤버 정보 가져오기
@@ -71,13 +74,13 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
         if (!data.success || !data.data) return;
 
         const project = data.data;
-        const members: any[] = [];
+        const members: { _id: string; nName: string; email: string; role: string }[] = [];
 
-        if (project.author) {
+        if (project.ownerId) {
           members.push({
-            _id: project.author._id,
-            nName: project.author.nName || project.author.email,
-            email: project.author.email,
+            _id: project.ownerId._id,
+            nName: project.ownerId.nName || project.ownerId.authorEmail,
+            email: project.ownerId.authorEmail,
             role: '프로젝트 리더',
           });
         }
@@ -87,9 +90,14 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
           const applicationsData = await applicationsRes.json();
 
           if (applicationsData.success && applicationsData.data) {
+            interface ApplicationData {
+              status: string;
+              applicantId: { _id: string; nName?: string; email?: string };
+              role: string;
+            }
             const acceptedApplicants = applicationsData.data
-              .filter((app: any) => app.status === 'accepted')
-              .map((app: any) => ({
+              .filter((app: ApplicationData) => app.status === 'accepted')
+              .map((app: ApplicationData) => ({
                 _id: app.applicantId._id || app.applicantId,
                 nName: app.applicantId.nName || app.applicantId.email,
                 email: app.applicantId.email,
@@ -132,9 +140,9 @@ export default function WBSPage({ params }: { params: { pid: string } }) {
   // TaskPanel 저장 핸들러
   const handlePanelSave = async (data: TaskFormData) => {
     if (panelTask) {
-      await updateTask(panelTask.id, data as any);
+      await updateTask(panelTask.id, data as unknown as Partial<Omit<Task, 'id'>>);
     } else {
-      await addTask(data as any);
+      await addTask(data as unknown as Omit<Task, 'id'>);
     }
     closePanel();
   };

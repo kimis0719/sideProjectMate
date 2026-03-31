@@ -28,7 +28,7 @@ interface ProjectDetail {
   images: string[];
   members: { role: string; current: number; max: number }[];
   tags: TagDetail[];
-  author: { _id: string; nName: string; authorEmail: string; avatarUrl?: string } | null;
+  ownerId: { _id: string; nName: string; authorEmail: string; avatarUrl?: string } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -244,12 +244,12 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
                 {/* 작성자 */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">작성자</p>
-                  {project.author ? (
+                  {project.ownerId ? (
                     <div className="flex items-center gap-3">
-                      {project.author.avatarUrl ? (
+                      {project.ownerId.avatarUrl ? (
                         <Image
-                          src={project.author.avatarUrl}
-                          alt={project.author.nName}
+                          src={project.ownerId.avatarUrl}
+                          alt={project.ownerId.nName}
                           width={36}
                           height={36}
                           className="w-9 h-9 rounded-full object-cover border border-border"
@@ -257,19 +257,19 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
                         />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm text-muted-foreground border border-border">
-                          {project.author.nName?.[0]?.toUpperCase() || '?'}
+                          {project.ownerId.nName?.[0]?.toUpperCase() || '?'}
                         </div>
                       )}
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          {project.author.nName}
+                          {project.ownerId.nName}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {project.author.authorEmail}
+                          {project.ownerId.authorEmail}
                         </p>
                       </div>
                       <button
-                        onClick={() => setAuthorModalId(project.author!._id)}
+                        onClick={() => setAuthorModalId(project.ownerId!._id)}
                         className="ml-auto text-xs px-2 py-1 rounded bg-muted hover:bg-muted/70 text-muted-foreground transition-colors"
                       >
                         사용자 정보 보기

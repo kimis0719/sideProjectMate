@@ -28,27 +28,19 @@ async function handleGet(request: Request, { params }: { params: { boardId: stri
     }
 
     // 3. 프로젝트 및 멤버 조회
-    // Project 모델의 virtual populate 'projectMembers'를 사용하거나,
-    // 직접 ProjectMember 컬렉션을 조회할 수도 있지만,
-    // Project 모델 조회 시 populate 옵션을 사용하는 것이 효율적일 수 있음.
-    // 기존 /api/projects/[pid] 참조.
-
-    const project = await Project.findOne({ pid: board.pid }).populate({
-      path: 'projectMembers',
-      populate: {
-        path: 'userId', // User 모델 populate
-        select: 'nName authorEmail position avatarUrl', // 필요한 필드만 선택 (avatarUrl 추가)
-      },
-    });
+    const project = await Project.findOne({ pid: board.pid })
+      .populate({
+        path: 'members.userId',
+        select: 'nName authorEmail position avatarUrl',
+      })
+      .lean();
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
     // 4. 멤버 데이터 가공
-    // project.projectMembers는 가상 필드로 populate 된 상태
-    // (타입스크립트 이슈가 있을 수 있어 any로 캐스팅하거나 방어코드 작성)
-    interface PopulatedProjectMember {
+    interface PopulatedMember {
       userId: {
         _id: string;
         nName: string;
@@ -59,18 +51,17 @@ async function handleGet(request: Request, { params }: { params: { boardId: stri
       role: string;
     }
 
-    const projectWithMembers = project as typeof project & {
-      projectMembers?: PopulatedProjectMember[];
-    };
-    const members =
-      projectWithMembers.projectMembers?.map((pm: PopulatedProjectMember) => ({
-        _id: pm.userId._id, // User ID (assigneeId로 사용될 값)
+    const projectData = project as unknown as { members?: PopulatedMember[] };
+    const members = (projectData.members || [])
+      .filter((pm) => pm.userId)
+      .map((pm) => ({
+        _id: pm.userId._id,
         nName: pm.userId.nName,
         email: pm.userId.authorEmail,
         position: pm.userId.position,
-        avatarUrl: pm.userId.avatarUrl, // 아바타 URL 추가
-        role: pm.role, // Member role (editor, viewer etc)
-      })) || [];
+        avatarUrl: pm.userId.avatarUrl,
+        role: pm.role,
+      }));
 
     return NextResponse.json({ success: true, members });
   } catch (error) {
