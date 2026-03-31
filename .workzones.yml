@@ -15,9 +15,4 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones:
-  - path: "src/app/page.tsx, src/app/dashboard/, src/app/api/admin/"
-    owner: "FFLINA-PC"
-    status: "active"
-    reason: "feat: SPM 서비스 전면 개편 Phase 6 — 랜딩 페이지 개편 (#219)"
-    expires: "2026-04-07"
+zones: []
