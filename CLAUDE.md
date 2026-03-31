@@ -116,4 +116,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| src/app/api/wbs/, src/components/wbs/, src/lib/models/ | FFLINA-PC | 🟡 작업 중 | feat: SPM Phase 7 — WBS 제거 및 정리 (#221) |
+| (현재 작업 중인 항목 없음) | — | 🟢 자유 | — |

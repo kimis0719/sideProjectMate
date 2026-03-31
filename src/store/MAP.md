@@ -3,7 +3,7 @@
 | 파일            | 관리 상태           | 주요 액션                                          |
 | --------------- | ------------------- | -------------------------------------------------- |
 | `boardStore.ts` | 칸반 보드/섹션/노트 | fetchBoard, addNote, moveNote, setFilterLabel      |
-| `wbsStore.ts`   | WBS 태스크 트리     | fetchTasks, addTask, updateTask, undo/redo (zundo) |
+| ~~`wbsStore.ts`~~ | ~~삭제됨 (Phase 7)~~ | — |
 | `modalStore.ts` | 전역 모달 상태      | openModal, closeModal                              |
 | `instructionStore.ts` | AI 지시서 모달/생성 | openModal, generate (SSE), setTarget, setPreset |
 | `applicationStore.ts` | 내 지원 상태 맵 | fetchMyApplications, addApplication, withdrawApplication, getStatus |
