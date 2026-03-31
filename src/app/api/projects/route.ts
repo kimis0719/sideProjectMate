@@ -23,12 +23,17 @@ async function handleGet(request: NextRequest) {
     const status = searchParams.get('status');
     const sortBy = searchParams.get('sortBy') || 'latest';
     const ownerId = searchParams.get('authorId') || searchParams.get('ownerId');
+    const domain = searchParams.get('domain');
+    const stage = searchParams.get('stage');
+    const style = searchParams.get('style');
+    const minHours = searchParams.get('minHours');
 
     const query: Record<string, unknown> = { delYn: { $ne: true } };
     if (searchTerm) {
       query.$or = [
         { title: { $regex: searchTerm, $options: 'i' } },
         { description: { $regex: searchTerm, $options: 'i' } },
+        { problemStatement: { $regex: searchTerm, $options: 'i' } },
       ];
     }
 
@@ -38,6 +43,24 @@ async function handleGet(request: NextRequest) {
 
     if (ownerId) {
       query.ownerId = ownerId;
+    }
+
+    if (domain) {
+      query.domains = { $regex: domain, $options: 'i' };
+    }
+
+    if (stage) {
+      const stages = stage.split(',');
+      query.currentStage = { $in: stages };
+    }
+
+    if (style) {
+      const styles = style.split(',');
+      query.executionStyle = { $in: styles };
+    }
+
+    if (minHours) {
+      query.weeklyHours = { $gte: Number(minHours) };
     }
 
     let sortOptions: Record<string, 1 | -1> = { createdAt: -1 };
