@@ -882,10 +882,14 @@ Phase 3이 끝난 시점이 `/teach-impeccable`을 실행하기에 가장 적합
 **스텝 컴포넌트**
 
 - [ ] `OnboardingStep1.tsx` — DOMAIN 그룹 대형 카드 멀티선택
-- [ ] `OnboardingStep2.tsx` — WORK_STYLE 그룹 칩 멀티선택
-- [ ] `OnboardingStep3.tsx` — `weeklyAvailability` 버튼 그룹 + `preferLaunchStyle` 카드 2개
+- [ ] `OnboardingStep2.tsx` — 기존 `CommunicationStyleSlider` + 협업 성향 태그 재사용
+- [ ] `OnboardingStep3.tsx` — 기존 `AvailabilityScheduler` 재사용 (시간표 드래그)
 
-> Step 3 컴포넌트는 프로필 편집(4-D)에서 재사용되도록 처음부터 분리 설계한다.
+> **설계 변경 (2026-03-31)**: `weeklyAvailability`(숫자) + `workStyle`(enum 칩) 대신
+> 기존 AvailabilityScheduler(시간표 드래그)와 CommunicationStyleSlider(소통 성향 슬라이더)를 유지한다.
+> 이유: 다른 개발자가 구현한 높은 퀄리티의 UX이며, 단순 숫자/칩보다 직관적.
+> `User.weeklyAvailability`, `User.workStyle` 필드는 온보딩/프로필에서 사용하지 않는다.
+> Step 2/3 컴포넌트는 프로필 편집(4-D)에서도 재사용된다.
 
 ---
 
@@ -895,11 +899,13 @@ Phase 3이 끝난 시점이 `/teach-impeccable`을 실행하기에 가장 적합
 >
 > 에이전트는 아래 초안을 개발자에게 보여주고 확인을 받는다.
 >
-> 초안: bio(20) + domains(20) + workStyle(15) + weeklyAvailability(15) + github(20) + techStacks(10) = 100
+> 초안: bio(20) + domains(20) + availability(15) + communicationStyle(15) + github(20) + techStacks(10) = 100
+>
+> **변경 (2026-03-31)**: workStyle → communicationStyle (CommunicationStyleSlider 유지), weeklyAvailability → availability (AvailabilityScheduler 유지)
 
-CommonCode 로드: `DOMAIN`, `WORK_STYLE` 그룹 → code → label 매핑
+CommonCode 로드: `DOMAIN` 그룹 → code → label 매핑
 
-레이아웃: 아바타 + 닉네임 + bio → 스탯 카드 → 완성도 게이지 → 도메인 → 스타일 → 가용성(스케줄러 또는 숫자 — CP-4-2 결정에 따름) → GitHub 통계 → 기술스택(접기) → 완료 프로젝트
+레이아웃: 아바타 + 닉네임 + bio → 스탯 카드 → 완성도 게이지 → 도메인 → 협업 성향(CommunicationStyleSlider) → 가용 시간(AvailabilityScheduler) → GitHub 통계 → 기술스택(접기) → 완료 프로젝트
 
 완료 프로젝트 쿼리: `GET /api/projects?memberId={userId}&status=completed`
 
@@ -919,7 +925,7 @@ await fetch('/api/users/me/availability', { method: 'POST', body: JSON.stringify
 
 #### 4-D. 프로필 편집 개편
 
-TagInput (Phase 2 재사용), OnboardingStep3 컴포넌트 재사용, 기존 기술스택 입력 재사용.
+TagInput (Phase 2 재사용), AvailabilityScheduler + CommunicationStyleSlider (기존 유지), 기존 기술스택 입력 재사용.
 
 ---
 
@@ -936,7 +942,8 @@ TagInput (Phase 2 재사용), OnboardingStep3 컴포넌트 재사용, 기존 기
 - [ ] 신규 가입 유저 → 자동으로 `/onboarding` redirect
 - [ ] 온보딩 3스텝 완료 → `onboardingStep = 4` DB 저장 + 세션 갱신
 - [ ] 온보딩 건너뛰기 → `onboardingStep = 4` + 무한 루프 없음
-- [ ] 프로필 페이지에서 `domains`, `workStyle` CommonCode label로 표시
+- [ ] 프로필 페이지에서 `domains` CommonCode label로 표시
+- [ ] 프로필 페이지에서 AvailabilityScheduler + CommunicationStyleSlider 정상 동작
 - [ ] 프로필 완성도 게이지 점수 정확히 표시
 - [ ] TagInput이 Phase 2와 동일한 것 사용 (중복 구현 없음)
 
