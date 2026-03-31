@@ -6,14 +6,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
 interface ProjectMember {
-  userId: { _id: string };
+  userId: { _id: string } | string;
   role: string;
   status: string;
 }
 
 interface ProjectData {
   _id: string;
-  ownerId: { _id: string };
+  ownerId: { _id: string } | string;
   members: ProjectMember[];
 }
 
@@ -187,15 +187,34 @@ export default function DashboardLayout({
           }
 
           const project = data.data as ProjectData;
-          const userId = session.user.id;
-          const isAuthor = project.ownerId._id === userId;
-          const isMember = project.members.some(
-            (m) => m.userId._id === userId && m.status === 'active'
-          );
+          // session.user._id = MongoDB ObjectId (auth callback), session.user.id = NextAuth 기본값
+          const userId = session.user._id || session.user.id;
+
+          // ownerId가 populated 객체일 수도, string일 수도 있음
+          const ownerIdStr =
+            typeof project.ownerId === 'string'
+              ? project.ownerId
+              : project.ownerId?._id?.toString();
+          const isAuthor = ownerIdStr === userId;
+
+          const isMember = (project.members || []).some((m) => {
+            const memberIdStr = typeof m.userId === 'string' ? m.userId : m.userId?._id?.toString();
+            return memberIdStr === userId && m.status === 'active';
+          });
+
+          // eslint-disable-next-line no-console -- 디버그 로그 (운영 오류 추적용, 안정화 후 제거)
+          console.log('[Dashboard Layout] Access check:', {
+            userId,
+            ownerIdStr,
+            isAuthor,
+            isMember,
+            membersCount: project.members?.length,
+          });
 
           if (isAuthor || isMember) {
             setIsAuthorized(true);
           } else {
+            console.warn('[Dashboard Layout] Access denied — not author or active member');
             setIsAuthorized(false);
             router.replace('/');
           }

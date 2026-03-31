@@ -30,11 +30,19 @@ export default function DashboardHome() {
       return;
     }
 
-    if (status === 'authenticated' && session?.user?._id) {
+    if (status === 'authenticated' && (session?.user?._id || session?.user?.id)) {
+      const userId = session.user._id || session.user.id;
       const fetchMyProjects = async () => {
         try {
-          const response = await fetch(`/api/projects?memberId=${session.user._id}`);
+          // eslint-disable-next-line no-console -- 디버그 로그 (운영 오류 추적용, 안정화 후 제거)
+          console.log('[Dashboard] Fetching projects for memberId:', userId);
+          const response = await fetch(`/api/projects?memberId=${userId}`);
           const data = await response.json();
+          // eslint-disable-next-line no-console -- 디버그 로그 (운영 오류 추적용, 안정화 후 제거)
+          console.log('[Dashboard] API response:', {
+            total: data.data?.total,
+            count: data.data?.projects?.length,
+          });
           if (data.success) {
             setProjects(data.data.projects);
           }

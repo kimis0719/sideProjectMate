@@ -23,18 +23,23 @@ async function handleGet(request: NextRequest) {
     const status = searchParams.get('status');
     const sortBy = searchParams.get('sortBy') || 'latest';
     const ownerId = searchParams.get('authorId') || searchParams.get('ownerId');
+    const memberId = searchParams.get('memberId');
     const domain = searchParams.get('domain');
     const stage = searchParams.get('stage');
     const style = searchParams.get('style');
     const minHours = searchParams.get('minHours');
 
     const query: Record<string, unknown> = { delYn: { $ne: true } };
+    const andConditions: Record<string, unknown>[] = [];
+
     if (searchTerm) {
-      query.$or = [
-        { title: { $regex: searchTerm, $options: 'i' } },
-        { description: { $regex: searchTerm, $options: 'i' } },
-        { problemStatement: { $regex: searchTerm, $options: 'i' } },
-      ];
+      andConditions.push({
+        $or: [
+          { title: { $regex: searchTerm, $options: 'i' } },
+          { description: { $regex: searchTerm, $options: 'i' } },
+          { problemStatement: { $regex: searchTerm, $options: 'i' } },
+        ],
+      });
     }
 
     if (status && status !== 'all') {
@@ -43,6 +48,20 @@ async function handleGet(request: NextRequest) {
 
     if (ownerId) {
       query.ownerId = ownerId;
+    }
+
+    // memberId 필터: ownerId이거나 members에 active로 포함된 프로젝트
+    if (memberId) {
+      andConditions.push({
+        $or: [
+          { ownerId: memberId },
+          { members: { $elemMatch: { userId: memberId, status: 'active' } } },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     if (domain) {
