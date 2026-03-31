@@ -2,7 +2,7 @@
 
 | 파일            | 관리 상태           | 주요 액션                                          |
 | --------------- | ------------------- | -------------------------------------------------- |
-| `boardStore.ts` | 칸반 보드/섹션/노트 | fetchBoard, addNote, moveNote, setFilterLabel      |
+| `boardStore.ts` | 칸반 보드/섹션/노트 | fetchBoard, addNote, moveNote, completeNote, batchCompleteNotes, revertNote |
 | ~~`wbsStore.ts`~~ | ~~삭제됨 (Phase 7)~~ | — |
 | `modalStore.ts` | 전역 모달 상태      | openModal, closeModal                              |
 | `instructionStore.ts` | AI 지시서 모달/생성 | openModal, generate (SSE), setTarget, setPreset |
