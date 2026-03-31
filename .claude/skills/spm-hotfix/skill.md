@@ -197,6 +197,25 @@ gh pr merge --squash --auto --delete-branch
 >   gh pr merge [PR번호] --squash --delete-branch
 > ```
 
+### 머지 후 이슈 클로즈 확인
+
+> **배경**: squash 머지 시 GitHub가 커밋 메시지를 재구성하면서 PR 본문의
+> `Closes #N` 키워드가 스쿼시된 커밋에 포함되지 않을 수 있다.
+> 이 경우 이슈가 자동 클로즈되지 않으므로 반드시 확인 후 수동 처리한다.
+
+머지 완료 후 연결된 이슈의 상태를 확인합니다:
+
+```bash
+gh issue view [이슈번호] --json state -q '.state'
+```
+
+- **CLOSED**: 정상 — 다음 단계 진행
+- **OPEN**: 자동 클로즈 실패 — 수동으로 닫는다:
+
+```bash
+gh issue close [이슈번호] --comment "PR #[PR번호] 머지로 작업 완료"
+```
+
 ---
 
 ## 7단계: main 복귀 및 정리
