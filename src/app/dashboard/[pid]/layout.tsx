@@ -202,19 +202,9 @@ export default function DashboardLayout({
             return memberIdStr === userId && m.status === 'active';
           });
 
-          // eslint-disable-next-line no-console -- 디버그 로그 (운영 오류 추적용, 안정화 후 제거)
-          console.log('[Dashboard Layout] Access check:', {
-            userId,
-            ownerIdStr,
-            isAuthor,
-            isMember,
-            membersCount: project.members?.length,
-          });
-
           if (isAuthor || isMember) {
             setIsAuthorized(true);
           } else {
-            console.warn('[Dashboard Layout] Access denied — not author or active member');
             setIsAuthorized(false);
             router.replace('/');
           }
