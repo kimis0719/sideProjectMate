@@ -83,6 +83,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     completedNotes,
     completedNotesLoaded,
     fetchCompletedNotes,
+    batchCompleteNotes,
   } = useBoardStore((s) => ({
     notes: s.notes,
     sections: s.sections,
@@ -114,6 +115,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     completedNotes: s.completedNotes,
     completedNotesLoaded: s.completedNotesLoaded,
     fetchCompletedNotes: s.fetchCompletedNotes,
+    batchCompleteNotes: s.batchCompleteNotes,
   }));
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -515,6 +517,31 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             {pid && <span className="text-xs text-muted-foreground ml-2 font-normal">#{pid}</span>}
           </div>
         </div>
+
+        {/* 멀티셀렉트 액션바 */}
+        {selectedNoteIds.length >= 2 && viewMode === 'active' && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+            <span className="text-xs font-medium text-primary">
+              {selectedNoteIds.length}개 선택
+            </span>
+            <div className="w-px h-4 bg-primary/20" />
+            <button
+              onClick={() => batchCompleteNotes(selectedNoteIds)}
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-500 transition-colors"
+              title="선택한 노트 일괄 완료"
+            >
+              <span>✅</span>
+              <span>선택 완료</span>
+            </button>
+            <button
+              onClick={() => selectNotes([])}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
+              title="선택 해제"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           {/* 진행중 / 완료 탭 */}

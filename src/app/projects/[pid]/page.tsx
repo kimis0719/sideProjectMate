@@ -716,6 +716,24 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   </button>
                 ) : null}
 
+                {/* 칸반 보드 열기 — 팀원 및 오너에게만 표시 */}
+                {(isMember || isOwner) && (
+                  <Link
+                    href={`/dashboard/${project.pid}/kanban`}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"
+                      />
+                    </svg>
+                    칸반 보드 열기
+                  </Link>
+                )}
+
                 {/* 1:1 문의하기 — 본인 프로젝트가 아닌 경우만 표시 */}
                 {!isOwner && (
                   <button

@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import Counter from '@/lib/models/Counter';
+import Board from '@/lib/models/kanban/BoardModel';
+import Section from '@/lib/models/kanban/SectionModel';
+import Note from '@/lib/models/kanban/NoteModel';
 import { headers } from 'next/headers';
 import { withApiLogging } from '@/lib/apiLogger';
 
@@ -196,6 +199,40 @@ async function handlePost(request: Request) {
     });
 
     await newProject.populate({ path: 'ownerId', select: 'nName' });
+
+    // 칸반 보드 자동 생성 (실패해도 프로젝트 생성은 성공 처리)
+    try {
+      const board = await Board.create({
+        pid: newProject.pid,
+        name: newProject.title,
+        ownerId,
+      });
+
+      const section = await Section.create({
+        boardId: board._id,
+        title: '아이디어',
+        x: 50,
+        y: 50,
+        width: 500,
+        height: 350,
+        color: '#E5E7EB',
+        zIndex: 0,
+        depth: 0,
+      });
+
+      if (newProject.problemStatement) {
+        await Note.create({
+          text: newProject.problemStatement,
+          x: 70,
+          y: 110,
+          boardId: board._id,
+          sectionId: section._id,
+          creatorId: ownerId,
+        });
+      }
+    } catch (boardError) {
+      console.error('[kanban] 보드 자동 생성 실패 (프로젝트 생성은 성공):', boardError);
+    }
 
     return NextResponse.json(
       { success: true, message: '프로젝트가 성공적으로 생성되었습니다.', data: newProject },
