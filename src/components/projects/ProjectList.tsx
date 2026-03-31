@@ -14,6 +14,8 @@ import {
   ExecutionStyle,
   ProjectStatus,
 } from '@/constants/project';
+import { useSession } from 'next-auth/react';
+import { useApplicationStore } from '@/store/applicationStore';
 import ProjectCard from './ProjectCard';
 import EmptyState from '@/components/common/EmptyState';
 
@@ -22,6 +24,8 @@ const WEEKLY_HOURS_FILTER = [0, 5, 10, 15, 20] as const;
 function ProjectListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const { fetchMyApplications, loaded: appLoaded, getStatus } = useApplicationStore();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [projects, setProjects] = useState<any[]>([]);
@@ -44,6 +48,12 @@ function ProjectListContent() {
   useEffect(() => {
     setSearchInput(searchTerm);
   }, [searchTerm]);
+
+  useEffect(() => {
+    if (session?.user?._id && !appLoaded) {
+      fetchMyApplications();
+    }
+  }, [session?.user?._id, appLoaded, fetchMyApplications]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -284,7 +294,15 @@ function ProjectListContent() {
         ) : projects.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {projects.map((project) => (
-              <ProjectCard key={project.pid} project={project} />
+              <ProjectCard
+                key={project.pid}
+                project={project}
+                applicationStatus={getStatus(project._id)?.status}
+                isOwner={
+                  session?.user?._id ===
+                  (typeof project.ownerId === 'object' ? project.ownerId?._id : project.ownerId)
+                }
+              />
             ))}
           </div>
         ) : (

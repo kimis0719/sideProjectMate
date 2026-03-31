@@ -1,6 +1,6 @@
 # Project Index: Side Project Mate
 
-Generated: 2026-03-30
+Generated: 2026-03-31
 
 ## Project Structure
 
@@ -59,7 +59,9 @@ sideProjectMate/
 |                   | `/api/projects/[pid]/like`                                | POST                    |
 |                   | `/api/projects/[pid]/resources`                           | GET, POST, DELETE       |
 | **Applications**  | `/api/applications`                                       | GET                     |
+|                   | `/api/applications/my`                                    | GET                     |
 |                   | `/api/applications/[appId]`                               | PUT, DELETE             |
+|                   | `/api/applications/[appId]/leave`                         | PATCH                   |
 |                   | `/api/applications/by-project/[pid]`                      | GET                     |
 | **Kanban**        | `/api/kanban/boards`                                      | GET, POST               |
 |                   | `/api/kanban/boards/[boardId]/members`                    | GET                     |
@@ -130,6 +132,7 @@ sideProjectMate/
 | `wbsStore`          | `src/store/wbsStore.ts`              | WBS tasks state (CRUD, socket broadcast)                    |
 | `modalStore`        | `src/store/modalStore.ts`            | Global alert/confirm modal                                  |
 | `notificationStore` | `src/lib/store/notificationStore.ts` | Notification state                                          |
+| `applicationStore`  | `src/store/applicationStore.ts`      | My application status map (projectId → {applicationId, status}) |
 
 ## Utility Modules
 

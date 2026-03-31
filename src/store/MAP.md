@@ -6,6 +6,7 @@
 | `wbsStore.ts`   | WBS 태스크 트리     | fetchTasks, addTask, updateTask, undo/redo (zundo) |
 | `modalStore.ts` | 전역 모달 상태      | openModal, closeModal                              |
 | `instructionStore.ts` | AI 지시서 모달/생성 | openModal, generate (SSE), setTarget, setPreset |
+| `applicationStore.ts` | 내 지원 상태 맵 | fetchMyApplications, addApplication, withdrawApplication, getStatus |
 
 ## 공통 패턴
 
@@ -29,6 +30,7 @@ export const useFooStore = create<FooState & FooActions>()(
 ## 자동 생성 파일 목록
 > 마지막 갱신: 2026-03-31
 
+- `applicationStore.ts`
 - `boardStore.ts`
 - `instructionStore.ts`
 - `modalStore.ts`

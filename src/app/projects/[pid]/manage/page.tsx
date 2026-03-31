@@ -16,10 +16,53 @@ interface Applicant {
 interface Application {
   _id: string;
   applicantId: Applicant;
-  role: string;
-  message: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  motivation: string;
+  weeklyHours: number;
+  message?: string;
+  ownerNote?: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
   createdAt: string;
+}
+
+function OwnerNoteInput({
+  initialValue,
+  onSave,
+}: {
+  initialValue: string;
+  onSave: (note: string) => void;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const [isSaving, setIsSaving] = useState(false);
+  const isDirty = value !== initialValue;
+
+  return (
+    <div>
+      <label className="text-xs font-semibold text-muted-foreground">내 메모</label>
+      <div className="flex gap-2 mt-1">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="지원자에 대한 메모를 남겨보세요"
+          className="flex-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background text-foreground"
+          maxLength={500}
+        />
+        {isDirty && (
+          <button
+            onClick={async () => {
+              setIsSaving(true);
+              await onSave(value);
+              setIsSaving(false);
+            }}
+            disabled={isSaving}
+            className="px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+          >
+            {isSaving ? '저장...' : '저장'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function ManageApplicantsPage() {
@@ -122,6 +165,25 @@ export default function ManageApplicantsPage() {
     }
   };
 
+  // 오너 메모 저장 핸들러
+  const handleSaveOwnerNote = async (appId: string, ownerNote: string) => {
+    try {
+      const res = await fetch(`/api/applications/${appId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ownerNote }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setApplications((prev) => prev.map((a) => (a._id === appId ? { ...a, ownerNote } : a)));
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err: unknown) {
+      await alert('오류', err instanceof Error ? err.message : '메모 저장 실패');
+    }
+  };
+
   // 지원 내역 삭제 핸들러
   const handleDeleteApplication = async (appId: string) => {
     const ok = await confirm(
@@ -192,32 +254,61 @@ export default function ManageApplicantsPage() {
           {applications.map((app) => (
             <div key={app._id} className="bg-card p-6 rounded-lg shadow-sm border border-border">
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="font-bold text-lg text-foreground">
                     {app.applicantId.nName}{' '}
                     <span className="text-sm font-normal text-muted-foreground">
                       ({app.applicantId.authorEmail})
                     </span>
                   </p>
-                  <p className="text-blue-600 font-semibold">{app.role} 역할 지원</p>
-                  <p className="mt-4 text-foreground">{app.message}</p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-sm text-muted-foreground">
+                      주 {app.weeklyHours}h 가능
+                    </span>
+                  </div>
+                  {/* 지원 동기 */}
+                  <div className="mt-3 p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">지원 동기</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{app.motivation}</p>
+                  </div>
+                  {/* 추가 메시지 */}
+                  {app.message && (
+                    <p className="mt-2 text-sm text-muted-foreground italic">
+                      &ldquo;{app.message}&rdquo;
+                    </p>
+                  )}
                 </div>
-                <div className="text-right">
-                  <p
-                    className={`font-bold ${
+                <div className="text-right ml-4 shrink-0">
+                  <span
+                    className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
                       app.status === 'accepted'
-                        ? 'text-green-500'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
                         : app.status === 'rejected'
-                          ? 'text-red-500'
-                          : 'text-yellow-500'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                          : app.status === 'withdrawn'
+                            ? 'bg-muted text-muted-foreground'
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200'
                     }`}
                   >
-                    {app.status}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
+                    {app.status === 'accepted'
+                      ? '수락됨'
+                      : app.status === 'rejected'
+                        ? '거절됨'
+                        : app.status === 'withdrawn'
+                          ? '취소됨'
+                          : '대기 중'}
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {new Date(app.createdAt).toLocaleString('ko-KR')}
                   </p>
                 </div>
+              </div>
+              {/* 오너 메모 */}
+              <div className="mt-4 pt-3 border-t border-border">
+                <OwnerNoteInput
+                  initialValue={app.ownerNote || ''}
+                  onSave={(note) => handleSaveOwnerNote(app._id, note)}
+                />
               </div>
               <div className="flex justify-end gap-2 mt-4">
                 {/* ✨ 대화하기 버튼 (면접/인터뷰) */}

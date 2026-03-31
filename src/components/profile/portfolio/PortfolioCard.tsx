@@ -106,6 +106,7 @@ export default function PortfolioCard({ url, onDelete, readOnly = false }: Portf
               src={data.image}
               alt={data.title}
               fill
+              sizes="112px"
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               unoptimized
               onError={(e) => {

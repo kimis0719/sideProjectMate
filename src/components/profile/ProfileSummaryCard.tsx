@@ -36,6 +36,7 @@ export default function ProfileSummaryCard({ user, onClick }: ProfileSummaryCard
               src={user.avatarUrl}
               alt={user.nName}
               fill
+              sizes="56px"
               className="object-cover"
               unoptimized
             />

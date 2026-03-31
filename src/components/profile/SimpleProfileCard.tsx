@@ -36,7 +36,13 @@ export default function SimpleProfileCard({ user, onClick }: SimpleProfileCardPr
         <div className="relative flex-shrink-0">
           <div className="relative w-14 h-14 rounded-full bg-gray-200 overflow-hidden border border-gray-100 dark:border-border">
             {user.avatarUrl ? (
-              <Image src={user.avatarUrl} alt={user.nName} fill className="object-cover" />
+              <Image
+                src={user.avatarUrl}
+                alt={user.nName}
+                fill
+                sizes="56px"
+                className="object-cover"
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 font-bold text-lg">
                 {user.nName?.charAt(0).toUpperCase() || '?'}

@@ -11,7 +11,7 @@
 | `[pid]/route.ts`                | DELETE | 프로젝트 삭제                     |
 | `[pid]/route.ts`                | PATCH  | 상태/overview 부분 업데이트       |
 | `[pid]/like/route.ts`           | POST   | 좋아요 (likeCount 증감)           |
-| `[pid]/apply/route.ts`          | POST   | 프로젝트 지원 (motivation+weeklyHours) |
+| `[pid]/apply/route.ts`          | POST   | 프로젝트 지원 (motivation+weeklyHours), 응답에 data:{_id,projectId} 포함 |
 | `[pid]/application/route.ts`    | GET    | 내 지원 현황                      |
 | `[pid]/application/me/route.ts` | GET    | 내 지원서 상세                    |
 | `[pid]/applications/route.ts`   | GET    | 지원자 목록 (리더용)              |

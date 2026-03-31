@@ -100,7 +100,8 @@ export default function OnboardingPage() {
     const newStep = await saveStep(3, {});
     if (newStep !== null) {
       await updateSession({ onboardingStep: 4 });
-      router.replace('/projects');
+      // full reload로 이동해야 middleware가 갱신된 JWT를 읽음
+      window.location.href = '/projects';
     }
   };
 
@@ -111,7 +112,7 @@ export default function OnboardingPage() {
       const result = await res.json();
       if (result.success) {
         await updateSession({ onboardingStep: 4 });
-        router.replace('/projects');
+        window.location.href = '/projects';
       }
     } catch (e) {
       console.error('온보딩 건너뛰기 실패', e);
