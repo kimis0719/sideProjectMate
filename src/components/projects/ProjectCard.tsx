@@ -49,16 +49,14 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       href={`/projects/${project.pid}`}
       className="bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer border border-border flex flex-col"
     >
-      {/* 썸네일 — 이미지가 있을 때만 표시 */}
-      {hasImage && (
-        <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
-          <ProjectThumbnail
-            src={project.images[0]}
-            alt={project.title}
-            fallbackText={project.title.charAt(0)}
-          />
-        </div>
-      )}
+      {/* 썸네일 — 이미지 유무 관계없이 항상 표시 */}
+      <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
+        <ProjectThumbnail
+          src={hasImage ? project.images[0] : null}
+          alt={project.title}
+          fallbackText={project.title.charAt(0)}
+        />
+      </div>
 
       <div className="p-5 flex flex-col flex-1">
         {/* 배지 + 등록일 */}

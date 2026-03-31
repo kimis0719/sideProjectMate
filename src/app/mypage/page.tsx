@@ -52,6 +52,7 @@ export default function MyPage() {
   // ✅ 모든 훅을 조건부 return 이전에 선언
   const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [userData, setUserData] = useState<any>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isAppsLoading, setIsAppsLoading] = useState(true);
@@ -104,6 +105,7 @@ export default function MyPage() {
       body: JSON.stringify({ avatarUrl: url }),
     });
     if (res.ok) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setUserData((prev: any) => ({ ...prev, avatarUrl: url }));
     } else {
       await alert('에러', '이미지 변경 실패');
@@ -125,8 +127,8 @@ export default function MyPage() {
         } else {
           throw new Error(data.message);
         }
-      } catch (err: any) {
-        await alert('에러', err.message);
+      } catch (err: unknown) {
+        await alert('에러', err instanceof Error ? err.message : '알 수 없는 오류');
       }
     }
   };
@@ -179,6 +181,22 @@ export default function MyPage() {
             onEditAvatar={() => setIsAvatarModalOpen(true)}
           />
         ) : null}
+        <div className="mt-3">
+          <Link
+            href="/profile"
+            className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            프로필 수정하기
+          </Link>
+        </div>
       </section>
 
       <ImageEditModal

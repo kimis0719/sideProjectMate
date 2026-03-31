@@ -54,7 +54,7 @@ export default function Header() {
       };
       // 💬 Step 5: 채팅 메시지 수신 시 헤더 뱃지 카운터 증가
       // /chat 페이지에 있거나 내가 보낸 메시지면 증가 안 함
-      const handleChatMessage = (message: any) => {
+      const handleChatMessage = (message: { sender?: string }) => {
         if (pathname?.startsWith('/chat')) return;
         if (session?.user?._id && message.sender === session.user._id) return;
         setTotalUnreadChat((prev) => prev + 1);
@@ -68,7 +68,8 @@ export default function Header() {
         socket.off('message-received', handleChatMessage);
       };
     }
-  }, [status, pathname, fetchNotifications, session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, pathname, fetchNotifications, session?.user?._id]);
 
   // 알림 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
@@ -119,7 +120,10 @@ export default function Header() {
       .then((res) => res.json())
       .then(({ success, data }) => {
         if (success && data) {
-          const total = (data as any[]).reduce((sum, r) => sum + (r.myUnreadCount ?? 0), 0);
+          const total = (data as { myUnreadCount?: number }[]).reduce(
+            (sum, r) => sum + (r.myUnreadCount ?? 0),
+            0
+          );
           setTotalUnreadChat(total);
         }
       })
@@ -184,7 +188,7 @@ export default function Header() {
 
   // 유저 아바타 표시 컴포넌트
   const UserAvatar = ({ size = 8 }: { size?: number }) => {
-    const avatarUrl = (session?.user as any)?.avatarUrl;
+    const avatarUrl = (session?.user as { avatarUrl?: string } | undefined)?.avatarUrl;
     const name = session?.user?.name || '?';
     const initials = name.charAt(0).toUpperCase();
 

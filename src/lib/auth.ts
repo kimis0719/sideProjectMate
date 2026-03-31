@@ -147,23 +147,30 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
 
-    async jwt({ token, user, account }) {
-      // ── OAuth 첫 로그인: DB에서 _id·memberType 가져와 토큰에 주입
+    async jwt({ token, user, account, trigger, session: updateData }) {
+      // ── 세션 업데이트 요청 (onboardingStep 갱신 등)
+      if (trigger === 'update' && updateData) {
+        return { ...token, ...updateData };
+      }
+
+      // ── OAuth 첫 로그인: DB에서 _id·memberType·onboardingStep 가져와 토큰에 주입
       if (account?.type === 'oauth') {
         await dbConnect();
         const dbUser = (await User.findOne({ authorEmail: token.email?.toLowerCase() })
-          .select('_id nName memberType avatarUrl')
+          .select('_id nName memberType avatarUrl onboardingStep')
           .lean()) as {
           _id: { toString(): string };
           nName?: string;
           memberType?: string;
           avatarUrl?: string;
+          onboardingStep?: number;
         } | null;
         if (dbUser) {
           return {
             ...token,
             _id: dbUser._id.toString(),
             memberType: dbUser.memberType,
+            onboardingStep: dbUser.onboardingStep ?? 0,
             name: dbUser.nName || token.name,
             image: dbUser.avatarUrl || token.picture,
           };
@@ -171,18 +178,45 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      // ── Credentials 로그인 (기존 로직)
+      // ── Credentials 로그인: DB에서 onboardingStep 가져오기
       if (user) {
+        await dbConnect();
+        const dbUser = (await User.findOne({ _id: user._id }).select('onboardingStep').lean()) as {
+          onboardingStep?: number;
+        } | null;
         return {
           ...token,
           ...user,
+          onboardingStep: dbUser?.onboardingStep ?? 0,
         };
       }
+
+      // ── 기존 세션: onboardingStep이 없으면 DB에서 한 번 가져와 토큰에 주입
+      if (token._id && token.onboardingStep === undefined) {
+        try {
+          await dbConnect();
+          const dbUser = (await User.findOne({ _id: token._id })
+            .select('onboardingStep')
+            .lean()) as { onboardingStep?: number } | null;
+          token.onboardingStep = dbUser?.onboardingStep ?? 4; // DB에도 없으면 온보딩 완료로 간주
+        } catch {
+          token.onboardingStep = 4; // DB 조회 실패 시 온보딩 완료로 간주 (redirect 루프 방지)
+        }
+      }
+
       return token;
     },
 
     async session({ session, token }) {
-      session.user = token as Session['user'];
+      session.user = {
+        ...session.user,
+        _id: token._id,
+        memberType: token.memberType,
+        onboardingStep: token.onboardingStep,
+        name: token.name,
+        email: token.email,
+        image: token.picture,
+      } as Session['user'];
       return session;
     },
   },

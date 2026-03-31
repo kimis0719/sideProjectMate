@@ -26,6 +26,15 @@ const Container = styled.div`
   & > div {
     width: 100% !important;
   }
+  /* 모든 컬럼(요일)을 균등 분배하여 '금' 셀 크기 불일치 방지 */
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  th,
+  td {
+    width: calc(100% / 8); /* 시간 라벨 컬럼 + 7요일 */
+  }
 `;
 
 const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
