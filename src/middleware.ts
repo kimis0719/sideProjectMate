@@ -29,8 +29,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // 온보딩 미완료 시 redirect
-  const onboardingStep = (token.onboardingStep as number) ?? 0;
-  if (onboardingStep < 4) {
+  // onboardingStep이 명시적으로 숫자인 경우만 체크 (기존 세션에 없으면 통과)
+  const onboardingStep = token.onboardingStep;
+  if (typeof onboardingStep === 'number' && onboardingStep < 4) {
     const onboardingUrl = new URL('/onboarding', request.url);
     return NextResponse.redirect(onboardingUrl);
   }

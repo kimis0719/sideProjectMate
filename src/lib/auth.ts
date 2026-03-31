@@ -190,6 +190,20 @@ export const authOptions: NextAuthOptions = {
           onboardingStep: dbUser?.onboardingStep ?? 0,
         };
       }
+
+      // ── 기존 세션: onboardingStep이 없으면 DB에서 한 번 가져와 토큰에 주입
+      if (token._id && token.onboardingStep === undefined) {
+        try {
+          await dbConnect();
+          const dbUser = (await User.findOne({ _id: token._id })
+            .select('onboardingStep')
+            .lean()) as { onboardingStep?: number } | null;
+          token.onboardingStep = dbUser?.onboardingStep ?? 4; // DB에도 없으면 온보딩 완료로 간주
+        } catch {
+          token.onboardingStep = 4; // DB 조회 실패 시 온보딩 완료로 간주 (redirect 루프 방지)
+        }
+      }
+
       return token;
     },
 
