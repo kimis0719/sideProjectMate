@@ -64,6 +64,7 @@ export default function DetailProfileCard({
                 src={user.avatarUrl}
                 alt={user.nName}
                 fill
+                sizes="112px"
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (

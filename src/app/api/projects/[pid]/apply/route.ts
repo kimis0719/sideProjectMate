@@ -67,7 +67,7 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
       );
     }
 
-    await Application.create({
+    const application = await Application.create({
       projectId: project._id,
       applicantId,
       motivation,
@@ -83,7 +83,11 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
     });
 
     return NextResponse.json(
-      { success: true, message: '프로젝트에 성공적으로 지원했습니다.' },
+      {
+        success: true,
+        message: '프로젝트에 성공적으로 지원했습니다.',
+        data: { _id: application._id.toString(), projectId: project._id.toString() },
+      },
       { status: 201 }
     );
   } catch (error: unknown) {

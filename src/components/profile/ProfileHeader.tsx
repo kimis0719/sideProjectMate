@@ -32,6 +32,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
                 src={user.avatarUrl}
                 alt={user.nName || ''}
                 fill
+                sizes="96px"
                 className="object-cover"
                 unoptimized
               />

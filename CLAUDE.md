@@ -116,4 +116,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| (현재 작업 중인 항목 없음) | — | 🟢 자유 | — |
+| src/app/api/applications/, src/store/, src/app/dashboard/ | FFLINA-PC | 🟡 작업 중 | feat: SPM Phase 5 — 지원 플로우 개편 (#217) |

@@ -26,9 +26,11 @@ interface ProjectCardProject {
 
 interface ProjectCardProps {
   project: ProjectCardProject;
+  applicationStatus?: string;
+  isOwner?: boolean;
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, applicationStatus, isOwner }: ProjectCardProps) {
   const membersArray = Array.isArray(project.members) ? project.members : [];
   const activeMembers = membersArray.filter((m) => m.status === 'active').length;
   const maxMembers = project.maxMembers ?? 4;
@@ -117,9 +119,29 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             {styleLabel && <span>{styleLabel}</span>}
             {project.weeklyHours && <span>{project.weeklyHours}h/주</span>}
           </div>
-          <span className={remaining > 0 ? 'text-primary font-semibold' : 'text-muted-foreground'}>
-            {remaining > 0 ? `${remaining}자리 남음` : '마감'}
-          </span>
+          {applicationStatus === 'pending' ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+              지원 완료
+            </span>
+          ) : applicationStatus === 'accepted' ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">
+              팀원
+            </span>
+          ) : applicationStatus === 'rejected' ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">
+              지원 마감
+            </span>
+          ) : isOwner ? (
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+              내 프로젝트
+            </span>
+          ) : (
+            <span
+              className={remaining > 0 ? 'text-primary font-semibold' : 'text-muted-foreground'}
+            >
+              {remaining > 0 ? `${remaining}자리 남음` : '마감'}
+            </span>
+          )}
         </div>
       </div>
     </Link>

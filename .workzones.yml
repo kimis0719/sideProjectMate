@@ -15,4 +15,9 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones: []
+zones:
+  - path: "src/app/api/applications/, src/store/applicationStore.ts, src/components/projects/, src/app/dashboard/"
+    owner: "FFLINA-PC"
+    status: "active"
+    reason: "feat: SPM 서비스 전면 개편 Phase 5 — 지원 플로우 개편 (#217)"
+    expires: "2026-04-07"

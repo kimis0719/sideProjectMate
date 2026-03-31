@@ -8,10 +8,12 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { IProject } from '@/lib/models/Project';
 import { useNotificationStore } from '@/lib/store/notificationStore';
+import { useApplicationStore } from '@/store/applicationStore';
 import DetailProfileCard from '@/components/profile/DetailProfileCard';
 import ProjectThumbnail from '@/components/projects/ProjectThumbnail';
 import { useModal } from '@/hooks/useModal';
 import ReviewModal from '@/components/projects/ReviewModal';
+import ApplyModal from '@/components/projects/ApplyModal';
 import AdBanner from '@/components/common/AdBanner';
 import {
   STAGE_LABELS,
@@ -84,13 +86,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
-  const [applyMessage, setApplyMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   // 상태 라벨 표시를 위한 상태
   const [statusLabel, setStatusLabel] = useState('');
-  // 사용자의 지원 여부 상태
-  const [hasApplied, setHasApplied] = useState(false);
 
   // 리뷰 관련 상태
   const [reviewTarget, setReviewTarget] = useState<{
@@ -102,6 +99,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
 
   const { fetchNotifications } = useNotificationStore();
+  const { fetchMyApplications, getStatus, loaded: appLoaded } = useApplicationStore();
+
   const isOwner =
     session?.user?._id &&
     typeof project?.ownerId === 'object' &&
@@ -134,19 +133,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
         // 상태 라벨은 상수에서 직접 가져옴
         setStatusLabel(STATUS_LABELS[project.status as ProjectStatus] || project.status);
-
-        // 4. 지원 여부 확인 (로그인한 경우)
-        if (session?.user?._id) {
-          try {
-            const applyRes = await fetch(`/api/projects/${pid}/application/me`);
-            const applyData = await applyRes.json();
-            if (applyData.success) {
-              setHasApplied(applyData.applied);
-            }
-          } catch (e) {
-            console.error('지원 내역 확인 실패', e);
-          }
-        }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
       } finally {
@@ -157,6 +143,13 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     // ... (previous code)
     fetchData();
   }, [pid, session]);
+
+  // 지원 상태 스토어 로딩 (최초 1회)
+  useEffect(() => {
+    if (session?.user?._id && !appLoaded) {
+      fetchMyApplications();
+    }
+  }, [session?.user?._id, appLoaded, fetchMyApplications]);
 
   // 프로젝트 완료 상태이고 팀원/작성자인 경우 기존 리뷰 여부 조회
   useEffect(() => {
@@ -325,33 +318,54 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     setIsApplyModalOpen(true);
   };
 
-  const handleApplySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRole) {
-      await alert('알림', '지원할 역할을 선택해주세요.');
-      return;
-    }
-    setIsSubmitting(true);
+  const handleWithdraw = async () => {
+    if (!project) return;
+    const appEntry = getStatus(project._id.toString());
+    if (!appEntry) return;
+
+    const ok = await confirm('지원 취소', '정말 지원을 취소하시겠습니까?', { isDestructive: true });
+    if (ok !== true) return;
+
     try {
-      const response = await fetch(`/api/projects/${pid}/apply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: selectedRole, message: applyMessage }),
-      });
-      const data = await response.json();
+      const res = await fetch(`/api/applications/${appEntry.applicationId}`, { method: 'DELETE' });
+      const data = await res.json();
       if (data.success) {
-        await alert('지원 완료', '성공적으로 지원했습니다.');
-        setIsApplyModalOpen(false);
-        setApplyMessage('');
-        setHasApplied(true); // 지원 상태 업데이트
-        fetchNotifications();
+        useApplicationStore.getState().withdrawApplication(project._id.toString());
+        await alert('완료', '지원이 취소되었습니다.');
       } else {
-        throw new Error(data.message || '지원에 실패했습니다.');
+        throw new Error(data.message);
       }
     } catch (err: unknown) {
-      await alert('에러', err instanceof Error ? err.message : '지원 중 오류가 발생했습니다.');
-    } finally {
-      setIsSubmitting(false);
+      await alert('오류', err instanceof Error ? err.message : '취소 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleLeaveProject = async () => {
+    if (!project) return;
+    const appEntry = getStatus(project._id.toString());
+    if (!appEntry) return;
+
+    const ok = await confirm(
+      '프로젝트 탈퇴',
+      '정말 이 프로젝트에서 탈퇴하시겠습니까? 다시 참여하려면 새로 지원해야 합니다.',
+      { isDestructive: true }
+    );
+    if (ok !== true) return;
+
+    try {
+      const res = await fetch(`/api/applications/${appEntry.applicationId}/leave`, {
+        method: 'PATCH',
+      });
+      const data = await res.json();
+      if (data.success) {
+        useApplicationStore.getState().withdrawApplication(project._id.toString());
+        await alert('완료', '프로젝트에서 탈퇴했습니다.');
+        router.refresh();
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err: unknown) {
+      await alert('오류', err instanceof Error ? err.message : '탈퇴 중 오류가 발생했습니다.');
     }
   };
 
@@ -374,23 +388,17 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       </div>
     );
 
-  // 버튼 텍스트 및 상태 결정
-  let buttonText = '프로젝트 참여하기';
-  let isButtonDisabled = false;
+  // 버튼 상태 분기 (6가지)
+  const appEntry = project ? getStatus(project._id.toString()) : null;
+  type ApplyButtonState = 'owner' | 'closed' | 'none' | 'pending' | 'accepted' | 'rejected';
+  let applyState: ApplyButtonState = 'none';
 
   if (isOwner) {
-    buttonText = '내 프로젝트';
-    isButtonDisabled = true;
-  } else if (isMember) {
-    buttonText = '참여중';
-    isButtonDisabled = true;
-  } else if (hasApplied) {
-    buttonText = '지원완료';
-    isButtonDisabled = true;
-  } else if (project.status !== 'recruiting') {
-    // 모집중이 아닌 경우 (진행중, 완료 등)
-    buttonText = '모집 마감';
-    isButtonDisabled = true;
+    applyState = 'owner';
+  } else if (project.status !== 'recruiting' && !appEntry) {
+    applyState = 'closed';
+  } else if (appEntry) {
+    applyState = appEntry.status as ApplyButtonState;
   }
 
   return (
@@ -573,31 +581,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                     }
                   }}
                 />
-
-                {/* ✨ 문의하기 버튼 추가 */}
-                {!isOwner && (
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      onClick={handleInquiry}
-                      className="flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-lg transition-colors shadow-sm"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        />
-                      </svg>
-                      작성자에게 1:1 문의하기
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -689,17 +672,68 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   </details>
                 )}
               </div>
-              <button
-                onClick={handleOpenApplyModal}
-                disabled={isButtonDisabled}
-                className={`mt-8 w-full font-bold py-3 rounded-lg transition-colors ${
-                  isButtonDisabled
-                    ? 'bg-muted cursor-not-allowed text-muted-foreground'
-                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                }`}
-              >
-                {buttonText}
-              </button>
+              {/* 지원 버튼 — 6가지 상태 분기 */}
+              <div className="mt-8 space-y-2">
+                {applyState === 'owner' ? null : applyState === 'closed' ? (
+                  <button
+                    disabled
+                    className="w-full font-bold py-3 rounded-lg bg-muted cursor-not-allowed text-muted-foreground"
+                  >
+                    모집 마감
+                  </button>
+                ) : applyState === 'none' ? (
+                  <button
+                    onClick={handleOpenApplyModal}
+                    className="w-full font-bold py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    프로젝트 지원하기
+                  </button>
+                ) : applyState === 'pending' ? (
+                  <button
+                    onClick={handleWithdraw}
+                    className="w-full font-bold py-3 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900/70 transition-colors"
+                  >
+                    지원 완료 · 취소
+                  </button>
+                ) : applyState === 'accepted' ? (
+                  <div className="space-y-2">
+                    <div className="w-full font-bold py-3 rounded-lg bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 text-center">
+                      팀원
+                    </div>
+                    <button
+                      onClick={handleLeaveProject}
+                      className="w-full text-sm py-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    >
+                      프로젝트 탈퇴
+                    </button>
+                  </div>
+                ) : applyState === 'rejected' ? (
+                  <button
+                    disabled
+                    className="w-full font-bold py-3 rounded-lg bg-muted cursor-not-allowed text-muted-foreground"
+                  >
+                    지원 마감
+                  </button>
+                ) : null}
+
+                {/* 1:1 문의하기 — 본인 프로젝트가 아닌 경우만 표시 */}
+                {!isOwner && (
+                  <button
+                    onClick={handleInquiry}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    작성자에게 1:1 문의
+                  </button>
+                )}
+              </div>
 
               {/* 팀원 리뷰 섹션 — 완료 프로젝트의 멤버/작성자에게만 표시 */}
               {project.status === 'completed' &&
@@ -776,61 +810,22 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         />
       )}
 
-      {isApplyModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-card rounded-lg p-8 w-full max-w-md border border-border">
-            <h2 className="text-2xl font-bold mb-6 text-foreground">프로젝트 지원하기</h2>
-            <form onSubmit={handleApplySubmit}>
-              <div className="mb-4">
-                <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">
-                  지원 역할
-                </label>
-                <select
-                  id="role"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
-                >
-                  <option value="" disabled>
-                    역할을 선택하세요
-                  </option>
-                  {/* TODO(Phase 5): 지원 플로우 개편 후 역할 선택 제거 */}
-                  <option value="member">팀원</option>
-                </select>
-              </div>
-              <div className="mb-6">
-                <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1">
-                  지원 메시지
-                </label>
-                <textarea
-                  id="message"
-                  rows={5}
-                  value={applyMessage}
-                  onChange={(e) => setApplyMessage(e.target.value)}
-                  placeholder="자신을 어필하는 간단한 메시지를 남겨주세요."
-                  required
-                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
-                />
-              </div>
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIsApplyModalOpen(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-400"
-                >
-                  {isSubmitting ? '제출 중...' : '지원서 제출'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {isApplyModalOpen && project && (
+        <ApplyModal
+          project={{
+            _id: project._id.toString(),
+            pid: typeof pid === 'string' ? Number(pid) : pid,
+            title: project.title,
+            problemStatement: project.problemStatement,
+            weeklyHours: project.weeklyHours,
+            lookingFor: project.lookingFor,
+          }}
+          onClose={() => setIsApplyModalOpen(false)}
+          onSuccess={() => {
+            setIsApplyModalOpen(false);
+            fetchNotifications();
+          }}
+        />
       )}
     </div>
   );

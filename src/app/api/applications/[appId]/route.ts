@@ -20,14 +20,8 @@ async function handlePut(request: Request, { params }: { params: { appId: string
 
     await dbConnect();
     const { appId } = params;
-    const { status } = await request.json();
-
-    if (!['accepted', 'rejected'].includes(status)) {
-      return NextResponse.json(
-        { success: false, message: '잘못된 상태 값입니다.' },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
+    const { status, ownerNote } = body;
 
     const application = await Application.findById(appId).populate('projectId');
     if (!application) {
@@ -43,6 +37,20 @@ async function handlePut(request: Request, { params }: { params: { appId: string
       return NextResponse.json(
         { success: false, message: '지원서를 처리할 권한이 없습니다.' },
         { status: 403 }
+      );
+    }
+
+    // ownerNote만 업데이트하는 경우
+    if (ownerNote !== undefined && !status) {
+      application.ownerNote = ownerNote;
+      await application.save();
+      return NextResponse.json({ success: true, data: application });
+    }
+
+    if (!status || !['accepted', 'rejected'].includes(status)) {
+      return NextResponse.json(
+        { success: false, message: '잘못된 상태 값입니다.' },
+        { status: 400 }
       );
     }
 
