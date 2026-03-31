@@ -13,12 +13,6 @@ interface PopulatedProjectMember {
   status: 'active' | 'inactive' | 'removed';
 }
 
-// 공통 코드 항목 타입
-interface CommonCodeItem {
-  code: string;
-  label: string;
-}
-
 // 리소스 메타데이터 타입
 interface ResourceMetadata {
   title?: string;
@@ -42,7 +36,6 @@ import MemberWidget from '@/components/dashboard/MemberWidget';
 export default function DashboardPage({ params }: { params: { pid: string } }) {
   const { pid } = params;
   const [project, setProject] = useState<PopulatedProject | null>(null);
-  const [categoryLabel, setCategoryLabel] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
@@ -59,21 +52,8 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
 
       const project = projectData.data;
       setProject(project);
-
-      // 카테고리 라벨 조회
-      try {
-        const categoryRes = await fetch('/api/common-codes?group=CATEGORY');
-        const categoryData = await categoryRes.json();
-        if (categoryData.success) {
-          const matchedCategory = categoryData.data.find(
-            (c: CommonCodeItem) => c.code === project.category
-          );
-          setCategoryLabel(matchedCategory ? matchedCategory.label : project.category);
-        }
-      } catch (e) {
-        setCategoryLabel(project.category);
-      }
     } catch (err: unknown) {
+      console.error('[DD] 에러:', err);
       setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
@@ -295,7 +275,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
       {/* 1. Header Area */}
       <ProjectHeader
         project={project as unknown as IProject}
-        categoryLabel={categoryLabel}
+        categoryLabel=""
         isAuthor={isAuthor || false}
         onStatusChange={(newStatus) => handleUpdateProject({ status: newStatus })}
       />
