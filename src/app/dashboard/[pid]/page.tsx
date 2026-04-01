@@ -32,6 +32,7 @@ import ProjectHeader from '@/components/dashboard/ProjectHeader';
 import ResourceModal from '@/components/dashboard/ResourceModal';
 import ProjectOverview from '@/components/dashboard/ProjectOverview';
 import MemberWidget from '@/components/dashboard/MemberWidget';
+import AiContextPanel from '@/components/dashboard/AiContextPanel';
 
 export default function DashboardPage({ params }: { params: { pid: string } }) {
   const { pid } = params;
@@ -301,6 +302,9 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
           >
             <span className="text-xl">💬</span>팀 채팅방 입장
           </button>
+
+          {/* AI Context Bridge */}
+          <AiContextPanel pid={pid} isOwner={isAuthor || false} />
 
           {/* Member List Widget (Real-time) */}
           {project && session?.user && (
