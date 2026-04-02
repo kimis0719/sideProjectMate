@@ -49,10 +49,10 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
   return (
     <Link
       href={`/projects/${project.pid}`}
-      className="bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer border border-border flex flex-col"
+      className="bg-surface-container-lowest rounded-xl transition-all duration-200 overflow-hidden group cursor-pointer flex flex-col hover:bg-surface-bright hover:shadow-ambient"
     >
       {/* 썸네일 — 이미지 유무 관계없이 항상 표시 */}
-      <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-video bg-surface-container-high flex items-center justify-center overflow-hidden">
         <ProjectThumbnail
           src={hasImage ? project.images[0] : null}
           alt={project.title}
@@ -64,32 +64,32 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
         {/* 배지 + 등록일 */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           {stageLabel && (
-            <span className="px-2 py-0.5 text-xs font-semibold rounded bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
+            <span className="px-2 py-0.5 text-xs font-semibold rounded-full uppercase tracking-wide bg-secondary-container/20 text-secondary">
               {stageLabel}
             </span>
           )}
           <span
-            className={`px-2 py-0.5 text-xs font-semibold rounded ${
+            className={`px-2 py-0.5 text-xs font-semibold rounded-full uppercase tracking-wide ${
               project.status === 'recruiting'
-                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
-                : 'bg-muted text-muted-foreground'
+                ? 'bg-emerald-500/10 text-emerald-700'
+                : 'bg-surface-container-high text-on-surface-variant'
             }`}
           >
             {statusLabel}
           </span>
-          <span className="text-xs text-muted-foreground ml-auto">
+          <span className="text-xs text-on-surface-variant ml-auto">
             {new Date(project.createdAt).toLocaleDateString('ko-KR')}
           </span>
         </div>
 
         {/* 제목 */}
-        <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="text-lg font-bold text-on-surface mb-2 line-clamp-2 group-hover:text-primary transition-colors">
           {project.title}
         </h3>
 
         {/* problemStatement — 3줄 클램프 */}
         {project.problemStatement && (
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
+          <p className="text-sm text-on-surface-variant mb-3 line-clamp-3">
             {project.problemStatement}
           </p>
         )}
@@ -100,13 +100,13 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
             {project.lookingFor.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full"
+                className="px-2 py-0.5 bg-primary-container/10 text-primary text-xs rounded-full"
               >
                 {tag}
               </span>
             ))}
             {project.lookingFor.length > 3 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-on-surface-variant">
                 +{project.lookingFor.length - 3}
               </span>
             )}
@@ -114,30 +114,30 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
         )}
 
         {/* 하단 정보 */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border mt-auto">
+        <div className="flex items-center justify-between text-xs text-on-surface-variant pt-3 mt-auto">
           <div className="flex items-center gap-3">
             {styleLabel && <span>{styleLabel}</span>}
             {project.weeklyHours && <span>{project.weeklyHours}h/주</span>}
           </div>
           {applicationStatus === 'pending' ? (
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide bg-amber-500/10 text-amber-700">
               지원 완료
             </span>
           ) : applicationStatus === 'accepted' ? (
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide bg-emerald-500/10 text-emerald-700">
               팀원
             </span>
           ) : applicationStatus === 'rejected' ? (
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide bg-surface-container-high text-on-surface-variant">
               지원 마감
             </span>
           ) : isOwner ? (
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide bg-secondary-container/20 text-secondary">
               내 프로젝트
             </span>
           ) : (
             <span
-              className={remaining > 0 ? 'text-primary font-semibold' : 'text-muted-foreground'}
+              className={remaining > 0 ? 'text-primary font-semibold' : 'text-on-surface-variant'}
             >
               {remaining > 0 ? `${remaining}자리 남음` : '마감'}
             </span>

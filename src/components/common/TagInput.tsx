@@ -78,10 +78,10 @@ export default function TagInput({
                 key={s.code}
                 type="button"
                 onClick={() => toggleSuggestion(s.label)}
-                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                className={`px-3 py-1.5 rounded-full text-sm transition-all duration-150 ${
                   isSelected
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card border-border text-foreground hover:border-primary/50'
+                    ? 'bg-primary-container text-on-primary'
+                    : 'bg-surface-container-high text-on-surface hover:bg-surface-dim'
                 }`}
               >
                 {s.label}
@@ -93,7 +93,8 @@ export default function TagInput({
 
       {/* 선택된 태그 + 입력 */}
       <div
-        className="flex flex-wrap items-center gap-2 px-3 py-2 border border-input rounded-lg bg-background min-h-[42px] cursor-text"
+        className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg bg-surface-container-lowest min-h-[42px] cursor-text"
+        style={{ border: '1px solid rgba(195, 198, 215, 0.15)' }}
         onClick={() => inputRef.current?.focus()}
       >
         {value.map((tag) => (
@@ -101,8 +102,8 @@ export default function TagInput({
             key={tag}
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm ${
               suggestionLabels.has(tag)
-                ? 'bg-primary/10 text-primary border border-primary/20'
-                : 'bg-muted text-foreground border border-border'
+                ? 'bg-primary-container/15 text-primary'
+                : 'bg-surface-container-high text-on-surface'
             }`}
           >
             {tag}
@@ -126,11 +127,11 @@ export default function TagInput({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={value.length === 0 ? placeholder : ''}
-            className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
+            className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-on-surface placeholder:text-on-surface-variant"
           />
         )}
         {isMaxReached && value.length > 0 && (
-          <span className="text-xs text-muted-foreground">최대 {maxTags}개</span>
+          <span className="text-xs text-on-surface-variant">최대 {maxTags}개</span>
         )}
       </div>
     </div>

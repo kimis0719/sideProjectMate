@@ -46,15 +46,15 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-accent border-t border-border">
+    <footer className="bg-surface-container-low">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* ── 1열: 브랜드 소개 */}
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+              <div className="w-7 h-7 rounded-md bg-primary-container flex items-center justify-center">
                 <svg
-                  className="w-4 h-4 text-primary-foreground"
+                  className="w-4 h-4 text-on-primary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -67,22 +67,22 @@ export default function Footer() {
                   />
                 </svg>
               </div>
-              <span className="font-bold text-foreground">Side Project Mate</span>
+              <span className="font-bold text-on-surface">Side Project Mate</span>
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-on-surface-variant leading-relaxed">
               아이디어를 빠르게 실행할 동료를 찾는 팀 매칭 플랫폼
             </p>
           </div>
 
           {/* ── 2열: 서비스 */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">서비스</h4>
+            <h4 className="text-sm font-semibold text-on-surface mb-4">서비스</h4>
             <ul className="space-y-2.5">
               {serviceLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-on-surface-variant hover:text-on-surface transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -93,13 +93,13 @@ export default function Footer() {
 
           {/* ── 3열: 리소스 */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">리소스</h4>
+            <h4 className="text-sm font-semibold text-on-surface mb-4">리소스</h4>
             <ul className="space-y-2.5">
               {resourceLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-on-surface-variant hover:text-on-surface transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -110,7 +110,7 @@ export default function Footer() {
 
           {/* ── 4열: 소셜 */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">소셜</h4>
+            <h4 className="text-sm font-semibold text-on-surface mb-4">소셜</h4>
             <div className="flex gap-3">
               {socialLinks.map((link) => (
                 <a
@@ -119,7 +119,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={link.label}
-                  className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                  className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors"
                 >
                   {link.icon}
                 </a>
@@ -129,20 +129,23 @@ export default function Footer() {
         </div>
 
         {/* ── 하단 저작권 */}
-        <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p className="text-xs text-muted-foreground">
+        <div
+          className="mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3"
+          style={{ borderTop: '1px solid rgba(195, 198, 215, 0.15)' }}
+        >
+          <p className="text-xs text-on-surface-variant">
             © {currentYear} Side Project Mate. All rights reserved.
           </p>
           <div className="flex gap-4">
             <Link
               href="/terms"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs text-on-surface-variant hover:text-on-surface transition-colors"
             >
               이용약관
             </Link>
             <Link
               href="/privacy"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs text-on-surface-variant hover:text-on-surface transition-colors"
             >
               개인정보처리방침
             </Link>

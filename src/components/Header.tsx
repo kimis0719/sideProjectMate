@@ -199,13 +199,13 @@ export default function Header() {
           alt={name}
           width={size * 4}
           height={size * 4}
-          className={`w-${size} h-${size} rounded-full object-cover ring-2 ring-border`}
+          className={`w-${size} h-${size} rounded-full object-cover ring-2 ring-surface-container-high`}
         />
       );
     }
     return (
       <div
-        className={`w-${size} h-${size} rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold ring-2 ring-border`}
+        className={`w-${size} h-${size} rounded-full bg-primary-container text-on-primary flex items-center justify-center text-sm font-bold ring-2 ring-surface-container-high`}
       >
         {initials}
       </div>
@@ -213,7 +213,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
+    <header className="bg-surface/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* ── 좌측: 로고 + 네비게이션 */}
@@ -221,7 +221,7 @@ export default function Header() {
             <div className="flex items-center gap-3">
               {/* 모바일 햄버거 */}
               <button
-                className="md:hidden p-2 -ml-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                className="md:hidden p-2 -ml-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label="메뉴 열기"
                 aria-expanded={isMobileMenuOpen}
@@ -248,9 +248,9 @@ export default function Header() {
 
               {/* 로고 */}
               <Link href="/" className="flex items-center gap-2 group">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center shadow-sm group-hover:shadow-ambient transition-shadow">
                   <svg
-                    className="w-5 h-5 text-primary-foreground"
+                    className="w-5 h-5 text-on-primary"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -263,10 +263,10 @@ export default function Header() {
                     />
                   </svg>
                 </div>
-                <span className="text-lg font-bold text-foreground hidden sm:block">
+                <span className="text-lg font-bold text-on-surface hidden sm:block">
                   Side Project Mate
                 </span>
-                <span className="text-lg font-bold text-foreground sm:hidden">SPM</span>
+                <span className="text-lg font-bold text-on-surface sm:hidden">SPM</span>
               </Link>
             </div>
 
@@ -278,8 +278,8 @@ export default function Header() {
                   href={category.path}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive(category.path)
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      ? 'bg-primary-container/10 text-primary font-semibold'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
                   }`}
                 >
                   {category.label}
@@ -293,7 +293,7 @@ export default function Header() {
             {/* 다크모드 토글 */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+              className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors"
               aria-label="다크모드 토글"
             >
               {theme === 'dark' ? (
@@ -318,13 +318,13 @@ export default function Header() {
             </button>
 
             {status === 'loading' ? (
-              <div className="h-8 w-8 bg-muted rounded-full animate-pulse" />
+              <div className="h-8 w-8 bg-surface-container-high rounded-full animate-pulse" />
             ) : session ? (
               <>
                 {/* 💬 Step 5: 채팅 숏컷 버튼 */}
                 <button
                   onClick={() => router.push('/chat')}
-                  className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                  className="relative p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors"
                   aria-label="채팅"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +336,7 @@ export default function Header() {
                     />
                   </svg>
                   {totalUnreadChat > 0 && (
-                    <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" />
+                    <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-error ring-2 ring-surface" />
                   )}
                 </button>
 
@@ -344,7 +344,7 @@ export default function Header() {
                 <div className="relative" ref={notificationRef}>
                   <button
                     onClick={() => setIsNotificationOpen((prev) => !prev)}
-                    className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                    className="relative p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors"
                     aria-label="알림"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -356,14 +356,14 @@ export default function Header() {
                       />
                     </svg>
                     {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
+                      <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-error ring-2 ring-surface" />
                     )}
                   </button>
 
                   {/* 알림 드롭다운 */}
                   {isNotificationOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-80 bg-popover rounded-xl shadow-xl overflow-hidden z-20 border border-border animate-fade-in">
-                      <div className="px-4 py-3 font-semibold text-foreground flex justify-between items-center border-b border-border">
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-surface-container-lowest rounded-lg shadow-modal overflow-hidden z-20 animate-fade-in">
+                      <div className="px-4 py-3 font-semibold text-on-surface flex justify-between items-center bg-surface-container-low">
                         <span>알림</span>
                         {notifications.length > 0 && (
                           <button
@@ -377,27 +377,27 @@ export default function Header() {
                                 useNotificationStore.getState().deleteAllNotifications();
                               }
                             }}
-                            className="text-xs text-destructive hover:text-destructive/80 transition-colors"
+                            className="text-xs text-error hover:text-error/80 transition-colors"
                           >
                             전체 삭제
                           </button>
                         )}
                       </div>
-                      <ul className="divide-y divide-border max-h-80 overflow-y-auto">
+                      <ul className="max-h-80 overflow-y-auto">
                         {notifications.length > 0 ? (
                           notifications.map((n) => (
                             <li
                               key={n._id}
-                              className={`relative p-4 hover:bg-muted/50 cursor-pointer transition-colors ${!n.read ? 'bg-primary/5' : ''}`}
+                              className={`relative p-4 hover:bg-surface-container-low cursor-pointer transition-colors ${!n.read ? 'bg-primary-container/5' : ''}`}
                             >
                               <div onClick={() => handleNotificationClick(n)}>
                                 {!n.read && (
                                   <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary" />
                                 )}
-                                <p className="text-sm text-foreground pl-2 pr-6">
+                                <p className="text-sm text-on-surface pl-2 pr-6">
                                   {getNotificationMessage(n)}
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-1 pl-2">
+                                <p className="text-xs text-on-surface-variant mt-1 pl-2">
                                   {new Date(n.createdAt).toLocaleString('ko-KR')}
                                 </p>
                               </div>
@@ -406,7 +406,7 @@ export default function Header() {
                                   e.stopPropagation();
                                   useNotificationStore.getState().deleteNotification(n._id);
                                 }}
-                                className="absolute top-4 right-3 text-muted-foreground hover:text-destructive transition-colors p-0.5"
+                                className="absolute top-4 right-3 text-on-surface-variant hover:text-error transition-colors p-0.5"
                                 aria-label="알림 삭제"
                               >
                                 <svg
@@ -426,9 +426,9 @@ export default function Header() {
                             </li>
                           ))
                         ) : (
-                          <li className="py-10 text-center text-sm text-muted-foreground">
+                          <li className="py-10 text-center text-sm text-on-surface-variant">
                             <svg
-                              className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40"
+                              className="w-8 h-8 mx-auto mb-2 text-on-surface-variant/40"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -452,12 +452,12 @@ export default function Header() {
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                    className="flex items-center gap-2 p-1 rounded-lg hover:bg-muted transition-colors"
+                    className="flex items-center gap-2 p-1 rounded-lg hover:bg-surface-container-high transition-colors"
                     aria-label="사용자 메뉴"
                   >
                     <UserAvatar size={8} />
                     <svg
-                      className="w-4 h-4 text-muted-foreground hidden md:block"
+                      className="w-4 h-4 text-on-surface-variant hidden md:block"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -473,13 +473,13 @@ export default function Header() {
 
                   {/* 유저 드롭다운 메뉴 */}
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-52 bg-popover rounded-xl shadow-xl border border-border z-20 overflow-hidden animate-fade-in">
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-surface-container-lowest rounded-lg shadow-modal z-20 overflow-hidden animate-fade-in">
                       {/* 유저 정보 헤더 */}
-                      <div className="px-4 py-3 border-b border-border">
-                        <p className="text-sm font-semibold text-foreground truncate">
+                      <div className="px-4 py-3 bg-surface-container-low">
+                        <p className="text-sm font-semibold text-on-surface truncate">
                           {session.user?.name || '사용자'}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-on-surface-variant truncate">
                           {session.user?.email}
                         </p>
                       </div>
@@ -487,10 +487,10 @@ export default function Header() {
                         <Link
                           href="/profile"
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low transition-colors"
                         >
                           <svg
-                            className="w-4 h-4 text-muted-foreground"
+                            className="w-4 h-4 text-on-surface-variant"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -507,10 +507,10 @@ export default function Header() {
                         <Link
                           href="/mypage"
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-on-surface hover:bg-surface-container-low transition-colors"
                         >
                           <svg
-                            className="w-4 h-4 text-muted-foreground"
+                            className="w-4 h-4 text-on-surface-variant"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -524,10 +524,10 @@ export default function Header() {
                           </svg>
                           마이페이지
                         </Link>
-                        <div className="border-t border-border my-1" />
+                        <div className="my-1 h-px bg-surface-container-high" />
                         <button
                           onClick={() => signOut({ callbackUrl: '/' })}
-                          className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                          className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-error hover:bg-error-container/20 transition-colors"
                         >
                           <svg
                             className="w-4 h-4"
@@ -578,7 +578,7 @@ export default function Header() {
         role="navigation"
         aria-label="모바일 메뉴"
         className={`md:hidden fixed top-16 left-0 h-[calc(100vh-4rem)] w-64
-                    bg-background border-r border-border z-40 shadow-xl overflow-y-auto
+                    bg-surface-container-lowest z-40 shadow-modal overflow-y-auto
                     transition-transform duration-300 ease-in-out
                     ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
                 `}
@@ -591,8 +591,8 @@ export default function Header() {
               onClick={() => setIsMobileMenuOpen(false)}
               className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive(category.path)
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  ? 'bg-primary-container/10 text-primary font-semibold'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
               }`}
             >
               {category.label}
@@ -601,17 +601,17 @@ export default function Header() {
 
           {session && (
             <>
-              <div className="border-t border-border my-2" />
+              <div className="my-2 h-px bg-surface-container-high" />
               <Link
                 href="/mypage"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
               >
                 마이페이지
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                className="px-3 py-2.5 rounded-lg text-sm text-error hover:bg-error-container/20 transition-colors text-left"
               >
                 로그아웃
               </button>

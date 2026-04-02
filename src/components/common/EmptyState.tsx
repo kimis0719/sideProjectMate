@@ -115,11 +115,11 @@ export default function EmptyState({
       className={`flex flex-col items-center justify-center py-16 px-4 text-center ${className}`}
     >
       {/* 아이콘 */}
-      <div className="text-muted-foreground/40 mb-4">{ICONS[icon]}</div>
+      <div className="text-on-surface-variant/40 mb-4">{ICONS[icon]}</div>
 
       {/* 텍스트 */}
-      <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
-      {description && <p className="text-sm text-muted-foreground max-w-xs">{description}</p>}
+      <h3 className="text-lg font-semibold text-on-surface mb-1">{title}</h3>
+      {description && <p className="text-sm text-on-surface-variant max-w-xs">{description}</p>}
 
       {/* 액션 버튼 */}
       {action && (
