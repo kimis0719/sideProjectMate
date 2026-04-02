@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import AuthSessionProvider from '@/components/AuthSessionProvider';
 import GlobalModal from '@/components/common/GlobalModal';
 import Toast from '@/components/common/Toast';
+import MobileTabBar from '@/components/common/MobileTabBar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
@@ -47,10 +48,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </a>
             <div className="flex flex-col min-h-screen">
               <Header />
-              <main id="main-content" className="flex-1 bg-background">
+              <main id="main-content" className="flex-1 bg-surface pb-16 md:pb-0">
                 {children}
               </main>
               <Footer />
+              {/* 모바일 하단 탭 바 */}
+              <MobileTabBar />
               {/* 전역 모달 */}
               <GlobalModal />
               {/* 전역 Toast */}

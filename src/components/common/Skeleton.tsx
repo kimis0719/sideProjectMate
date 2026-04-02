@@ -24,7 +24,10 @@ function Skeleton({ className = '', rounded = 'md' }: SkeletonProps) {
   }[rounded];
 
   return (
-    <div className={`animate-pulse bg-muted ${roundedClass} ${className}`} aria-hidden="true" />
+    <div
+      className={`animate-pulse bg-surface-container-high ${roundedClass} ${className}`}
+      aria-hidden="true"
+    />
   );
 }
 
@@ -63,7 +66,7 @@ Skeleton.Text = function SkeletonText({
 /** 카드 Skeleton */
 Skeleton.Card = function SkeletonCard() {
   return (
-    <div className="bg-card border border-border rounded-xl p-4 space-y-3" aria-hidden="true">
+    <div className="bg-surface-container-lowest rounded-xl p-6 space-y-3" aria-hidden="true">
       {/* 썸네일 */}
       <Skeleton className="h-40 w-full" rounded="lg" />
       {/* 텍스트 줄 */}
@@ -96,10 +99,7 @@ Skeleton.Profile = function SkeletonProfile() {
 /** 리스트 항목 Skeleton */
 Skeleton.ListItem = function SkeletonListItem() {
   return (
-    <div
-      className="flex items-center gap-3 py-3 px-4 border-b border-border last:border-0"
-      aria-hidden="true"
-    >
+    <div className="flex items-center gap-3 py-3 px-4" aria-hidden="true">
       <Skeleton.Avatar size="md" />
       <div className="flex-1 space-y-1.5">
         <Skeleton className="h-4 w-1/3" />

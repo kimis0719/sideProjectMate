@@ -119,20 +119,21 @@ const GlobalModal = () => {
       aria-describedby={descId}
       onKeyDown={handleKeyDown}
     >
-      {/* Backdrop */}
+      {/* Backdrop — glassmorphism */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isAnimate ? 'opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 transition-opacity duration-300 ${isAnimate ? 'opacity-100' : 'opacity-0'}`}
+        style={{ backdropFilter: 'blur(16px)', backgroundColor: 'rgba(249, 249, 248, 0.8)' }}
         onClick={handleBackdropClick}
         aria-hidden="true"
       />
 
-      {/* Modal 박스 — 시스템 토큰 사용 */}
+      {/* Modal 박스 — No-Line Rule + modal shadow */}
       <div
         ref={containerRef}
         className={`
                     relative w-full max-w-sm overflow-hidden
-                    bg-card text-card-foreground
-                    rounded-2xl shadow-2xl border border-border
+                    bg-surface-container-lowest text-on-surface
+                    rounded-lg shadow-modal
                     transform transition-all duration-300 ease-out
                     ${isAnimate ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'}
                 `}
@@ -142,7 +143,7 @@ const GlobalModal = () => {
           <button
             ref={closeBtnRef}
             onClick={handleDismiss}
-            className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors z-[110]"
+            className="absolute top-4 right-4 p-1 text-on-surface-variant hover:text-on-surface transition-colors z-[110]"
             aria-label="닫기"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,7 +160,7 @@ const GlobalModal = () => {
         <div className="p-6">
           {/* 제목 */}
           {title && (
-            <h3 id={titleId} className="text-lg font-bold text-foreground mb-2 pr-8">
+            <h3 id={titleId} className="text-lg font-bold text-on-surface mb-2 pr-8">
               {title}
             </h3>
           )}
@@ -167,20 +168,24 @@ const GlobalModal = () => {
           {/* 본문 */}
           <div
             id={descId}
-            className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed"
+            className="text-sm text-on-surface-variant whitespace-pre-wrap leading-relaxed"
           >
             {message}
           </div>
         </div>
 
-        {/* 액션 버튼 영역 */}
-        <div className="flex border-t border-border" role="group" aria-label="모달 액션">
+        {/* 액션 버튼 영역 — No-Line Rule: 구분은 배경색으로 */}
+        <div
+          className="flex bg-surface-container-low rounded-b-lg"
+          role="group"
+          aria-label="모달 액션"
+        >
           {type === 'confirm' && (
             <button
               ref={cancelBtnRef}
               type="button"
               onClick={handleCancel}
-              className="flex-1 px-4 py-3.5 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors border-r border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              className="flex-1 px-4 py-3.5 text-sm font-medium text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-bl-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             >
               {cancelText}
             </button>
@@ -189,11 +194,11 @@ const GlobalModal = () => {
             ref={confirmBtnRef}
             type="button"
             onClick={handleConfirm}
-            className={`flex-1 px-4 py-3.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+            className={`flex-1 px-4 py-3.5 text-sm font-bold transition-colors rounded-br-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
               isDestructive
-                ? 'text-destructive hover:bg-destructive/10'
-                : 'text-primary hover:bg-primary/10'
-            }`}
+                ? 'text-error hover:bg-error-container/30'
+                : 'text-primary hover:bg-surface-container-high'
+            } ${type !== 'confirm' ? 'rounded-b-lg' : ''}`}
           >
             {confirmText}
           </button>

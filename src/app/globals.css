@@ -203,16 +203,38 @@
 
 @layer components {
   /* === 버튼 === */
-  /* @apply 안에서 CSS 변수 색상에 /opacity 수정자를 쓰면 오류 발생.
-     hover 상태는 brightness 필터 또는 별도 CSS 변수로 처리합니다. */
+
+  /* Primary: CTA 버튼. hover 시 색상 대신 가로 4px 확장 (2px × 양쪽). */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-primary-foreground active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-primary-container text-on-primary active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary:hover:not(:disabled) {
-    background-color: var(--primary-hover);
+    padding-left: calc(1rem + 2px);
+    padding-right: calc(1rem + 2px);
   }
 
+  /* Tertiary: 취소, 보조 액션. 배경 없음. */
+  .btn-tertiary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-transparent text-primary active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-tertiary:hover:not(:disabled) {
+    padding-left: calc(1rem + 2px);
+    padding-right: calc(1rem + 2px);
+  }
+
+  /* Error: 삭제, 위험 액션. */
+  .btn-error {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-error text-on-error active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-error:hover:not(:disabled) {
+    padding-left: calc(1rem + 2px);
+    padding-right: calc(1rem + 2px);
+  }
+
+  /* Secondary / Destructive / Ghost: 기존 컴포넌트 호환용 유지 */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-secondary text-secondary-foreground border border-border hover:bg-muted active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
   }
@@ -226,42 +248,58 @@
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all duration-150;
   }
 
   /* === 폼 인풋 === */
+  /* Ghost Border: outline-variant(#c3c6d7) at 15% opacity */
   .form-input {
-    @apply w-full px-3 py-2.5 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply w-full px-3 py-2.5 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    border: 1px solid rgba(195, 198, 215, 0.15);
+  }
+
+  .form-input:focus {
+    border-color: transparent;
   }
 
   .form-label {
-    @apply block text-sm font-medium text-foreground mb-1.5;
+    @apply block text-sm font-medium text-on-surface mb-1.5;
   }
 
   /* === 카드 === */
+  /* No-Line Rule: 보더 없음. 배경색 차이로만 구분. */
   .card {
-    @apply bg-card text-card-foreground rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow duration-200;
+    @apply bg-surface-container-lowest text-on-surface rounded-xl transition-all duration-200;
+  }
+
+  .card:hover {
+    @apply bg-surface-bright shadow-ambient;
   }
 
   /* === 배지 === */
+  /* rounded-full은 뱃지/칩에만 허용 (스펙 3-4) */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide;
   }
 
-  .badge-primary {
-    @apply badge bg-brand-light text-brand;
-  }
-
+  /* 모집중 */
   .badge-success {
-    @apply badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
+    @apply badge bg-emerald-500/10 text-emerald-700;
   }
 
+  /* 진행중 */
   .badge-warning {
-    @apply badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
+    @apply badge bg-amber-500/10 text-amber-700;
   }
 
+  /* 종료/마감 */
   .badge-danger {
-    @apply badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
+    @apply badge bg-tertiary-fixed/40 text-tertiary;
+  }
+
+  /* 일반 강조 */
+  .badge-primary {
+    @apply badge bg-secondary-container/20 text-secondary;
   }
 
   /* === 스크롤바 숨김 === */

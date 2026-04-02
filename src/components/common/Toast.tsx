@@ -41,7 +41,7 @@ function ToastIcon({ type }: { type: ToastType }) {
   if (type === 'success') {
     return (
       <svg
-        className="w-5 h-5 text-green-400 shrink-0"
+        className="w-5 h-5 text-emerald-600 shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -53,7 +53,7 @@ function ToastIcon({ type }: { type: ToastType }) {
   if (type === 'error') {
     return (
       <svg
-        className="w-5 h-5 text-red-400 shrink-0"
+        className="w-5 h-5 text-error shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -70,7 +70,7 @@ function ToastIcon({ type }: { type: ToastType }) {
   if (type === 'warning') {
     return (
       <svg
-        className="w-5 h-5 text-yellow-400 shrink-0"
+        className="w-5 h-5 text-amber-600 shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -87,7 +87,7 @@ function ToastIcon({ type }: { type: ToastType }) {
   // default: 알림 벨 아이콘
   return (
     <svg
-      className="w-5 h-5 text-brand shrink-0"
+      className="w-5 h-5 text-primary shrink-0"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -116,8 +116,8 @@ function ToastItem({ toast, onRemove }: { toast: ToastItem; onRemove: () => void
   return (
     <div
       className={`
-        flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border border-border
-        bg-card text-card-foreground text-sm font-medium
+        flex items-center gap-3 px-4 py-3 rounded-lg shadow-modal
+        bg-surface-container-lowest text-on-surface text-sm font-medium
         transition-all duration-300 ease-out
         ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
       `}
@@ -129,7 +129,7 @@ function ToastItem({ toast, onRemove }: { toast: ToastItem; onRemove: () => void
           setVisible(false);
           setTimeout(onRemove, 300);
         }}
-        className="text-muted-foreground hover:text-foreground transition-colors"
+        className="text-on-surface-variant hover:text-on-surface transition-colors"
         aria-label="알림 닫기"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
