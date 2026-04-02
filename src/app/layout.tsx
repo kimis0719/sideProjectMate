@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Manrope, Noto_Sans_KR } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -8,7 +8,14 @@ import AuthSessionProvider from '@/components/AuthSessionProvider';
 import GlobalModal from '@/components/common/GlobalModal';
 import Toast from '@/components/common/Toast';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' });
+const notoSansKR = Noto_Sans_KR({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  variable: '--font-noto-sans-kr',
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: {
@@ -28,7 +35,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${manrope.variable} ${notoSansKR.variable}`}
+        suppressHydrationWarning
+      >
         <AuthSessionProvider>
           <ThemeProvider>
             {/* Skip to main — 키보드 접근성 */}
