@@ -153,7 +153,7 @@ sideProjectMate/
 | File                   | Purpose                                          |
 | ---------------------- | ------------------------------------------------ |
 | `next.config.js`       | Next.js config (image domains, webpack fallback) |
-| `tailwind.config.js`   | Tailwind CSS config                              |
+| `tailwind.config.js`   | Tailwind CSS config — 신규 디자인 시스템 토큰 포함 (surface/on-surface/tertiary/error/outline/inverse 계열, Manrope/Inter/Noto Sans KR 폰트, ambient/modal 쉐도우) |
 | `tsconfig.json`        | TypeScript config (`@/` = `src/`)                |
 | `tsconfig.server.json` | server.ts compilation                            |
 | `vitest.config.ts`     | Vitest test runner config                        |
@@ -170,6 +170,8 @@ sideProjectMate/
 | `docs/testing/TESTING_PHASE{1,2,3}_GUIDE.md` | Phase-specific test guides            |
 | `docs/plans/DEV_ROADMAP.md`                  | Development roadmap                   |
 | `docs/plans/UI_UX_IMPROVEMENT_PLAN.md`       | UI/UX improvement plan                |
+| `docs/plans/UIUX_DEVELOPMENT_SPEC.md`        | UI/UX 전면 개편 개발 기획서 (Phase 1~9) |
+| `docs/assets/`                               | 디자인 에셋 (Stitch HTML + PNG, pages/components/kanban/modals/admin) |
 | `docs/plans/WBS_REDESIGN.md`                 | WBS redesign plan                     |
 | `docs/plans/admin-page-plan.md`              | Admin page plan                       |
 | `docs/plans/KANBAN_REVIEW.md`                | Kanban review                         |
