@@ -49,7 +49,7 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
   return (
     <Link
       href={`/projects/${project.pid}`}
-      className="bg-surface-container-lowest rounded-xl transition-all duration-200 overflow-hidden group cursor-pointer flex flex-col hover:bg-surface-bright hover:shadow-ambient"
+      className="bg-surface-container-lowest rounded-xl transition-all duration-300 overflow-hidden group cursor-pointer flex flex-col hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] hover:-translate-y-1"
     >
       {/* 썸네일 — 이미지 유무 관계없이 항상 표시 */}
       <div className="relative aspect-video bg-surface-container-high flex items-center justify-center overflow-hidden">
@@ -64,7 +64,7 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
         {/* 배지 + 등록일 */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           {stageLabel && (
-            <span className="px-2 py-0.5 text-xs font-semibold rounded-full uppercase tracking-wide bg-secondary-container/20 text-secondary">
+            <span className="px-2 py-0.5 text-xs font-semibold rounded-full uppercase tracking-wide bg-primary-container/15 text-primary-container">
               {stageLabel}
             </span>
           )}
@@ -83,7 +83,7 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
         </div>
 
         {/* 제목 */}
-        <h3 className="text-lg font-bold text-on-surface mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="text-lg font-bold text-on-surface mb-2 line-clamp-2 group-hover:text-primary-container transition-colors">
           {project.title}
         </h3>
 
@@ -100,7 +100,7 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
             {project.lookingFor.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-0.5 bg-primary-container/10 text-primary text-xs rounded-full"
+                className="px-2 py-0.5 bg-primary-container/10 text-primary-container text-xs rounded-full"
               >
                 {tag}
               </span>
@@ -132,12 +132,14 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
               지원 마감
             </span>
           ) : isOwner ? (
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide bg-secondary-container/20 text-secondary">
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide bg-primary-container/15 text-primary-container">
               내 프로젝트
             </span>
           ) : (
             <span
-              className={remaining > 0 ? 'text-primary font-semibold' : 'text-on-surface-variant'}
+              className={
+                remaining > 0 ? 'text-primary-container font-semibold' : 'text-on-surface-variant'
+              }
             >
               {remaining > 0 ? `${remaining}자리 남음` : '마감'}
             </span>

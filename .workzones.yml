@@ -15,4 +15,19 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones: []
+zones:
+  - path: 'src/app/projects/'
+    owner: 'FFLINA-PC'
+    status: 'active'
+    reason: 'UI/UX 전면 개편 Phase 5 — 프로젝트 페이지 디자인 교체'
+    expires: '2026-04-11'
+  - path: 'src/components/projects/'
+    owner: 'FFLINA-PC'
+    status: 'active'
+    reason: 'UI/UX 전면 개편 Phase 5 — 프로젝트 페이지 디자인 교체'
+    expires: '2026-04-11'
+  - path: 'src/app/dashboard/'
+    owner: 'FFLINA-PC'
+    status: 'active'
+    reason: 'UI/UX 전면 개편 Phase 5 — 프로젝트 페이지 디자인 교체'
+    expires: '2026-04-11'
