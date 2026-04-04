@@ -1386,8 +1386,17 @@ export const useBoardStore = create<BoardState>()(
           const note = notes.find((n) => n.id === noteId);
           if (!note) return;
 
+          // completionNote 미전달 시 기존 값 보존 (유지 버튼으로 기록된 내용 보호)
+          const finalCompletionNote =
+            completionNote !== undefined ? completionNote : (note.completionNote ?? undefined);
+
           const completedAt = new Date();
-          const completedNote: Note = { ...note, status: 'done', completedAt, completionNote };
+          const completedNote: Note = {
+            ...note,
+            status: 'done',
+            completedAt,
+            completionNote: finalCompletionNote,
+          };
 
           // Optimistic update (undo 히스토리 제외)
           set((state) => ({
@@ -1403,13 +1412,18 @@ export const useBoardStore = create<BoardState>()(
               body: JSON.stringify({
                 status: 'done',
                 completedAt,
-                completionNote: completionNote || null,
+                completionNote: finalCompletionNote || null,
               }),
             });
 
             if (boardId) {
               const socket = socketClient.connect();
-              socket.emit('complete-note', { boardId, noteId, completedAt, completionNote });
+              socket.emit('complete-note', {
+                boardId,
+                noteId,
+                completedAt,
+                completionNote: finalCompletionNote,
+              });
             }
           } catch (error) {
             console.error('Failed to complete note:', error);

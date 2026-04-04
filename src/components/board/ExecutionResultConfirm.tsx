@@ -64,6 +64,10 @@ export default function ExecutionResultConfirm() {
       });
 
       if (res.ok) {
+        // 로컬 스토어 갱신 — 이후 completeNote 호출 시 유지 기록이 보존되도록
+        useBoardStore.setState((state) => ({
+          notes: state.notes.map((n) => (n.id === noteId ? { ...n, completionNote: appended } : n)),
+        }));
         setProcessed((prev) => new Set(prev).add(noteId));
         showToast('메모에 기록되었습니다');
       } else {
