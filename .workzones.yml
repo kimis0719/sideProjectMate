@@ -15,4 +15,9 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones: []
+zones:
+  - path: '.github/workflows/'
+    owner: 'kimis0719'
+    status: 'active'
+    reason: '테스트 서버 / 운영 서버 인프라 분리 — GitHub Actions 워크플로우 작성'
+    expires: '2026-04-11'
