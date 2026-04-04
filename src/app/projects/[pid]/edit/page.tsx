@@ -99,6 +99,13 @@ function DragOverlayItem({ url }: { url: string }) {
 // --- 상수 ---
 const WEEKLY_HOURS_OPTIONS = [5, 10, 15, 20, 30] as const;
 const MAX_MEMBERS_OPTIONS = [2, 3, 4, 5, 6] as const;
+const MAX_MEMBERS_LABELS: Record<number, string> = {
+  2: '2명',
+  3: '3명',
+  4: '4명',
+  5: '5명',
+  6: '6+명',
+};
 const DURATION_OPTIONS = [
   { value: 1, label: '1개월' },
   { value: 2, label: '2개월' },
@@ -281,8 +288,7 @@ export default function EditProjectPage() {
   }
 
   // 제출
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
 
@@ -356,63 +362,66 @@ export default function EditProjectPage() {
   };
 
   if (isLoading || sessionStatus === 'loading')
-    return <div className="text-center py-20 text-foreground">데이터를 불러오는 중...</div>;
-  if (error && !isOwner) return <div className="text-center py-20 text-red-500">{error}</div>;
+    return <div className="text-center py-20 text-on-surface">데이터를 불러오는 중...</div>;
+  if (error && !isOwner) return <div className="text-center py-20 text-error">{error}</div>;
   if (!isOwner)
     return (
-      <div className="text-center py-20 text-red-500">이 프로젝트를 수정할 권한이 없습니다.</div>
+      <div className="text-center py-20 text-error">이 프로젝트를 수정할 권한이 없습니다.</div>
     );
 
+  // 공통 스타일 (생성 페이지와 동일)
+  const inputClass =
+    'w-full bg-surface-container-lowest border-none p-4 text-on-surface rounded-xl focus:ring-2 focus:ring-primary-container/20 placeholder:text-on-surface-variant/30';
+  const labelClass =
+    'block text-sm font-bold uppercase tracking-widest text-primary-container font-label mb-2';
+  const chipActive = 'bg-primary-container/10 ring-2 ring-primary-container';
+  const chipInactive = 'bg-surface-container-low hover:bg-surface-container-high';
+  const cardActive = 'bg-primary-container/5 ring-2 ring-primary-container';
+  const cardInactive = 'bg-surface-container-low hover:bg-surface-container-high';
+
   return (
-    <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-8 md:py-12 max-w-3xl">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">프로젝트 수정하기</h1>
-          <p className="text-muted-foreground mt-2">프로젝트 정보를 업데이트하세요.</p>
+    <div className="bg-surface min-h-screen">
+      <div className="px-6 lg:px-8 py-8 md:py-12 max-w-[800px] mx-auto">
+        <div className="mb-10 space-y-2">
+          <h1 className="text-4xl md:text-[3.5rem] font-bold font-headline leading-tight tracking-tight text-on-surface">
+            프로젝트 수정하기
+          </h1>
+          <p className="text-lg text-on-surface-variant">프로젝트 정보를 업데이트하세요.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-10">
+        <div className="space-y-10">
           {/* ── 섹션 1: 핵심 정보 ── */}
           <section className="space-y-6">
-            <h2 className="text-lg font-bold text-foreground border-b border-border pb-2">
-              핵심 정보
-            </h2>
-
-            <div>
-              <label htmlFor="title" className="block text-sm font-bold mb-1 text-foreground">
-                프로젝트 제목 <span className="text-red-500">*</span>
-              </label>
+            <p className={labelClass}>* 프로젝트 이름</p>
+            <div className="relative">
               <input
                 type="text"
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                required
                 maxLength={60}
-                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                placeholder="프로젝트 제목을 입력하세요"
+                className={`${inputClass} text-xl font-semibold`}
               />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant/50 font-mono">
+                {title.length} / 60
+              </span>
             </div>
 
-            <div>
-              <label
-                htmlFor="problemStatement"
-                className="block text-sm font-bold mb-1 text-foreground"
-              >
-                프로젝트 동기 <span className="text-red-500">*</span>
-              </label>
+            <div className="space-y-3">
+              <p className={labelClass}>* 시작 동기 및 목표</p>
               <div className="relative">
                 <textarea
                   id="problemStatement"
                   value={problemStatement}
                   onChange={(e) => setProblemStatement(e.target.value)}
-                  required
                   maxLength={500}
-                  rows={4}
-                  placeholder={`이 프로젝트를 왜 시작하게 됐나요? 풀고 싶은 문제든, 만들어보고 싶은 아이디어든 자유롭게 써주세요.\n예) 소규모 카페들이 배달앱 수수료 때문에 직접 주문 채널을 못 만들고 있어서, 간단한 주문 페이지를 만들어주는 서비스를 구상 중이에요. 같이 발전시킬 분을 찾고 있어요.`}
-                  className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                  rows={5}
+                  placeholder="이 프로젝트를 왜 시작하게 되었나요? 어떤 문제를 해결하고 싶은지 자유롭게 적어주세요."
+                  className={`${inputClass} text-lg resize-none`}
                 />
-                <span className="absolute bottom-2 right-3 text-xs text-muted-foreground">
-                  {problemStatement.length}/500
+                <span className="absolute bottom-3 right-4 text-xs text-on-surface-variant/50 font-mono">
+                  {problemStatement.length} / 500
                 </span>
               </div>
             </div>
@@ -420,30 +429,22 @@ export default function EditProjectPage() {
 
           {/* ── 섹션 2: 진행 현황 ── */}
           <section className="space-y-6">
-            <h2 className="text-lg font-bold text-foreground border-b border-border pb-2">
-              진행 현황
-            </h2>
-
             <div>
-              <p className="text-sm font-bold mb-3 text-foreground">
-                현재 단계 <span className="text-red-500">*</span>
-              </p>
+              <p className={labelClass}>* 현재 단계</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {PROJECT_STAGES.map((stage) => (
                   <button
                     key={stage}
                     type="button"
                     onClick={() => setCurrentStage(stage)}
-                    className={`p-3 rounded-lg border text-left transition-colors ${
-                      currentStage === stage
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                        : 'border-border hover:border-primary/50'
+                    className={`p-4 rounded-xl text-left transition-all ${
+                      currentStage === stage ? cardActive : cardInactive
                     }`}
                   >
-                    <span className="block text-sm font-semibold text-foreground">
+                    <span className="block text-sm font-semibold text-on-surface">
                       {STAGE_LABELS[stage]}
                     </span>
-                    <span className="block text-xs text-muted-foreground mt-0.5">
+                    <span className="block text-xs text-on-surface-variant mt-0.5">
                       {STAGE_DESCRIPTIONS[stage]}
                     </span>
                   </button>
@@ -452,25 +453,21 @@ export default function EditProjectPage() {
             </div>
 
             <div>
-              <p className="text-sm font-bold mb-3 text-foreground">
-                실행 방식 <span className="text-red-500">*</span>
-              </p>
-              <div className="grid grid-cols-3 gap-3">
+              <p className={labelClass}>* 실행 방식</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {EXECUTION_STYLES.map((style) => (
                   <button
                     key={style}
                     type="button"
                     onClick={() => setExecutionStyle(style)}
-                    className={`p-3 rounded-lg border text-left transition-colors ${
-                      executionStyle === style
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                        : 'border-border hover:border-primary/50'
+                    className={`p-4 rounded-xl text-left transition-all ${
+                      executionStyle === style ? cardActive : cardInactive
                     }`}
                   >
-                    <span className="block text-sm font-semibold text-foreground">
+                    <span className="block text-sm font-semibold text-on-surface">
                       {STYLE_LABELS[style]}
                     </span>
-                    <span className="block text-xs text-muted-foreground mt-0.5">
+                    <span className="block text-xs text-on-surface-variant mt-0.5">
                       {STYLE_DESCRIPTIONS[style]}
                     </span>
                   </button>
@@ -479,19 +476,17 @@ export default function EditProjectPage() {
             </div>
 
             <div>
-              <p className="text-sm font-bold mb-3 text-foreground">
-                주당 예상 참여 시간 <span className="text-red-500">*</span>
-              </p>
+              <p className={labelClass}>* 주당 예상 참여 시간</p>
               <div className="flex flex-wrap gap-2">
                 {WEEKLY_HOURS_OPTIONS.map((h) => (
                   <button
                     key={h}
                     type="button"
                     onClick={() => setWeeklyHours(h)}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                       weeklyHours === h
-                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                        : 'border-border text-foreground hover:border-primary/50'
+                        ? `${chipActive} text-primary-container`
+                        : `${chipInactive} text-on-surface`
                     }`}
                   >
                     {h === 30 ? '30h+' : `${h}h`}
@@ -503,12 +498,8 @@ export default function EditProjectPage() {
 
           {/* ── 섹션 3: 매칭 조건 ── */}
           <section className="space-y-6">
-            <h2 className="text-lg font-bold text-foreground border-b border-border pb-2">
-              매칭 조건
-            </h2>
-
             <div>
-              <p className="text-sm font-bold mb-2 text-foreground">관심 도메인</p>
+              <p className={labelClass}>관심 도메인</p>
               <TagInput
                 value={domains}
                 onChange={setDomains}
@@ -519,7 +510,7 @@ export default function EditProjectPage() {
             </div>
 
             <div>
-              <p className="text-sm font-bold mb-2 text-foreground">찾는 사람</p>
+              <p className={labelClass}>찾는 사람</p>
               <TagInput
                 value={lookingFor}
                 onChange={setLookingFor}
@@ -530,20 +521,20 @@ export default function EditProjectPage() {
             </div>
 
             <div>
-              <p className="text-sm font-bold mb-3 text-foreground">최대 팀원 수</p>
+              <p className={labelClass}>예상 팀원 수</p>
               <div className="flex flex-wrap gap-2">
                 {MAX_MEMBERS_OPTIONS.map((n) => (
                   <button
                     key={n}
                     type="button"
                     onClick={() => setMaxMembers(n)}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                       maxMembers === n
-                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                        : 'border-border text-foreground hover:border-primary/50'
+                        ? `${chipActive} text-primary-container`
+                        : `${chipInactive} text-on-surface`
                     }`}
                   >
-                    {n}명
+                    {MAX_MEMBERS_LABELS[n] || `${n}명`}
                   </button>
                 ))}
               </div>
@@ -555,35 +546,22 @@ export default function EditProjectPage() {
             <button
               type="button"
               onClick={() => setShowExtra(!showExtra)}
-              className="flex items-center gap-2 text-lg font-bold text-foreground border-b border-border pb-2 w-full text-left"
+              className="flex items-center gap-2 w-full text-left mb-6"
             >
-              부가 정보
-              <svg
-                className={`w-4 h-4 transition-transform ${showExtra ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <p className={`${labelClass} mb-0`}>부가 정보</p>
+              <span
+                className={`material-symbols-outlined text-on-surface-variant transition-transform ${showExtra ? 'rotate-180' : ''}`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-              <span className="text-sm font-normal text-muted-foreground ml-auto">선택사항</span>
+                expand_more
+              </span>
+              <span className="text-xs text-on-surface-variant/50 ml-auto">선택사항</span>
             </button>
 
             {showExtra && (
-              <div className="space-y-6 mt-6">
+              <div className="space-y-6">
                 <div>
-                  <label
-                    htmlFor="overview"
-                    className="block text-sm font-bold mb-1 text-foreground"
-                  >
-                    상세 배경 설명
-                  </label>
-                  <p className="text-xs text-muted-foreground mb-2">
+                  <p className={labelClass}>상세 배경 설명</p>
+                  <p className="text-xs text-on-surface-variant mb-2">
                     AI 지시서 생성과 팀원 온보딩에 활용됩니다.
                   </p>
                   <textarea
@@ -592,29 +570,24 @@ export default function EditProjectPage() {
                     onChange={(e) => setOverview(e.target.value)}
                     rows={5}
                     placeholder="프로젝트 배경, 목표, 현재 상황 등을 자세히 적어주세요."
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                    className={`${inputClass} resize-none`}
                   />
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-bold mb-1 text-foreground"
-                  >
-                    부가 설명
-                  </label>
+                  <p className={labelClass}>부가 설명</p>
                   <textarea
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={5}
                     placeholder="추가로 설명하고 싶은 내용이 있다면 적어주세요."
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                    className={`${inputClass} resize-none`}
                   />
                 </div>
 
                 <div>
-                  <p className="text-sm font-bold mb-2 text-foreground">기술 스택</p>
+                  <p className={labelClass}>기술 스택</p>
                   <TagInput
                     value={techStacks}
                     onChange={setTechStacks}
@@ -625,18 +598,18 @@ export default function EditProjectPage() {
                 </div>
 
                 <div>
-                  <p className="text-sm font-bold mb-3 text-foreground">예상 기간</p>
+                  <p className={labelClass}>예상 기간</p>
                   <div className="flex flex-wrap gap-2">
                     {DURATION_OPTIONS.map((opt) => (
                       <button
                         key={opt.value}
                         type="button"
                         onClick={() => setDurationMonths(opt.value === 0 ? undefined : opt.value)}
-                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                           (opt.value === 0 && durationMonths === undefined) ||
                           durationMonths === opt.value
-                            ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                            : 'border-border text-foreground hover:border-primary/50'
+                            ? `${chipActive} text-primary-container`
+                            : `${chipInactive} text-on-surface`
                         }`}
                       >
                         {opt.label}
@@ -646,35 +619,33 @@ export default function EditProjectPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-sm font-bold text-foreground">링크</p>
+                  <p className={labelClass}>링크</p>
                   <input
                     type="url"
                     value={linksGithub}
                     onChange={(e) => setLinksGithub(e.target.value)}
                     placeholder="GitHub 저장소 URL"
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                    className={inputClass}
                   />
                   <input
                     type="url"
                     value={linksDeploy}
                     onChange={(e) => setLinksDeploy(e.target.value)}
                     placeholder="배포 URL"
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                    className={inputClass}
                   />
                   <input
                     type="url"
                     value={linksNotion}
                     onChange={(e) => setLinksNotion(e.target.value)}
                     placeholder="Notion / 기획 문서 URL"
-                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                    className={inputClass}
                   />
                 </div>
 
                 {/* 이미지 업로드 */}
                 <div>
-                  <label className="block text-sm font-bold mb-2 text-foreground">
-                    프로젝트 이미지 (드래그해서 순서 변경)
-                  </label>
+                  <p className={labelClass}>프로젝트 이미지</p>
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -696,22 +667,21 @@ export default function EditProjectPage() {
                       {activeId && activeImage ? <DragOverlayItem url={activeImage.url} /> : null}
                     </DragOverlay>
                   </DndContext>
-                  <div className="flex items-center justify-center w-full mt-4">
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer bg-muted/20 hover:bg-muted/40">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <p className="text-sm text-muted-foreground">
-                          <span className="font-semibold">클릭하여 이미지 추가</span>
-                        </p>
-                      </div>
-                      <input
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={handleNewImageChange}
-                        accept="image/*"
-                      />
-                    </label>
-                  </div>
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-outline-variant/30 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                    <span className="material-symbols-outlined text-3xl text-on-surface-variant/40 mb-1">
+                      image
+                    </span>
+                    <p className="text-sm text-on-surface-variant">
+                      클릭하여 이미지 추가 (드래그로 순서 변경)
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleNewImageChange}
+                      accept="image/*"
+                    />
+                  </label>
                 </div>
               </div>
             )}
@@ -719,20 +689,41 @@ export default function EditProjectPage() {
 
           {/* ── 에러 / 제출 ── */}
           {error && (
-            <p className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 px-4 py-3 rounded-lg">
-              {error}
-            </p>
+            <div className="p-4 bg-error-container/40 text-on-error-container rounded-xl text-sm flex items-start gap-2">
+              <span className="material-symbols-outlined text-base mt-0.5">warning</span>
+              <span>{error}</span>
+            </div>
           )}
-          <div className="text-right">
+          <div className="flex items-center justify-end gap-4 pt-6">
             <button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-primary text-primary-foreground font-bold py-3 px-8 rounded-lg hover:bg-primary/90 disabled:opacity-50"
+              type="button"
+              onClick={() => router.back()}
+              className="px-6 py-3 text-on-surface-variant font-semibold hover:bg-surface-container-high rounded-xl transition-all"
             >
-              {isSubmitting ? '수정 중...' : '수정 완료'}
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-8 py-3 bg-primary-container text-on-primary font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="animate-spin material-symbols-outlined text-[20px]">
+                    progress_activity
+                  </span>
+                  수정 중...
+                </>
+              ) : (
+                <>
+                  수정 완료
+                  <span className="material-symbols-outlined">check</span>
+                </>
+              )}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

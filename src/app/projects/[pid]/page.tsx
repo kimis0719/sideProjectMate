@@ -499,6 +499,11 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           <div className="lg:col-span-8 space-y-8">
+            {/* 이미지 */}
+            {project.images && project.images.length > 0 && project.images[0] !== '🚀' && (
+              <ProjectImageSlider images={project.images} title={project.title} />
+            )}
+
             {/* 프로젝트 동기 (problemStatement) */}
             {project.problemStatement && (
               <div className="bg-surface-container-low p-8 rounded-xl">
@@ -549,19 +554,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               </div>
             )}
 
-            {/* 이미지 */}
-            <div className="max-w-none">
-              {project.images && project.images.length > 0 && project.images[0] !== '🚀' ? (
-                <ProjectImageSlider images={project.images} title={project.title} />
-              ) : null}
-
-              {/* 부가 설명 */}
-              {project.description && (
-                <p className="text-base leading-relaxed whitespace-pre-wrap break-all text-on-surface-variant mt-6">
-                  {project.description}
-                </p>
-              )}
-            </div>
+            {/* 부가 설명 */}
+            {project.description && (
+              <p className="text-base leading-relaxed whitespace-pre-wrap break-all text-on-surface-variant">
+                {project.description}
+              </p>
+            )}
 
             {/* 프로젝트 리더 상세 프로필 */}
             {project.ownerId && (
