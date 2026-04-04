@@ -117,4 +117,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| src/app/projects/, src/components/projects/, src/app/dashboard/ | FFLINA-PC | 🟡 작업 중 | UI/UX 전면 개편 Phase 5 — 프로젝트 페이지 디자인 교체 |
+| (현재 작업 중인 항목 없음) | — | 🟢 자유 | — |
