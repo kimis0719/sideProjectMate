@@ -4,6 +4,7 @@
 
 | 도메인     | 경로                   | MAP.md                    |
 | ---------- | ---------------------- | ------------------------- |
+| AI         | `api/ai/`              | `api/ai/MAP.md`           |
 | 칸반       | `api/kanban/`          | `api/kanban/MAP.md`       |
 | 프로젝트   | `api/projects/`        | `api/projects/MAP.md`     |
 | 유저       | `api/users/`           | `api/users/MAP.md`        |

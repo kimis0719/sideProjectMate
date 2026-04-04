@@ -17,6 +17,7 @@
 | `AiUsage.ts`       | `aiusages`        | userId, projectId, provider, inputTokens        |
 | `AiPreset.ts`      | `aipresets`       | projectId, name, roleInstruction                |
 | `AiInstructionHistory.ts` | `aiinstructionhistories` | projectId, boardId, target, resultMarkdown |
+| `AiExecutionLog.ts`       | `aiexecutionlogs`        | instructionId, boardId, results[], testsResult, parseMethod |
 | `kanban/`          | —                 | Board, Section, Note                            |
 | `wbs/`             | —                 | WBS Task                                        |
 

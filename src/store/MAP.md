@@ -6,6 +6,7 @@
 | ~~`wbsStore.ts`~~ | ~~삭제됨 (Phase 7)~~ | — |
 | `modalStore.ts` | 전역 모달 상태      | openModal, closeModal                              |
 | `instructionStore.ts` | AI 지시서 모달/생성 | openModal, generate (SSE), setTarget, setPreset |
+| `executionResultStore.ts` | AI 실행결과 처리 모달 | open, close, submit (input→confirming 2단계) |
 | `applicationStore.ts` | 내 지원 상태 맵 | fetchMyApplications, addApplication, withdrawApplication, getStatus |
 
 ## 공통 패턴
@@ -32,5 +33,6 @@ export const useFooStore = create<FooState & FooActions>()(
 
 - `applicationStore.ts`
 - `boardStore.ts`
+- `executionResultStore.ts`
 - `instructionStore.ts`
 - `modalStore.ts`
