@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline": "#737686",
+                        "tertiary-container": "#bc4800",
+                        "on-primary-container": "#eeefff",
+                        "background": "#f9f9f8",
+                        "surface-tint": "#0053db",
+                        "on-secondary-container": "#394c84",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-background": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#1a1c1c",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "inverse-surface": "#2f3130",
+                        "surface-container-highest": "#e2e2e2",
+                        "primary-container": "#2563eb",
+                        "on-tertiary-container": "#ffede6",
+                        "surface": "#f9f9f8",
+                        "tertiary": "#943700",
+                        "surface-container": "#eeeeed",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#00174b",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "surface-container-high": "#e8e8e7",
+                        "surface-variant": "#e2e2e2",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f9f9f8",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-surface-variant": "#434655",
+                        "secondary": "#495c95",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-secondary-fixed": "#00174b",
+                        "surface-dim": "#dadad9",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "primary": "#004ac6",
+                        "outline-variant": "#c3c6d7",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "surface-container-low": "#f3f4f3",
+                        "secondary-container": "#acbfff",
+                        "inverse-on-surface": "#f1f1f0"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9f8; color: #1a1c1c; }
+        .glass { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-background overflow-x-hidden">
+<!-- DESKTOP LAYOUT PREVIEW -->
+<div class="hidden md:flex flex-col h-screen">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#f9f9f8]/80 dark:bg-slate-900/80 backdrop-blur-xl flex items-center justify-between px-8 py-4 max-w-[1440px] mx-auto left-0 right-0">
+<div class="text-2xl font-bold tracking-tighter text-blue-600 dark:text-blue-400 font-['Manrope']">SPM</div>
+<div class="flex items-center gap-8 font-['Manrope'] font-semibold tracking-tight">
+<a class="text-slate-500 hover:text-slate-900 transition-all" href="#">Discover</a>
+<a class="text-slate-500 hover:text-slate-900 transition-all" href="#">My Projects</a>
+<a class="text-blue-600 border-b-2 border-blue-600 transition-all" href="#">Messages</a>
+<a class="text-slate-500 hover:text-slate-900 transition-all" href="#">Network</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-blue-50/50 rounded-full transition-all active:scale-90">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-blue-50/50 rounded-full transition-all active:scale-90">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-10 w-10 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="professional portrait of a creative professional in a bright modern studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCANZFQDqBKJj0Mw_lQesCpEu9F_kcS75NfAuIWxVZY-bULnWz47VqoSvPRzycQdq6Pm1uOGLn7lb9u0EH91exJ8tdZ3wRjR-gsMLj2hDPBahW5CWP784e2Gwxq5cTNRiJeV5t7NwmwE8ZJSjOxtFntBi0fQJVuEnL0BAxdtMYpJaUjYZLl3CXi5hr_NAR2WXMWJ3qzTHv1FaiWqsIcj8761kq7kXdcY0v2Aegqrn7WVFmAbxe9M8cQjq6u4u7lmVpojmd6hzz83FWj"/>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-2 rounded-lg font-semibold hover:translate-x-1 transition-transform active:scale-95">
+                    Create Project
+                </button>
+</div>
+</nav>
+<!-- Main Workspace -->
+<main class="flex flex-1 pt-20 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="h-[calc(100vh-80px)] w-64 sticky left-0 overflow-y-auto bg-[#f3f4f3] flex flex-col p-6 gap-2 font-['Inter'] text-sm font-medium">
+<div class="mb-8 px-2">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<div>
+<h3 class="font-['Manrope'] font-extrabold text-blue-600 block leading-tight">Project Alpha</h3>
+<span class="text-xs text-slate-500">Incubating Stage</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-1 flex-1">
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 rounded-lg cursor-pointer active:opacity-80 transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</div>
+<div class="flex items-center gap-3 p-3 bg-white text-blue-600 rounded-lg shadow-sm cursor-pointer active:opacity-80 transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span>Active Chats</span>
+</div>
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 rounded-lg cursor-pointer active:opacity-80 transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined">group_add</span>
+<span>Applications</span>
+</div>
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 rounded-lg cursor-pointer active:opacity-80 transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined">groups</span>
+<span>Team</span>
+</div>
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 rounded-lg cursor-pointer active:opacity-80 transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined">monitoring</span>
+<span>Analytics</span>
+</div>
+</div>
+<div class="mt-auto flex flex-col gap-1 border-t border-slate-200 pt-6">
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 rounded-lg cursor-pointer transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined">help</span>
+<span>Support</span>
+</div>
+<div class="flex items-center gap-3 p-3 text-slate-600 hover:bg-white/50 rounded-lg cursor-pointer transition-transform hover:translate-x-1">
+<span class="material-symbols-outlined">archive</span>
+<span>Archive</span>
+</div>
+</div>
+</aside>
+<!-- Chat Content (Desktop) -->
+<div class="flex flex-1 overflow-hidden bg-white">
+<!-- Chat List -->
+<section class="w-[320px] bg-surface-container-low flex flex-col">
+<div class="p-6">
+<h2 class="font-headline font-semibold text-xl mb-4">Messages</h2>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border-0 rounded-xl text-sm focus:ring-2 focus:ring-primary-container transition-all" placeholder="Search projects or people..." type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-3 space-y-1 no-scrollbar">
+<!-- Chat Item Active -->
+<div class="flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm cursor-pointer border-l-4 border-primary">
+<img alt="Avatar" class="w-12 h-12 rounded-full object-cover" data-alt="close up of a cheerful developer with glasses in a modern office with greenery" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA45wts4apd0-AhDAZ4fXVyxK9lWOWutnW5LKjI7hFIHnywQyQ-PBUHuwS0MF09VXz1nFnxyJVby4Zwpd6dBSzS0dXWg-zhBagcZO9YWMAlI7wta6a0Vrfm1zni1CT7vPic9QgbWpBIemKNT3qBLgod5y1ASi8Q5q5o4MZDXdIfMD1t65mpDniA07kXs_ln1mfnssMF3ueyDsR5RKx4e2KSdre49ItMJGnp6xYl9T6h1K7A-Z7egX7Lcz2x0A9kXGYJ_YCc2kvu_1b1"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-semibold text-on-surface truncate">Designer Kim</h4>
+<span class="text-[10px] text-slate-400">14:20</span>
+</div>
+<p class="text-xs text-slate-500 truncate">Final assets have been uploaded to the shared folder.</p>
+</div>
+</div>
+<!-- Chat Item -->
+<div class="flex items-center gap-4 p-4 hover:bg-white/50 rounded-2xl cursor-pointer transition-all">
+<img alt="Avatar" class="w-12 h-12 rounded-full object-cover" data-alt="professional woman in tech smiling warmly with a clean minimalist background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAjmxX80RL7c2YEXOqOva5guw2XMW5LnIGRi8C2wbYiW0lGL1DCw3Mn428X0NalXLo9wI1cll4CohIQG2AyRi66lTi-W-OoJVGLO5YNEWN2dcL3YL0YiKDrQe356ltl1x8091DxIl0gspyoGqE2AxbMJEAsKixedvCBKN4UHuByGWa2O59beYi6wOcw7KtM9FcYARNq6-28nMBbTUYYnJ16IwyOMpkpn0LyjDRN7nRk7se_WyU7iAURldAfYiU7W51_2UOl8x3xVIF"/>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-semibold text-on-surface truncate">Project Manager Lee</h4>
+<span class="text-[10px] text-slate-400">오전 11:30</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-xs text-slate-500 truncate font-semibold">언제 시간 되시나요?</p>
+<span class="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full">2</span>
+</div>
+</div>
+</div>
+<!-- More Chat Items -->
+<div class="flex items-center gap-4 p-4 hover:bg-white/50 rounded-2xl cursor-pointer transition-all">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary font-bold">FE</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-semibold text-on-surface truncate">FE-Dev Group</h4>
+<span class="text-[10px] text-slate-400">Yesterday</span>
+</div>
+<p class="text-xs text-slate-500 truncate">PR approved. Let's merge today.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Chat Window -->
+<section class="flex-1 flex flex-col bg-surface">
+<header class="h-16 px-6 flex items-center justify-between glass bg-white/80 z-10">
+<div class="flex items-center gap-3">
+<img alt="Avatar" class="w-10 h-10 rounded-full object-cover" data-alt="close up of a cheerful developer with glasses in a modern office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDem1a_LXPHUHgcqkVQjzSGHJHuqcXD1dW_Wqvy6cDw0xZPTOsQBl3NozCakYgfbwER9qdoEXE49RlLCPk0adlbdw0i2PCN8kDJHk0k33LlbbBD-NY0DIRLawdR0SI360FWxbcsqKDNNU86po6vlcs-LCsecbwwp8PVYoQ7QGWoW4XazKlLQLep6G6hw9Q_pFA7rfSAr14JfWd0bImCZtdYJB2k2tuFeb0EJbgDCzWyFv4ZCgPodyKtK-7OxOjs6SHDHRNNzVD6uQvv"/>
+<div>
+<h3 class="font-semibold text-on-surface leading-tight">Designer Kim</h3>
+<span class="text-xs text-emerald-500 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online
+                                </span>
+</div>
+</div>
+<button class="text-error font-medium text-sm flex items-center gap-1 px-4 py-2 hover:bg-error/5 rounded-lg transition-all">
+<span class="material-symbols-outlined text-lg">logout</span>
+                            나가기
+                        </button>
+</header>
+<div class="flex-1 overflow-y-auto p-8 space-y-6">
+<div class="flex justify-center">
+<span class="px-4 py-1.5 bg-surface-container-high rounded-full text-[11px] font-bold tracking-widest text-slate-500 font-label">2026년 4월 1일</span>
+</div>
+<!-- Message Left -->
+<div class="flex items-start gap-3 max-w-[80%]">
+<img alt="Avatar" class="w-8 h-8 rounded-full mt-1" data-alt="close up of a cheerful developer with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbPVzAJ3o06jA3-72PBKQ8M0BLT7Jca88_6PegYTzW9k-rXa7EZMoE_kluQ2jQvdvsa4whADB_GiPo_71g1EWrZLL_FYDHlwyV8jCEFqk_oxPDqEDooBzvJ95gcstRCkxbY6ZLli2n1wdJJ_m-hEEF8Gk0ADmHteiLCGiV71jH_wqvMhgNK8f4aFWL8W08Rgf7EKZ-m-Bwedk1EjEnvKI5J_qtDnhVxAyx8n4n9IRH98d5ZMhbX8lnN51yZCkBeKYXRqsZLSSzGwuP"/>
+<div>
+<div class="bg-surface-container-low p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm">
+                                    안녕하세요! 프로젝트 아키텍처 초안 확인해 보셨나요? 몇 가지 제안사항이 있습니다.
+                                </div>
+<span class="text-[10px] text-slate-400 mt-1 block">오후 2:10</span>
+</div>
+</div>
+<!-- Message Right -->
+<div class="flex flex-row-reverse items-start gap-3 ml-auto max-w-[80%]">
+<div class="flex flex-col items-end">
+<div class="bg-primary-container text-white p-4 rounded-2xl rounded-tr-none text-sm leading-relaxed shadow-md">
+                                    네, 방금 확인했습니다. UI 컴포넌트 구조화 방식이 아주 인상적이에요. 특히 컬러 토큰 활용이 돋보입니다!
+                                </div>
+<span class="text-[10px] text-slate-400 mt-1 block">오후 2:15</span>
+</div>
+</div>
+<!-- Message Left -->
+<div class="flex items-start gap-3 max-w-[80%]">
+<img alt="Avatar" class="w-8 h-8 rounded-full mt-1" data-alt="close up of a cheerful developer with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGuSZ6m4cXdP5LbpZ1WFgspSVkKKQiA_M-i5iOctcrdGdjFd2TImDljcOHSqItrQ_dYnjBhkLPnGmqmF7Z9gPoMMCzNRNLOJsDTVoBQgeniw4Qse86ETqRrBR4ybQMBrtls51JZS3_KWjy4Ox6Q2XaS1yVFZFcn0oKdr8Iby-NepLhCe_qBvsO46E2VOkWMKo6sL6KaXPX0hPc6Ykim33LfZz2NHvCNwT1NGBGg95l7BJci1ObNskBC0dv_5pS0_F-R4-j5coepS2X"/>
+<div>
+<div class="bg-surface-container-low p-4 rounded-2xl rounded-tl-none text-sm leading-relaxed shadow-sm">
+                                    감사합니다! 그럼 오늘 중으로 세부 페이지 디자인 가이드도 업데이트 해둘게요.
+                                </div>
+<span class="text-[10px] text-slate-400 mt-1 block">오후 2:20</span>
+</div>
+</div>
+</div>
+<footer class="p-6 bg-white">
+<div class="flex items-center gap-3 bg-surface-container-low p-2 pr-4 rounded-2xl focus-within:ring-2 ring-primary-container transition-all">
+<button class="p-2 text-slate-400 hover:text-primary transition-all">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<input class="flex-1 bg-transparent border-0 focus:ring-0 text-sm py-2" placeholder="Type a message..." type="text"/>
+<button class="bg-primary-container text-white w-10 h-10 rounded-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</footer>
+</section>
+</div>
+</main>
+</div>
+<!-- MOBILE LAYOUT PREVIEW (Chat Window focus) -->
+<div class="md:hidden flex flex-col h-screen bg-surface">
+<header class="h-16 px-4 flex items-center justify-between glass bg-white/90 sticky top-0 z-50">
+<div class="flex items-center gap-3">
+<button class="p-2 -ml-2">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full overflow-hidden">
+<img alt="Avatar" class="w-full h-full object-cover" data-alt="close up profile of a young tech designer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBddeW0dXtpkUdg9hPTcluxgXZ8EUO_8bzXYPeiUDRZj24KLl7MKzlBpwMF_HVoxL1pfmh3e_LCz2nCqLk_0Txh1lK7elCUYYajkJO6SqO6BgfkgriNBZYTNFsKu-87Gc12qqBKBa1i6ECGXDGI4I1Jh97sN9FfcQ30oNBaj4nOIB6ZNHtrwOKSrIbdj0SvX8iW-pKXxdYUCYzBvmFUcUyoJfuzstoJdsvlfR8D2pV4wjSI7IblhIob8oGa9CFZkniS7lBH7u0x46A0"/>
+</div>
+<span class="font-semibold text-on-surface">Designer Kim</span>
+</div>
+</div>
+<button class="p-2">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
+<div class="flex justify-center my-4">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold tracking-widest text-slate-500 font-label">2026년 4월 1일</span>
+</div>
+<!-- Message Left -->
+<div class="flex items-start gap-2 max-w-[85%]">
+<div class="bg-surface-container-low p-3.5 rounded-2xl rounded-tl-none text-sm shadow-sm">
+                    안녕하세요! 오늘 회의 가능한가요?
+                </div>
+<span class="text-[9px] text-slate-400 self-end">14:10</span>
+</div>
+<!-- Message Right -->
+<div class="flex flex-row-reverse items-start gap-2 ml-auto max-w-[85%]">
+<div class="bg-primary-container text-white p-3.5 rounded-2xl rounded-tr-none text-sm shadow-md">
+                    네, 4시 이후엔 언제든 괜찮습니다!
+                </div>
+<span class="text-[9px] text-slate-400 self-end">14:15</span>
+</div>
+<!-- Message Left with Attachment Mock -->
+<div class="flex items-start gap-2 max-w-[85%]">
+<div class="bg-surface-container-low p-3 rounded-2xl rounded-tl-none text-sm shadow-sm space-y-2">
+<div class="bg-white/60 p-2 rounded-xl flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">description</span>
+<span class="text-xs font-medium">Design_System_v2.fig</span>
+</div>
+<p>이거 먼저 확인 부탁드려요.</p>
+</div>
+<span class="text-[9px] text-slate-400 self-end">14:20</span>
+</div>
+</div>
+<!-- Input Area Mobile -->
+<div class="fixed bottom-0 left-0 w-full p-4 bg-white/90 backdrop-blur-md">
+<div class="flex items-center gap-2 bg-surface-container-low px-2 py-1.5 rounded-full">
+<button class="p-1.5 text-slate-400">
+<span class="material-symbols-outlined">add</span>
+</button>
+<input class="flex-1 bg-transparent border-0 focus:ring-0 text-sm h-8" placeholder="Chat..." type="text"/>
+<button class="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+<!-- Hidden BottomNavBar (Suppressed in Chat View as per instructions) -->
+</div>
+<!-- MOBILE LIST PREVIEW (Floating as separate context to show BottomNavBar) -->
+<!-- (Normally wouldn't show both together, but task asks for desktop/mobile layouts on same screen) -->
+<div class="hidden md:block fixed right-8 bottom-8 w-[375px] h-[600px] border-[12px] border-slate-900 rounded-[3rem] overflow-hidden shadow-2xl z-40 bg-white">
+<div class="flex flex-col h-full">
+<header class="p-6 pb-2">
+<h1 class="text-2xl font-headline font-bold">Messages</h1>
+</header>
+<div class="flex-1 overflow-y-auto px-4 py-2 space-y-1">
+<div class="flex items-center gap-3 p-3 bg-blue-50 rounded-2xl">
+<img alt="A1" class="w-12 h-12 rounded-full object-cover" data-alt="close up profile of a young tech designer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQW7G1U_ZA31EOWlrjr9jplfDsJy0669hgdNpHI8oXm-dlNF-UKGQk25GHvVnN_m1ECUdPvrD7kyGNW6OX3L6q1D-jao14ST8K9VRS6ZnF-o2hsMvqlo-O4IaIXuKvDx0oVBEggPkm6Xs0bc6knU9vsB0_VCxHfDCR2DLCADO69Fs9WyF61mAqQGXX7P48MVRJPifd9zg5gP8XQK7DlUN9ZMQ82Gf1yVPLb5AJ-UuO7799v9T3flO1rfF5Z5QACfZxSb9BbQwu6qnm"/>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-0.5">
+<span class="font-bold text-sm">Designer Kim</span>
+<span class="text-[10px] text-slate-400">14:20</span>
+</div>
+<p class="text-xs text-slate-500 truncate">Final assets have been uploaded...</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3">
+<img alt="A2" class="w-12 h-12 rounded-full object-cover" data-alt="professional woman in tech smiling warmly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdSCOOEcOVudKoNhYe8Me1ngoQwIQPsCQc1HkPwO8_n7pK5481q9dVt_4ODEd56HyluQzT9U1AGgtDhLE0TG9dFisU-jGcaslGAxuz3ms2GKuNOx4eUDwTAEQ8VIllfBBbYIHffyBG7NMIU7nqPzVRrsOu24y9ToRSy6ZryFcY3gD0tFrqBqVHLY7kjKbi8FK231sm0KpihO2z1toGJ3KNa6idt2of0cYSr6CIm9-DBNh3GlkIJfIWCo2Rzk47clbgbkvWROD0zQTD"/>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-0.5">
+<span class="font-bold text-sm">Project Manager Lee</span>
+<span class="text-[10px] text-slate-400">11:30</span>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-xs text-slate-500 truncate font-semibold">언제 시간 되시나요?</p>
+<span class="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full">2</span>
+</div>
+</div>
+</div>
+<!-- Mock list repeat -->
+<div class="flex items-center gap-3 p-3" v-for="i in 4">
+<div class="w-12 h-12 rounded-full bg-slate-100"></div>
+<div class="flex-1 border-b border-slate-50 pb-3">
+<div class="h-3 w-24 bg-slate-100 rounded mb-2"></div>
+<div class="h-2 w-full bg-slate-50 rounded"></div>
+</div>
+</div>
+</div>
+<!-- BottomNavBar (Only on Mobile List View) -->
+<nav class="flex justify-around items-end px-6 pb-6 pt-2 bg-white/90 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.03)] rounded-t-3xl">
+<div class="flex flex-col items-center justify-center text-slate-400 p-2">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] uppercase font-bold tracking-widest mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-blue-600 text-white rounded-2xl p-3 mb-2 transform -translate-y-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat_bubble</span>
+<span class="text-[10px] uppercase font-bold tracking-widest mt-1">Inbox</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 p-2">
+<span class="material-symbols-outlined">folder_shared</span>
+<span class="text-[10px] uppercase font-bold tracking-widest mt-1">Projects</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-400 p-2">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] uppercase font-bold tracking-widest mt-1">Profile</span>
+</div>
+</nav>
+</div>
+</div>
+</body></html>

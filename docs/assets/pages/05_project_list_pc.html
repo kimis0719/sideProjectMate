@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>프로젝트 | Side Project Mate (SPM)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;family=Manrope:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#943700",
+              "primary": "#2563eb",
+              "inverse-surface": "#2f3130",
+              "primary-fixed-dim": "#b4c5ff",
+              "surface-container-highest": "#e2e2e2",
+              "primary-container": "#2563eb",
+              "on-primary-fixed": "#00174b",
+              "secondary-fixed-dim": "#b4c5ff",
+              "secondary-fixed": "#dbe1ff",
+              "inverse-primary": "#b4c5ff",
+              "tertiary-fixed": "#ffdbcd",
+              "inverse-on-surface": "#f1f1f0",
+              "on-tertiary-container": "#ffede6",
+              "outline-variant": "#c3c6d7",
+              "error": "#ba1a1a",
+              "surface": "#f9f9f8",
+              "surface-variant": "#e2e2e2",
+              "surface-container": "#eeeeed",
+              "surface-container-low": "#f3f4f3",
+              "on-secondary-container": "#394c84",
+              "background": "#f9f9f8",
+              "on-background": "#1a1c1c",
+              "on-error": "#ffffff",
+              "surface-container-high": "#e8e8e7",
+              "on-surface-variant": "#434655",
+              "on-tertiary": "#ffffff",
+              "error-container": "#ffdad6",
+              "on-secondary": "#ffffff",
+              "tertiary-fixed-dim": "#ffb596",
+              "tertiary-container": "#bc4800",
+              "primary-fixed": "#dbe1ff",
+              "on-tertiary-fixed-variant": "#7d2d00",
+              "on-secondary-fixed": "#00174b",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-container": "#eeefff",
+              "on-primary": "#ffffff",
+              "secondary": "#495c95",
+              "surface-tint": "#0053db",
+              "on-tertiary-fixed": "#360f00",
+              "on-secondary-fixed-variant": "#31447b",
+              "secondary-container": "#acbfff",
+              "surface-dim": "#dadad9",
+              "surface-bright": "#f9f9f8",
+              "on-primary-fixed-variant": "#003ea8",
+              "outline": "#737686",
+              "on-error-container": "#93000a",
+              "on-surface": "#1a1c1c"
+            },
+            fontFamily: {
+              "headline": ["Manrope", "Noto Sans KR"],
+              "body": ["Noto Sans KR", "Inter"],
+              "label": ["Noto Sans KR", "Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        background-color: #FAFAF9;
+        font-family: 'Noto Sans KR', sans-serif;
+      }
+      /* Hide scrollbar for cleaner look on mobile drawers */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+</head>
+<body class="font-body text-on-surface">
+<!-- TopNavBar -->
+<nav class="bg-[#f9f9f8]/80 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-slate-200/50">
+<div class="flex items-center justify-between px-4 md:px-8 py-3 md:py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-4 md:gap-12">
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden p-1 text-slate-600" onclick="document.getElementById('mobile-nav').classList.toggle('hidden')">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="text-xl md:text-2xl font-bold tracking-tighter text-slate-900 font-['Manrope']">SPM</span>
+<div class="hidden md:flex items-center gap-8 font-['Noto+Sans+KR'] tracking-tight">
+<a class="text-blue-600 font-semibold border-b-2 border-blue-600 transition-all" href="#">프로젝트</a>
+<a class="text-slate-600 hover:text-slate-900 transition-all" href="#">대시보드</a>
+<a class="text-slate-600 hover:text-slate-900 transition-all" href="#">채팅</a>
+</div>
+</div>
+<div class="flex items-center gap-2 md:gap-6">
+<button class="bg-primary text-white px-3 md:px-5 py-2 rounded-lg text-sm md:text-base font-semibold hover:bg-opacity-90 active:scale-[0.99] transition-all">프로젝트 시작</button>
+<div class="flex items-center gap-1 md:gap-4 text-slate-600">
+<span class="material-symbols-outlined cursor-pointer hover:bg-slate-100/50 p-2 rounded-full transition-all hidden sm:block" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-slate-100/50 p-2 rounded-full transition-all" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</div>
+<!-- Mobile Nav Drawer -->
+<div class="hidden fixed inset-0 bg-black/50 z-50 md:hidden" id="mobile-nav">
+<div class="w-64 h-full bg-white p-6 shadow-xl flex flex-col gap-6">
+<div class="flex justify-between items-center">
+<span class="text-xl font-bold font-['Manrope']">SPM Menu</span>
+<button onclick="document.getElementById('mobile-nav').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<nav class="flex flex-col gap-4">
+<a class="text-blue-600 font-bold" href="#">프로젝트</a>
+<a class="text-slate-600" href="#">대시보드</a>
+<a class="text-slate-600" href="#">채팅</a>
+<hr class="border-slate-100"/>
+<a class="flex items-center gap-3 text-slate-600" href="#">
+<span class="material-symbols-outlined text-sm">notifications</span> 알림
+            </a>
+<a class="flex items-center gap-3 text-slate-600" href="#">
+<span class="material-symbols-outlined text-sm">settings</span> 설정
+            </a>
+</nav>
+</div>
+</div>
+</nav>
+<div class="flex min-h-screen pt-[60px] md:pt-[72px]">
+<!-- SideNavBar (Hidden on Mobile) -->
+<aside class="bg-[#f3f4f3] w-64 fixed top-[72px] bottom-0 left-0 hidden lg:flex flex-col p-6 font-['Noto+Sans+KR'] text-sm z-40 border-r border-slate-200/50 overflow-y-auto">
+<div class="flex-1 flex flex-col gap-2">
+<div class="mb-8">
+<h2 class="text-lg font-semibold text-slate-800">프로젝트 대시보드</h2>
+<p class="text-slate-500 text-xs mt-1">협업 프로젝트를 관리하세요</p>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-white text-blue-600 rounded-lg shadow-sm font-medium hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="grid_view">grid_view</span>
+<span>모든 프로젝트</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/50 rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="star">star</span>
+<span>팔로잉</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/50 rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="workspaces">workspaces</span>
+<span>내 워크스페이스</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/50 rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="insights">insights</span>
+<span>통계 분석</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/50 rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span>설정</span>
+</a>
+</nav>
+<button class="mt-8 bg-primary text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span>새 프로젝트 생성</span>
+</button>
+</div>
+<!-- Sidebar Ad Placeholder -->
+<div class="mt-auto pt-8">
+<div class="w-full aspect-[4/5] bg-gradient-to-br from-slate-200 to-slate-300 rounded-xl flex flex-col items-center justify-center text-center p-4 relative overflow-hidden group">
+<div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500 to-transparent"></div>
+<div class="relative z-10">
+<span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Premium Ad</span>
+<p class="text-slate-600 text-xs font-bold leading-relaxed">성공적인 협업을 위한<br/>프리미엄 툴킷</p>
+<button class="mt-4 text-[10px] bg-white px-4 py-2 rounded-full font-bold shadow-sm hover:scale-105 transition-transform">자세히 보기</button>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 lg:ml-64 px-4 md:px-12 py-8 md:py-10 max-w-[1200px] mx-auto w-full">
+<!-- Header Section -->
+<section class="mb-8 md:mb-12">
+<h1 class="font-headline text-3xl md:text-[3.5rem] font-bold leading-tight tracking-tight text-on-surface mb-2">에디토리얼 갤러리.</h1>
+<p class="font-body text-slate-500 text-sm md:text-lg max-w-2xl">혁신과 성장을 위해 큐레이션된 고영향력 사이드 프로젝트를 발견하고 협업하세요.</p>
+</section>
+<!-- Mobile Search & Filter Button -->
+<div class="md:hidden flex gap-2 mb-6">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="w-full pl-9 pr-4 py-2.5 bg-surface-container-low border-none rounded-lg text-sm focus:ring-1 focus:ring-primary" placeholder="검색..." type="text"/>
+</div>
+<button class="flex items-center gap-1 bg-surface-container-high px-4 py-2.5 rounded-lg font-bold text-sm" onclick="document.getElementById('mobile-filter').classList.toggle('hidden')">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+        필터
+    </button>
+</div>
+<!-- Mobile Filter Drawer -->
+<div class="hidden fixed inset-0 z-[60] md:hidden" id="mobile-filter">
+<div class="absolute inset-0 bg-black/40" onclick="document.getElementById('mobile-filter').classList.add('hidden')"></div>
+<div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 shadow-2xl flex flex-col gap-6 max-h-[80vh] overflow-y-auto">
+<div class="flex justify-between items-center">
+<h3 class="font-bold text-lg">필터 설정</h3>
+<button onclick="document.getElementById('mobile-filter').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="space-y-6">
+<div>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block">상태</span>
+<div class="flex gap-2">
+<button class="bg-primary text-white px-4 py-2 rounded-full text-xs font-bold">전체</button>
+<button class="bg-slate-100 px-4 py-2 rounded-full text-xs font-bold">모집중</button>
+<button class="bg-slate-100 px-4 py-2 rounded-full text-xs font-bold">완료</button>
+</div>
+</div>
+<div>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block">도메인</span>
+<select class="w-full bg-slate-100 border-none rounded-lg py-3 px-4 text-sm font-semibold">
+<option>모든 카테고리</option>
+<option>이커머스</option>
+<option>소셜</option>
+<option>AI / 머신러닝</option>
+</select>
+</div>
+<div>
+<span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block">찾는 역할</span>
+<select class="w-full bg-slate-100 border-none rounded-lg py-3 px-4 text-sm font-semibold">
+<option>모든 역할</option>
+<option>개발자</option>
+<option>디자이너</option>
+<option>기획자</option>
+</select>
+</div>
+</div>
+<button class="w-full bg-primary text-white py-4 rounded-xl font-bold mt-4" onclick="document.getElementById('mobile-filter').classList.add('hidden')">결과 보기</button>
+</div>
+</div>
+<!-- Desktop Search & Filters Section -->
+<section class="hidden md:flex bg-surface-container-low p-8 rounded-xl mb-12 flex-col gap-6">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" data-icon="search">search</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-lowest border-none rounded-lg focus:ring-2 focus:ring-primary transition-shadow placeholder:text-slate-400 text-lg" placeholder="프로젝트, 기술 스택 또는 키워드 검색..." type="text"/>
+</div>
+<div class="flex flex-wrap items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">상태</span>
+<div class="flex gap-2">
+<button class="bg-primary text-white px-4 py-1.5 rounded-full text-xs font-bold transition-all">전체</button>
+<button class="bg-surface-container-high hover:bg-surface-variant px-4 py-1.5 rounded-full text-xs font-bold transition-all">모집중</button>
+<button class="bg-surface-container-high hover:bg-surface-variant px-4 py-1.5 rounded-full text-xs font-bold transition-all">완료</button>
+</div>
+</div>
+<div class="h-6 w-[1px] bg-outline-variant/30 hidden md:block"></div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">도메인</span>
+<select class="bg-surface-container-lowest border-none rounded-lg py-1.5 px-4 text-xs font-semibold focus:ring-primary">
+<option>모든 카테고리</option>
+<option>이커머스</option>
+<option>소셜</option>
+<option>AI / 머신러닝</option>
+<option>핀테크</option>
+</select>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-semibold text-slate-400 uppercase tracking-widest">찾는 역할</span>
+<select class="bg-surface-container-lowest border-none rounded-lg py-1.5 px-4 text-xs font-semibold focus:ring-primary">
+<option>모든 역할</option>
+<option>프론트엔드 개발자</option>
+<option>백엔드 개발자</option>
+<option>UI/UX 디자이너</option>
+<option>프로덕트 매니저</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Ad Banner (Hidden on smallest mobile for cleaner view) -->
+<section class="mb-8 md:mb-12 hidden sm:block">
+<div class="w-full h-24 md:h-32 bg-gradient-to-r from-slate-100 to-slate-200 rounded-xl flex items-center justify-center relative overflow-hidden group">
+<div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-400 to-transparent"></div>
+<div class="relative z-10 flex flex-col items-center text-center px-4">
+<span class="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">스폰서 협업</span>
+<h3 class="text-slate-600 font-semibold text-xs md:text-sm">프리미엄 큐레이터 기능을 통해 프로젝트의 노출도를 높여보세요</h3>
+</div>
+</div>
+</section>
+<!-- Project Card Grid - Responsive 1 to 3 columns -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-5 md:p-6 rounded-xl group hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] md:hover:-translate-y-1 transition-all duration-300">
+<div class="aspect-video mb-5 md:mb-6 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover md:grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="vibrant dashboard interface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5U7CSWiYBnsUzBXIobJQhNB75wqpYrVAENozoHqSKlRP31c28Hhfdwo4Y3CSiAmnEsirg_kKKC91j1DKHi7zG3XafgsSafGh-wAv7zdBok3T3HRfpsx9hUC-VAHkRv1k1iZb1chPV4N08QYUhXrIdnnF445nGW4PidgUYjsu-8G4mqwea_iDd50xjyklplPlGlIWfBODhU3zlZG7Gai-gqNQ--6s5204qAmMAt0jeXdKgjWcbfbXbmhhp2hxhNt41RRCY9aLZ3s8N"/>
+</div>
+<div class="flex justify-between items-start mb-3">
+<span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">모집중</span>
+<div class="flex items-center gap-3 text-slate-400">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="favorite">favorite</span>
+<span class="text-xs font-semibold">124</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="group">group</span>
+<span class="text-xs font-semibold">3/5</span>
+</div>
+</div>
+</div>
+<h3 class="font-headline text-lg md:text-xl font-bold text-on-surface mb-2">NexuStream: AI 콘텐츠 엔진</h3>
+<p class="font-body text-slate-500 text-xs md:text-sm line-clamp-2 mb-4 md:mb-6">GPT-4o 모델을 활용한 디지털 큐레이터용 자동 콘텐츠 배포 플랫폼을 구축합니다.</p>
+<div class="flex flex-wrap gap-2 mb-4 md:mb-6">
+<span class="px-2 py-1 bg-surface-container text-slate-600 text-[10px] font-bold rounded uppercase">AI / 머신러닝</span>
+<span class="px-2 py-1 bg-surface-container text-slate-600 text-[10px] font-bold rounded uppercase">Next.js</span>
+</div>
+<div class="flex items-center justify-between border-t border-slate-50 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Alex Rivers" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh5zSdVBksRgJl4I7mLfb-mWXErLvnqJAY60ms2-de-OondIt0FIDGkkNp5WzKKZcD6MM354_Jn0ceOGbp6QyQ4A-N64ZCmaCldlFM28xTzPs3lM1AXI4m9-4sz3KMXQvzbW4o5QEl54YZVaM_7yIPG--rWmxtUv4Q-UeXiOAIzCejY8hPL6BTfQsTVUcxh9HppOCpyLA1zGI1Kia6BBW-iUxYgyYIqef5uxS0hEGfNppPPe_pDKAHUJ3PpHdo3pJMG3NFic2hgXUt"/>
+</div>
+<span class="text-xs font-semibold text-slate-700">Alex Rivers</span>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1 hover:gap-2 transition-all">
+                            프로젝트 보기
+                            <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-5 md:p-6 rounded-xl group hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] md:hover:-translate-y-1 transition-all duration-300">
+<div class="aspect-video mb-5 md:mb-6 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover md:grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="K-Space Curators" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyoJohPwj_orcS2vpPbPHl0mxmJY52rp_qj_yodNo5UoAs1HuJP3vnjraRbgg4-DL6RplAe3XXx4AnQevypyX0OUnR6jocRY1TzBdbQzBE4FLEWape6C1NtZXniGqnwcI0-J_HpoV9H7xvc7Iw-_qAJlHEdMNY80Rq3EVvIYCdgx9M4OTHKTrWfssAztZlfUZF5TYduEwIbD3gzptCyY7DKnICse0PLTaI5lFMjApC0s8vm4ElqZt49sYX83AA2Zudw86BDUsMdM6x"/>
+</div>
+<div class="flex justify-between items-start mb-3">
+<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">진행중</span>
+<div class="flex items-center gap-3 text-slate-400">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="favorite">favorite</span>
+<span class="text-xs font-semibold">89</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="group">group</span>
+<span class="text-xs font-semibold">4/4</span>
+</div>
+</div>
+</div>
+<h3 class="font-headline text-lg md:text-xl font-bold text-on-surface mb-2">K-Space Curators</h3>
+<p class="font-body text-slate-500 text-xs md:text-sm line-clamp-2 mb-4 md:mb-6">서울의 인테리어 디자이너들이 부티크 워크스페이스를 공유하는 니치 커뮤니티 플랫폼입니다.</p>
+<div class="flex flex-wrap gap-2 mb-4 md:mb-6">
+<span class="px-2 py-1 bg-surface-container text-slate-600 text-[10px] font-bold rounded uppercase">소셜</span>
+<span class="px-2 py-1 bg-surface-container text-slate-600 text-[10px] font-bold rounded uppercase">모바일</span>
+</div>
+<div class="flex items-center justify-between border-t border-slate-50 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="박민지" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDznlIoedq2URTCqdoaO963A_57yjw1UWCLdvUw180BymzIRKGRVhLswc796WGwCU1OXMJFLZxUclozZSfOLvAcVvv6ry6qM6zyUE16NBswnAhj2gvYTW7kdA0RpFFk3J1Ipkmt9Wx14X4zfYiiyYOwjlcsBmqDwprBLxmIg0FxxsFhAhowAtFOmUbKCG6G5fkVnEAVAkQz4RsKMCn9lweNUdosDgREB8RnDNwPA8SMp1y9UClSTfkQcbwkx51zXlcIdJibYcGd77B5"/>
+</div>
+<span class="text-xs font-semibold text-slate-700">박민지</span>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1 hover:gap-2 transition-all">
+                            프로젝트 보기
+                            <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-5 md:p-6 rounded-xl group hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] md:hover:-translate-y-1 transition-all duration-300">
+<div class="aspect-video mb-5 md:mb-6 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover md:grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="payment sdk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjXN5XquFVhE__Ssh-kOBP_AaqC0IPY-QXUMQz2F4zzB7Q5s1FUNnyXeYLDtLiC2p_Mx28AZOzIBM7RCfEDsi7k5l2LMFxoYN6q6hBQPjmMSvSBeaK2SNXDy-kLJQXl_2QBPhuMFVJNCMs6pXUXyk0i5rT2j90mjabCcxAofZPKRu3iujCD1Ow7QjNxgS4agyo9WGudJl3Mf-Q9_7ToekZbrRb_JMKV87bbd7KwPSwaMfVVGOQ1wwvi25WbFC3v3wk1KkmmK8yHXJ-"/>
+</div>
+<div class="flex justify-between items-start mb-3">
+<span class="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">완료</span>
+<div class="flex items-center gap-3 text-slate-400">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="favorite">favorite</span>
+<span class="text-xs font-semibold">212</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="group">group</span>
+<span class="text-xs font-semibold">2/2</span>
+</div>
+</div>
+</div>
+<h3 class="font-headline text-lg md:text-xl font-bold text-on-surface mb-2">미니멀리스트 결제 SDK</h3>
+<p class="font-body text-slate-500 text-xs md:text-sm line-clamp-2 mb-4 md:mb-6">독립 상점을 위한 세계에서 가장 빠른 경량 결제 게이트웨이 통합 솔루션입니다.</p>
+<div class="flex flex-wrap gap-2 mb-4 md:mb-6">
+<span class="px-2 py-1 bg-surface-container text-slate-600 text-[10px] font-bold rounded uppercase">핀테크</span>
+<span class="px-2 py-1 bg-surface-container text-slate-600 text-[10px] font-bold rounded uppercase">웹</span>
+</div>
+<div class="flex items-center justify-between border-t border-slate-50 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-200 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="James Wei" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5lucuIdJlAyn26BYmfCWUQY6hNVrQsSVIZVfOM7-EEagwZg8CGJr8VStnSPHvYan7tI7055B6S3dDs_MXom29D6Zic5i1Npm5WsvrKC9BxceWLkuGQW_ipSjlzJ5EpqYX1CpUFDjx5hsQTxIgmm79EAY_o_5g2wzpaYLxbiw8q8yQm32b5N4GXzkXdXIKlVTLLpHlHhruBpOXrhGOsJBTQrR3Dl7C-A1W8zCltSr_qudSSyBf_Us6ka0EufeiP_75Sy8pqVWk7SXv"/>
+</div>
+<span class="text-xs font-semibold text-slate-700">James Wei</span>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1 hover:gap-2 transition-all">
+                            프로젝트 보기
+                            <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Pagination Section -->
+<section class="mt-12 md:mt-16 flex items-center justify-center gap-1 md:gap-2">
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-slate-400" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg bg-primary text-white font-bold text-xs md:text-sm">1</button>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg hover:bg-surface-container font-semibold text-slate-600 text-xs md:text-sm">2</button>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg hover:bg-surface-container font-semibold text-slate-600 text-xs md:text-sm">3</button>
+<span class="px-1 md:px-2 text-slate-300">...</span>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg hover:bg-surface-container font-semibold text-slate-600 text-xs md:text-sm">12</button>
+<button class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-lg hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-slate-400" data-icon="chevron_right">chevron_right</span>
+</button>
+</section>
+</main>
+</div>
+<!-- Footer -->
+<footer class="w-full mt-auto py-8 md:py-12 bg-[#f9f9f8] border-t border-slate-200/50 lg:pl-64">
+<div class="flex flex-col md:flex-row justify-between items-center px-6 md:px-12 gap-6 font-['Noto+Sans+KR'] text-[10px] md:text-xs uppercase tracking-widest text-center md:text-left">
+<div class="text-slate-400">
+                © 2024 Side Project Mate. 디지털 큐레이터.
+            </div>
+<div class="flex flex-wrap justify-center gap-4 md:gap-8">
+<a class="text-slate-400 hover:text-blue-600 transition-colors duration-300" href="#">서비스 소개</a>
+<a class="text-slate-400 hover:text-blue-600 transition-colors duration-300" href="#">이용약관</a>
+<a class="text-slate-400 hover:text-blue-600 transition-colors duration-300" href="#">개인정보처리방침</a>
+<a class="text-slate-400 hover:text-blue-600 transition-colors duration-300" href="#">가이드라인</a>
+</div>
+</div>
+</footer>
+</body></html>

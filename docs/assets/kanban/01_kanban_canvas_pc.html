@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neural-Canvas | Digital Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;600;700&amp;family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .dot-grid {
+      background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .marker-font {
+      font-family: 'Noto Sans KR', sans-serif;
+      letter-spacing: -0.02em;
+    }
+    .hand-drawn-border {
+      border: 2px solid #1a1c1c;
+      border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+    }
+    body {
+      font-family: 'Noto Sans KR', 'Inter', sans-serif;
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "tertiary-container": "#bc4800",
+            "error-container": "#ffdad6",
+            "on-secondary-container": "#394c84",
+            "outline": "#737686",
+            "on-surface-variant": "#434655",
+            "surface-container-low": "#f3f4f3",
+            "surface-container-high": "#e8e8e7",
+            "surface-dim": "#dadad9",
+            "on-background": "#1a1c1c",
+            "primary": "#004ac6",
+            "inverse-on-surface": "#f1f1f0",
+            "primary-fixed-dim": "#b4c5ff",
+            "on-surface": "#1a1c1c",
+            "on-secondary": "#ffffff",
+            "surface-tint": "#0053db",
+            "error": "#ba1a1a",
+            "background": "#f9f9f8",
+            "on-primary-fixed": "#00174b",
+            "on-secondary-fixed": "#00174b",
+            "surface-variant": "#e2e2e2",
+            "on-tertiary-container": "#ffede6",
+            "surface": "#f9f9f8",
+            "on-primary-container": "#eeefff",
+            "on-error": "#ffffff",
+            "surface-bright": "#f9f9f8",
+            "inverse-surface": "#2f3130",
+            "secondary-container": "#acbfff",
+            "secondary": "#495c95",
+            "primary-container": "#2563eb",
+            "on-tertiary-fixed": "#360f00",
+            "surface-container-highest": "#e2e2e2",
+            "primary-fixed": "#dbe1ff",
+            "tertiary": "#943700",
+            "on-primary-fixed-variant": "#003ea8",
+            "inverse-primary": "#b4c5ff",
+            "secondary-fixed": "#dbe1ff",
+            "on-secondary-fixed-variant": "#31447b",
+            "on-tertiary-fixed-variant": "#7d2d00",
+            "tertiary-fixed-dim": "#ffb596",
+            "outline-variant": "#c3c6d7",
+            "on-primary": "#ffffff",
+            "on-error-container": "#93000a",
+            "secondary-fixed-dim": "#b4c5ff",
+            "surface-container": "#eeeeed",
+            "tertiary-fixed": "#ffdbcd",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary": "#ffffff"
+          },
+          fontFamily: {
+            "headline": ["Manrope", "Noto Sans KR"],
+            "body": ["Noto Sans KR", "Inter"],
+            "label": ["Noto Sans KR", "Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background font-body text-on-surface overflow-hidden">
+<!-- TopNavBar (Shared Component) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-[#f9f9f8]/80 dark:bg-[#1a1c1c]/80 backdrop-blur-xl shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-[#1a1c1c] dark:text-[#f9f9f8]">Project Curator</span>
+<nav class="hidden md:flex gap-6">
+<a class="font-['Noto_Sans_KR'] text-sm font-semibold tracking-tight text-[#2563eb] border-b-2 border-[#2563eb] pb-1" href="#">캔버스</a>
+<a class="font-['Noto_Sans_KR'] text-sm font-semibold tracking-tight text-[#1a1c1c]/60 dark:text-[#f9f9f8]/60 hover:text-[#2563eb] transition-all duration-300" href="#">히스토리</a>
+<a class="font-['Noto_Sans_KR'] text-sm font-semibold tracking-tight text-[#1a1c1c]/60 dark:text-[#f9f9f8]/60 hover:text-[#2563eb] transition-all duration-300" href="#">에셋</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-[#f3f4f3] rounded-full transition-all duration-300 scale-98 active:opacity-80">
+<span class="material-symbols-outlined text-[#1a1c1c]">settings</span>
+</button>
+<button class="bg-primary-container text-white px-4 py-2 rounded-lg font-semibold text-sm hover:scale-105 transition-all">공유하기</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full" data-alt="professional headshot of a smiling designer with warm lighting and a soft blurred office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc6okxBk18Xx-3VJ2hU-1HBFf8YlChgUWkGIiaBuGltdckmGQeCqTUeTTvuEZOvEpLXO4RTVVbRlgxir6wnK3XfElUYqFkLbOBO4DEViVqIt4V9lCNrR9jHGnm-55neVbB5LdiWy8I_JnchuhYB8F7aOBhk-7ROW18c2FJEe9ylH9M9zxPwyrONLm9jt1jJ1lFmUogpYQeH7QXb_l1iZEf760o8ELjhx-1xEQ9a_Tc5xRf_yE5R8EmWtfaPfzOBCQxry_YhFI7bWG5"/>
+</div>
+</header>
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-20 bottom-20 z-40 flex flex-col items-center py-6 bg-[#ffffff]/90 dark:bg-[#1a1c1c]/90 backdrop-blur-lg rounded-2xl m-4 w-20 shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+<div class="mb-8 text-center px-2">
+<div class="w-10 h-10 bg-primary-container rounded-lg mx-auto flex items-center justify-center text-white mb-1">
+<span class="material-symbols-outlined">mediation</span>
+</div>
+</div>
+<div class="flex flex-col gap-4 flex-1">
+<button class="bg-[#2563eb] text-white rounded-xl p-3 shadow-lg shadow-blue-500/20 hover:scale-110 transition-all duration-200">
+<span class="material-symbols-outlined">near_me</span>
+<span class="block text-[8px] font-bold uppercase mt-1">선택</span>
+</button>
+<button class="text-[#1a1c1c]/40 p-3 hover:text-[#2563eb] hover:scale-110 transition-all duration-200">
+<span class="material-symbols-outlined">draw</span>
+<span class="block text-[8px] font-bold uppercase mt-1">펜</span>
+</button>
+<button class="text-[#1a1c1c]/40 p-3 hover:text-[#2563eb] hover:scale-110 transition-all duration-200">
+<span class="material-symbols-outlined">sticky_note_2</span>
+<span class="block text-[8px] font-bold uppercase mt-1">스티커</span>
+</button>
+<button class="text-[#1a1c1c]/40 p-3 hover:text-[#2563eb] hover:scale-110 transition-all duration-200">
+<span class="material-symbols-outlined">category</span>
+<span class="block text-[8px] font-bold uppercase mt-1">도형</span>
+</button>
+<button class="text-[#1a1c1c]/40 p-3 hover:text-[#2563eb] hover:scale-110 transition-all duration-200">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="block text-[8px] font-bold uppercase mt-1">에셋</span>
+</button>
+</div>
+<div class="mt-auto flex flex-col gap-2">
+<button class="text-[#1a1c1c]/40 p-2 hover:text-[#2563eb] transition-all">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+</div>
+</aside>
+<!-- Infinite Canvas Area -->
+<main class="relative w-screen h-screen pt-16 dot-grid overflow-hidden">
+<!-- SVG Connector Overlay (Static Mockup) -->
+<svg class="absolute inset-0 pointer-events-none w-full h-full z-10">
+<path d="M450 300 Q 550 250 650 350" fill="none" stroke="#1a1c1c" stroke-dasharray="5,5" stroke-width="2"></path>
+<path d="M700 450 L 900 400" fill="none" marker-end="url(#arrowhead)" stroke="#1a1c1c" stroke-width="2"></path>
+<defs>
+<marker id="arrowhead" markerheight="7" markerwidth="10" orient="auto" refx="0" refy="3.5">
+<polygon fill="#1a1c1c" points="0 0, 10 3.5, 0 7"></polygon>
+</marker>
+</defs>
+</svg>
+<!-- Canvas Content Wrapper (Centered viewport) -->
+<div class="relative w-[2000px] h-[2000px] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+<!-- Sections (Hand-drawn look) -->
+<div class="absolute top-[300px] left-[200px] w-[500px] h-[600px] border-4 border-dashed border-outline/30 rounded-[40px] flex flex-col p-8 opacity-60">
+<span class="marker-font text-3xl font-bold text-outline">할 일</span>
+</div>
+<div class="absolute top-[300px] left-[750px] w-[500px] h-[600px] border-4 border-dashed border-primary/20 rounded-[40px] flex flex-col p-8 opacity-60 bg-primary/5">
+<span class="marker-font text-3xl font-bold text-primary">진행 중</span>
+</div>
+<div class="absolute top-[300px] left-[1300px] w-[500px] h-[600px] border-4 border-dashed border-emerald-500/20 rounded-[40px] flex flex-col p-8 opacity-60">
+<span class="marker-font text-3xl font-bold text-emerald-600">완료</span>
+</div>
+<!-- Sticky Notes -->
+<!-- Yellow -->
+<div class="absolute top-[400px] left-[280px] w-48 h-48 bg-[#fef08a] shadow-xl p-6 -rotate-2 hover:rotate-0 transition-transform cursor-grab active:cursor-grabbing">
+<p class="font-medium text-on-surface leading-tight">뉴럴 코어 모델 아키텍처 정의</p>
+<div class="absolute bottom-4 right-4 flex -space-x-2">
+<img alt="Sarah" class="w-8 h-8 rounded-full border-2 border-white" data-alt="close-up of a young professional man with glasses looking thoughtfully at a screen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCruz0p9PBcO73cA80zYsvCeZWwvaRfrLQaNRF9nGy1dSO2TzfPoNkUJ8GaGHHggFndMFHIg3BgMPPa2uT-k3liKl_wiJktKEdfHKkaWe4gjEeku20CxdXjgggnwT9yq4lvw_J4mpMV2sSCBrKHK22yHX0sWxFRBLpPJox1mJ4d3BBJ0K5Ya8nbRTI-jLhN2nMy6W2qmQ55-bGDTKXy0hzi1LfpmPF7OLo4GgsBjV-ePYpC87ryPQpcfwR1_Zp1-JYQqNgjFKiz7SBH"/>
+</div>
+</div>
+<!-- Blue -->
+<div class="absolute top-[480px] left-[820px] w-48 h-48 bg-[#bfdbfe] shadow-xl p-6 rotate-3 hover:rotate-0 transition-transform cursor-grab active:cursor-grabbing">
+<p class="font-medium text-on-surface leading-tight">잠재 공간 시각화 고도화</p>
+<div class="absolute bottom-4 right-4 flex -space-x-2">
+<img alt="Marcus" class="w-8 h-8 rounded-full border-2 border-white" data-alt="portrait of a confident woman with curly hair smiling in a bright natural light studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZRBUQADhE8_fpCRKwjYw6dgFk5TNvVvXe4R6ywU5HOcnTtKpNwe9nDJYQKpaivIqZWZOISnYYVGqQrKROiKj3J2Pq9S1sPIbmpDzAwPsuhiIAQHYfkozuDvISjS7rukLI-mhqH9Pqm_xHKd8lTcPVDVQ0J4F6-uJ9l4kkF3iHEUbfFcAd-UW0Vgg3tqbqZXQYPUng_PUZ22v4qCk8rlmd0L_gfiLXZFeHdA_HM7BswK7tbOuyx6uwvXOmtNJ1StukQfNkgpyf5CFt"/>
+</div>
+</div>
+<!-- Pink -->
+<div class="absolute top-[650px] left-[350px] w-48 h-48 bg-[#fbcfe8] shadow-xl p-6 rotate-1 hover:rotate-0 transition-transform cursor-grab active:cursor-grabbing">
+<p class="font-medium text-on-surface leading-tight">UI 컴포넌트 라이브러리 - V1 검토</p>
+</div>
+<!-- Green -->
+<div class="absolute top-[420px] left-[1380px] w-48 h-48 bg-[#bbf7d0] shadow-xl p-6 -rotate-3 hover:rotate-0 transition-transform cursor-grab active:cursor-grabbing line-through opacity-80">
+<p class="font-medium text-on-surface leading-tight">초기 브레인스토밍 세션</p>
+<div class="absolute top-2 right-2">
+<span class="material-symbols-outlined text-emerald-700">check_circle</span>
+</div>
+</div>
+<!-- Image Asset Card -->
+<div class="absolute top-[700px] left-[900px] w-64 bg-surface-container-lowest rounded-xl shadow-2xl p-2 rotate-2">
+<img class="w-full h-40 object-cover rounded-lg mb-3" data-alt="abstract geometric composition with flowing liquid shapes in shades of deep blue and electric violet" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9JEf304JQU84WlSL7TXt8RjUQljwGDJG2AkzzFh7idOOf5tIC9VmmBV9OF8_aRYO7QknNgIC9xZ5EvaOdyFnP4RnINpTUxfQnRo63htNdHF7GBwrFfEn--qTeImtWA37oF_-aYkJQirsxFELvO8BP43XC-Qjh1VOQZx1QZbEjHTUz-5RFY-Sx-ejYiTFJnDhmDISS1e16-eAl6CNN36Lb1kOVkJJKKKMWQ9NQ5ADdkU0L32JHfClY7HhQhy7Sqt4VT6lQq1rsruZP"/>
+<div class="px-2 pb-2">
+<span class="label-md uppercase text-[10px] text-primary font-bold">참조 에셋</span>
+<p class="text-xs font-semibold">무드보드: 뉴럴 플로우 v2</p>
+</div>
+</div>
+</div>
+</main>
+<!-- AI Assistant Button (Floating Action) -->
+<button class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-primary-container text-white px-8 py-4 rounded-full flex items-center gap-3 shadow-[0_20px_50px_rgba(37,99,235,0.4)] hover:scale-105 active:scale-95 transition-all group z-50">
+<div class="relative">
+<span class="material-symbols-outlined group-hover:animate-pulse">bolt</span>
+<div class="absolute inset-0 bg-white/30 blur-lg rounded-full animate-pulse"></div>
+</div>
+<span class="font-bold tracking-tight">AI 어시스턴트</span>
+<div class="h-4 w-px bg-white/20 mx-1"></div>
+<span class="text-xs font-medium opacity-80">다음 작업 추천</span>
+</button>
+<!-- Mini-map (Bottom Right) -->
+<div class="fixed bottom-10 right-10 w-48 h-32 bg-surface-container-lowest/80 backdrop-blur-md rounded-2xl shadow-2xl border border-outline-variant/15 p-2 z-50 overflow-hidden">
+<div class="w-full h-full bg-surface-container-low rounded-lg relative overflow-hidden opacity-50">
+<!-- Mini representations -->
+<div class="absolute top-1/4 left-1/4 w-1/4 h-1/2 border border-outline/30 rounded"></div>
+<div class="absolute top-1/4 left-1/2 w-1/4 h-1/2 border border-primary/20 rounded"></div>
+<div class="absolute top-1/4 left-3/4 w-1/4 h-1/2 border border-emerald-500/20 rounded"></div>
+<!-- Viewport focus box -->
+<div class="absolute top-1/3 left-1/3 w-1/2 h-1/3 border-2 border-primary rounded-md shadow-[0_0_20px_rgba(37,99,235,0.2)]"></div>
+</div>
+<div class="absolute top-0 right-0 p-2">
+<span class="material-symbols-outlined text-xs text-outline">map</span>
+</div>
+</div>
+<!-- Zoom Controls -->
+<div class="fixed bottom-10 right-64 flex items-center bg-surface-container-lowest shadow-xl rounded-full px-4 py-2 gap-4 z-50">
+<button class="text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined">remove</span></button>
+<span class="text-xs font-bold w-12 text-center">85%</span>
+<button class="text-outline hover:text-primary transition-colors"><span class="material-symbols-outlined">add</span></button>
+</div>
+</body></html>
