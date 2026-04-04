@@ -11,6 +11,7 @@ import ShortcutHandler from '@/components/board/ShortcutHandler';
 import ZoomController from '@/components/board/ZoomController';
 import ShortcutModal from '@/components/board/ShortcutModal';
 import InstructionModal from '@/components/board/InstructionModal';
+import ExecutionResultModal from '@/components/board/ExecutionResultModal';
 import HistoryModal from '@/components/board/HistoryModal';
 import InboxPanel from '@/components/board/InboxPanel';
 import { useInstructionStore } from '@/store/instructionStore';
@@ -778,6 +779,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
       <ShortcutHandler />
       <ShortcutModal isOpen={isShortcutModalOpen} onClose={() => setIsShortcutModalOpen(false)} />
       <InstructionModal />
+      <ExecutionResultModal />
       <HistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} />
 
       <main

@@ -16,8 +16,18 @@
 #     expires: "2026-04-05"
 
 zones:
-  - path: '.github/workflows/'
+  - path: 'src/app/api/ai/'
     owner: 'kimis0719'
     status: 'active'
-    reason: '테스트 서버 / 운영 서버 인프라 분리 — GitHub Actions 워크플로우 작성'
+    reason: '#243 AI 지시서 실행결과 자동 완료처리'
+    expires: '2026-04-11'
+  - path: 'src/components/board/InstructionModal.tsx'
+    owner: 'kimis0719'
+    status: 'active'
+    reason: '#243 AI 지시서 실행결과 자동 완료처리'
+    expires: '2026-04-11'
+  - path: 'src/lib/models/kanban/NoteModel.ts'
+    owner: 'kimis0719'
+    status: 'active'
+    reason: '#243 AI 지시서 실행결과 자동 완료처리'
     expires: '2026-04-11'

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useInstructionStore } from '@/store/instructionStore';
 import { useBoardStore, type Section, type Note } from '@/store/boardStore';
+import { useExecutionResultStore } from '@/store/executionResultStore';
 
 /* ══════════════════════════════════════════
    InstructionModal — AI 지시서 생성 모달
@@ -19,6 +20,7 @@ export default function InstructionModal() {
     resultMarkdown,
     error,
     usage,
+    historyId,
     setTarget,
     setReference,
     setPreset,
@@ -26,6 +28,8 @@ export default function InstructionModal() {
     generate,
     closeModal,
   } = useInstructionStore();
+
+  const openExecutionResult = useExecutionResultStore((s) => s.open);
 
   const sections = useBoardStore((s) => s.sections);
   const notes = useBoardStore((s) => s.notes);
@@ -196,7 +200,7 @@ export default function InstructionModal() {
         {/* ── 푸터 ── */}
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
           {resultMarkdown ? (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 onClick={handleCopy}
                 className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -217,6 +221,17 @@ export default function InstructionModal() {
               >
                 재생성
               </button>
+              {boardId && historyId && (
+                <button
+                  onClick={() => {
+                    openExecutionResult(boardId, historyId);
+                    closeModal();
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                >
+                  결과 보고
+                </button>
+              )}
             </div>
           ) : (
             <div />

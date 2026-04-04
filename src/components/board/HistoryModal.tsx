@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useBoardStore } from '@/store/boardStore';
+import { useExecutionResultStore } from '@/store/executionResultStore';
 
 interface HistoryItem {
   _id: string;
@@ -32,6 +33,8 @@ export default function HistoryModal({
   onClose: () => void;
 }) {
   const boardId = useBoardStore((s) => s.boardId);
+  const activeNotes = useBoardStore((s) => s.notes);
+  const openExecutionResult = useExecutionResultStore((s) => s.open);
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(false);
@@ -92,6 +95,23 @@ export default function HistoryModal({
     const days = Math.floor(hours / 24);
     if (days < 7) return `${days}일 전`;
     return d.toLocaleDateString('ko-KR');
+  };
+
+  // 연관 노트가 모두 완료되었는지 확인 (active 노트가 하나도 없으면 true)
+  const isAllNotesCompleted = (target: HistoryItem['target']): boolean => {
+    const activeIds = new Set(activeNotes.map((n) => n.id));
+    if (target.type === 'notes') {
+      return (target.noteIds ?? []).every((id) => !activeIds.has(id));
+    }
+    if (target.type === 'all') {
+      return activeNotes.length === 0;
+    }
+    // sections: active 노트 중 해당 섹션 소속이 없으면 완료로 간주
+    if (target.type === 'sections') {
+      const sectionSet = new Set(target.sectionIds ?? []);
+      return !activeNotes.some((n) => n.sectionId && sectionSet.has(n.sectionId));
+    }
+    return false;
   };
 
   const targetLabel = (target: HistoryItem['target']) => {
@@ -204,6 +224,26 @@ export default function HistoryModal({
                         >
                           MD 다운로드
                         </button>
+                        {(() => {
+                          const allDone = isAllNotesCompleted(item.target);
+                          return (
+                            <button
+                              onClick={() => {
+                                if (!boardId || allDone) return;
+                                openExecutionResult(boardId, item._id);
+                                onClose();
+                              }}
+                              disabled={allDone}
+                              title={allDone ? '연관 노트가 모두 완료되었습니다' : '실행결과 보고'}
+                              className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
+                                         bg-green-600 text-white hover:bg-green-700
+                                         disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-200
+                                         disabled:text-gray-400 dark:disabled:bg-gray-700 dark:disabled:text-gray-500"
+                            >
+                              {allDone ? '완료됨' : '결과 보고'}
+                            </button>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}

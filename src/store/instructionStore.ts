@@ -136,6 +136,7 @@ export const useInstructionStore = create<InstructionState & InstructionActions>
                   markdown += data.content;
                   set({ resultMarkdown: markdown });
                 } else if (data.type === 'done') {
+                  const historyId = data.historyId ?? null;
                   set({
                     usage: data.usage
                       ? {
@@ -143,8 +144,20 @@ export const useInstructionStore = create<InstructionState & InstructionActions>
                           outputTokens: data.usage.outputTokens,
                         }
                       : null,
-                    historyId: data.historyId ?? null,
+                    historyId,
                   });
+                  // 템플릿이 포함된 전체 마크다운을 DB에서 fetch하여 store 갱신
+                  if (data.hasResultTemplate && historyId) {
+                    try {
+                      const histRes = await fetch(`/api/ai/history/${historyId}`);
+                      const histJson = await histRes.json();
+                      if (histJson.success && histJson.data?.resultMarkdown) {
+                        set({ resultMarkdown: histJson.data.resultMarkdown });
+                      }
+                    } catch {
+                      // fetch 실패해도 스트리밍 결과는 유지
+                    }
+                  }
                 } else if (data.type === 'error') {
                   set({ error: data.message });
                 }
