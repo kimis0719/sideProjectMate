@@ -1392,9 +1392,7 @@ export const useBoardStore = create<BoardState>()(
           // Optimistic update (undo 히스토리 제외)
           set((state) => ({
             notes: state.notes.filter((n) => n.id !== noteId),
-            completedNotes: completedNotesLoaded
-              ? [...state.completedNotes, completedNote]
-              : state.completedNotes,
+            completedNotes: [...state.completedNotes, completedNote],
             selectedNoteIds: state.selectedNoteIds.filter((id) => id !== noteId),
           }));
 
@@ -1434,16 +1432,14 @@ export const useBoardStore = create<BoardState>()(
           // Optimistic update
           set((state) => ({
             notes: state.notes.filter((n) => !realNoteIds.includes(n.id)),
-            completedNotes: completedNotesLoaded
-              ? [
-                  ...state.completedNotes,
-                  ...notesToComplete.map((n) => ({
-                    ...n,
-                    status: 'done' as const,
-                    completedAt,
-                  })),
-                ]
-              : state.completedNotes,
+            completedNotes: [
+              ...state.completedNotes,
+              ...notesToComplete.map((n) => ({
+                ...n,
+                status: 'done' as const,
+                completedAt,
+              })),
+            ],
             selectedNoteIds: [],
           }));
 
@@ -1470,23 +1466,28 @@ export const useBoardStore = create<BoardState>()(
             // Rollback
             set((state) => ({
               notes: [...state.notes, ...notesToComplete],
-              completedNotes: completedNotesLoaded
-                ? state.completedNotes.filter((n) => !realNoteIds.includes(n.id))
-                : state.completedNotes,
+              completedNotes: state.completedNotes.filter((n) => !realNoteIds.includes(n.id)),
             }));
           }
         },
 
         revertNote: async (noteId) => {
-          const { completedNotes, boardId } = get();
+          const { completedNotes, sections, boardId } = get();
           const note = completedNotes.find((n) => n.id === noteId);
           if (!note) return;
+
+          // 소속 섹션이 done 상태이면 sectionId를 null로 클리어 (진행중 탭에서 보이도록)
+          const parentSection = note.sectionId
+            ? sections.find((s) => s.id === note.sectionId)
+            : null;
+          const shouldClearSection = parentSection && (parentSection.status || 'active') === 'done';
 
           const revertedNote: Note = {
             ...note,
             status: 'active',
             completedAt: undefined,
             completionNote: undefined,
+            ...(shouldClearSection ? { sectionId: null } : {}),
           };
 
           // Optimistic update
@@ -1496,10 +1497,12 @@ export const useBoardStore = create<BoardState>()(
           }));
 
           try {
+            const patch: Record<string, unknown> = { status: 'active', completedAt: null };
+            if (shouldClearSection) patch.sectionId = null;
             await fetch(`/api/kanban/notes/${noteId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'active', completedAt: null }),
+              body: JSON.stringify(patch),
             });
 
             if (boardId) {

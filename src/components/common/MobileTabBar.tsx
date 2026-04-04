@@ -83,6 +83,7 @@ export default function MobileTabBar() {
 
   return (
     <nav
+      data-mobile-tabbar
       className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface-container-lowest"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="하단 탭 바"

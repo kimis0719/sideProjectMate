@@ -131,6 +131,7 @@ export default function DashboardLayout({
 
   // 대시보드 홈 여부 확인
   const isHomePage = pathname === `/dashboard/${pid}`;
+  const isKanbanPage = pathname?.includes('/kanban');
   const isActive = (path: string) => pathname === path;
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -250,8 +251,9 @@ export default function DashboardLayout({
           </svg>
         </button>
       ) : (
-        /* 작업 페이지: 개선된 플로팅 트리거 (손잡이 형태) */
-        !isSidebarOpen && (
+        /* 작업 페이지: 개선된 플로팅 트리거 (손잡이 형태, 칸반 제외) */
+        !isSidebarOpen &&
+        !isKanbanPage && (
           <button
             onClick={toggleSidebar}
             className="fixed left-0 top-1/2 -translate-y-1/2 z-[40] w-4 h-20 bg-background border-y border-r border-border rounded-r-2xl shadow-[4px_0_15px_rgba(0,0,0,0.1)] flex items-center justify-center hover:w-8 transition-all group overflow-hidden"

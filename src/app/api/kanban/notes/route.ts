@@ -64,7 +64,7 @@ async function handlePost(request: Request) {
     const { text, x, y, color, width, height, boardId, sectionId, tags, dueDate, assigneeId } =
       body;
 
-    if (!boardId || !text || x === undefined || y === undefined) {
+    if (!boardId || !text) {
       return NextResponse.json(
         { success: false, message: '필수 필드가 누락되었습니다.' },
         { status: 400 }
@@ -73,8 +73,8 @@ async function handlePost(request: Request) {
 
     const newNote = new Note({
       text: text || '새 노트',
-      x: x || 0,
-      y: y || 0,
+      x: x ?? null,
+      y: y ?? null,
       color: color || '#FFFB8F',
       width: width || 200,
       height: height || 140,

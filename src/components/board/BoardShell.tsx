@@ -1087,8 +1087,19 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         {/* 우측 — 미니맵 */}
         <div className="absolute bottom-8 right-8 z-40" onPointerDown={(e) => e.stopPropagation()}>
           <Minimap
-            notes={notes}
-            sections={sections}
+            notes={
+              viewMode === 'done'
+                ? completedNotes.filter((n) => n.x !== null && n.y !== null)
+                : notes.filter((n) => n.x !== null && n.y !== null)
+            }
+            sections={sections.filter(
+              (s) =>
+                (viewMode === 'done'
+                  ? (s.status || 'active') === 'done'
+                  : (s.status || 'active') === 'active') &&
+                s.x !== null &&
+                s.y !== null
+            )}
             pan={pan}
             zoom={zoom}
             containerWidth={containerRef.current?.clientWidth || 0}

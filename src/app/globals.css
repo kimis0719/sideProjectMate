@@ -176,6 +176,12 @@
     @apply top-0;
   }
 
+  /* 칸반 페이지에서 Footer + MobileTabBar 숨김 */
+  body.kanban-active footer,
+  body.kanban-active [data-mobile-tabbar] {
+    display: none !important;
+  }
+
   /* 스크린리더 전용 텍스트 */
   .sr-only {
     position: absolute;
