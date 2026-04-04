@@ -117,4 +117,3 @@ feature/* / fix/* /
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
 | `src/app/api/ai/`, `src/components/board/` | kimis0719 | 🟡 작업 중 | #243 AI 지시서 실행결과 자동 완료처리 |
-| `ApplyModal.tsx`, `ImageEditModal.tsx`, `ReviewModal.tsx` | FFLINA-PC | 🟡 작업 중 | #247 feat: UI/UX 전면 개편 Phase 7 — 모달 디자인 교체 (7-1, 7-4, 7-5) |
