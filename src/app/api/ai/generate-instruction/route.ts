@@ -7,8 +7,10 @@ import AiSettings from '@/lib/models/AiSettings';
 import AiUsage from '@/lib/models/AiUsage';
 import AiInstructionHistory from '@/lib/models/AiInstructionHistory';
 import Board from '@/lib/models/kanban/BoardModel';
+import Note from '@/lib/models/kanban/NoteModel';
 import { getLlmProvider } from '@/lib/ai';
 import { buildAiContext } from '@/lib/utils/board/buildAiContext';
+import { generateResultTemplate } from '@/lib/utils/ai/generateResultTemplate';
 import type { TokenUsage } from '@/lib/ai/types';
 
 export const dynamic = 'force-dynamic';
@@ -133,8 +135,36 @@ export async function POST(request: Request) {
             estimatedCost: usage.estimatedCost,
           });
 
-          // ── 히스토리 저장 ──
+          // ── 실행결과 템플릿용 대상 노트 조회 ──
+          type LeanNote = { _id: string; text: string };
+          let targetNotes: LeanNote[] = [];
+          if (target.type === 'notes' && target.noteIds?.length) {
+            targetNotes = (await Note.find(
+              { _id: { $in: target.noteIds } },
+              { _id: 1, text: 1 }
+            ).lean()) as unknown as LeanNote[];
+          } else if (target.type === 'sections' && target.sectionIds?.length) {
+            targetNotes = (await Note.find(
+              { sectionId: { $in: target.sectionIds }, boardId, status: 'active' },
+              { _id: 1, text: 1 }
+            ).lean()) as unknown as LeanNote[];
+          } else if (target.type === 'all') {
+            targetNotes = (await Note.find(
+              { boardId, status: 'active' },
+              { _id: 1, text: 1 }
+            ).lean()) as unknown as LeanNote[];
+          }
+
+          // ── 히스토리 저장 (resultMarkdown에 실행결과 템플릿 포함) ──
+          // 템플릿은 DB에만 저장하고 스트리밍에는 포함하지 않음
+          // 클라이언트는 히스토리 조회 시 전체 마크다운(템플릿 포함)을 받음
+          const tempHistory = new AiInstructionHistory();
+          const historyId = tempHistory._id.toString();
+          const resultTemplate = generateResultTemplate(historyId, targetNotes);
+          const finalMarkdown = `${fullResult}\n\n${resultTemplate}`;
+
           const history = await AiInstructionHistory.create({
+            _id: tempHistory._id,
             projectId: board.pid,
             boardId,
             creatorId: session.user._id,
@@ -142,7 +172,7 @@ export async function POST(request: Request) {
             target,
             reference: reference ?? undefined,
             additionalInstruction: additionalInstruction ?? '',
-            resultMarkdown: fullResult,
+            resultMarkdown: finalMarkdown,
             inputTokens: usage.inputTokens,
             outputTokens: usage.outputTokens,
             provider: settings.provider,
@@ -155,6 +185,7 @@ export async function POST(request: Request) {
                 type: 'done',
                 usage,
                 historyId: history._id,
+                hasResultTemplate: true,
               })}\n\n`
             )
           );

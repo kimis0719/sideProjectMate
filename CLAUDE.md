@@ -116,4 +116,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| `.github/workflows/` | kimis0719 | 🟡 작업 중 | #232 테스트 서버 / 운영 서버 인프라 분리 — GitHub Actions 워크플로우 작성 |
+| `src/app/api/ai/`, `src/components/board/` | kimis0719 | 🟡 작업 중 | #243 AI 지시서 실행결과 자동 완료처리 |
