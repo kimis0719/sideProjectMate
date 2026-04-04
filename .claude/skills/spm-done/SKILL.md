@@ -191,24 +191,22 @@ work-log 내용을 기반으로 PR 초안을 작성하고 사용자에게 확인
 - question: "PR 초안을 확인해주세요."
 - header: "PR 확인"
 - options:
-  - label: "이대로 생성 (Recommended)", description: "PR을 생성하고 auto-merge를 등록합니다"
+  - label: "이대로 생성 (Recommended)", description: "PR을 생성합니다. 테스트 서버 검증 후 수동 머지해주세요."
   - label: "수정 후 생성", description: "Other를 선택해 수정할 내용을 입력하세요"
 - preview 활용: PR 제목 + 본문 전체를 preview 필드에 표시
 
-확인 후 PR 생성 및 auto-merge 등록:
+확인 후 PR 생성 (**auto-merge 하지 않음**):
 
 ```bash
 gh pr create \
   --title "[PR 제목]" \
   --body "[PR 본문]" \
   --base main
-
-gh pr merge --auto --merge
 ```
 
 - PR URL을 출력합니다.
-- auto-merge 등록 완료 메시지: `✅ CI 통과 시 자동 머지됩니다.`
-- branch protection rule이 없으면 즉시 머지, 있으면 CI + approve 후 자동 머지.
+- 테스트 서버 배포 안내: `🚀 PR 생성 완료 — 테스트 서버(test-server 브랜치)에 자동 배포됩니다. 검증 완료 후 수동으로 머지해주세요.`
+- **⚠️ `gh pr merge --auto`를 실행하지 않습니다.** 테스트 서버 검증 → 수동 머지가 운영 배포 프로세스입니다.
 
 ---
 
