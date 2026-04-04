@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SPM - Project Board</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Manrope:wght@700;800&amp;family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#acbfff",
+                      "outline-variant": "#c3c6d7",
+                      "inverse-primary": "#b4c5ff",
+                      "on-tertiary-fixed-variant": "#7d2d00",
+                      "on-secondary-fixed-variant": "#31447b",
+                      "on-tertiary": "#ffffff",
+                      "tertiary": "#943700",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "primary-fixed": "#dbe1ff",
+                      "on-primary-container": "#eeefff",
+                      "secondary": "#495c95",
+                      "on-primary-fixed": "#00174b",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "surface-container": "#eeeeed",
+                      "primary-container": "#2563eb",
+                      "surface-container-highest": "#e2e2e2",
+                      "background": "#f9f9f8",
+                      "outline": "#737686",
+                      "secondary-fixed": "#dbe1ff",
+                      "inverse-on-surface": "#f1f1f0",
+                      "tertiary-fixed": "#ffdbcd",
+                      "inverse-surface": "#2f3130",
+                      "tertiary-container": "#bc4800",
+                      "on-secondary-container": "#394c84",
+                      "error-container": "#ffdad6",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed": "#360f00",
+                      "error": "#ba1a1a",
+                      "surface-dim": "#dadad9",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "surface-variant": "#e2e2e2",
+                      "on-error-container": "#93000a",
+                      "on-surface": "#1a1c1c",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#f9f9f8",
+                      "surface-container-lowest": "#ffffff",
+                      "surface": "#f9f9f8",
+                      "on-secondary": "#ffffff",
+                      "surface-container-high": "#e8e8e7",
+                      "on-surface-variant": "#434655",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-tertiary-container": "#ffede6",
+                      "surface-tint": "#0053db",
+                      "surface-container-low": "#f3f4f3",
+                      "primary": "#004ac6",
+                      "on-secondary-fixed": "#00174b",
+                      "on-background": "#1a1c1c"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.5rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope", "Noto Sans KR"],
+                      "body": ["Inter", "Noto Sans KR"],
+                      "label": ["Inter", "Noto Sans KR"]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f9f9f8; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .tab-content-active { display: block; }
+        .tab-content-inactive { display: none; }
+        /* Style for Completed Tab background */
+        .mode-completed { background-color: #f1f5f1 !important; }
+        
+        /* Specific highlight for active tab from prompt */
+        .tab-active-blue { background-color: #2563EB !important; color: white !important; }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="text-on-surface antialiased pb-32 transition-colors duration-300" id="body-root">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-inherit flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-4">
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-150">
+<span class="material-symbols-outlined text-[#2563eb]">arrow_back</span>
+</button>
+<h1 class="font-manrope text-xl font-bold tracking-tight text-slate-900">Project Board</h1>
+</div>
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-150">
+<span class="material-symbols-outlined text-[#2563eb]">settings</span>
+</button>
+<div class="absolute bottom-0 left-0 bg-black/5 h-[1px] w-full"></div>
+</header>
+<main class="mt-16 px-4 pt-6 max-w-md mx-auto">
+<!-- Status Tabs -->
+<nav class="flex gap-2 mb-8 bg-surface-container-low p-1 rounded-xl">
+<button class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg tab-active-blue shadow-sm transition-all duration-200" id="btn-ongoing" onclick="setTab('ongoing')">
+<span class="text-sm font-bold">📌 진행중</span>
+<span class="bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold">24</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-all duration-200" id="btn-completed" onclick="setTab('completed')">
+<span class="text-sm font-semibold">✅ 완료</span>
+<span class="bg-surface-container-high px-2 py-0.5 rounded-full text-[10px] font-bold text-slate-500">12</span>
+</button>
+</nav>
+<!-- ONGOING TAB CONTENT -->
+<div class="tab-content-active" id="tab-ongoing">
+<!-- Inbox Section (Vibrant/Active state) -->
+<section class="mb-10 rounded-2xl bg-[#e2e4e2] overflow-hidden">
+<div class="px-5 py-4 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#2563eb] text-xl">inbox</span>
+<div class="w-5 h-5 rounded-md border-2 border-outline-variant flex-shrink-0"></div><h2 class="text-sm font-bold text-slate-900 tracking-tight">인박스 (3)</h2>
+</div>
+<button class="text-slate-500">
+<span class="material-symbols-outlined">expand_less</span>
+</button>
+</div>
+<div class="px-3 pb-4 space-y-4">
+<!-- Inbox Folder/Section 1 -->
+<div class="space-y-2">
+<div class="flex items-center justify-between px-2 py-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 text-sm">folder_open</span>
+<span class="text-xs font-bold text-slate-700">기획 리뷰 요청</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="text-slate-400 cursor-grab">
+<span class="material-symbols-outlined text-[18px]">drag_handle</span>
+</button>
+</div>
+</div>
+<div class="space-y-2 pl-2">
+<!-- Inbox Note Card 1 -->
+<div class="relative bg-surface-container-lowest rounded-xl p-4 flex items-start gap-3 shadow-sm group">
+<div class="absolute left-0 top-3 bottom-3 w-1 bg-yellow-400 rounded-r-full"></div>
+<div class="flex-shrink-0 pt-0.5">
+<div class="w-5 h-5 rounded-md border-2 border-outline-variant flex items-center justify-center"></div>
+</div>
+<div class="flex-1">
+<h3 class="text-[15px] font-medium text-slate-900 mb-3 leading-snug">API 엔드포인트 명세서 검토 요청</h3>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img alt="" class="w-5 h-5 rounded-full border border-surface-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJfxH21ZBMRs-J04ouWxx0IfYYB7yLZT_ndhLO0tb3e-UvVsEZhxRCnAt2DDKas3Rz8T5u47Rg1ByAP41hB8irR-CUsyl6UTJ__G-a6ogPrcsy_Uozj1_6IaBF4JVnsj7ClE7WQBQjey-JFDrakCe3iGpc8s6Dsc1ulxziLX9gLIPQF5pTN4pUU0GD1aaq979MSoWcmaJe_hZ44XSX10KdppgEE12bo4x2UTQqP6uuXFbpNLKAWYRh7Ds4RgESngIo_2gREknFs8zi"/>
+<span class="text-[11px] font-medium text-slate-500">김철수</span>
+</div>
+<span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 text-[10px] font-bold uppercase rounded-full">High Priority</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Inbox Folder/Section 2 -->
+<div class="space-y-2">
+<div class="flex items-center justify-between px-2 py-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 text-sm">folder_open</span>
+<span class="text-xs font-bold text-slate-700">디자인 에셋</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="text-slate-400 cursor-grab">
+<span class="material-symbols-outlined text-[18px]">drag_handle</span>
+</button>
+</div>
+</div>
+<div class="space-y-2 pl-2">
+<!-- Inbox Note Card 2 -->
+<div class="relative bg-surface-container-lowest rounded-xl p-4 flex items-start gap-3 shadow-sm group">
+<div class="absolute left-0 top-3 bottom-3 w-1 bg-blue-500 rounded-r-full"></div>
+<div class="flex-shrink-0 pt-0.5">
+<div class="w-5 h-5 rounded-md border-2 border-outline-variant"></div>
+</div>
+<div class="flex-1">
+<h3 class="text-[15px] font-medium text-slate-900 mb-3 leading-snug">메인 배너 리소스 전달</h3>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img alt="" class="w-5 h-5 rounded-full border border-surface-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2bzXqVzqR3bAoMQigYYS1_OzBNEd6lPc56Wf5BgqrOkYPXOnilIFORr1jsccRM74shC1lIX3_eA5cqr5W5_mCS41MXFRFBW1PmArKZqMkJVLqKZ8mlZLM-bWScn-WLpkzwHuLpdDSS5KrBFdI7FGsJFMXpmqCRi3DVKC2IGwI2sniN4prD5A_o4d8_NDZuOInqJ3RMpPqCeMCvZrku6pYKu3MAOGK4jmaCo_-L6MdqnCHGqN3bSmfH63yzAv8D0k2ZpDZ9L2y6qyu"/>
+<span class="text-[11px] font-medium text-slate-500">이영희</span>
+</div>
+<span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase rounded-full">Assets</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Active Sections Accordion -->
+<div class="space-y-12">
+<!-- Section 1 -->
+<section>
+<div class="flex justify-between items-center mb-4 px-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-sm">arrow_drop_down</span>
+<div class="w-5 h-5 rounded-md border-2 border-outline-variant flex-shrink-0 ml-1"></div><h2 class="text-[15px] font-bold text-slate-900">백엔드 리팩토링 (3)</h2>
+</div>
+<button class="text-slate-400">
+<span class="material-symbols-outlined text-xl">more_horiz</span>
+</button>
+</div>
+<div class="space-y-3">
+<!-- Note Card -->
+<div class="relative bg-surface-container-lowest rounded-xl p-4 flex items-start gap-3 shadow-sm border border-transparent hover:border-blue-100 transition-colors">
+<div class="absolute left-0 top-3 bottom-3 w-1 bg-green-500 rounded-r-full"></div>
+<div class="flex-shrink-0 pt-0.5">
+<div class="w-5 h-5 rounded-md border-2 border-outline-variant"></div>
+</div>
+<div class="flex-1">
+<h3 class="text-[15px] font-medium text-slate-900 mb-3 leading-snug">DB 마이그레이션 스크립트 작성</h3>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img alt="" class="w-5 h-5 rounded-full border border-surface-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuw_79ZMQl4RphLqbHnIPuJO_LO18O_dgH-yay-_t85iMR1cKqdMQcZ-HSUc1x2QDAX-LFGii4yyFbu1uTmKJOi0edBeegfzVfmY40d8LCG7ok4WOFGB77LYZrBQCrxbiPft87bGfHY0Q0QwKhM-W8NKX8dfybkkGMBkVZSr8O1VQE9KTWn0moyuyK-qa_9LdofWdW_6gUvEQlf74rlzg3eJehQLbHehE4GgDKMtnl9uiT1C55ieyjCZcknpyJ8Kpnr9CQa4iH1Vzw"/>
+<span class="text-[11px] font-medium text-slate-500">박지민</span>
+</div>
+<div class="flex gap-1">
+<span class="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold uppercase rounded-full tracking-wider">Dev</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Note Card 2 -->
+<div class="relative bg-surface-container-lowest rounded-xl p-4 flex items-start gap-3 shadow-sm border border-transparent hover:border-blue-100 transition-colors">
+<div class="absolute left-0 top-3 bottom-3 w-1 bg-rose-500 rounded-r-full"></div>
+<div class="flex-shrink-0 pt-0.5">
+<div class="w-5 h-5 rounded-md border-2 border-outline-variant"></div>
+</div>
+<div class="flex-1">
+<h3 class="text-[15px] font-medium text-slate-900 mb-3 leading-snug">레거시 오더 시스템 아키텍처 다이어그램 업데이트</h3>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img alt="" class="w-5 h-5 rounded-full border border-surface-container" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDW5sX3409m8aea30isCA2SNECmLIc1gP_-Sd6V4ei0a9WKmBy-Xnd9PMnzo_TWO8CeAUFZwEiDN8ItyvdTzTWtfPqw5ezd5jEguBpVUt8oxWVCiCglJCN7vp9QUh6cQTZC-jQg9xWdQXPjxW1dbxJPwnrknNSx2R-CdtvfZn_r48TaP5NK74r9qLmAeep6yn3XgXGjbasjlicPxOowCSksiahZPnUJscdek850YaynzJBwjHo1C5ryBnZDv_ZmSUzzTEKU8w7H6PFS"/>
+<span class="text-[11px] font-medium text-slate-500">최수아</span>
+</div>
+<span class="px-2 py-0.5 bg-rose-50 text-rose-700 text-[10px] font-bold uppercase rounded-full tracking-wider">Docs</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2 -->
+<section>
+<div class="flex justify-between items-center mb-4 px-1">
+<div class="flex items-center gap-2 opacity-50">
+<span class="material-symbols-outlined text-slate-400 text-sm">arrow_right</span>
+<div class="w-5 h-5 rounded-md border-2 border-outline-variant flex-shrink-0 ml-1"></div><h2 class="text-[15px] font-bold text-slate-900">UI 컴포넌트 고도화 (5)</h2>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- COMPLETED TAB CONTENT -->
+<div class="tab-content-inactive" id="tab-completed">
+<div class="space-y-8">
+<section>
+<div class="flex justify-between items-center mb-4 px-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-sm">arrow_drop_down</span>
+<h2 class="text-[15px] font-bold text-slate-900 opacity-60">완료된 아카이브 (12)</h2>
+</div>
+</div>
+<div class="space-y-3">
+<!-- Completed Note Card 1 -->
+<div class="relative bg-surface-container-lowest/70 rounded-xl p-4 flex items-start gap-3 shadow-sm opacity-70">
+<div class="absolute left-0 top-3 bottom-3 w-1 bg-slate-300 rounded-r-full"></div>
+<div class="flex-shrink-0 pt-0.5">
+<div class="w-5 h-5 rounded-md bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[14px]" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+</div>
+<div class="flex-1">
+<h3 class="text-[15px] font-medium text-slate-500 mb-3 leading-snug line-through">로그인 페이지 벨리데이션 추가</h3>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-medium text-slate-400">2024.05.12 완료</span>
+</div>
+<span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase rounded-full">Frontend</span>
+</div>
+</div>
+</div>
+<!-- Completed Note Card 2 -->
+<div class="relative bg-surface-container-lowest/70 rounded-xl p-4 flex items-start gap-3 shadow-sm opacity-70">
+<div class="absolute left-0 top-3 bottom-3 w-1 bg-slate-300 rounded-r-full"></div>
+<div class="flex-shrink-0 pt-0.5">
+<div class="w-5 h-5 rounded-md bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[14px]" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+</div>
+<div class="flex-1">
+<h3 class="text-[15px] font-medium text-slate-500 mb-3 leading-snug line-through">사용자 피드백 서베이 폼 제작</h3>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-medium text-slate-400">2024.05.10 완료</span>
+</div>
+<span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase rounded-full">Product</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Floating Actions -->
+<div class="fixed bottom-24 right-6 flex flex-col gap-3 items-end z-40">
+<button class="bg-surface-container-lowest text-[#2563eb] px-4 py-2.5 rounded-full shadow-lg border border-slate-100 flex items-center gap-2 active:scale-95 duration-150 transition-all">
+<span class="material-symbols-outlined text-xl">create_new_folder</span>
+<span class="text-sm font-bold">+ 섹션</span>
+</button>
+<button class="bg-[#2563eb] text-white px-6 py-3.5 rounded-full shadow-xl flex items-center gap-2 active:scale-95 duration-150 transition-all">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">add</span>
+<span class="text-sm font-bold">+ 노트</span>
+</button>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-inherit/80 backdrop-blur-lg rounded-t-xl">
+<div class="bg-black/5 h-[1px] w-full"></div>
+<div class="flex justify-around items-center w-full px-4 pb-6 pt-3">
+<div class="flex flex-col items-center justify-center bg-blue-50 text-[#2563eb] rounded-lg px-4 py-1.5 transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+<span class="font-manrope text-[10px] font-semibold uppercase tracking-wider mt-0.5">Board</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined">search</span>
+<span class="font-manrope text-[10px] font-semibold uppercase tracking-wider mt-0.5">Search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="font-manrope text-[10px] font-semibold uppercase tracking-wider mt-0.5">Chat</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined">person</span>
+<span class="font-manrope text-[10px] font-semibold uppercase tracking-wider mt-0.5">Profile</span>
+</div>
+</div>
+</nav>
+<script>
+        function setTab(mode) {
+            const body = document.getElementById('body-root');
+            const ongoingTab = document.getElementById('tab-ongoing');
+            const completedTab = document.getElementById('tab-completed');
+            const btnOngoing = document.getElementById('btn-ongoing');
+            const btnCompleted = document.getElementById('btn-completed');
+
+            if (mode === 'completed') {
+                body.classList.add('mode-completed');
+                ongoingTab.classList.replace('tab-content-active', 'tab-content-inactive');
+                completedTab.classList.replace('tab-content-inactive', 'tab-content-active');
+                
+                // Toggle Button Styles
+                btnOngoing.className = "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-all duration-200";
+                btnCompleted.className = "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg tab-active-blue shadow-sm transition-all duration-200";
+            } else {
+                body.classList.remove('mode-completed');
+                ongoingTab.classList.replace('tab-content-inactive', 'tab-content-active');
+                completedTab.classList.replace('tab-content-active', 'tab-content-inactive');
+                
+                // Toggle Button Styles
+                btnOngoing.className = "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg tab-active-blue shadow-sm transition-all duration-200";
+                btnCompleted.className = "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container transition-all duration-200";
+            }
+        }
+    </script>
+</body></html>

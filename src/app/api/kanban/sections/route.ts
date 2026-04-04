@@ -14,7 +14,12 @@ async function handleGet(req: NextRequest) {
     }
 
     await dbConnect();
-    const sections = await Section.find({ boardId }).lean();
+    const status = searchParams.get('status');
+    const filter: Record<string, unknown> = { boardId };
+    if (status === 'active' || status === 'done') {
+      filter.status = status;
+    }
+    const sections = await Section.find(filter).lean();
 
     return NextResponse.json({ success: true, data: sections });
   } catch (error) {

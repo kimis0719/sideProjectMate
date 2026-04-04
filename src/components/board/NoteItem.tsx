@@ -7,6 +7,7 @@ import { socketClient } from '@/lib/socket';
 import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 // Color Gen Helper
 const stringToColor = (str: string) => {
@@ -22,9 +23,37 @@ const stringToColor = (str: string) => {
 const preprocessMarkdown = (text: string) => {
   if (!text) return '';
   let processed = text;
-  processed = processed.replace(/(^|\n)(#{1,6})([^ \n#])/g, '$1$2 $3');
+  // 볼드 공백 트림
   processed = processed.replace(/\*\*\s+([^\*]+?)\s+\*\*/g, '**$1**');
+  // 들여쓰기 보존
   processed = processed.replace(/^ +/gm, (match) => '&nbsp;'.repeat(match.length));
+  // 미지원 문법 이스케이프 (기호가 플레인 텍스트로 보이도록)
+  processed = processed.replace(/^(#{1,6})\s/gm, (_, h) => h.replace(/#/g, '\\#') + ' ');
+  processed = processed.replace(/^>\s/gm, '\\> ');
+  processed = processed.replace(/```/g, '\\`\\`\\`');
+  // 체크리스트 이스케이프: - [ ] / - [x] → 플레인 텍스트 (리스트 파싱도 차단)
+  processed = processed.replace(/^- \[[ xX]?\]/gm, (m) => '\\- ' + m.slice(2).replace('[', '\\['));
+  // 독립 체크박스 이스케이프: [ ], [x] 등
+  processed = processed.replace(/\[[ xX]?\]/gm, (m) => m.replace('[', '\\['));
+  // 넘버링 이스케이프: 1. 텍스트 → 1\. 텍스트 (ol 파싱 방지)
+  processed = processed.replace(/^(\d+)\.\s/gm, '$1\\. ');
+  // 밑줄: ++텍스트++ → <u>텍스트</u>
+  processed = processed.replace(/\+\+([^+]+?)\+\+/g, '<u>$1</u>');
+  // 리스트 블록과 비리스트 텍스트 사이에 빈 줄 삽입 (리스트 종료)
+  const lines = processed.split('\n');
+  const result: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    result.push(lines[i]);
+    const isListLine = lines[i].startsWith('- ');
+    const nextLine = lines[i + 1];
+    const isNextList = nextLine?.startsWith('- ');
+    const isNextEmpty = nextLine === '';
+    // 현재 줄이 리스트이고, 다음 줄이 리스트도 빈줄도 아닌 일반 텍스트이면 빈줄 삽입
+    if (isListLine && nextLine !== undefined && !isNextList && !isNextEmpty) {
+      result.push('');
+    }
+  }
+  processed = result.join('\n');
   return processed;
 };
 // -----------------------------
@@ -103,7 +132,7 @@ const toInputDate = (d?: Date) => {
   return new Date(d).toISOString().split('T')[0];
 };
 
-const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
+const COLOR_PALETTE = ['#fef9c3', '#dcfce7', '#fce7f3', '#dbeafe', '#f3e8ff', '#FEF3C7'] as const;
 const SNAP_THRESHOLD = 3;
 const GRID_SIZE = 10;
 
@@ -539,6 +568,7 @@ export default function NoteItem({
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
+      if (isDoneView) return;
       if (isEditing) return;
       if (isLockedByOther) return;
 
@@ -552,6 +582,7 @@ export default function NoteItem({
 
       isDragging.current = true;
       hasMoved.current = false;
+      useBoardStore.getState().setIsDraggingNote(true);
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       totalDragRef.current = { x: 0, y: 0 };
 
@@ -574,7 +605,19 @@ export default function NoteItem({
 
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     },
-    [isEditing, id, selectNote, isSelected, isLockedByOther, isSelectionMode, x, y, width, height]
+    [
+      isEditing,
+      isDoneView,
+      id,
+      selectNote,
+      isSelected,
+      isLockedByOther,
+      isSelectionMode,
+      x,
+      y,
+      width,
+      height,
+    ]
   );
 
   const onPointerMove = React.useCallback(
@@ -708,6 +751,7 @@ export default function NoteItem({
       // 드래그 종료 처리
       if (!isDragging.current) return;
       isDragging.current = false;
+      useBoardStore.getState().setIsDraggingNote(false);
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
       setAlignmentGuides([]);
 
@@ -729,13 +773,28 @@ export default function NoteItem({
         // 2. DB Update (Batch)
         // Store 업데이트 후, DB에는 '이동 된 좌표'를 보내거나, '이동 전 좌표 + 델타'를 보내야 함.
         // 여기서는 안전하게 계산된 값을 보냄.
-        const currentNotes = useBoardStore.getState().notes;
+        const { notes: currentNotes, sections: allSecs } = useBoardStore.getState();
+        const sortedSecs = [...allSecs].sort((a, b) => (b.depth || 0) - (a.depth || 0));
         const updates = currentNotes
           .filter((n) => selectedNoteIds.includes(n.id))
-          .map((n) => ({
-            id: n.id,
-            changes: { x: n.x, y: n.y },
-          }));
+          .map((n) => {
+            const cx = n.x + (n.width || 200) / 2;
+            const cy = n.y + (n.height || 140) / 2;
+            let capId: string | null = null;
+            for (const sec of sortedSecs) {
+              if (
+                cx >= sec.x &&
+                cx <= sec.x + sec.width &&
+                cy >= sec.y &&
+                cy <= sec.y + sec.height
+              ) {
+                capId = sec.id;
+                break;
+              }
+            }
+            updateNote(n.id, { sectionId: capId });
+            return { id: n.id, changes: { x: n.x, y: n.y, sectionId: capId } };
+          });
 
         fetch('/api/kanban/notes/batch', {
           method: 'PATCH',
@@ -758,9 +817,50 @@ export default function NoteItem({
             snappedY = Math.round(snappedY / GRID_SIZE) * GRID_SIZE;
         }
 
+        // 인박스 영역 위에 드롭했는지 체크 (화면 우측 인박스 패널)
+        const inboxEl = document.querySelector('[data-inbox-panel]');
+        if (inboxEl) {
+          const inboxRect = inboxEl.getBoundingClientRect();
+          if (
+            e.clientX >= inboxRect.left &&
+            e.clientX <= inboxRect.right &&
+            e.clientY >= inboxRect.top &&
+            e.clientY <= inboxRect.bottom
+          ) {
+            // 인박스로 이동: 좌표 null
+            updateNote(id, {
+              x: null as unknown as number,
+              y: null as unknown as number,
+              sectionId: null,
+            });
+            saveChanges({ x: null, y: null, sectionId: null } as unknown as Partial<
+              Omit<Note, 'id'>
+            >);
+            return;
+          }
+        }
+
         moveNote(id, snappedX, snappedY); // Store Update (Undo 1회 저장)
         debouncedSave.cancel();
-        saveChanges({ x: snappedX, y: snappedY }); // DB 저장
+
+        // Auto-capture: 노트 중심이 어떤 섹션 안에 있는지 계산 → 항상 sectionId 포함하여 저장
+        const allSections = useBoardStore.getState().sections;
+        const noteCX = snappedX + (width || 200) / 2;
+        const noteCY = snappedY + (height || 140) / 2;
+        let capturedSectionId: string | null = null;
+        for (const sec of [...allSections].sort((a, b) => (b.depth || 0) - (a.depth || 0))) {
+          if (
+            noteCX >= sec.x &&
+            noteCX <= sec.x + sec.width &&
+            noteCY >= sec.y &&
+            noteCY <= sec.y + sec.height
+          ) {
+            capturedSectionId = sec.id;
+            break;
+          }
+        }
+        updateNote(id, { sectionId: capturedSectionId });
+        saveChanges({ x: snappedX, y: snappedY, sectionId: capturedSectionId });
       }
     },
     [
@@ -773,6 +873,8 @@ export default function NoteItem({
       debouncedSave,
       isSnapEnabled,
       moveNote,
+      width,
+      height,
       moveNotes,
     ]
   );
@@ -780,6 +882,7 @@ export default function NoteItem({
   const onPointerCancel = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       isDragging.current = false;
+      useBoardStore.getState().setIsDraggingNote(false);
       isResizing.current = false;
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
       setAlignmentGuides([]);
@@ -850,7 +953,7 @@ export default function NoteItem({
   );
 
   // --- Box-Shadow (Border Replacement) ---
-  const baseShadow = '0 2px 8px rgba(0,0,0,0.15)';
+  const baseShadow = '0 4px 12px rgba(0,0,0,0.08)';
   let ringShadow = '';
 
   if (isLockedByOther) {
@@ -861,7 +964,9 @@ export default function NoteItem({
     ringShadow = `inset 0 0 0 2px ${peerColor}`;
   }
 
+  const hoverShadow = '0 8px 24px rgba(0,0,0,0.12)';
   const finalShadow = ringShadow ? `${baseShadow}, ${ringShadow}` : baseShadow;
+  const finalHoverShadow = ringShadow ? `${hoverShadow}, ${ringShadow}` : hoverShadow;
 
   return (
     <div
@@ -884,21 +989,23 @@ export default function NoteItem({
       onMouseLeave={() => setIsHovered(false)}
       style={{
         position: 'absolute',
-        transform: `translate3d(${x}px, ${y}px, 0)`,
         width: width,
         height: height,
         background: isDoneView ? `${color}99` : color,
-        boxShadow: finalShadow,
-        borderRadius: 12,
+        boxShadow: isHovered && !isEditing && !isDoneView ? finalHoverShadow : finalShadow,
+        borderRadius: 8,
         padding: 0,
-        cursor: isEditing ? 'text' : 'grab',
+        cursor: isDoneView ? 'default' : isEditing ? 'text' : 'grab',
         userSelect: isEditing ? 'text' : 'none',
         touchAction: 'none',
         overscrollBehavior: 'contain',
         outline: 'none',
-        opacity: isTempNote ? 0.7 : isCompleting ? 0 : 1,
-        transition: isCompleting ? 'opacity 0.3s ease, transform 0.3s ease' : undefined,
-        zIndex: isSelected ? 9999 : zIndex,
+        opacity: isTempNote ? 0.7 : isCompleting ? 0 : isDoneView ? 0.6 : 1,
+        transition: isCompleting
+          ? 'opacity 0.3s ease, transform 0.3s ease'
+          : 'box-shadow 0.2s ease',
+        transform: `translate3d(${x}px, ${y}px, 0)${isHovered && !isEditing && !isDoneView ? ' scale(1.02)' : ''}`,
+        zIndex: isSelected ? 9999 : isHovered ? 10 : zIndex,
         pointerEvents: isLockedByOther ? 'none' : 'auto',
         display: 'flex',
         flexDirection: 'column',
@@ -1197,10 +1304,10 @@ export default function NoteItem({
             zIndex: 30,
           }}
         >
-          <span style={{ fontSize: 10, color: '#059669', fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500, whiteSpace: 'nowrap' }}>
             ✅{' '}
             {completedAt
-              ? completedAt.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+              ? `${new Date(completedAt).getFullYear()}.${String(new Date(completedAt).getMonth() + 1).padStart(2, '0')}.${String(new Date(completedAt).getDate()).padStart(2, '0')} 완료`
               : '완료'}
           </span>
           <button
@@ -1317,8 +1424,31 @@ export default function NoteItem({
             </div>
           </>
         ) : (
-          <div className="prose prose-sm max-w-none text-gray-900 select-text pointer-events-auto cursor-text text-sm break-all whitespace-pre-wrap leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{preprocessMarkdown(text)}</ReactMarkdown>
+          <div
+            className={`max-w-none select-text pointer-events-auto cursor-text text-[15px] font-medium break-all whitespace-pre-wrap leading-relaxed ${isDoneView ? 'line-through text-zinc-400' : 'text-zinc-800'}`}
+          >
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={{
+                ul: ({ children }) => (
+                  <ul style={{ listStyleType: 'disc', paddingLeft: 18, margin: 0 }}>{children}</ul>
+                ),
+                ol: ({ children }) => (
+                  <ol style={{ listStyleType: 'decimal', paddingLeft: 18, margin: 0 }}>
+                    {children}
+                  </ol>
+                ),
+                li: ({ children }) => (
+                  <li style={{ margin: 0, padding: 0, listStylePosition: 'outside' }}>
+                    {children}
+                  </li>
+                ),
+                p: ({ children }) => <p style={{ margin: 0 }}>{children}</p>,
+              }}
+            >
+              {preprocessMarkdown(text)}
+            </ReactMarkdown>
           </div>
         )}
       </div>

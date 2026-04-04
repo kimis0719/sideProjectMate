@@ -15,10 +15,10 @@ const ZoomController: React.FC<Props> = ({ onFit }) => {
   const handleZoomOut = () => setZoom(Math.max(0.1, zoom - 0.1));
 
   return (
-    <div className="flex items-center bg-card text-card-foreground rounded-full shadow-lg border border-border p-1 select-none animate-in slide-in-from-bottom-5 duration-300 ring-1 ring-black/5 dark:ring-white/10 pointer-events-none">
+    <div className="flex items-center bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-zinc-100 px-2 py-1 select-none">
       <button
         onClick={handleZoomOut}
-        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground font-medium transition-colors pointer-events-auto"
+        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
         title="Zoom Out (-)"
       >
         <svg
@@ -31,19 +31,18 @@ const ZoomController: React.FC<Props> = ({ onFit }) => {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="pointer-events-none"
         >
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
       </button>
 
-      <div className="px-3 min-w-[64px] text-center text-sm font-semibold text-foreground font-numerical tabular-nums">
+      <div className="px-2 min-w-[52px] text-center text-[13px] font-bold text-zinc-500 tabular-nums">
         {Math.round(zoom * 100)}%
       </div>
 
       <button
         onClick={handleZoomIn}
-        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground font-medium transition-colors pointer-events-auto"
+        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-zinc-100 text-zinc-500 hover:text-zinc-800 font-medium transition-colors"
         title="Zoom In (+)"
       >
         <svg
@@ -56,18 +55,17 @@ const ZoomController: React.FC<Props> = ({ onFit }) => {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="pointer-events-none"
         >
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
       </button>
 
-      <div className="w-px h-4 bg-border mx-1"></div>
+      <div className="w-px h-5 bg-zinc-200 mx-1"></div>
 
       <button
         onClick={onFit}
-        className="px-3 h-8 flex items-center justify-center rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider transition-colors pointer-events-auto"
+        className="px-3 h-8 flex items-center justify-center rounded-xl hover:bg-blue-50 text-blue-600 text-[11px] font-black uppercase tracking-widest transition-colors"
         title="Fit to Content (Shift + 1)"
       >
         FIT

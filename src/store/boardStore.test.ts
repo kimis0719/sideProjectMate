@@ -779,11 +779,11 @@ describe('boardStore', () => {
       expect(useBoardStore.getState().activeUsers).toEqual(users);
     });
 
-    it('fitToContent — 노트/섹션이 없으면 zoom=1, pan=(0,0)으로 리셋한다', () => {
+    it('fitToContent — 노트/섹션이 없으면 zoom=1, pan=(0, HEADER_HEIGHT)으로 리셋한다', () => {
       useBoardStore.setState({ zoom: 2, pan: { x: 100, y: 200 } });
       useBoardStore.getState().fitToContent(1000, 800);
       expect(useBoardStore.getState().zoom).toBe(1);
-      expect(useBoardStore.getState().pan).toEqual({ x: 0, y: 0 });
+      expect(useBoardStore.getState().pan).toEqual({ x: 0, y: 64 }); // HEADER_HEIGHT = 64
     });
   });
 

@@ -99,8 +99,19 @@ export default function Minimap({
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // 배경
-    ctx.fillStyle = theme === 'dark' ? '#1f2937' : '#f3f4f6'; // gray-800 : gray-100
+    ctx.fillStyle = theme === 'dark' ? '#1f2937' : 'rgba(250, 250, 249, 0.8)'; // zinc-50/80
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // dot-grid 패턴 (opacity 20%)
+    ctx.fillStyle = 'rgba(161, 161, 170, 0.2)'; // zinc-400 at 20%
+    const dotSpacing = 8;
+    for (let dx = 0; dx < canvasWidth; dx += dotSpacing) {
+      for (let dy = 0; dy < canvasHeight; dy += dotSpacing) {
+        ctx.beginPath();
+        ctx.arc(dx, dy, 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
     // 좌표 변환 헬퍼
     const toMini = (x: number, y: number) => ({
@@ -138,9 +149,18 @@ export default function Minimap({
 
     const vpPos = toMini(viewportWorldX, viewportWorldY);
 
-    ctx.strokeStyle = '#ef4444'; // red-500
-    ctx.lineWidth = 2;
-    ctx.strokeRect(vpPos.x, vpPos.y, viewportWorldW * scale, viewportWorldH * scale);
+    // 뷰포트 배경
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.03)'; // blue-50/5
+    ctx.beginPath();
+    ctx.roundRect(vpPos.x, vpPos.y, viewportWorldW * scale, viewportWorldH * scale, 4);
+    ctx.fill();
+    // 뷰포트 보더
+    ctx.strokeStyle = '#3B82F6'; // blue-500
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(vpPos.x, vpPos.y, viewportWorldW * scale, viewportWorldH * scale, 4);
+    ctx.stroke();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notes, sections, pan, zoom, containerWidth, containerHeight, theme]);
 
   const isDragging = useRef(false);
@@ -211,13 +231,13 @@ export default function Minimap({
   // 모바일 감지는 여기서는 어려우므로 일단 기본은 펼침, 사용자가 접을 수 있게.
 
   return (
-    <div className="flex flex-col items-end gap-2 pointer-events-none">
+    <div className="flex flex-col items-end gap-2">
       <button
         onClick={(e) => {
           e.stopPropagation();
           setIsCollapsed(!isCollapsed);
         }}
-        className="bg-white border border-gray-300 rounded-lg p-2 shadow-sm text-gray-700 hover:bg-gray-50 focus:outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 pointer-events-auto"
+        className="bg-white/90 backdrop-blur-md border border-zinc-200 rounded-xl p-2 shadow-lg text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 focus:outline-none transition-colors"
         title={isCollapsed ? '미니맵 펼치기' : '미니맵 접기'}
       >
         {isCollapsed ? (
@@ -254,10 +274,10 @@ export default function Minimap({
           </svg>
         )}
       </button>
-      <div style={{ display: isCollapsed ? 'none' : 'block' }} className="pointer-events-auto">
+      <div style={{ display: isCollapsed ? 'none' : 'block' }}>
         <canvas
           ref={canvasRef}
-          className="border border-gray-300 bg-white shadow-lg rounded-lg cursor-crosshair"
+          className="border border-zinc-200 bg-zinc-50/80 backdrop-blur shadow-2xl rounded-2xl cursor-crosshair"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
