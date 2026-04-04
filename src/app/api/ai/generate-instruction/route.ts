@@ -11,6 +11,7 @@ import Note from '@/lib/models/kanban/NoteModel';
 import { getLlmProvider } from '@/lib/ai';
 import { buildAiContext } from '@/lib/utils/board/buildAiContext';
 import { generateResultTemplate } from '@/lib/utils/ai/generateResultTemplate';
+import { validateAdditionalInstruction } from '@/lib/utils/ai/validateAdditionalInstruction';
 import type { TokenUsage } from '@/lib/ai/types';
 
 export const dynamic = 'force-dynamic';
@@ -44,6 +45,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // ── 어드민 여부 ──
+    const isAdmin = session.user.memberType === 'admin';
+
     // ── 보드 → 프로젝트 PID 조회 ──
     const board = (await Board.findById(boardId).lean()) as { _id: string; pid: number } | null;
     if (!board) {
@@ -53,35 +57,50 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── 쿨다운 체크 ──
-    const lastUsage = (await AiUsage.findOne({ userId: session.user._id })
-      .sort({ createdAt: -1 })
-      .lean()) as { createdAt: Date } | null;
+    // ── 쿨다운 체크 (어드민 스킵) ──
+    if (!isAdmin) {
+      const lastUsage = (await AiUsage.findOne({ userId: session.user._id })
+        .sort({ createdAt: -1 })
+        .lean()) as { createdAt: Date } | null;
 
-    if (lastUsage) {
-      const elapsed = Date.now() - new Date(lastUsage.createdAt).getTime();
-      const cooldown = settings.cooldownMinutes * 60 * 1000;
-      if (elapsed < cooldown) {
-        const remaining = Math.ceil((cooldown - elapsed) / 60000);
+      if (lastUsage) {
+        const elapsed = Date.now() - new Date(lastUsage.createdAt).getTime();
+        const cooldown = settings.cooldownMinutes * 60 * 1000;
+        if (elapsed < cooldown) {
+          const remaining = Math.ceil((cooldown - elapsed) / 60000);
+          return NextResponse.json(
+            { success: false, message: `${remaining}분 후에 다시 생성할 수 있습니다.` },
+            { status: 429 }
+          );
+        }
+      }
+    }
+
+    // ── 일일 한도 체크 (어드민 스킵) ──
+    if (!isAdmin) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayCount = await AiUsage.countDocuments({
+        projectId: board.pid,
+        createdAt: { $gte: todayStart },
+      });
+      if (todayCount >= settings.dailyLimitPerProject) {
         return NextResponse.json(
-          { success: false, message: `${remaining}분 후에 다시 생성할 수 있습니다.` },
+          { success: false, message: '오늘 프로젝트 일일 한도에 도달했습니다.' },
           { status: 429 }
         );
       }
     }
 
-    // ── 일일 한도 체크 ──
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayCount = await AiUsage.countDocuments({
-      projectId: board.pid,
-      createdAt: { $gte: todayStart },
-    });
-    if (todayCount >= settings.dailyLimitPerProject) {
-      return NextResponse.json(
-        { success: false, message: '오늘 프로젝트 일일 한도에 도달했습니다.' },
-        { status: 429 }
+    // ── 추가 지시사항 가드레일 검증 (어드민 스킵) ──
+    if (!isAdmin && additionalInstruction) {
+      const guardRailError = validateAdditionalInstruction(
+        additionalInstruction,
+        settings.guardRailPatterns ?? []
       );
+      if (guardRailError) {
+        return NextResponse.json({ success: false, message: guardRailError }, { status: 400 });
+      }
     }
 
     // ── 컨텍스트 조립 ──
