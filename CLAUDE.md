@@ -117,4 +117,3 @@ feature/* / fix/* /
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
 | `.github/workflows/` | kimis0719 | 🟡 작업 중 | #232 테스트 서버 / 운영 서버 인프라 분리 — GitHub Actions 워크플로우 작성 |
-| `src/app/page.tsx`, `src/app/login/`, `src/app/register/`, `src/app/onboarding/` | FFLINA-PC | 🟡 작업 중 | #241 feat: UI/UX 전면 개편 Phase 4 — 인증/온보딩 페이지 디자인 교체 |

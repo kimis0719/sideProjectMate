@@ -21,8 +21,3 @@ zones:
     status: 'active'
     reason: '테스트 서버 / 운영 서버 인프라 분리 — GitHub Actions 워크플로우 작성'
     expires: '2026-04-11'
-  - path: 'src/app/page.tsx, src/app/login/, src/app/register/, src/app/onboarding/, src/components/HeroSection.tsx, src/components/LandingPreview.tsx'
-    owner: 'FFLINA-PC'
-    status: 'active'
-    reason: 'feat: UI/UX 전면 개편 Phase 4 — 인증/온보딩 페이지 디자인 교체 (#241)'
-    expires: '2026-04-11'
