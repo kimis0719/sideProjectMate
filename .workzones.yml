@@ -15,19 +15,4 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones:
-  - path: 'src/app/api/kanban/'
-    owner: 'HyunJin'
-    status: 'active'
-    reason: 'Phase 3.5 칸반보드 2.0 디자인 전면 개편 및 신규 기능 구현 (#231)'
-    expires: '2026-04-10'
-  - path: 'src/store/boardStore.ts'
-    owner: 'HyunJin'
-    status: 'active'
-    reason: 'Phase 3.5 칸반보드 2.0 디자인 전면 개편 및 신규 기능 구현 (#231)'
-    expires: '2026-04-10'
-  - path: 'src/components/board/'
-    owner: 'HyunJin'
-    status: 'active'
-    reason: 'Phase 3.5 칸반보드 2.0 디자인 전면 개편 및 신규 기능 구현 (#231)'
-    expires: '2026-04-10'
+zones: []

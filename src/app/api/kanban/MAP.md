@@ -31,7 +31,7 @@
 
 ## 의존 컴포넌트
 
-- `src/components/board/` — BoardShell, SectionItem, NoteItem 등
+- `src/components/board/` — BoardShell, SectionItem, NoteItem, InboxPanel, KanbanMobileView, Minimap, ZoomController 등
 
 ## 자동 생성 파일 목록
 
