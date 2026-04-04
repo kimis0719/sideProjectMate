@@ -7,6 +7,7 @@ import { socketClient } from '@/lib/socket';
 import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 // Color Gen Helper
 const stringToColor = (str: string) => {
@@ -22,9 +23,37 @@ const stringToColor = (str: string) => {
 const preprocessMarkdown = (text: string) => {
   if (!text) return '';
   let processed = text;
-  processed = processed.replace(/(^|\n)(#{1,6})([^ \n#])/g, '$1$2 $3');
+  // 볼드 공백 트림
   processed = processed.replace(/\*\*\s+([^\*]+?)\s+\*\*/g, '**$1**');
+  // 들여쓰기 보존
   processed = processed.replace(/^ +/gm, (match) => '&nbsp;'.repeat(match.length));
+  // 미지원 문법 이스케이프 (기호가 플레인 텍스트로 보이도록)
+  processed = processed.replace(/^(#{1,6})\s/gm, (_, h) => h.replace(/#/g, '\\#') + ' ');
+  processed = processed.replace(/^>\s/gm, '\\> ');
+  processed = processed.replace(/```/g, '\\`\\`\\`');
+  // 체크리스트 이스케이프: - [ ] / - [x] → 플레인 텍스트 (리스트 파싱도 차단)
+  processed = processed.replace(/^- \[[ xX]?\]/gm, (m) => '\\- ' + m.slice(2).replace('[', '\\['));
+  // 독립 체크박스 이스케이프: [ ], [x] 등
+  processed = processed.replace(/\[[ xX]?\]/gm, (m) => m.replace('[', '\\['));
+  // 넘버링 이스케이프: 1. 텍스트 → 1\. 텍스트 (ol 파싱 방지)
+  processed = processed.replace(/^(\d+)\.\s/gm, '$1\\. ');
+  // 밑줄: ++텍스트++ → <u>텍스트</u>
+  processed = processed.replace(/\+\+([^+]+?)\+\+/g, '<u>$1</u>');
+  // 리스트 블록과 비리스트 텍스트 사이에 빈 줄 삽입 (리스트 종료)
+  const lines = processed.split('\n');
+  const result: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    result.push(lines[i]);
+    const isListLine = lines[i].startsWith('- ');
+    const nextLine = lines[i + 1];
+    const isNextList = nextLine?.startsWith('- ');
+    const isNextEmpty = nextLine === '';
+    // 현재 줄이 리스트이고, 다음 줄이 리스트도 빈줄도 아닌 일반 텍스트이면 빈줄 삽입
+    if (isListLine && nextLine !== undefined && !isNextList && !isNextEmpty) {
+      result.push('');
+    }
+  }
+  processed = result.join('\n');
   return processed;
 };
 // -----------------------------
@@ -1396,9 +1425,30 @@ export default function NoteItem({
           </>
         ) : (
           <div
-            className={`prose prose-sm max-w-none select-text pointer-events-auto cursor-text text-[15px] font-medium break-all whitespace-pre-wrap leading-relaxed ${isDoneView ? 'line-through text-zinc-400' : 'text-zinc-800'}`}
+            className={`max-w-none select-text pointer-events-auto cursor-text text-[15px] font-medium break-all whitespace-pre-wrap leading-relaxed ${isDoneView ? 'line-through text-zinc-400' : 'text-zinc-800'}`}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{preprocessMarkdown(text)}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={{
+                ul: ({ children }) => (
+                  <ul style={{ listStyleType: 'disc', paddingLeft: 18, margin: 0 }}>{children}</ul>
+                ),
+                ol: ({ children }) => (
+                  <ol style={{ listStyleType: 'decimal', paddingLeft: 18, margin: 0 }}>
+                    {children}
+                  </ol>
+                ),
+                li: ({ children }) => (
+                  <li style={{ margin: 0, padding: 0, listStylePosition: 'outside' }}>
+                    {children}
+                  </li>
+                ),
+                p: ({ children }) => <p style={{ margin: 0 }}>{children}</p>,
+              }}
+            >
+              {preprocessMarkdown(text)}
+            </ReactMarkdown>
           </div>
         )}
       </div>
