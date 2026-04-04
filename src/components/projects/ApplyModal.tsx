@@ -99,8 +99,14 @@ export default function ApplyModal({ project, onClose, onSuccess }: ApplyModalPr
           {/* 지원 동기 */}
           <div className="space-y-3">
             <div className="flex justify-between items-end">
-              <label className="text-sm font-bold text-on-surface">
+              <label className="text-base font-bold text-on-surface flex items-center gap-2">
                 지원 동기 <span className="text-error">*</span>
+                {motivation.trim().length > 0 && motivation.trim().length < 20 && (
+                  <span className="text-[12px] font-medium text-error flex items-center gap-0.5 leading-none">
+                    <span className="material-symbols-outlined text-[12px]">error</span>
+                    {20 - motivation.trim().length}자 더 입력해주세요
+                  </span>
+                )}
               </label>
               <span className="text-[11px] font-medium text-outline">{motivation.length}/500</span>
             </div>
@@ -112,17 +118,11 @@ export default function ApplyModal({ project, onClose, onSuccess }: ApplyModalPr
               className="w-full px-4 py-3 bg-surface-container-low border-0 rounded-lg focus:ring-2 focus:ring-primary/20 text-sm placeholder:text-outline/60 resize-none transition-all"
               maxLength={500}
             />
-            {motivation.trim().length > 0 && motivation.trim().length < 20 && (
-              <p className="text-[12px] font-medium text-error flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">error</span>
-                {20 - motivation.trim().length}자 더 입력해주세요
-              </p>
-            )}
           </div>
 
           {/* 주당 시간 */}
           <div className="space-y-4">
-            <label className="text-sm font-bold text-on-surface">
+            <label className="text-base font-bold text-on-surface">
               주당 투자 가능 시간 <span className="text-error">*</span>
             </label>
             <div className="flex flex-wrap gap-2">
@@ -145,7 +145,7 @@ export default function ApplyModal({ project, onClose, onSuccess }: ApplyModalPr
 
           {/* 추가 메시지 */}
           <div className="space-y-3">
-            <label className="text-sm font-bold text-on-surface">추가 메시지 (선택)</label>
+            <label className="text-base font-bold text-on-surface">추가 메시지 (선택)</label>
             <textarea
               rows={3}
               value={message}
@@ -177,7 +177,7 @@ export default function ApplyModal({ project, onClose, onSuccess }: ApplyModalPr
             className={`flex-[2] py-4 font-bold text-sm rounded-lg transition-all active:scale-[0.98] ${
               canSubmit
                 ? 'bg-primary-container text-on-primary hover:shadow-md'
-                : 'bg-primary/40 text-on-primary cursor-not-allowed'
+                : 'bg-surface-container-high text-on-surface-variant cursor-not-allowed opacity-60'
             }`}
           >
             {isSubmitting ? '제출 중...' : '지원서 제출'}

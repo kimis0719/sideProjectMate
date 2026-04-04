@@ -43,6 +43,7 @@ export interface IProject extends Document {
   deadline?: Date;
   views: number;
   likeCount: number;
+  likedBy: mongoose.Types.ObjectId[];
   techStacks: string[];
   images: string[];
   // Phase 1 신규 필드
@@ -108,6 +109,7 @@ const ProjectSchema: Schema = new Schema(
     deadline: { type: Date },
     views: { type: Number, default: 0 },
     likeCount: { type: Number, default: 0 },
+    likedBy: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
     techStacks: { type: [String], default: [] },
     images: { type: [String], default: ['🚀'] },
     // Phase 1 신규 필드

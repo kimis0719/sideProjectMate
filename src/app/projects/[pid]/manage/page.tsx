@@ -37,14 +37,16 @@ function OwnerNoteInput({
 
   return (
     <div>
-      <label className="text-xs font-semibold text-muted-foreground">내 메모</label>
+      <label className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-3 block">
+        내 메모
+      </label>
       <div className="flex gap-2 mt-1">
         <input
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="지원자에 대한 메모를 남겨보세요"
-          className="flex-1 px-3 py-1.5 text-sm border border-input rounded-lg bg-background text-foreground"
+          className="flex-1 px-4 py-2.5 text-sm bg-surface-container-low border-none rounded-xl text-on-surface focus:ring-2 focus:ring-primary-container/20 placeholder:text-on-surface-variant/30"
           maxLength={500}
         />
         {isDirty && (
@@ -55,7 +57,7 @@ function OwnerNoteInput({
               setIsSaving(false);
             }}
             disabled={isSaving}
-            className="px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+            className="px-4 py-2.5 text-xs font-bold bg-primary-container text-on-primary rounded-xl hover:opacity-90 disabled:opacity-50"
           >
             {isSaving ? '저장...' : '저장'}
           </button>
@@ -208,20 +210,25 @@ export default function ManageApplicantsPage() {
   };
 
   if (isLoading || sessionStatus === 'loading')
-    return <div className="text-center py-20 text-foreground">로딩 중...</div>;
-  if (error) return <div className="text-center py-20 text-destructive">{error}</div>;
+    return <div className="text-center py-20 text-on-surface">로딩 중...</div>;
+  if (error) return <div className="text-center py-20 text-error">{error}</div>;
 
   return (
-    <div className="container mx-auto px-4 py-12 bg-background min-h-screen">
-      <h1 className="text-3xl font-bold mb-8 text-foreground">프로젝트 관리</h1>
+    <div className="px-6 lg:px-8 py-10 bg-surface min-h-screen">
+      <h1 className="text-4xl font-bold font-headline tracking-tight text-on-surface mb-8">
+        프로젝트 관리
+      </h1>
 
       {/* 1. 현재 참여 멤버 섹션 */}
       {project && project.members && project.members.length > 0 && (
         <div className="mb-12">
-          <h2 className="text-xl font-bold mb-4 text-foreground">
-            현재 참여 멤버 ({project.members.length}명)
+          <h2 className="text-xl font-bold mb-6 text-on-surface font-headline flex items-center gap-2">
+            현재 참여 멤버
+            <span className="text-sm font-normal text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-full">
+              {project.members.length}
+            </span>
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {project.members.map((pm) => {
               const user = pm.userId;
               if (!user) return null;
@@ -246,48 +253,60 @@ export default function ManageApplicantsPage() {
       )}
 
       {/* 2. 지원자 목록 섹션 */}
-      <h2 className="text-xl font-bold mb-4 text-foreground">지원자 목록</h2>
+      <h2 className="text-xl font-bold mb-6 text-on-surface font-headline">지원자 목록</h2>
       {applications.length === 0 ? (
-        <p className="text-muted-foreground">아직 지원자가 없습니다.</p>
+        <p className="text-on-surface-variant">아직 지원자가 없습니다.</p>
       ) : (
         <div className="space-y-6">
           {applications.map((app) => (
-            <div key={app._id} className="bg-card p-6 rounded-lg shadow-sm border border-border">
+            <div
+              key={app._id}
+              className={`bg-surface-container-lowest p-8 rounded-xl border-l-4 transition-all duration-300 ${
+                app.status === 'accepted'
+                  ? 'border-emerald-500'
+                  : app.status === 'rejected'
+                    ? 'border-error opacity-70 grayscale-[0.5] hover:grayscale-0 hover:opacity-100'
+                    : app.status === 'withdrawn'
+                      ? 'border-surface-container-high opacity-70 grayscale-[0.5] hover:grayscale-0 hover:opacity-100'
+                      : 'border-primary-container'
+              }`}
+            >
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-lg text-foreground">
+                  <p className="font-bold text-xl text-on-surface">
                     {app.applicantId.nName}{' '}
-                    <span className="text-sm font-normal text-muted-foreground">
+                    <span className="text-sm font-normal text-on-surface-variant">
                       ({app.applicantId.authorEmail})
                     </span>
                   </p>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-on-surface-variant">
                       주 {app.weeklyHours}h 가능
                     </span>
                   </div>
                   {/* 지원 동기 */}
-                  <div className="mt-3 p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">지원 동기</p>
-                    <p className="text-sm text-foreground whitespace-pre-wrap">{app.motivation}</p>
+                  <div className="mt-4 relative pl-6 py-2 border-l-4 border-primary-container/20">
+                    <p className="italic text-on-surface-variant leading-relaxed">
+                      {app.motivation}
+                    </p>
                   </div>
                   {/* 추가 메시지 */}
                   {app.message && (
-                    <p className="mt-2 text-sm text-muted-foreground italic">
+                    <p className="mt-2 text-sm text-on-surface-variant italic">
                       &ldquo;{app.message}&rdquo;
                     </p>
                   )}
                 </div>
                 <div className="text-right ml-4 shrink-0">
                   <span
-                    className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
+                    className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                       app.status === 'accepted'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                        ? 'bg-emerald-100 text-emerald-800'
                         : app.status === 'rejected'
-                          ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                          ? 'bg-error-container/40 text-error'
                           : app.status === 'withdrawn'
-                            ? 'bg-muted text-muted-foreground'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200'
+                            ? 'bg-surface-container-high text-on-surface-variant'
+                            : 'bg-primary-container/15 text-primary-container'
                     }`}
                   >
                     {app.status === 'accepted'
@@ -296,22 +315,22 @@ export default function ManageApplicantsPage() {
                         ? '거절됨'
                         : app.status === 'withdrawn'
                           ? '취소됨'
-                          : '대기 중'}
+                          : '대기중'}
                   </span>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-on-surface-variant mt-1">
                     {new Date(app.createdAt).toLocaleString('ko-KR')}
                   </p>
                 </div>
               </div>
               {/* 오너 메모 */}
-              <div className="mt-4 pt-3 border-t border-border">
+              <div className="mt-6">
                 <OwnerNoteInput
                   initialValue={app.ownerNote || ''}
                   onSave={(note) => handleSaveOwnerNote(app._id, note)}
                 />
               </div>
-              <div className="flex justify-end gap-2 mt-4">
-                {/* ✨ 대화하기 버튼 (면접/인터뷰) */}
+              <div className="flex justify-end gap-3 mt-6">
+                {/* 대화하기 버튼 */}
                 <button
                   onClick={async () => {
                     try {
@@ -322,7 +341,7 @@ export default function ManageApplicantsPage() {
                           category: 'RECRUIT',
                           participants: [app.applicantId._id],
                           applicationId: app._id,
-                          projectId: project?._id, // 🔥 프로젝트의 실제 ObjectId (_id)로 수정
+                          projectId: project?._id,
                         }),
                       });
                       const data = await res.json();
@@ -341,16 +360,9 @@ export default function ManageApplicantsPage() {
                       );
                     }
                   }}
-                  className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-low text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-all"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
+                  <span className="material-symbols-outlined text-lg">chat_bubble</span>
                   대화하기
                 </button>
 
@@ -358,14 +370,16 @@ export default function ManageApplicantsPage() {
                   <>
                     <button
                       onClick={() => handleStatusChange(app._id, 'accepted')}
-                      className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-container text-on-primary font-bold text-sm hover:opacity-90 transition-all"
                     >
+                      <span className="material-symbols-outlined text-lg">check_circle</span>
                       수락
                     </button>
                     <button
                       onClick={() => handleStatusChange(app._id, 'rejected')}
-                      className="px-3 py-1 text-sm bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-error-container/10 text-error font-bold text-sm hover:bg-error-container/20 transition-all"
                     >
+                      <span className="material-symbols-outlined text-lg">cancel</span>
                       거절
                     </button>
                   </>
@@ -373,8 +387,9 @@ export default function ManageApplicantsPage() {
                 {app.status !== 'accepted' && (
                   <button
                     onClick={() => handleDeleteApplication(app._id)}
-                    className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-error-container/10 text-error font-bold text-sm hover:bg-error-container/20 transition-all"
                   >
+                    <span className="material-symbols-outlined text-lg">delete</span>
                     삭제
                   </button>
                 )}

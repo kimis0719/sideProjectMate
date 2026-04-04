@@ -27,7 +27,7 @@ import {
 // 동적 임포트를 사용하여 이미지 슬라이더 컴포넌트를 로드 (SSR 제외)
 const ProjectImageSlider = dynamic(() => import('@/components/ProjectImageSlider'), {
   ssr: false,
-  loading: () => <div className="aspect-video bg-gray-100 rounded-lg animate-pulse" />,
+  loading: () => <div className="aspect-video bg-surface-container-low rounded-xl animate-pulse" />,
 });
 
 // 프로젝트 소유자 populate된 타입
@@ -129,7 +129,16 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
         const project = projectData.data;
         setProject(project);
-        setLikeCount(project.likesCount || 0);
+        setLikeCount(project.likesCount || project.likeCount || 0);
+
+        // 현재 사용자가 좋아요 했는지 확인
+        if (session?.user?._id && project.likedBy) {
+          setIsLiked(
+            project.likedBy.some(
+              (id: string) => id === session.user._id || id.toString() === session.user._id
+            )
+          );
+        }
 
         // 상태 라벨은 상수에서 직접 가져옴
         setStatusLabel(STATUS_LABELS[project.status as ProjectStatus] || project.status);
@@ -173,14 +182,16 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?._id, project?.status, session?.user?._id]);
 
-  /** 리뷰 가능한 팀원 목록 (자신 제외) */
+  /** 리뷰 가능한 팀원 목록 (자신 제외, 중복 제거) */
   const getReviewableUsers = () => {
     if (!project || !session?.user?._id) return [];
+    const seen = new Set<string>();
     const users: { _id: string; nName: string; avatarUrl?: string; position?: string }[] = [];
 
     // 프로젝트 작성자
     if (typeof project.ownerId === 'object' && project.ownerId._id !== session.user._id) {
       const owner = project.ownerId as PopulatedOwner;
+      seen.add(owner._id);
       users.push({
         _id: owner._id,
         nName: owner.nName || '작성자',
@@ -189,11 +200,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       });
     }
 
-    // 활성 팀원
+    // 활성 팀원 (소유자와 중복 방지)
     project.members?.forEach((m: PopulatedMember) => {
       const memberUser = typeof m.userId === 'object' ? m.userId : null;
       const userId = memberUser?._id || (typeof m.userId === 'string' ? m.userId : undefined);
-      if (userId && userId !== session.user?._id && m.status === 'active') {
+      if (userId && userId !== session.user?._id && m.status === 'active' && !seen.has(userId)) {
+        seen.add(userId);
         users.push({
           _id: userId,
           nName: memberUser?.nName || '팀원',
@@ -257,7 +269,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   };
 
   const handleLike = async () => {
-    // ... (rest of code)
     if (!session) {
       router.push('/login');
       return;
@@ -267,7 +278,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       const data = await response.json();
       if (data.success) {
         setLikeCount(data.data.likeCount);
-        setIsLiked(true);
+        setIsLiked(data.data.isLiked);
         fetchNotifications();
       } else {
         await alert('알림', data.message || '요청에 실패했습니다.');
@@ -371,19 +382,17 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
   if (isLoading)
     return (
-      <div className="flex justify-center items-center min-h-screen text-foreground">
+      <div className="flex justify-center items-center min-h-screen text-on-surface">
         로딩 중...
       </div>
     );
   if (error)
     return (
-      <div className="flex justify-center items-center min-h-screen text-destructive">
-        오류: {error}
-      </div>
+      <div className="flex justify-center items-center min-h-screen text-error">오류: {error}</div>
     );
   if (!project)
     return (
-      <div className="flex justify-center items-center min-h-screen text-foreground">
+      <div className="flex justify-center items-center min-h-screen text-on-surface">
         프로젝트를 찾을 수 없습니다.
       </div>
     );
@@ -402,123 +411,117 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-8 md:py-12">
+    <div className="bg-surface min-h-screen">
+      <div className="px-6 lg:px-8 py-8 md:py-12">
         {/* 목록으로 돌아가기 */}
         <div className="mb-4 flex items-center justify-between">
           <Link
             href="/projects"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant hover:text-on-surface transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             목록으로
           </Link>
           {isOwner && (
             <div className="flex gap-2">
               <Link
                 href={`/projects/${pid}/manage`}
-                className="px-4 py-2 text-sm font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600"
+                className="px-4 py-2 text-sm font-bold text-on-primary bg-primary-container rounded-lg hover:opacity-90 transition-all"
               >
                 지원자 관리
               </Link>
               <Link
                 href={`/projects/${pid}/edit`}
-                className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                className="px-4 py-2 text-sm font-bold text-on-surface-variant bg-surface-container-high rounded-lg hover:bg-surface-dim transition-colors"
               >
                 수정
               </Link>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-lg hover:bg-red-600"
+                className="px-4 py-2 text-sm font-bold text-error bg-error-container/10 rounded-lg hover:bg-error-container/20 transition-colors"
               >
                 삭제
               </button>
             </div>
           )}
         </div>
-        <div className="mb-8 md:mb-12">
+        <div className="mb-8 md:mb-12 space-y-4">
           {/* 배지: currentStage + status */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2">
             {project.currentStage && (
-              <span className="px-2.5 py-1 text-xs font-semibold rounded bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
+              <span className="px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide bg-primary-container/15 text-primary-container">
                 {STAGE_LABELS[project.currentStage as ProjectStage] || project.currentStage}
               </span>
             )}
             <span
-              className={`px-2.5 py-1 text-xs font-semibold rounded ${
+              className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-widest ${
                 project.status === 'recruiting'
-                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
-                  : 'bg-muted text-muted-foreground'
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-surface-container-high text-on-surface-variant'
               }`}
             >
               {statusLabel || project.status}
             </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{project.title}</h1>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold font-headline tracking-tight text-on-surface">
+            {project.title}
+          </h1>
+          <p className="text-lg text-on-surface-variant max-w-2xl leading-relaxed break-all">
+            {project.problemStatement?.slice(0, 120)}
+            {project.problemStatement && project.problemStatement.length > 120 ? '...' : ''}
+          </p>
+          <div className="flex items-center justify-between text-sm text-on-surface-variant">
+            <div className="flex items-center gap-2">
               <span>작성자: {getOwnerName(project.ownerId)}</span>
-              <span className="mx-2">|</span>
+              <span className="text-outline-variant">|</span>
               <span>{new Date(project.createdAt).toLocaleString('ko-KR')}</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
+                <span className="material-symbols-outlined text-[18px]">visibility</span>
                 <span>{project.views}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
+              <button
+                onClick={handleLike}
+                className="flex items-center gap-1 hover:text-error transition-colors"
+              >
+                <span
+                  className={`material-symbols-outlined text-[18px] ${isLiked ? 'text-error' : ''}`}
+                  style={isLiked ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                >
+                  favorite
+                </span>
                 <span>{likeCount}</span>
-              </div>
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          <div className="lg:col-span-8 space-y-8">
+            {/* 이미지 */}
+            {project.images && project.images.length > 0 && project.images[0] !== '🚀' && (
+              <ProjectImageSlider images={project.images} title={project.title} />
+            )}
+
             {/* 프로젝트 동기 (problemStatement) */}
             {project.problemStatement && (
-              <div className="bg-muted/30 border border-border rounded-lg p-6 mb-8">
-                <h2 className="text-sm font-semibold text-muted-foreground mb-2">프로젝트 동기</h2>
-                <p className="text-lg leading-relaxed whitespace-pre-wrap text-foreground">
+              <div className="bg-surface-container-low p-8 rounded-xl">
+                <h2 className="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-3">
+                  프로젝트 동기
+                </h2>
+                <p className="text-lg leading-relaxed whitespace-pre-wrap break-all text-on-surface">
                   {project.problemStatement}
                 </p>
               </div>
             )}
 
             {/* 실행 방식 + lookingFor */}
-            <div className="flex flex-wrap gap-4 mb-8">
+            <div className="flex flex-wrap gap-4">
               {project.executionStyle && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">실행 방식:</span>
-                  <span className="px-2.5 py-1 text-sm font-medium rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
+                  <span className="text-sm text-on-surface-variant">실행 방식:</span>
+                  <span className="px-2.5 py-1 text-sm font-medium rounded-full bg-emerald-100 text-emerald-800">
                     {STYLE_LABELS[project.executionStyle as ExecutionStyle] ||
                       project.executionStyle}
                   </span>
@@ -526,23 +529,23 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               )}
               {project.weeklyHours && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">주당:</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {project.weeklyHours}h
-                  </span>
+                  <span className="text-sm text-on-surface-variant">주당:</span>
+                  <span className="text-sm font-bold text-on-surface">{project.weeklyHours}h</span>
                 </div>
               )}
             </div>
 
             {/* lookingFor 태그 */}
             {project.lookingFor && project.lookingFor.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-2">찾는 사람</h3>
+              <div>
+                <h3 className="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-3">
+                  찾는 사람
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {project.lookingFor.map((tag) => (
                     <span
                       key={tag}
-                      className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
+                      className="px-3 py-1 bg-surface-container-lowest text-on-surface text-sm rounded-full font-semibold"
                     >
                       {tag}
                     </span>
@@ -551,23 +554,16 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               </div>
             )}
 
-            {/* 이미지 */}
-            <div className="prose dark:prose-invert max-w-none">
-              {project.images && project.images.length > 0 && project.images[0] !== '🚀' ? (
-                <ProjectImageSlider images={project.images} title={project.title} />
-              ) : null}
-
-              {/* 부가 설명 */}
-              {project.description && (
-                <p className="text-base leading-relaxed whitespace-pre-wrap text-foreground mt-6">
-                  {project.description}
-                </p>
-              )}
-            </div>
+            {/* 부가 설명 */}
+            {project.description && (
+              <p className="text-base leading-relaxed whitespace-pre-wrap break-all text-on-surface-variant">
+                {project.description}
+              </p>
+            )}
 
             {/* 프로젝트 리더 상세 프로필 */}
             {project.ownerId && (
-              <div className="mt-12 border-t border-border pt-8">
+              <div className="pt-8">
                 <DetailProfileCard
                   title="👑 프로젝트 리더"
                   user={
@@ -584,125 +580,145 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               </div>
             )}
           </div>
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 bg-card rounded-lg p-6 border border-border">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-bold text-foreground">프로젝트 요약</h3>
-                <button
-                  onClick={handleLike}
-                  className="p-2 rounded-full hover:bg-muted transition-colors"
-                >
-                  <svg
-                    className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-muted-foreground'}`}
-                    fill={isLiked ? 'currentColor' : 'none'}
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+          <div className="lg:col-span-4">
+            <div className="sticky top-24 bg-surface-container-lowest p-8 rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.04)] border border-outline-variant/10 space-y-8">
+              {/* 소유자 프로필 */}
+              {typeof project.ownerId === 'object' && (
+                <div className="flex items-center gap-4 pb-6 border-b border-outline-variant/10">
+                  {project.ownerId.avatarUrl ? (
+                    <Image
+                      src={project.ownerId.avatarUrl}
+                      alt={project.ownerId.nName}
+                      width={56}
+                      height={56}
+                      className="w-14 h-14 rounded-full object-cover"
+                      unoptimized
                     />
-                  </svg>
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-semibold text-muted-foreground">모집 현황</p>
-                  <ul className="space-y-1 mt-1">
-                    {/* TODO(Phase 3): 새 팀원 모집 UI로 교체 */}
-                    <li className="text-foreground">
-                      팀원 {project.members?.filter((m) => m.status === 'active').length ?? 0} /{' '}
-                      {project.maxMembers ?? 4}명
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-muted-foreground">상태</p>
-                  <span
-                    className={`px-3 py-1 text-sm font-semibold rounded-full ${project.status === 'recruiting' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-muted text-muted-foreground'}`}
-                  >
-                    {statusLabel || project.status}
-                  </span>
-                </div>
-                {project.domains && project.domains.length > 0 && (
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-primary-container/15 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary-container">
+                        {project.ownerId.nName.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                   <div>
-                    <p className="text-sm font-semibold text-muted-foreground mb-2">도메인</p>
-                    <div className="flex flex-wrap gap-2">
-                      {project.domains.map((d) => (
-                        <span
-                          key={d}
-                          className="px-3 py-1 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 text-sm rounded-full"
-                        >
-                          {d}
-                        </span>
-                      ))}
+                    <div className="text-xs text-on-surface-variant font-label uppercase tracking-widest">
+                      프로젝트 개설자
+                    </div>
+                    <div className="text-lg font-bold text-on-surface font-headline">
+                      {project.ownerId.nName}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 프로젝트 메트릭 */}
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-on-surface-variant">
+                    <span className="material-symbols-outlined text-primary-container">group</span>
+                    <span className="text-sm font-medium">모집 현황</span>
+                  </div>
+                  <div className="font-bold text-on-surface">
+                    {project.members?.filter((m) => m.status === 'active').length ?? 0} /{' '}
+                    {project.maxMembers ?? 4}명
+                  </div>
+                </div>
+                {project.weeklyHours && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-primary-container">
+                        schedule
+                      </span>
+                      <span className="text-sm font-medium">주간 참여 시간</span>
+                    </div>
+                    <div className="font-bold text-on-surface">주 {project.weeklyHours}시간</div>
+                  </div>
+                )}
+                {project.currentStage && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-on-surface-variant">
+                      <span className="material-symbols-outlined text-primary-container">
+                        rocket_launch
+                      </span>
+                      <span className="text-sm font-medium">진행 단계</span>
+                    </div>
+                    <div className="font-bold text-primary-container uppercase text-xs tracking-widest font-label">
+                      {STAGE_LABELS[project.currentStage as ProjectStage] || project.currentStage}
                     </div>
                   </div>
                 )}
-                {project.techStacks && project.techStacks.length > 0 && (
-                  <details className="group">
-                    <summary className="text-sm font-semibold text-muted-foreground cursor-pointer list-none flex items-center gap-1">
-                      기술 스택 ({project.techStacks.length})
-                      <svg
-                        className="w-3 h-3 transition-transform group-open:rotate-180"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </summary>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {project.techStacks.map((stack) => (
-                        <span
-                          key={stack}
-                          className="px-3 py-1 bg-card border border-border text-foreground text-sm rounded-full"
-                        >
-                          {stack}
-                        </span>
-                      ))}
-                    </div>
-                  </details>
-                )}
               </div>
+
+              {/* 도메인 + 기술스택 */}
+              {project.domains && project.domains.length > 0 && (
+                <div>
+                  <p className="text-sm font-bold text-on-surface-variant uppercase tracking-widest mb-2">
+                    도메인
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {project.domains.map((d) => (
+                      <span
+                        key={d}
+                        className="px-3 py-1 bg-surface-container-low text-on-surface text-sm rounded-full font-semibold"
+                      >
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {project.techStacks && project.techStacks.length > 0 && (
+                <details className="group">
+                  <summary className="text-sm font-bold text-on-surface-variant uppercase tracking-widest cursor-pointer list-none flex items-center gap-1">
+                    기술 스택 ({project.techStacks.length})
+                    <span className="material-symbols-outlined text-[16px] transition-transform group-open:rotate-180">
+                      expand_more
+                    </span>
+                  </summary>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {project.techStacks.map((stack) => (
+                      <span
+                        key={stack}
+                        className="px-3 py-1 bg-surface-container-lowest text-on-surface text-sm rounded-full"
+                      >
+                        {stack}
+                      </span>
+                    ))}
+                  </div>
+                </details>
+              )}
               {/* 지원 버튼 — 6가지 상태 분기 */}
-              <div className="mt-8 space-y-2">
+              <div className="space-y-3">
                 {applyState === 'owner' ? null : applyState === 'closed' ? (
                   <button
                     disabled
-                    className="w-full font-bold py-3 rounded-lg bg-muted cursor-not-allowed text-muted-foreground"
+                    className="w-full font-bold py-4 rounded-lg bg-surface-container-high cursor-not-allowed text-on-surface-variant"
                   >
                     모집 마감
                   </button>
                 ) : applyState === 'none' ? (
                   <button
                     onClick={handleOpenApplyModal}
-                    className="w-full font-bold py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    className="w-full font-bold py-4 rounded-lg bg-primary-container text-on-primary hover:opacity-90 transition-all shadow-lg shadow-primary-container/20"
                   >
                     프로젝트 지원하기
                   </button>
                 ) : applyState === 'pending' ? (
                   <button
                     onClick={handleWithdraw}
-                    className="w-full font-bold py-3 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900/70 transition-colors"
+                    className="w-full font-bold py-4 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors"
                   >
                     지원 완료 · 취소
                   </button>
                 ) : applyState === 'accepted' ? (
                   <div className="space-y-2">
-                    <div className="w-full font-bold py-3 rounded-lg bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 text-center">
+                    <div className="w-full font-bold py-4 rounded-lg bg-emerald-100 text-emerald-800 text-center">
                       팀원
                     </div>
                     <button
                       onClick={handleLeaveProject}
-                      className="w-full text-sm py-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      className="w-full py-4 rounded-lg bg-surface-container-lowest text-error font-bold hover:bg-error-container hover:text-on-error-container transition-colors shadow-[0_2px_8px_rgba(26,28,28,0.06)]"
                     >
                       프로젝트 탈퇴
                     </button>
@@ -710,7 +726,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                 ) : applyState === 'rejected' ? (
                   <button
                     disabled
-                    className="w-full font-bold py-3 rounded-lg bg-muted cursor-not-allowed text-muted-foreground"
+                    className="w-full font-bold py-4 rounded-lg bg-surface-container-high cursor-not-allowed text-on-surface-variant"
                   >
                     지원 마감
                   </button>
@@ -720,16 +736,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                 {(isMember || isOwner) && (
                   <Link
                     href={`/dashboard/${project.pid}/kanban`}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-lg bg-surface-container-lowest text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors shadow-[0_2px_8px_rgba(26,28,28,0.06)]"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"
-                      />
-                    </svg>
+                    <span className="material-symbols-outlined text-[20px]">view_kanban</span>
                     칸반 보드 열기
                   </Link>
                 )}
@@ -738,17 +747,10 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                 {!isOwner && (
                   <button
                     onClick={handleInquiry}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-lg bg-surface-container-lowest text-on-surface-variant font-bold hover:bg-surface-container-high transition-colors shadow-[0_2px_8px_rgba(26,28,28,0.06)]"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                    작성자에게 1:1 문의
+                    <span className="material-symbols-outlined text-[20px]">chat_bubble</span>
+                    개설자에게 문의하기
                   </button>
                 )}
               </div>
@@ -760,8 +762,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   const reviewable = getReviewableUsers();
                   if (reviewable.length === 0) return null;
                   return (
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <h4 className="text-sm font-semibold text-foreground mb-3">팀원 리뷰 작성</h4>
+                    <div className="pt-6 border-t border-outline-variant/10">
+                      <h4 className="text-sm font-bold text-on-surface mb-3">팀원 리뷰 작성</h4>
                       <div className="space-y-2">
                         {reviewable.map((u) => (
                           <div key={u._id} className="flex items-center justify-between gap-2">
@@ -776,22 +778,22 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                                   unoptimized
                                 />
                               ) : (
-                                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                  <span className="text-xs font-bold text-primary">
+                                <div className="w-7 h-7 rounded-full bg-primary-container/15 flex items-center justify-center shrink-0">
+                                  <span className="text-xs font-bold text-primary-container">
                                     {u.nName.charAt(0)}
                                   </span>
                                 </div>
                               )}
-                              <span className="text-sm text-foreground truncate">{u.nName}</span>
+                              <span className="text-sm text-on-surface truncate">{u.nName}</span>
                             </div>
                             {reviewedIds.has(u._id) ? (
-                              <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                              <span className="shrink-0 text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
                                 작성 완료
                               </span>
                             ) : (
                               <button
                                 onClick={() => setReviewTarget(u)}
-                                className="shrink-0 text-xs px-2 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                                className="shrink-0 text-xs px-2 py-1 rounded-full bg-primary-container/10 text-primary-container hover:bg-primary-container/20 transition-colors"
                               >
                                 리뷰 쓰기
                               </button>
@@ -803,7 +805,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                   );
                 })()}
               {/* 광고 배너 — 프로젝트 요약 카드 하단 (sticky 내부) */}
-              <div className="mt-4 pt-4 border-t border-border">
+              <div className="pt-6 border-t border-outline-variant/10">
                 <AdBanner
                   unitId={process.env.NEXT_PUBLIC_ADFIT_PROJECT_DETAIL}
                   size="rectangle"

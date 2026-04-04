@@ -51,7 +51,7 @@ export default function TagInput({
   );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || (e.key === 'Tab' && inputValue.trim())) {
       e.preventDefault();
       if (allowFreeInput && inputValue.trim()) {
         addTag(inputValue);
