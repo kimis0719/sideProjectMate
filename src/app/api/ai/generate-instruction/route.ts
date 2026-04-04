@@ -142,17 +142,17 @@ export async function POST(request: Request) {
             targetNotes = (await Note.find(
               { _id: { $in: target.noteIds } },
               { _id: 1, text: 1 }
-            ).lean()) as LeanNote[];
+            ).lean()) as unknown as LeanNote[];
           } else if (target.type === 'sections' && target.sectionIds?.length) {
             targetNotes = (await Note.find(
               { sectionId: { $in: target.sectionIds }, boardId, status: 'active' },
               { _id: 1, text: 1 }
-            ).lean()) as LeanNote[];
+            ).lean()) as unknown as LeanNote[];
           } else if (target.type === 'all') {
             targetNotes = (await Note.find(
               { boardId, status: 'active' },
               { _id: 1, text: 1 }
-            ).lean()) as LeanNote[];
+            ).lean()) as unknown as LeanNote[];
           }
 
           // ── 히스토리 저장 (resultMarkdown에 실행결과 템플릿 포함) ──

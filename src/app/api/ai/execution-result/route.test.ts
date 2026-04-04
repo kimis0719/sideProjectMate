@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { setupTestDB, clearTestDB, teardownTestDB } from '@/__tests__/helpers/mockDb';
 import mongoose from 'mongoose';
+import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/mongodb', () => ({ default: vi.fn() }));
 
@@ -11,8 +12,10 @@ vi.mock('next-auth', () => ({
 vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 
 import Note from '@/lib/models/kanban/NoteModel';
+import type { INote } from '@/lib/models/kanban/NoteModel';
 import AiInstructionHistory from '@/lib/models/AiInstructionHistory';
 import AiExecutionLog from '@/lib/models/AiExecutionLog';
+import type { IAiExecutionLog } from '@/lib/models/AiExecutionLog';
 import { POST } from './route';
 
 const BASE_URL = 'http://localhost:3000/api/ai/execution-result';
@@ -26,6 +29,14 @@ const mockSession = {
   },
   expires: '2099-12-31T23:59:59.999Z',
 };
+
+function makeReq(body: unknown): NextRequest {
+  return new Request(BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }) as unknown as NextRequest;
+}
 
 beforeAll(async () => await setupTestDB());
 afterEach(async () => {
@@ -88,22 +99,14 @@ function makeSpmResult(
 describe('POST /api/ai/execution-result', () => {
   it('미인증 요청은 401을 반환한다', async () => {
     mockGetServerSession.mockResolvedValue(null);
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId: 'abc', rawInput: 'text' }),
-    });
+    const req = makeReq({ boardId: 'abc', rawInput: 'text' });
     const res = await POST(req);
     expect(res.status).toBe(401);
   });
 
   it('boardId 또는 rawInput 없으면 400을 반환한다', async () => {
     mockGetServerSession.mockResolvedValue(mockSession);
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rawInput: '텍스트만' }),
-    });
+    const req = makeReq({ rawInput: '텍스트만' });
     const res = await POST(req);
     expect(res.status).toBe(400);
   });
@@ -111,11 +114,7 @@ describe('POST /api/ai/execution-result', () => {
   it('파싱 불가한 입력은 422를 반환한다', async () => {
     mockGetServerSession.mockResolvedValue(mockSession);
     const boardId = new mongoose.Types.ObjectId().toString();
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId, rawInput: '파싱 불가한 자유 텍스트입니다.' }),
-    });
+    const req = makeReq({ boardId, rawInput: '파싱 불가한 자유 텍스트입니다.' });
     const res = await POST(req);
     expect(res.status).toBe(422);
   });
@@ -127,11 +126,7 @@ describe('POST /api/ai/execution-result', () => {
       instructionId: 'not-a-valid-objectid',
       completedNotes: [],
     });
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId, rawInput }),
-    });
+    const req = makeReq({ boardId, rawInput });
     const res = await POST(req);
     expect(res.status).toBe(400);
   });
@@ -144,11 +139,7 @@ describe('POST /api/ai/execution-result', () => {
       instructionId: fakeInstructionId,
       completedNotes: [],
     });
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId, rawInput }),
-    });
+    const req = makeReq({ boardId, rawInput });
     const res = await POST(req);
     expect(res.status).toBe(404);
   });
@@ -163,11 +154,7 @@ describe('POST /api/ai/execution-result', () => {
       { id: note._id.toString(), title: 'Redis 설정 구현', status: 'done' },
     ])}\n\`\`\``;
 
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId: boardId.toString(), rawInput }),
-    });
+    const req = makeReq({ boardId: boardId.toString(), rawInput });
     const res = await POST(req);
     const json = await res.json();
 
@@ -179,7 +166,7 @@ describe('POST /api/ai/execution-result', () => {
     expect(json.data.requiresConfirmation).toHaveLength(0);
 
     // DB 반영 확인
-    const updated = await Note.findById(note._id).lean();
+    const updated = await Note.findById(note._id).lean<INote>();
     expect(updated?.status).toBe('done');
     expect(updated?.completionNote).toBe('Redis 설정 구현 완료');
   });
@@ -194,11 +181,7 @@ describe('POST /api/ai/execution-result', () => {
       { id: note._id.toString(), title: '캐시 무효화 로직', status: 'partial' },
     ]);
 
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId: boardId.toString(), rawInput }),
-    });
+    const req = makeReq({ boardId: boardId.toString(), rawInput });
     const res = await POST(req);
     const json = await res.json();
 
@@ -208,7 +191,7 @@ describe('POST /api/ai/execution-result', () => {
     expect(json.data.requiresConfirmation[0].agentStatus).toBe('partial');
 
     // DB는 변경되지 않음
-    const notChanged = await Note.findById(note._id).lean();
+    const notChanged = await Note.findById(note._id).lean<INote>();
     expect(notChanged?.status).toBe('active');
   });
 
@@ -222,11 +205,7 @@ describe('POST /api/ai/execution-result', () => {
       { id: note._id.toString(), title: '이미 완료된 노트', status: 'done' },
     ]);
 
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId: boardId.toString(), rawInput }),
-    });
+    const req = makeReq({ boardId: boardId.toString(), rawInput });
     const res = await POST(req);
     const json = await res.json();
 
@@ -245,11 +224,7 @@ describe('POST /api/ai/execution-result', () => {
       { id: note._id.toString(), title: '다른 보드 노트', status: 'done' },
     ]);
 
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId: boardId.toString(), rawInput }),
-    });
+    const req = makeReq({ boardId: boardId.toString(), rawInput });
     const res = await POST(req);
     const json = await res.json();
 
@@ -258,7 +233,7 @@ describe('POST /api/ai/execution-result', () => {
     expect(json.data.requiresConfirmation).toHaveLength(0);
 
     // 원본 노트는 변경되지 않음
-    const original = await Note.findById(note._id).lean();
+    const original = await Note.findById(note._id).lean<INote>();
     expect(original?.status).toBe('active');
   });
 
@@ -272,14 +247,12 @@ describe('POST /api/ai/execution-result', () => {
       { id: note._id.toString(), title: '로그 테스트 노트', status: 'done' },
     ])}\n\`\`\``;
 
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId: boardId.toString(), rawInput }),
-    });
+    const req = makeReq({ boardId: boardId.toString(), rawInput });
     await POST(req);
 
-    const log = await AiExecutionLog.findOne({ instructionId: instruction._id }).lean();
+    const log = await AiExecutionLog.findOne({
+      instructionId: instruction._id,
+    }).lean<IAiExecutionLog>();
     expect(log).not.toBeNull();
     expect(log?.parseMethod).toBe('json');
     expect(log?.results).toHaveLength(1);
@@ -301,17 +274,13 @@ describe('POST /api/ai/execution-result', () => {
       { id: note2._id.toString(), title: '노트2', status: 'partial' },
     ]);
 
-    const req = new Request(BASE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ boardId: boardId.toString(), rawInput }),
-    });
+    const req = makeReq({ boardId: boardId.toString(), rawInput });
     const res = await POST(req);
     const json = await res.json();
 
     expect(json.data.autoCompleted).toHaveLength(1);
     expect(json.data.requiresConfirmation).toHaveLength(1);
-    expect((await Note.findById(note1._id).lean())?.status).toBe('done');
-    expect((await Note.findById(note2._id).lean())?.status).toBe('active');
+    expect((await Note.findById(note1._id).lean<INote>())?.status).toBe('done');
+    expect((await Note.findById(note2._id).lean<INote>())?.status).toBe('active');
   });
 });
