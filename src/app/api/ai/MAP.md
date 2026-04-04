@@ -16,12 +16,13 @@
 | `parseExecutionResult.ts` | spm-result 코드블록 or bare JSON 파싱 (CRLF, balanced bracket, 리터럴 줄바꿈 처리) |
 | `generateResultTemplate.ts` | 지시서에 삽입할 spm-result JSON 템플릿 생성 |
 | `buildAiContext.ts` | 보드 데이터 → systemPrompt + userMessage 조립 |
+| `validateAdditionalInstruction.ts` | additionalInstruction 가드레일 검증 (길이 500자·URL·금지패턴). null=유효, string=에러메시지 |
 
 ## 관련 모델
 
 - `AiInstructionHistory` — 지시서 히스토리 (resultMarkdown에 spm-result 템플릿 포함)
 - `AiExecutionLog` — 실행결과 로그 (instructionId, results[], testsResult, parseMethod)
-- `AiSettings` — AI 설정 (provider, modelPriority, cooldown, dailyLimit)
+- `AiSettings` — AI 설정 (provider, modelPriority, cooldown, dailyLimit, **guardRailPatterns**)
 - `AiUsage` — 사용량 기록
 
 ## 실행결과 처리 흐름
@@ -42,3 +43,5 @@
 - `generate-instruction` 은 SSE 스트리밍(`Response` 반환)이므로 `withApiLogging` 래퍼 불가
 - `execution-result`는 `withApiLogging(handlePost, ...)` 패턴 사용
 - 지시서 resultMarkdown에는 spm-result 템플릿이 DB에만 저장됨 (스트리밍 미포함); 클라이언트는 `done` SSE 이후 `/api/ai/history/{id}` 재조회
+- 어드민(`memberType === 'admin'`)은 쿨다운·일일 한도·가드레일 모두 스킵됨 (AiUsage 기록은 유지)
+- `FRONTEND_GUARDRAIL_PATTERNS`(InstructionModal)과 `AiSettings.guardRailPatterns` 기본값을 항상 동기화할 것
