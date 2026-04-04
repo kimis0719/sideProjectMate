@@ -182,26 +182,19 @@ git diff origin/main...HEAD --stat        # 변경 통계
 
 ---
 
-## 10단계: 변경사항 전체 커밋 & 푸시
+## 10단계: 코드 커밋 & 코드 PR 생성
 
-work-log, 문서 갱신, .workzones.yml, CLAUDE.md 변경을 **한 번에** 커밋하고 푸시합니다.
+현재 feature 브랜치에서 **코드 변경분만** 커밋하고 푸시합니다.
+work-log, CLAUDE.md, MAP.md 등 문서 변경은 이 커밋에 **포함하지 않습니다**.
 
 ```bash
-git add work-logs/ CLAUDE.md .workzones.yml [갱신된 MAP.md 등]
-git commit -m "chore: work-log 추가 및 세션 정리 ([브랜치명])"
+git add [코드 변경 파일만]
+git commit -m "[커밋 메시지]"
 git push
 ```
 
-> ⚠️ 이 단계가 완료된 후에만 PR을 생성합니다.
-> PR 생성 전 모든 커밋이 원격에 반영되어야 auto-merge 시 누락이 없습니다.
-
----
-
-## 11단계: GitHub PR 자동 생성
-
+이어서 코드 PR을 생성합니다.
 현재 브랜치와 연결된 이슈 번호를 브랜치명에서 추출합니다 (예: `feature/180-spm-improve` → `#180`).
-
-work-log 내용을 기반으로 PR 초안을 작성하고 사용자에게 확인을 요청합니다:
 
 `AskUserQuestion` 도구로 PR 초안 확인을 요청합니다:
 
@@ -222,8 +215,46 @@ gh pr create \
 ```
 
 - PR URL을 출력합니다.
-- 테스트 서버 배포 안내: `🚀 PR 생성 완료 — 테스트 서버(test-server 브랜치)에 자동 배포됩니다. 검증 완료 후 수동으로 머지해주세요.`
+- 테스트 서버 배포 안내: `🚀 코드 PR 생성 완료 — 테스트 서버에 자동 배포됩니다. 검증 완료 후 수동으로 머지해주세요.`
 - **⚠️ `gh pr merge --auto`를 실행하지 않습니다.** 테스트 서버 검증 → 수동 머지가 운영 배포 프로세스입니다.
+
+---
+
+## 11단계: work-log/문서 갱신 — 별도 브랜치 PR로 분리
+
+work-log, CLAUDE.md, MAP.md 등 문서 변경은 **코드 PR과 분리**하여 별도 브랜치 → PR → 즉시 squash merge합니다.
+main 브랜치가 보호되어 있으므로 직접 push 대신 PR 방식을 사용합니다.
+
+```bash
+# main으로 이동
+git checkout main
+git pull origin main
+
+# 문서 전용 브랜치 생성
+DOCS_BRANCH="auto/worklog-[브랜치명]-$(date +%Y%m%d-%H%M%S)"
+git checkout -b "$DOCS_BRANCH"
+
+# work-log, 문서 변경 커밋
+git add work-logs/ CLAUDE.md [갱신된 MAP.md 등]
+git commit -m "chore: work-log 및 문서 갱신 ([브랜치명])"
+git push -u origin "$DOCS_BRANCH"
+
+# PR 생성 + 즉시 squash merge
+gh pr create \
+  --title "chore: work-log 및 문서 갱신 ([브랜치명])" \
+  --body "work-log 및 세션 문서 자동 갱신 (코드 변경 없음)" \
+  --base main \
+  --head "$DOCS_BRANCH"
+
+gh pr merge "$DOCS_BRANCH" --squash --delete-branch
+
+# 원래 feature 브랜치로 복귀
+git checkout [feature 브랜치명]
+```
+
+> **주의:**
+> - `gh pr merge --squash`가 "clean status" 오류로 실패할 수 있습니다. 이 경우 CI 통과를 기다린 후 재시도하거나, 사용자에게 수동 머지를 안내합니다.
+> - 문서 PR은 코드가 없으므로 빌드에 영향 없습니다 (render.yaml ignoredPaths에 docs/**, work-logs/**, **/*.md 포함).
 
 ---
 
@@ -234,14 +265,15 @@ gh pr create \
 ─────────────────────────────
 👤 [작업자]의 작업 구역이 해제되었습니다.
 🌿 브랜치: [브랜치명]
-🔗 PR: [PR URL]
+🔗 코드 PR: [코드 PR URL]
+🔗 문서 PR: [문서 PR URL] (자동 머지)
 📝 work-log 생성 완료:
    - work-logs/2026-03-28-HJ-a1b2c3d.md
 📄 갱신된 문서:
-   - PROJECT_INDEX.md
    - CLAUDE.md
    - src/app/api/kanban/MAP.md
 ─────────────────────────────
+🚀 코드 PR은 테스트 서버 검증 후 수동으로 머지해주세요.
 ```
 
 변경된 파일이 없어 work-log를 생성하지 않은 경우:
