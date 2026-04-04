@@ -4,6 +4,24 @@ import { useEffect, useState, useCallback } from 'react';
 import { useInstructionStore } from '@/store/instructionStore';
 import { useBoardStore, type Section, type Note } from '@/store/boardStore';
 import { useExecutionResultStore } from '@/store/executionResultStore';
+import {
+  validateAdditionalInstruction,
+  MAX_ADDITIONAL_LENGTH,
+} from '@/lib/utils/ai/validateAdditionalInstruction';
+
+// 프론트엔드용 기본 패턴 (AiSettings 기본값과 동일)
+const FRONTEND_GUARDRAIL_PATTERNS = [
+  '너는\\s*(?:이제|이다)',
+  '역할을?\\s*바꿔',
+  '이전\\s*(?:지시|명령).*무시',
+  '(?:위|앞).*명령.*무시',
+  'ignore\\s+(?:above|previous|instructions)',
+  'forget\\s+(?:everything|all)',
+  '\\d+번\\s*반복',
+  '위\\s*내용.*반복',
+  'api\\s*키.*(?:출력|알려|보여)',
+  '비밀번호.*(?:알려|출력|보여)',
+];
 
 /* ══════════════════════════════════════════
    InstructionModal — AI 지시서 생성 모달
@@ -55,6 +73,11 @@ export default function InstructionModal() {
   }, [isOpen, fetchPresets]);
 
   if (!isOpen) return null;
+
+  const additionalError = additionalInstruction
+    ? validateAdditionalInstruction(additionalInstruction, FRONTEND_GUARDRAIL_PATTERNS)
+    : null;
+  const isGenerateDisabled = isGenerating || !!additionalError;
 
   const activeNotes = notes.filter((n) => n.status !== 'done');
 
@@ -156,16 +179,38 @@ export default function InstructionModal() {
 
               {/* 추가 지시 */}
               <section className="space-y-3">
-                <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">
-                  추가 지시 (선택)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">
+                    추가 지시 (선택)
+                  </label>
+                  <span
+                    className={`text-xs tabular-nums ${
+                      additionalInstruction.length > MAX_ADDITIONAL_LENGTH
+                        ? 'text-error font-semibold'
+                        : 'text-on-surface-variant/60'
+                    }`}
+                  >
+                    {additionalInstruction.length} / {MAX_ADDITIONAL_LENGTH}
+                  </span>
+                </div>
                 <textarea
                   value={additionalInstruction}
                   onChange={(e) => setAdditionalInstruction(e.target.value)}
+                  maxLength={MAX_ADDITIONAL_LENGTH + 50}
                   rows={3}
-                  className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary resize-none text-sm placeholder:text-on-surface-variant/50"
+                  className={`w-full bg-surface-container-low rounded-xl px-4 py-3 focus:ring-2 resize-none text-sm placeholder:text-on-surface-variant/50 transition-colors ${
+                    additionalError
+                      ? 'border border-error focus:ring-error'
+                      : 'border-none focus:ring-primary'
+                  }`}
                   placeholder="예: 각 작업의 예상 소요시간도 포함해줘"
                 />
+                {additionalError && (
+                  <p className="text-xs text-error flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">warning</span>
+                    {additionalError}
+                  </p>
+                )}
               </section>
 
               {error && (
@@ -243,7 +288,7 @@ export default function InstructionModal() {
           )}
           <button
             onClick={generate}
-            disabled={isGenerating}
+            disabled={isGenerateDisabled}
             className="px-8 py-3 bg-primary-container text-on-primary font-bold rounded-xl hover:translate-x-1 active:opacity-80 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span
