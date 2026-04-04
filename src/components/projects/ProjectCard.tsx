@@ -136,13 +136,7 @@ export default function ProjectCard({ project, applicationStatus, isOwner }: Pro
               내 프로젝트
             </span>
           ) : (
-            <span
-              className={
-                remaining > 0 ? 'text-primary-container font-semibold' : 'text-on-surface-variant'
-              }
-            >
-              {remaining > 0 ? `${remaining}자리 남음` : '마감'}
-            </span>
+            <span className="text-primary-container font-semibold">{maxMembers}명 원함</span>
           )}
         </div>
       </div>
