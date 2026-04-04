@@ -5,6 +5,7 @@ import { useBoardStore, Note, Section } from '@/store/boardStore';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useModal } from '@/hooks/useModal';
+import { socketClient } from '@/lib/socket';
 import { useToastStore } from '@/components/common/Toast';
 
 // 인박스 판별
@@ -360,7 +361,7 @@ export default function KanbanMobileView({ pid }: Props) {
     if (session?.user?.id) setCurrentUserId(session.user.id);
   }, [session, setCurrentUserId]);
 
-  // 소켓 접속 (접속자 정보 수신)
+  // 소켓 접속 (접속자 정보 수신) + cleanup
   React.useEffect(() => {
     if (boardId && session?.user) {
       initSocket({
@@ -368,6 +369,9 @@ export default function KanbanMobileView({ pid }: Props) {
         nName: session.user.name || 'Unknown',
         avatarUrl: session.user.image || undefined,
       });
+      return () => {
+        socketClient.socket?.emit('leave-board', { boardId, userId: session.user.id });
+      };
     }
   }, [boardId, session, initSocket]);
 
