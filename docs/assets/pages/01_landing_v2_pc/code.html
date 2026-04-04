@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CollabCurator | Side Project Mate (SPM)</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+KR:wght@400;500;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#00174b",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-surface-variant": "#434655",
+                        "tertiary": "#943700",
+                        "primary-container": "#2563eb",
+                        "primary": "#004ac6",
+                        "on-tertiary-container": "#ffede6",
+                        "surface-dim": "#dadad9",
+                        "surface": "#f9f9f8",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "secondary-fixed": "#dbe1ff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-primary-container": "#eeefff",
+                        "outline": "#737686",
+                        "on-secondary-container": "#394c84",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-container": "#eeeeed",
+                        "surface-container-high": "#e8e8e7",
+                        "secondary": "#495c95",
+                        "outline-variant": "#c3c6d7",
+                        "surface-tint": "#0053db",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "secondary-container": "#acbfff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-variant": "#e2e2e2",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2f3130",
+                        "surface-container-low": "#f3f4f3",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-container-highest": "#e2e2e2",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f9f9f8",
+                        "background": "#f9f9f8",
+                        "on-surface": "#1a1c1c",
+                        "on-primary-fixed": "#00174b",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#bc4800",
+                        "inverse-on-surface": "#f1f1f0",
+                        "inverse-primary": "#b4c5ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope", "Noto Sans KR"],
+                        "body": ["Inter", "Noto Sans KR"],
+                        "label": ["Inter", "Noto Sans KR"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background-color: #f9f9f8;
+            color: #1a1c1c;
+        }
+    </style>
+</head>
+<body class="antialiased">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 bg-stone-50/80 dark:bg-stone-900/80 backdrop-blur-xl shadow-[0_20px_40px_rgba(26,28,28,0.04)] font-['Manrope'] antialiased">
+<div class="flex items-center justify-between px-8 h-16 max-w-full mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50">CollabCurator</span>
+<div class="hidden md:flex gap-6">
+<a class="text-blue-600 dark:text-blue-400 font-semibold border-b-2 border-blue-600" href="#">Explore</a>
+<a class="text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" href="#">Matches</a>
+<a class="text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" href="#">Resources</a>
+<a class="text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors" href="#">Activity</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:block px-4 py-2 text-stone-500 hover:text-stone-900 transition-colors">Sign In</button>
+<button class="bg-primary-container text-on-primary-container px-5 py-2 rounded-lg font-semibold transition-all duration-300 ease-out hover:scale-[1.02]">Create Project</button>
+<button class="md:hidden p-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</div>
+</nav>
+<main class="pt-16">
+<!-- Hero Section -->
+<section class="min-h-[819px] flex flex-col md:flex-row items-center px-8 lg:px-24 py-20 bg-surface">
+<div class="w-full md:w-1/2 flex flex-col gap-8">
+<h1 class="text-[3.5rem] leading-[1.1] font-bold font-headline tracking-tight text-on-surface">
+                    아이디어를 현실로,<br/>최적의 팀원을 만나보세요
+                </h1>
+<p class="text-xl text-on-surface-variant max-w-lg leading-relaxed">
+                    AI 기반 도메인 매칭과 자동 생성되는 로드맵으로 사이드 프로젝트의 시작부터 끝까지, SPM이 당신의 완벽한 메이트가 되어드립니다.
+                </p>
+<div class="flex flex-wrap gap-4 pt-4">
+<button class="bg-primary-container text-on-primary px-8 py-4 rounded-lg font-semibold text-lg transition-all hover:translate-x-1 shadow-sm">
+                        시작하기
+                    </button>
+<button class="text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-container-low transition-all">
+                        프로젝트 둘러보기
+                    </button>
+</div>
+</div>
+<div class="w-full md:w-1/2 mt-16 md:mt-0 relative">
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-[0_40px_80px_rgba(26,28,28,0.08)] transform md:rotate-2">
+<img alt="Kanban Board Mockup" class="rounded-lg w-full h-auto object-cover border border-outline-variant/15" data-alt="clean minimal digital kanban board interface with colorful project cards and task columns in a sleek software UI layout" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsOM_WlusO-vzxyrgzZm9j4CD45LxHT31jP-uiCWpD9kkEOSbc7EniSH1qMePt7kdEGQACXnvOxnnrqein-121JsyhqU6ptmG8teP0lxJ-qwic_zJYduvoQ5jvgTonJgWUVbKzgT5YATFBVJqw7LZNnrBJb6MFrCocy7sZd6Qw14dnwxuGX5APrGndOOrAqRpSLXNhU6BK4125Fq-KAHB0Zxl-k5uxhGffa8F8RGquDyanS8GzuOf1PgrnUiW8bzuiz47nFrqkJOe5"/>
+</div>
+<div class="absolute -bottom-8 -left-8 bg-white p-6 rounded-xl shadow-lg hidden lg:block">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+<span class="material-symbols-outlined text-emerald-600">check_circle</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">AI Matching Complete</p>
+<p class="text-xs text-on-surface-variant">3명의 새로운 팀원이 제안되었습니다.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Bento Grid -->
+<section class="py-24 px-8 lg:px-24 bg-surface-container-low">
+<div class="max-w-7xl mx-auto">
+<div class="mb-16">
+<span class="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-4 block">Key Features</span>
+<h2 class="text-4xl font-bold font-headline text-on-surface">프로젝트 성공을 위한 올인원 솔루션</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Feature 1: AI Matching -->
+<div class="md:col-span-8 bg-surface-container-lowest p-10 rounded-xl flex flex-col justify-between min-h-[400px]">
+<div>
+<span class="material-symbols-outlined text-primary text-4xl mb-6">group_add</span>
+<h3 class="text-2xl font-bold mb-4">AI 스마트 도메인 매칭</h3>
+<p class="text-on-surface-variant leading-relaxed max-w-md">
+                                당신의 경력과 기술 스택, 그리고 프로젝트의 성향을 AI가 정밀 분석하여 가장 시너지가 날 수 있는 팀원을 추천합니다. 단순한 스킬 매칭을 넘어 도메인 적합도까지 고려합니다.
+                            </p>
+</div>
+<div class="mt-8 flex gap-2">
+<span class="px-4 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase">Recruiting</span>
+<span class="px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase">Domain Expert</span>
+</div>
+</div>
+<!-- Feature 2: AI Instruction -->
+<div class="md:col-span-4 bg-primary-container p-10 rounded-xl text-on-primary flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-4xl mb-6">auto_awesome</span>
+<h3 class="text-2xl font-bold mb-4">자동 로드맵 생성</h3>
+<p class="opacity-90 leading-relaxed">
+                                프로젝트 주제만 입력하세요. AI가 단계별 개발 계획과 마일스톤을 즉시 생성해 드립니다.
+                            </p>
+</div>
+<div class="mt-8">
+<div class="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-white"></div>
+</div>
+<p class="text-xs mt-2 font-medium opacity-80 text-right">Roadmap Gen: 75%</p>
+</div>
+</div>
+<!-- Feature 3: Kanban -->
+<div class="md:col-span-12 bg-surface-container-lowest p-10 rounded-xl flex flex-col md:flex-row items-center gap-12">
+<div class="w-full md:w-1/2">
+<span class="material-symbols-outlined text-primary text-4xl mb-6">dashboard_customize</span>
+<h3 class="text-2xl font-bold mb-4">리얼타임 화이트보드 칸반</h3>
+<p class="text-on-surface-variant leading-relaxed mb-6">
+                                유연한 워크플로우를 위해 설계된 화이트보드형 칸반 보드입니다. 실시간 동기화로 팀원들과 즉각적으로 업무 상태를 공유하고 조율하세요.
+                            </p>
+<button class="text-primary font-bold flex items-center gap-2 hover:gap-4 transition-all">
+                                더 알아보기 <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<div class="w-full md:w-1/2 bg-surface-container p-6 rounded-lg">
+<img alt="Kanban View" class="rounded shadow-sm" data-alt="Close-up of a digital task management interface with colorful sticky-note style cards on a light background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5AnqreP_zVrdw0Sl3PVRoObREnL8TNqOpn_axPNjbJZp7XLAoZ3SZX2U-hL_DFChFbS13C9tlzB4Awk1gIS-k6LKCOxpp9QM9O_17gKtUgAH1kuZFI7cWO8EvHlCYBobiFbuQQrn6MQRQ_UNI6NXBa1NK52GSs_we_EeuY9Klw3jWF2B_lCnTS7sJYtf1jV0aERhpdXJqCev1-i8Ez3Wdx0ROgSetuPg1YrI6MTVURvKNAOZhTb1DsMbt5v8ACH_Di0swgcpxhq6r"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Project Preview Grid -->
+<section class="py-24 px-8 lg:px-24 bg-surface">
+<div class="max-w-7xl mx-auto">
+<div class="flex justify-between items-end mb-12">
+<div>
+<span class="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-4 block">New Missions</span>
+<h2 class="text-4xl font-bold font-headline text-on-surface">현재 모집 중인 프로젝트</h2>
+</div>
+<button class="text-stone-500 hover:text-primary transition-colors font-medium flex items-center gap-2">
+                        전체보기 <span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Project Card 1 -->
+<div class="group bg-surface-container-lowest rounded-xl p-8 transition-all hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] hover:-translate-y-1">
+<div class="flex justify-between items-start mb-6">
+<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider">Recruiting</span>
+<span class="material-symbols-outlined text-stone-300 group-hover:text-primary transition-colors">bookmark</span>
+</div>
+<h3 class="text-xl font-bold mb-3">AI 반려동물 건강 케어 서비스</h3>
+<p class="text-sm text-on-surface-variant line-clamp-2 mb-6">
+                            반려동물의 사진을 통해 건강 상태를 체크하고 영양제를 추천해주는 앱 서비스를 기획 중입니다.
+                        </p>
+<div class="flex items-center gap-2 mb-6 flex-wrap">
+<span class="text-[10px] font-bold bg-surface-container text-on-surface-variant px-2 py-1 rounded">MOBILE</span>
+<span class="text-[10px] font-bold bg-surface-container text-on-surface-variant px-2 py-1 rounded">AI/ML</span>
+</div>
+<div class="flex items-center justify-between border-t border-outline-variant/10 pt-6">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-stone-200 border-2 border-white flex items-center justify-center text-[10px] font-bold">JD</div>
+<div class="w-8 h-8 rounded-full bg-stone-300 border-2 border-white flex items-center justify-center text-[10px] font-bold">ML</div>
+<div class="w-8 h-8 rounded-full bg-stone-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-stone-400">+2</div>
+</div>
+<span class="text-xs text-on-surface-variant">2명 더 필요함</span>
+</div>
+</div>
+<!-- Project Card 2 -->
+<div class="group bg-surface-container-lowest rounded-xl p-8 transition-all hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] hover:-translate-y-1">
+<div class="flex justify-between items-start mb-6">
+<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-wider">Recruiting</span>
+<span class="material-symbols-outlined text-stone-300 group-hover:text-primary transition-colors">bookmark</span>
+</div>
+<h3 class="text-xl font-bold mb-3">개발자를 위한 오프라인 네트워킹</h3>
+<p class="text-sm text-on-surface-variant line-clamp-2 mb-6">
+                            위치 기반으로 주변 개발자들과 가벼운 커피챗을 연결해주는 로컬 커뮤니티 플랫폼입니다.
+                        </p>
+<div class="flex items-center gap-2 mb-6 flex-wrap">
+<span class="text-[10px] font-bold bg-surface-container text-on-surface-variant px-2 py-1 rounded">WEB</span>
+<span class="text-[10px] font-bold bg-surface-container text-on-surface-variant px-2 py-1 rounded">COMMUNITY</span>
+</div>
+<div class="flex items-center justify-between border-t border-outline-variant/10 pt-6">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-stone-200 border-2 border-white flex items-center justify-center text-[10px] font-bold">UI</div>
+<div class="w-8 h-8 rounded-full bg-stone-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-stone-400">+1</div>
+</div>
+<span class="text-xs text-on-surface-variant">1명 더 필요함</span>
+</div>
+</div>
+<!-- Project Card 3 -->
+<div class="group bg-surface-container-lowest rounded-xl p-8 transition-all hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] hover:-translate-y-1">
+<div class="flex justify-between items-start mb-6">
+<span class="px-3 py-1 bg-stone-200 text-stone-600 rounded-full text-[10px] font-bold uppercase tracking-wider">Reviewing</span>
+<span class="material-symbols-outlined text-stone-300 group-hover:text-primary transition-colors">bookmark</span>
+</div>
+<h3 class="text-xl font-bold mb-3">친환경 라이프스타일 챌린지</h3>
+<p class="text-sm text-on-surface-variant line-clamp-2 mb-6">
+                            제로웨이스트 실천을 기록하고 보상을 받는 게이미피케이션 요소가 포함된 챌린지 앱입니다.
+                        </p>
+<div class="flex items-center gap-2 mb-6 flex-wrap">
+<span class="text-[10px] font-bold bg-surface-container text-on-surface-variant px-2 py-1 rounded">DESIGN</span>
+<span class="text-[10px] font-bold bg-surface-container text-on-surface-variant px-2 py-1 rounded">GREEN</span>
+</div>
+<div class="flex items-center justify-between border-t border-outline-variant/10 pt-6">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-stone-400 border-2 border-white flex items-center justify-center text-[10px] font-bold">PM</div>
+<div class="w-8 h-8 rounded-full bg-stone-200 border-2 border-white flex items-center justify-center text-[10px] font-bold">FE</div>
+<div class="w-8 h-8 rounded-full bg-stone-300 border-2 border-white flex items-center justify-center text-[10px] font-bold">BE</div>
+</div>
+<span class="text-xs text-on-surface-variant">모집 마감 임박</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="py-32 px-8 bg-surface-container-low text-center">
+<div class="max-w-3xl mx-auto">
+<h2 class="text-4xl md:text-5xl font-bold font-headline mb-8 text-on-surface">혼자 고민하지 마세요.</h2>
+<p class="text-xl text-on-surface-variant mb-12">
+                    당신의 아이디어는 소중합니다. SPM에서 완벽한 팀원을 만나 지금 바로 시작해보세요.
+                </p>
+<button class="bg-primary-container text-on-primary px-10 py-5 rounded-lg font-bold text-xl transition-all hover:scale-105 shadow-lg">
+                    무료로 시작하기
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 bg-stone-100 dark:bg-stone-900 flex flex-col items-center justify-center space-y-4 px-8 font-['Inter'] text-xs uppercase tracking-widest">
+<div class="flex gap-8 mb-4">
+<a class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 underline underline-offset-4 transition-all opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 underline underline-offset-4 transition-all opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 underline underline-offset-4 transition-all opacity-80 hover:opacity-100" href="#">Cookie Policy</a>
+</div>
+<div class="text-stone-400 font-bold">CollabCurator</div>
+<p class="text-stone-400 text-center">© 2024 The Digital Curator Editorial. All rights reserved.</p>
+</footer>
+<!-- Side Navigation (Suppressed for landing, but included logic for internal pages) -->
+<!-- Not rendered as per Destination Rule: Suppress on Transactional/Landing screens -->
+</body></html>

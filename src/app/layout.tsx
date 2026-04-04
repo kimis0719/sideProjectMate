@@ -18,6 +18,10 @@ const notoSansKR = Noto_Sans_KR({
   preload: false,
 });
 
+// Material Symbols Outlined — 아이콘 폰트
+const materialSymbolsUrl =
+  'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
+
 export const metadata: Metadata = {
   title: {
     default: 'Side Project Mate',
@@ -36,6 +40,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
+      <head>
+        <link href={materialSymbolsUrl} rel="stylesheet" />
+      </head>
       <body
         className={`${inter.variable} ${manrope.variable} ${notoSansKR.variable}`}
         suppressHydrationWarning

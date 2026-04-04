@@ -19,8 +19,13 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-surface min-h-screen">
       <HeroSection />
+
+      {/* LandingPreview: 세션에 따라 비회원 미리보기 / 로그인 전체 목록 분기 */}
+      <LandingPreview>
+        <ProjectList />
+      </LandingPreview>
 
       <div className="container mx-auto px-4">
         <AdBanner
@@ -30,11 +35,6 @@ export default function Home() {
           className="py-4"
         />
       </div>
-
-      {/* LandingPreview: 세션에 따라 비회원 미리보기 / 로그인 전체 목록 분기 */}
-      <LandingPreview>
-        <ProjectList />
-      </LandingPreview>
     </div>
   );
 }

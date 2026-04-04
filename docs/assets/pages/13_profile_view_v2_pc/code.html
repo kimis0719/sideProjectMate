@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Digital Curator - 내 프로필 편집</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-container": "#2563eb",
+                        "surface-tint": "#0053db",
+                        "primary": "#2563eb",
+                        "on-primary-container": "#eeefff",
+                        "outline-variant": "#c3c6d7",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-container-low": "#f3f4f3",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "inverse-primary": "#b4c5ff",
+                        "tertiary-container": "#bc4800",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-surface-variant": "#434655",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-container": "#eeeeed",
+                        "secondary": "#495c95",
+                        "on-surface": "#1a1c1c",
+                        "inverse-surface": "#2f3130",
+                        "background": "#f9f9f8",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "surface-variant": "#e2e2e2",
+                        "surface-dim": "#dadad9",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface": "#f9f9f8",
+                        "on-secondary-fixed": "#00174b",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#00174b",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e2e2e2",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "outline": "#737686",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "tertiary": "#943700",
+                        "surface-container-high": "#e8e8e7",
+                        "secondary-container": "#acbfff",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f9f9f8",
+                        "primary-fixed": "#dbe1ff",
+                        "inverse-on-surface": "#f1f1f0",
+                        "on-tertiary-container": "#ffede6",
+                        "on-secondary-container": "#394c84",
+                        "secondary-fixed": "#dbe1ff"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "Noto Sans KR"],
+                        "body": ["Inter", "Noto Sans KR"],
+                        "label": ["Inter", "Noto Sans KR"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Noto Sans KR', 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 bg-[#f9f9f8]/80 dark:bg-neutral-900/80 backdrop-blur-xl transition-all duration-300 border-b border-outline-variant/10">
+<div class="flex justify-between items-center px-8 h-16 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-12">
+<span class="text-xl font-bold tracking-tighter text-[#1a1c1c] dark:text-neutral-100 font-headline">The Digital Curator</span>
+<div class="hidden md:flex gap-8 items-center font-['Manrope'] text-sm tracking-tight">
+<a class="text-[#1a1c1c]/60 dark:text-neutral-400 hover:text-[#1a1c1c] transition-all duration-300" href="#">프로젝트</a>
+<a class="text-[#1a1c1c]/60 dark:text-neutral-400 hover:text-[#1a1c1c] transition-all duration-300" href="#">대시보드</a>
+<a class="text-[#1a1c1c]/60 dark:text-neutral-400 hover:text-[#1a1c1c] transition-all duration-300" href="#">채팅</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-[#1a1c1c]/60 hover:bg-[#f3f4f3] p-2 rounded-lg transition-all">notifications</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img alt="사용자 프로필" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEANDxKjkAEGJAXiKX8Yq1_hAtDgKM_HUe1ChF9_Zjc2kC2r7WLy5UaM_gTq6pyxc36XUDo55zJESvRKyVZS2gePbr3K_llgBgXwWiF_JWHxHJfm2sW1WArqUlKJScYuSBdr1xsU0LpaccL62563L-qhKUg7yyZwxrsZgWyS8EnHa8nl_EtEZ1pUFYpdM3OUwiAjWFXXBhNtpiApk5HbyqRPyGXvccbVQ0sL5xKtvkVUOmiau6YewF7tigV_uVg4BsIrOHAeqiPEiU"/>
+</div>
+</div>
+</div>
+</nav>
+<!-- Page Header -->
+<header class="mt-16 bg-surface-container-low border-b border-outline-variant/10">
+<div class="max-w-[1440px] mx-auto px-8 py-10 flex justify-between items-end">
+<div>
+<span class="text-xs font-bold uppercase tracking-widest text-primary mb-2 block">My Space</span>
+<h1 class="text-4xl font-bold font-headline tracking-tighter">내 프로필</h1>
+</div>
+<button class="bg-primary text-white px-8 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-primary/90 transition-all active:scale-95 shadow-sm">
+            저장하기
+        </button>
+</div>
+</header>
+<main class="max-w-[1440px] mx-auto px-8 pb-32">
+<div class="grid grid-cols-12 gap-12 mt-12">
+<!-- Left Column -->
+<div class="col-span-12 lg:col-span-8 space-y-12">
+<!-- Basic Info -->
+<section class="bg-surface-container-lowest p-10 rounded-xl shadow-sm">
+<h2 class="text-2xl font-bold font-headline mb-8">기본 정보</h2>
+<div class="flex flex-col md:flex-row gap-12 items-start">
+<div class="relative group">
+<div class="w-32 h-32 rounded-xl overflow-hidden bg-surface-container ring-4 ring-background shadow-inner">
+<img alt="Profile Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoKlUGbS45cJ-7yjYucRnk26Qv7QiB0FPKJ2stc5p_htbkZCTFZLD4qVmllGZfsYdWa9SbbBNptVCfqb-ASd6ZTlw5BnTSi6ul1uymd2wjCFAQTy7A2hI91WIU6UjUvOukNZSnB6jgiD_teXWSNObeFB_XZSFkZWjk6RN82uAdBmi_Q3M_kdU-yKHE6SRI-Hx3qbuT6VcUOxcEUO8aZGyPC9tgzNTEsBXRkSJ-ez6UHh7B8Sp6Xmo2N6o4MiPGEg59ltlB4NN5uGKA"/>
+</div>
+<button class="absolute -bottom-2 -right-2 bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-sm">photo_camera</span>
+</button>
+</div>
+<div class="flex-1 w-full space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">닉네임</label>
+<input class="w-full bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 py-3 px-4 font-medium transition-all" type="text" value="디지털큐레이터"/>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">포지션 / 경력</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 py-3 px-4 font-medium appearance-none transition-all">
+<option>Senior Fullstack Developer (8년차)</option>
+<option>Lead UI Designer (5년차)</option>
+<option>Product Manager (3년차)</option>
+</select>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">자기소개</label>
+<span class="text-[10px] font-medium text-outline">120 / 300자</span>
+</div>
+<textarea class="w-full bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 py-3 px-4 font-body text-sm leading-relaxed transition-all" placeholder="나를 표현하는 한 문장을 적어주세요." rows="4">사용자 중심의 가치를 실현하는 풀스택 개발자입니다. 효율적인 시스템 설계와 아름다운 UI를 결합하는 것을 즐깁니다.</textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- Skills & Interests -->
+<section class="bg-surface-container-lowest p-10 rounded-xl shadow-sm">
+<h2 class="text-2xl font-bold font-headline mb-8">기술 &amp; 관심사</h2>
+<div class="space-y-8">
+<div class="space-y-4">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">보유 기술 스택</label>
+<div class="flex flex-wrap gap-2 p-4 bg-surface-container-low rounded-xl">
+<span class="bg-primary text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2">React <button class="material-symbols-outlined text-[14px]">close</button></span>
+<span class="bg-primary text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2">TypeScript <button class="material-symbols-outlined text-[14px]">close</button></span>
+<span class="bg-primary text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2">Next.js <button class="material-symbols-outlined text-[14px]">close</button></span>
+<span class="bg-primary text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2">Tailwind CSS <button class="material-symbols-outlined text-[14px]">close</button></span>
+<button class="bg-white px-3 py-1.5 rounded-full text-xs font-bold border border-outline-variant/30 text-primary flex items-center gap-1 hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-xs">add</span> 태그 추가
+                            </button>
+</div>
+</div>
+<div class="space-y-4">
+<label class="text-xs font-bold uppercase tracking-wider text-on-surface-variant">관심 도메인</label>
+<div class="flex flex-wrap gap-2">
+<button class="bg-surface-container-high px-4 py-2 rounded-full text-xs font-semibold hover:bg-primary hover:text-white transition-colors">핀테크</button>
+<button class="bg-primary text-white px-4 py-2 rounded-full text-xs font-semibold">인공지능</button>
+<button class="bg-surface-container-high px-4 py-2 rounded-full text-xs font-semibold hover:bg-primary hover:text-white transition-colors">이커머스</button>
+<button class="bg-surface-container-high px-4 py-2 rounded-full text-xs font-semibold hover:bg-primary hover:text-white transition-colors">헬스케어</button>
+<button class="bg-surface-container-high px-4 py-2 rounded-full text-xs font-semibold hover:bg-primary hover:text-white transition-colors">모빌리티</button>
+</div>
+</div>
+</div>
+</section>
+<!-- External Integrations -->
+<section class="bg-surface-container-lowest p-10 rounded-xl shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<h2 class="text-2xl font-bold font-headline">외부 연동</h2>
+<button class="text-xs font-bold text-primary flex items-center gap-1 hover:underline">업데이트 확인 <span class="material-symbols-outlined text-xs">sync</span></button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+<div class="bg-surface-container-low p-6 rounded-xl text-center transition-all hover:bg-surface-bright">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Commits</span>
+<div class="text-3xl font-bold text-primary font-headline">2.4k+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl text-center transition-all hover:bg-surface-bright">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">PRs</span>
+<div class="text-3xl font-bold text-primary font-headline">142</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl text-center transition-all hover:bg-surface-bright">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Issues</span>
+<div class="text-3xl font-bold text-primary font-headline">89</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl text-center transition-all hover:bg-surface-bright">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Stars</span>
+<div class="text-3xl font-bold text-primary font-headline">512</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-6 bg-surface-container-low rounded-xl border-l-4 border-[#FF0076]">
+<div class="flex items-center gap-6">
+<div class="w-12 h-12 bg-[#FF0076]/10 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[#FF0076]">military_tech</span>
+</div>
+<div>
+<h4 class="font-bold text-sm">Solved.ac 티어</h4>
+<p class="text-on-surface-variant text-xs">문제를 해결하고 티어를 갱신하세요.</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-2xl font-black text-[#FF0076] tracking-tighter">RUBY IV</span>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column -->
+<div class="col-span-12 lg:col-span-4 space-y-12">
+<!-- Social Links -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-sm">
+<h2 class="text-xl font-bold font-headline mb-6">소셜 링크</h2>
+<div class="space-y-4">
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2.5 rounded-lg border-l-2 border-on-surface">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">code</span>
+<input class="bg-transparent border-none p-0 text-sm focus:ring-0 w-full font-medium" type="text" value="github.com/curator_digital"/>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2.5 rounded-lg border-l-2 border-primary">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">rss_feed</span>
+<input class="bg-transparent border-none p-0 text-sm focus:ring-0 w-full font-medium" type="text" value="curator-blog.io"/>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2.5 rounded-lg border-l-2 border-secondary">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">link</span>
+<input class="bg-transparent border-none p-0 text-sm focus:ring-0 w-full font-medium" type="text" value="linkedin.com/in/digital"/>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2.5 rounded-lg border-l-2 border-[#FF0076]">
+<span class="material-symbols-outlined text-on-surface-variant text-xl">workspace_premium</span>
+<input class="bg-transparent border-none p-0 text-sm focus:ring-0 w-full font-medium" type="text" value="solved.ac/profile/dev_art"/>
+</div>
+</div>
+</section>
+<!-- Available Hours (Updated Section) -->
+<section class="bg-surface-container-lowest p-8 rounded-xl shadow-sm overflow-hidden">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-xl font-bold font-headline">주간 가능한 시간</h2>
+<span class="text-[10px] font-bold text-white px-3 py-1 bg-primary rounded-full">주 25시간</span>
+</div>
+<div class="w-full select-none">
+<!-- Schedule Table Grid: 4x7 with labels -->
+<div class="grid grid-cols-[4.5rem_repeat(7,1fr)] gap-[4px]">
+<!-- Top Row: Headers -->
+<div class="h-8"></div>
+<div class="text-[10px] font-bold text-on-surface-variant text-center uppercase flex items-center justify-center">Mon</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-center uppercase flex items-center justify-center">Tue</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-center uppercase flex items-center justify-center">Wed</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-center uppercase flex items-center justify-center">Thu</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-center uppercase flex items-center justify-center">Fri</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-center uppercase flex items-center justify-center">Sat</div>
+<div class="text-[10px] font-bold text-on-surface-variant text-center uppercase flex items-center justify-center">Sun</div>
+<!-- Morning (06-12) -->
+<div class="text-[9px] font-bold text-outline text-right pr-3 flex items-center justify-end h-10 leading-none">아침<br/><span class="text-[8px] font-normal opacity-70">06-12</span></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<!-- Lunch (12-18) -->
+<div class="text-[9px] font-bold text-outline text-right pr-3 flex items-center justify-end h-10 leading-none">점심<br/><span class="text-[8px] font-normal opacity-70">12-18</span></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<!-- Evening (18-24) -->
+<div class="text-[9px] font-bold text-outline text-right pr-3 flex items-center justify-end h-10 leading-none">저녁<br/><span class="text-[8px] font-normal opacity-70">18-24</span></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-primary rounded-md shadow-sm"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<!-- Late Night (00-06) -->
+<div class="text-[9px] font-bold text-outline text-right pr-3 flex items-center justify-end h-10 leading-none">심야<br/><span class="text-[8px] font-normal opacity-70">00-06</span></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+<div class="h-10 bg-[#F3F4F6] rounded-md transition-colors hover:bg-[#F3F4F6]/80 cursor-pointer"></div>
+</div>
+</div>
+<p class="mt-6 text-[10px] text-on-surface-variant italic leading-relaxed text-center font-['Noto_Sans_KR']">* 클릭하여 가용 가능한 시간대를 선택해 주세요.</p>
+</section>
+</div>
+</div>
+<!-- Section 6: Reviews -->
+<section class="mt-12 bg-surface-container-lowest p-10 rounded-xl shadow-sm">
+<h2 class="text-2xl font-bold font-headline mb-8">받은 리뷰</h2>
+<div class="space-y-4">
+<div class="bg-surface-container-low p-6 rounded-xl group transition-all hover:translate-x-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-1 text-tertiary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="ml-2 text-on-surface text-xs font-bold">5.0</span>
+</div>
+<span class="text-[10px] text-on-surface-variant font-medium">2024.03.15</span>
+</div>
+<h4 class="font-bold text-sm mb-2">핀테크 자산관리 플랫폼 고도화 프로젝트</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">복잡한 기술적 문제를 명쾌하게 해결해주셨습니다. 팀워크가 훌륭하고 커뮤니케이션 역량이 탁월합니다. 다음에도 꼭 함께하고 싶습니다.</p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl group transition-all hover:translate-x-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-1 text-tertiary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm">star</span>
+<span class="ml-2 text-on-surface text-xs font-bold">4.0</span>
+</div>
+<span class="text-[10px] text-on-surface-variant font-medium">2024.01.20</span>
+</div>
+<h4 class="font-bold text-sm mb-2">커뮤니티 기반 여행 앱 개발</h4>
+<p class="text-sm text-on-surface-variant leading-relaxed">일정 준수와 코드 품질이 매우 안정적입니다. UI 애니메이션 디테일이 인상적이었습니다.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#f3f4f3] dark:bg-neutral-950 w-full py-12 mt-20 border-t border-outline-variant/10">
+<div class="flex flex-col md:flex-row justify-between items-center px-8 gap-4 max-w-[1440px] mx-auto font-['Inter'] text-xs font-medium uppercase tracking-widest">
+<span class="text-[#1a1c1c]/40 dark:text-neutral-500">© 2024 The Digital Curator. All rights reserved.</span>
+<div class="flex gap-8">
+<a class="text-[#1a1c1c]/40 dark:text-neutral-500 hover:text-primary transition-colors" href="#">이용약관</a>
+<a class="text-[#1a1c1c]/40 dark:text-neutral-500 hover:text-primary transition-colors" href="#">개인정보처리방침</a>
+<a class="text-[#1a1c1c]/40 dark:text-neutral-500 hover:text-primary transition-colors" href="#">고객센터</a>
+</div>
+</div>
+</footer>
+</body></html>

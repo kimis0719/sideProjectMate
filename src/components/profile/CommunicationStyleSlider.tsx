@@ -40,61 +40,67 @@ export default function CommunicationStyleSlider({
   };
 
   return (
-    <div className="space-y-8 p-4 bg-card rounded-lg shadow-sm border border-border">
+    <div className="space-y-8">
       {/* 커뮤니케이션 스타일 슬라이더 */}
       <div>
-        <h3 className="text-lg font-semibold mb-4 text-foreground">커뮤니케이션 스타일</h3>
-        <div className="relative pt-6 pb-2">
+        <div className="flex items-center justify-between mb-8">
+          <span className="text-xs font-bold text-outline uppercase tracking-widest">
+            커뮤니케이션
+          </span>
+          <span className="material-symbols-outlined text-primary">chat_bubble</span>
+        </div>
+        <div className="space-y-6">
           <input
             type="range"
             min="0"
             max="100"
             value={preference}
             onChange={(e) => onChangePreference(Number(e.target.value))}
-            className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+            className="w-full h-3 bg-surface-container-high rounded-full appearance-none cursor-pointer accent-primary"
           />
-          <div className="flex justify-between mt-2 text-sm font-medium text-muted-foreground">
-            <span className={preference < 50 ? 'text-primary font-bold' : ''}>
-              비동기 (텍스트) 💬
+          <div className="flex justify-between text-sm font-medium">
+            <span className={preference < 50 ? 'text-on-surface font-bold' : 'text-outline'}>
+              💬 비동기 (텍스트)
             </span>
-            <span className={preference > 50 ? 'text-primary font-bold' : ''}>
+            <span className={preference > 50 ? 'text-on-surface font-bold' : 'text-outline'}>
               동기 (음성/미팅) 📞
             </span>
-          </div>
-          <div className="text-center mt-2 text-xs text-muted-foreground">
-            {preference}% (0: 완전 비동기, 100: 완전 동기)
           </div>
         </div>
       </div>
 
       {/* Personality Lingo 태그 */}
       <div>
-        <h3 className="text-lg font-semibold mb-4 text-foreground">
-          협업 성향 (Personality Lingo)
-          <span className="ml-2 text-xs font-normal text-muted-foreground">최대 3개 선택</span>
-        </h3>
+        <div className="flex items-center justify-between mb-6">
+          <span className="text-xs font-bold text-outline uppercase tracking-widest">
+            협업 성향
+          </span>
+          <span className="text-xs text-on-surface-variant">최대 3개 선택</span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {PERSONALITY_TAGS.map((tag) => (
-            <button
-              key={tag.id}
-              onClick={() => toggleTag(tag.id)}
-              className={`flex items-center p-3 rounded-lg border transition-all duration-200 text-left ${
-                tags.includes(tag.id)
-                  ? 'border-primary bg-primary/10 ring-1 ring-primary'
-                  : 'border-border hover:border-primary/50 hover:bg-muted'
-              }`}
-            >
-              <div className="flex-1">
-                <div
-                  className={`font-bold ${tags.includes(tag.id) ? 'text-primary' : 'text-foreground'}`}
-                >
-                  {tag.label}
+          {PERSONALITY_TAGS.map((tag) => {
+            const isSelected = tags.includes(tag.id);
+            return (
+              <button
+                key={tag.id}
+                onClick={() => toggleTag(tag.id)}
+                className={`flex items-center p-3 rounded-lg transition-all duration-200 text-left ${
+                  isSelected
+                    ? 'bg-primary-container/10 ring-2 ring-primary'
+                    : 'bg-surface-container-low hover:bg-surface-container-high'
+                }`}
+              >
+                <div className="flex-1">
+                  <div
+                    className={`font-bold text-sm ${isSelected ? 'text-primary' : 'text-on-surface'}`}
+                  >
+                    {tag.label}
+                  </div>
+                  <div className="text-xs text-on-surface-variant mt-1">{tag.desc}</div>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">{tag.desc}</div>
-              </div>
-              {tags.includes(tag.id) && <span className="text-primary text-xl">✓</span>}
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

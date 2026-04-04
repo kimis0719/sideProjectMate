@@ -179,8 +179,10 @@ borderRadius: {
 | `pages/09_dashboard_pc.html` | `src/app/dashboard/[pid]/page.tsx` | 350 | 실시간 동기화, 리소스, 멤버 위젯 |
 | `pages/10_chat_pc.html` | `src/app/chat/page.tsx` | 249 | Socket.io 실시간 채팅, 읽지 않음 뱃지 |
 | `pages/11_mypage_pc.html` | `src/app/mypage/page.tsx` | 314 | 지원 현황, 프로필 카드, 아바타 편집 |
-| `pages/12_profile_edit_pc.html` | `src/app/profile/page.tsx` | 56 | ProfileView 컴포넌트 위임 |
-| `pages/13_profile_view_pc.html` | `src/app/profile/[id]/page.tsx` | 72 | 읽기 전용 프로필, 본인/타인 분기 |
+| ~~`pages/12_profile_edit_pc.html`~~ | ~~`src/app/profile/page.tsx`~~ | — | **v2로 통합 (아래 참조)** |
+| ~~`pages/13_profile_view_pc.html`~~ | ~~`src/app/profile/[id]/page.tsx`~~ | — | **v2로 통합 (아래 참조)** |
+| `pages/13_profile_view_v2_pc/` | `src/app/profile/page.tsx` + `src/app/profile/[id]/page.tsx` | 56+72 | **프로필 편집/조회 통합 v2** (PC: `code.html`+`screen.png`) |
+| `pages/13_profile_view_v2_mo/` | (위와 동일) | — | **프로필 v2 모바일 버전** (Mobile: `code.html`+`screen.png`) |
 | `pages/14_terms_pc.html` | `src/app/terms/page.tsx` | 321 | 이용약관, TOC 사이드바 |
 | `admin/01_admin_dashboard.html` | `src/app/admin/page.tsx` | 8 | AdminLayout + 하위 5개 페이지 |
 
@@ -551,6 +553,12 @@ Phase 1~3 (완료) ──►├─── Phase 7 (모달) ──►─── Pha
 | 4-3 | 회원가입 페이지 | `src/app/register/page.tsx` (704줄) | `pages/03_register_pc.html` |
 | 4-4 | 온보딩 페이지 | `src/app/onboarding/page.tsx` (236줄) | `pages/04_onboarding_pc.html` |
 
+> **4-4 AvailabilityScheduler 변경사항:**
+> - 기존 24시간×7일 → **4블록(새벽/오전/오후/저녁)×7일**로 간략화 `[기능 수정]`
+> - react-schedule-selector + styled-components 제거 → Tailwind 그리드로 재구현
+> - DB/API 변경 없음 (DaySchedule[] 포맷 유지)
+> - **디자인 참조:** `pages/13_profile_view_v2_pc/` 및 `pages/13_profile_view_v2_mo/` 내 AvailabilityScheduler 영역
+
 ### Phase 7: 모달 (1~2일) 🏷️ Phase 5·6의 선행 조건
 
 > ⚠️ **전제 조건:** `docs/plans/PHASE_7_MODALS_SPEC.md` 상세 기획서 작성 후 개발 시작 (섹션 6 참조)
@@ -623,8 +631,12 @@ Phase 1~3 (완료) ──►├─── Phase 7 (모달) ──►─── Pha
 |---|------|----------|-----------|
 | 6-1 | 채팅 페이지 (데스크톱 + 모바일) | `src/app/chat/page.tsx` (249줄) | `pages/10_chat_pc.html` |
 | 6-2 | 마이페이지 | `src/app/mypage/page.tsx` (314줄) | `pages/11_mypage_pc.html` |
-| 6-3 | 프로필 편집 | `src/app/profile/page.tsx` (56줄) → **실제: `ProfileView.tsx` (471줄) + 하위 15개 컴포넌트 (~2,860줄)** | `pages/12_profile_edit_pc.html` |
-| 6-4 | 프로필 조회 | `src/app/profile/[id]/page.tsx` (72줄) → **ProfileView 공유** | `pages/13_profile_view_pc.html` |
+| 6-3 | 프로필 (편집+조회 통합) | `src/app/profile/page.tsx` (56줄) + `src/app/profile/[id]/page.tsx` (72줄) → **실제: `ProfileView.tsx` (471줄) + 하위 15개 컴포넌트 (~2,860줄)** | **PC:** `pages/13_profile_view_v2_pc/` **Mobile:** `pages/13_profile_view_v2_mo/` |
+
+> **6-3 프로필 v2 변경사항:**
+> - 기존 편집(12)과 조회(13) 페이지를 **하나의 v2 디자인으로 통합**
+> - PC/Mobile 디자인 에셋이 각각 별도로 존재 — 모바일은 에셋 기준으로 구현
+> - AvailabilityScheduler도 v2 에셋 내 4블록×7일 버전으로 교체 (Phase 4와 동일 컴포넌트 공유)
 
 ---
 

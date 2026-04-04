@@ -53,8 +53,8 @@ export default function LandingPreview({ children }: { children: React.ReactNode
   return (
     <section className="container mx-auto px-4 py-12">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-foreground mb-2">지금 팀원을 찾고 있는 프로젝트</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl font-bold text-on-surface mb-2">지금 팀원을 찾고 있는 프로젝트</h2>
+        <p className="text-on-surface-variant">
           가입하면 더 많은 프로젝트를 탐색하고 지원할 수 있어요
         </p>
       </div>
@@ -66,8 +66,8 @@ export default function LandingPreview({ children }: { children: React.ReactNode
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-muted/30 rounded-xl border border-border max-w-lg mx-auto">
-          <p className="text-muted-foreground mb-4">아직 등록된 프로젝트가 없어요.</p>
+        <div className="text-center py-16 bg-surface-container-low rounded-xl max-w-lg mx-auto">
+          <p className="text-on-surface-variant mb-4">아직 등록된 프로젝트가 없어요.</p>
           <Link
             href="/register"
             className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"

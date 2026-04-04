@@ -35,9 +35,9 @@ async function handlePost(request: Request) {
     }
 
     // 비밀번호 길이 검증
-    if (password.length < 6) {
+    if (password.length < 4) {
       return NextResponse.json(
-        { success: false, error: '비밀번호는 최소 6자 이상이어야 합니다.' },
+        { success: false, error: '비밀번호는 최소 4자 이상이어야 합니다.' },
         { status: 400 }
       );
     }

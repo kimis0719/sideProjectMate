@@ -68,7 +68,6 @@ export default function OnboardingPage() {
       const result = await res.json();
       if (!result.success) throw new Error(result.message);
 
-      // Step 3에서 AvailabilityScheduler 데이터 별도 저장
       if (stepNum === 3) {
         await fetch('/api/users/me/availability', {
           method: 'PUT',
@@ -100,7 +99,6 @@ export default function OnboardingPage() {
     const newStep = await saveStep(3, {});
     if (newStep !== null) {
       await updateSession({ onboardingStep: 4 });
-      // full reload로 이동해야 middleware가 갱신된 JWT를 읽음
       window.location.href = '/projects';
     }
   };
@@ -122,83 +120,170 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl bg-card rounded-2xl shadow-lg border border-border overflow-hidden flex flex-col max-h-[90vh]">
-        {/* 헤더 */}
-        <div className="bg-muted/30 p-6 border-b border-border text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-2">프로필 설정하기</h1>
-          <p className="text-muted-foreground text-sm">
-            맞춤 프로젝트를 추천받기 위해 간단한 정보를 입력해주세요. ({step}/3)
-          </p>
-          <div className="w-full h-2 bg-muted rounded-full mt-4 overflow-hidden">
+    <div className="antialiased min-h-screen bg-surface">
+      {/* 헤더 + 프로그레스 */}
+      <header className="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl">
+        <div className="max-w-5xl mx-auto px-8 py-6 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-on-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              </div>
+              <span className="text-xl font-bold tracking-tight text-on-surface font-headline">
+                Side Project Mate
+              </span>
+            </div>
+            <span className="text-sm font-semibold text-outline uppercase tracking-wider">
+              3단계 중 {step}단계
+            </span>
+          </div>
+          <div className="w-full h-1 bg-surface-container rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary transition-all duration-300"
+              className="h-full bg-primary-container transition-all duration-500"
               style={{ width: `${(step / 3) * 100}%` }}
             />
           </div>
         </div>
+      </header>
 
-        {/* 본문 */}
-        <div className="p-6 md:p-8 overflow-y-auto flex-1">
-          {step === 1 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-foreground">어떤 분야에 관심이 있나요?</h3>
-              <p className="text-sm text-muted-foreground">여러 개 선택할 수 있어요.</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {domainSuggestions.map((d) => {
-                  const isSelected = domains.includes(d.label);
-                  return (
-                    <button
-                      key={d.code}
-                      type="button"
-                      onClick={() => toggleDomain(d.label)}
-                      className={`p-4 rounded-xl border-2 text-center transition-all ${
-                        isSelected
-                          ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <span className="block text-sm font-semibold text-foreground">{d.label}</span>
-                    </button>
-                  );
-                })}
+      {/* 본문 */}
+      <main className="min-h-screen pt-32 pb-24 px-8 max-w-5xl mx-auto flex items-center justify-center">
+        {/* Step 1: 관심 도메인 */}
+        {step === 1 && (
+          <section className="w-full max-w-4xl">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
+              <div className="md:col-span-5">
+                <h1 className="text-4xl md:text-5xl font-bold font-headline leading-tight tracking-tight text-on-surface mb-6">
+                  당신의 <span className="text-primary-container">관심사</span>는 무엇인가요?
+                </h1>
+                <p className="text-lg text-on-surface-variant leading-relaxed">
+                  선택하신 관심 분야를 바탕으로 열정과 커리어 성장에 딱 맞는 프로젝트를 매칭해
+                  드립니다.
+                </p>
+                <div className="mt-12 flex items-center gap-3 p-4 bg-surface-container-low rounded-xl">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm">
+                    <span className="material-symbols-outlined">auto_awesome</span>
+                  </div>
+                  <p className="text-sm font-medium text-on-surface-variant italic whitespace-nowrap">
+                    현재 기술 트렌드를 기반으로 추천된 항목입니다.
+                  </p>
+                </div>
+              </div>
+
+              <div className="md:col-span-7">
+                <div className="bg-surface-container-lowest rounded-xl p-8 shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+                  <div className="flex flex-wrap gap-3">
+                    {domainSuggestions.map((d) => {
+                      const isSelected = domains.includes(d.label);
+                      return (
+                        <button
+                          key={d.code}
+                          type="button"
+                          onClick={() => toggleDomain(d.label)}
+                          className={`px-6 py-3 rounded-full text-sm font-medium border-2 transition-all ${
+                            isSelected
+                              ? 'bg-primary-container text-on-primary font-semibold border-primary-container'
+                              : 'bg-surface-container-low text-on-surface-variant border-transparent hover:border-primary-container'
+                          }`}
+                        >
+                          {d.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+          </section>
+        )}
 
-          {step === 2 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-foreground">협업 스타일을 알려주세요</h3>
-              <div className="p-4 border border-border rounded-xl bg-background">
-                <CommunicationStyleSlider
-                  preference={preference}
-                  onChangePreference={setPreference}
-                  tags={personalityTags}
-                  onChangeTags={setPersonalityTags}
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-foreground">언제 활동할 수 있나요?</h3>
-              <p className="text-sm text-muted-foreground">
-                드래그해서 가능한 시간을 선택하세요. 나중에 프로필에서 수정할 수 있어요.
+        {/* Step 2: 협업 스타일 */}
+        {step === 2 && (
+          <section className="w-full max-w-4xl">
+            <div className="flex flex-col items-center text-center mb-16">
+              <h1 className="text-4xl md:text-5xl font-bold font-headline tracking-tight text-on-surface mb-4">
+                어떻게 일하시나요?
+              </h1>
+              <p className="text-lg text-on-surface-variant max-w-xl">
+                당신의 협업 리듬을 정의해 주세요. 업무 방식이 잘 맞는 팀과 매칭해 드립니다.
               </p>
-              <div className="border border-border rounded-xl p-4 bg-background max-h-[400px] overflow-y-auto">
-                <AvailabilityScheduler initialSchedule={schedule} onChange={setSchedule} />
+            </div>
+            <div className="bg-surface-container-lowest rounded-xl p-8 shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+              <CommunicationStyleSlider
+                preference={preference}
+                onChangePreference={setPreference}
+                tags={personalityTags}
+                onChangeTags={setPersonalityTags}
+              />
+            </div>
+          </section>
+        )}
+
+        {/* Step 3: 가용 시간 */}
+        {step === 3 && (
+          <section className="w-full max-w-5xl">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+              <div className="md:col-span-4">
+                <h1 className="text-4xl font-bold font-headline tracking-tight text-on-surface mb-4">
+                  당신의 <span className="text-primary-container">템포</span>를 설정하세요.
+                </h1>
+                <p className="text-on-surface-variant mb-8">
+                  사이드 프로젝트에 할애할 수 있는 시간을 선택해 주세요. 대부분 주당 5-10시간을
+                  권장합니다.
+                </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 p-4 rounded-xl border border-outline-variant/15 bg-surface-container-lowest">
+                    <span className="material-symbols-outlined text-primary">calendar_month</span>
+                    <div>
+                      <p className="text-sm font-bold text-on-surface">총 참여 시간</p>
+                      <p className="text-xs text-outline">
+                        주{' '}
+                        {schedule.reduce(
+                          (acc, d) =>
+                            acc +
+                            d.timeRanges.reduce((sum, r) => {
+                              const s = parseInt(r.start.split(':')[0]);
+                              const e = parseInt(r.end.split(':')[0]) || 24;
+                              return sum + (e - s);
+                            }, 0),
+                          0
+                        )}
+                        시간
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="md:col-span-8">
+                <div className="bg-surface-container-lowest rounded-xl p-6 shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+                  <AvailabilityScheduler initialSchedule={schedule} onChange={setSchedule} />
+                </div>
               </div>
             </div>
-          )}
-        </div>
+          </section>
+        )}
+      </main>
 
-        {/* 하단 버튼 */}
-        <div className="p-6 border-t border-border flex justify-between">
+      {/* 하단 네비게이션 */}
+      <footer className="fixed bottom-0 w-full bg-surface/80 backdrop-blur-xl border-t border-outline-variant/10 z-50">
+        <div className="max-w-5xl mx-auto px-8 py-6 flex justify-between">
           {step > 1 ? (
             <button
               onClick={() => setStep((s) => s - 1)}
-              className="px-6 py-2.5 text-muted-foreground hover:bg-muted rounded-lg font-medium transition-colors"
+              className="px-8 py-3.5 text-on-surface-variant hover:bg-surface-container-low rounded-xl font-medium transition-colors"
             >
               이전
             </button>
@@ -206,7 +291,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleSkip}
               disabled={isSubmitting}
-              className="px-4 py-2.5 text-muted-foreground hover:text-foreground font-medium text-sm underline transition-colors"
+              className="px-6 py-3.5 text-on-surface-variant hover:text-on-surface font-medium text-sm underline transition-colors"
             >
               다음에 하기
             </button>
@@ -216,7 +301,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleNext}
               disabled={isSubmitting}
-              className="px-8 py-2.5 bg-primary text-primary-foreground rounded-lg font-bold hover:bg-primary/90 transition-all disabled:opacity-50"
+              className="px-8 py-3.5 bg-primary-container text-on-primary rounded-xl font-bold hover:shadow-md hover:translate-y-[-1px] transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {isSubmitting ? '저장 중...' : '다음'}
             </button>
@@ -224,13 +309,13 @@ export default function OnboardingPage() {
             <button
               onClick={handleComplete}
               disabled={isSubmitting}
-              className="px-8 py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-all disabled:opacity-50"
+              className="px-8 py-3.5 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 hover:shadow-md hover:translate-y-[-1px] transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {isSubmitting ? '저장 중...' : '완료 및 시작하기'}
             </button>
           )}
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

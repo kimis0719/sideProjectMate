@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CuratorMatch - Side Project Mate</title>
+<!-- Google Fonts: Noto Sans KR, Manrope, Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&amp;family=Manrope:wght@700;800&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed": "#00174b",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-surface-variant": "#434655",
+                        "tertiary": "#943700",
+                        "primary-container": "#2563eb",
+                        "primary": "#004ac6",
+                        "on-tertiary-container": "#ffede6",
+                        "surface-dim": "#dadad9",
+                        "surface": "#f9f9f8",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "secondary-fixed": "#dbe1ff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-primary-container": "#eeefff",
+                        "outline": "#737686",
+                        "on-secondary-container": "#394c84",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "surface-container": "#eeeeed",
+                        "surface-container-high": "#e8e8e7",
+                        "secondary": "#495c95",
+                        "outline-variant": "#c3c6d7",
+                        "surface-tint": "#0053db",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "secondary-container": "#acbfff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-variant": "#e2e2e2",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2f3130",
+                        "surface-container-low": "#f3f4f3",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-container-highest": "#e2e2e2",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f9f9f8",
+                        "background": "#f9f9f8",
+                        "on-surface": "#1a1c1c",
+                        "on-primary-fixed": "#00174b",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#bc4800",
+                        "inverse-on-surface": "#f1f1f0",
+                        "inverse-primary": "#b4c5ff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "Noto Sans KR"],
+                        "body": ["Inter", "Noto Sans KR"],
+                        "label": ["Inter", "Noto Sans KR"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background-color: #f9f9f8; color: #1a1c1c; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-nav { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .no-line { border: none !important; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar (Mobile Optimized) -->
+<nav class="fixed top-0 w-full z-50 bg-[#f9f9f8]/80 dark:bg-[#1a1c1c]/80 backdrop-blur-xl h-16 flex items-center justify-between px-6 no-line shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+<div class="flex items-center gap-2">
+<span class="text-xl font-bold tracking-tighter text-[#1a1c1c] dark:text-[#f9f9f8] font-headline">CuratorMatch</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface p-2 hover:bg-surface-container-low rounded-lg transition-all">menu</button>
+</div>
+<div class="bg-[#f3f4f3] dark:bg-[#2d2e2d] h-[1px] w-full absolute bottom-0 left-0"></div>
+</nav>
+<main class="pt-16 pb-24">
+<!-- Hero Section (Mobile) -->
+<section class="px-6 pt-12 pb-16 flex flex-col items-center text-center">
+<h1 class="text-[2.5rem] font-bold leading-tight font-headline tracking-tight text-on-surface mb-6">
+                아이디어를 현실로,<br/>
+<span class="text-primary-container">최적의 팀원</span>을 만나보세요
+            </h1>
+<div class="w-full aspect-square max-w-sm mb-10 relative">
+<div class="absolute inset-0 bg-primary-container/5 rounded-3xl -rotate-2"></div>
+<div class="relative w-full h-full bg-surface-container-lowest rounded-3xl overflow-hidden shadow-[0_20px_40px_rgba(26,28,28,0.04)] p-4 flex flex-col gap-3">
+<!-- Simplified AI/Kanban Representation -->
+<div class="flex justify-between items-center mb-2">
+<div class="h-4 w-24 bg-surface-container rounded-full"></div>
+<div class="h-6 w-6 bg-primary-container/20 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container text-xs" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+</div>
+<div class="h-24 bg-surface-container-low rounded-xl flex items-center px-4 gap-3">
+<div class="h-10 w-10 bg-secondary-container rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">person_search</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="h-3 w-32 bg-on-surface/10 rounded-full"></div>
+<div class="h-2 w-20 bg-on-surface/5 rounded-full"></div>
+</div>
+</div>
+<div class="h-24 bg-surface-container-low rounded-xl flex items-center px-4 gap-3 border border-primary-container/10">
+<div class="h-10 w-10 bg-primary-container rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="h-3 w-40 bg-on-surface/10 rounded-full"></div>
+<div class="h-2 w-24 bg-on-surface/5 rounded-full"></div>
+</div>
+</div>
+<div class="mt-auto h-12 bg-primary-container rounded-xl flex items-center justify-center text-white font-bold text-sm">
+                        Matching Potential 98%
+                    </div>
+</div>
+</div>
+<div class="w-full flex flex-col gap-3 px-4">
+<button class="w-full py-5 bg-primary-container text-on-primary font-bold rounded-lg text-lg active:scale-95 transition-transform">
+                    프로젝트 시작하기
+                </button>
+<button class="w-full py-5 text-primary-container font-bold rounded-lg text-lg hover:bg-primary-container/5 active:scale-95 transition-transform">
+                    둘러보기
+                </button>
+</div>
+</section>
+<!-- Feature Highlights -->
+<section class="bg-surface-container-low px-6 py-16">
+<div class="grid grid-cols-1 gap-8">
+<div class="flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-2xl flex items-center justify-center text-primary-container mb-4 shadow-sm">
+<span class="material-symbols-outlined text-3xl">bolt</span>
+</div>
+<h3 class="text-xl font-bold font-headline mb-2">빠른 팀 구성</h3>
+<p class="text-on-surface-variant font-body text-sm leading-relaxed">AI 기반 매칭 시스템으로 단 며칠 만에 원하는 역량의 팀원을 찾을 수 있습니다.</p>
+</div>
+<div class="flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-2xl flex items-center justify-center text-primary-container mb-4 shadow-sm">
+<span class="material-symbols-outlined text-3xl">verified_user</span>
+</div>
+<h3 class="text-xl font-bold font-headline mb-2">검증된 프로필</h3>
+<p class="text-on-surface-variant font-body text-sm leading-relaxed">커리어와 포트폴리오가 인증된 현업 전문가들과 함께 사이드 프로젝트를 시작하세요.</p>
+</div>
+<div class="flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-2xl flex items-center justify-center text-primary-container mb-4 shadow-sm">
+<span class="material-symbols-outlined text-3xl">dashboard</span>
+</div>
+<h3 class="text-xl font-bold font-headline mb-2">통합 관리 도구</h3>
+<p class="text-on-surface-variant font-body text-sm leading-relaxed">협업 툴 연동부터 일정 관리까지, 프로젝트의 모든 단계를 한 곳에서 관리하세요.</p>
+</div>
+</div>
+</section>
+<!-- Recruited Projects List -->
+<section class="px-6 py-16">
+<div class="flex justify-between items-end mb-8">
+<div>
+<span class="text-primary-container font-bold text-xs uppercase tracking-widest block mb-2">Recommended</span>
+<h2 class="text-2xl font-bold font-headline">지금 모집 중인 프로젝트</h2>
+</div>
+<button class="text-primary-container font-semibold text-sm underline">전체보기</button>
+</div>
+<div class="flex flex-col gap-6">
+<!-- Project Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0_20px_40px_rgba(26,28,28,0.04)] flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<span class="px-3 py-1 bg-[#10b981]/10 text-[#065f46] text-[10px] font-bold rounded-full uppercase tracking-widest">Recruiting</span>
+<button class="material-symbols-outlined text-on-surface-variant">bookmark</button>
+</div>
+<div>
+<h4 class="text-lg font-bold mb-2">AI 기반 퍼스널 쇼퍼 서비스 개발</h4>
+<p class="text-sm text-on-surface-variant line-clamp-2">사용자의 취향을 분석하여 최적의 패션 아이템을 제안하는 모바일 앱 프로젝트입니다.</p>
+</div>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">Flutter</span>
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">Python</span>
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">UI/UX</span>
+</div>
+<div class="pt-4 flex items-center gap-3 bg-surface-container-low -mx-6 px-6 mt-2 rounded-b-xl py-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img alt="Lead" class="w-full h-full object-cover" data-alt="close up professional headshot of a smiling developer with neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrSnH1CEpaHsHsF5c_W6Se3_aPvTG-P_7crwgRLL6Mf8kavSjJ4FXEyxyMDNwzqY9ruGBm2Y5-kHd1bkRMFryYJ-i5K4iQ5NLtieKk0wP8aA3U3KzmT2Cqz5JTzvdxZLs7lLR15tG9t_OHhgSK4Xl0cc5KGepSp7G_evkgERGm_HsV2uHUr1ygrchEAlXqfhDMavP75yTz8iXbU46KSn6Y6HnVr9umpPqDFRYeWbFi0Hlsxfu2AkbiLaDTbybIo0GV5-eSSkiqdvNy"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">김민수 리더</span>
+<span class="text-[10px] text-on-surface-variant">시니어 개발자 · 네이버</span>
+</div>
+</div>
+</div>
+<!-- Project Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0_20px_40px_rgba(26,28,28,0.04)] flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<span class="px-3 py-1 bg-[#10b981]/10 text-[#065f46] text-[10px] font-bold rounded-full uppercase tracking-widest">Recruiting</span>
+<button class="material-symbols-outlined text-on-surface-variant">bookmark</button>
+</div>
+<div>
+<h4 class="text-lg font-bold mb-2">환경 보호를 위한 제로웨이스트 커뮤니티</h4>
+<p class="text-sm text-on-surface-variant line-clamp-2">일상 속 탄소 절감을 실천하고 공유하는 소셜 플랫폼 프로젝트에 참여할 기획자를 찾습니다.</p>
+</div>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">Next.js</span>
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">PM/기획</span>
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">Marketing</span>
+</div>
+<div class="pt-4 flex items-center gap-3 bg-surface-container-low -mx-6 px-6 mt-2 rounded-b-xl py-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img alt="Lead" class="w-full h-full object-cover" data-alt="close up professional headshot of a creative designer with artistic background lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6-WHmp9cWhKRtK9Xx6WlODTST_r_Gh-KG-kz6DqLuXj00GDfwqLBok0R9v3yRYrpcoTWJSDZN5j49aSigw1XxDQG7EnjTUMzWJDpTVaqQf39hLdt6-LExEXv8deVQzvHX94nHKCbRdkpmcqGWiCfp-CEHYgW1uEVIqK4uqPfrOL4cHj8A160fcbX10w3b8OyDOQGavuuLi640nO3uoy6K5SSNdFYxn12ShDl9bQhdxLroJIpd-zPnKpQBammkU-IU1UjQeQo5mJo5"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">이지영 리더</span>
+<span class="text-[10px] text-on-surface-variant">서비스 기획자 · 카카오</span>
+</div>
+</div>
+</div>
+<!-- Project Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0_20px_40px_rgba(26,28,28,0.04)] flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<span class="px-3 py-1 bg-[#10b981]/10 text-[#065f46] text-[10px] font-bold rounded-full uppercase tracking-widest">Recruiting</span>
+<button class="material-symbols-outlined text-on-surface-variant">bookmark</button>
+</div>
+<div>
+<h4 class="text-lg font-bold mb-2">전국 맛집 지도 기반 오마카세 예약 서비스</h4>
+<p class="text-sm text-on-surface-variant line-clamp-2">데이터 크롤링 및 예약 자동화 알고리즘 개발을 담당할 백엔드 개발자를 모집합니다.</p>
+</div>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">Node.js</span>
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">PostgreSQL</span>
+<span class="px-2 py-1 bg-surface-container-high rounded text-[10px] font-bold text-on-surface-variant">Backend</span>
+</div>
+<div class="pt-4 flex items-center gap-3 bg-surface-container-low -mx-6 px-6 mt-2 rounded-b-xl py-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img alt="Lead" class="w-full h-full object-cover" data-alt="close up professional headshot of a technical architect with clean modern background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOvfE9m2GvSmZKjh3f4qbD-SZdO9Nqklp4H0m1mQClKtPFjz9Z8Tjyt9oDYQanVvt64VLgp6RARUMFZNK2Gy93Aq56aroN4EEb2lKo8pAb-fD4CNOzeo0GPeybf9sknqsuO3q8qHLm22OZltJjCs2QVNdrI6Pw91OkG60DZ-PCzoQAnHi3O9Vo4vGwfRYAfrPR_Sb5ZOwomXq791OdaEfZ8gbmw8pl7I_uzvNzAEqgwrq5Zi2wKdm5V8xqNPkhsWMMMfG-ZRpZEOXu"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">박준형 리더</span>
+<span class="text-[10px] text-on-surface-variant">백엔드 아키텍트 · 토스</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (JSON Reference Execution) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-8 z-50 bg-[#f9f9f8]/90 dark:bg-[#1a1c1c]/90 backdrop-blur-lg border-t border-[#f3f4f3] dark:border-[#2d2e2d] rounded-t-2xl shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+<a class="flex flex-col items-center justify-center text-[#2563eb] bg-[#2563eb]/5 rounded-xl px-3 py-1" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Discover</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1a1c1c]/40 dark:text-[#f9f9f8]/40" href="#">
+<span class="material-symbols-outlined">folder</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Projects</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1a1c1c]/40 dark:text-[#f9f9f8]/40" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Chat</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1a1c1c]/40 dark:text-[#f9f9f8]/40" href="#">
+<span class="material-symbols-outlined">hub</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-widest mt-1">Network</span>
+</a>
+</nav>
+<!-- Footer -->
+<footer class="bg-[#f3f4f3] dark:bg-[#121212] w-full py-12 px-8 mb-20">
+<div class="flex flex-col md:flex-row justify-between items-center gap-8 max-w-screen-xl mx-auto">
+<div class="flex flex-col items-center md:items-start gap-4">
+<span class="text-xl font-bold tracking-tighter text-[#1a1c1c] font-headline">CuratorMatch</span>
+<p class="font-['Inter'] text-xs text-[#1a1c1c]/50 text-center md:text-left leading-relaxed">
+                    © 2024 CuratorMatch. Designed for Innovation.<br/>
+                    Better collaboration for a better world.
+                </p>
+</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="font-['Inter'] text-xs text-[#1a1c1c]/50 hover:text-[#2563eb] transition-colors" href="#">Privacy Policy</a>
+<a class="font-['Inter'] text-xs text-[#1a1c1c]/50 hover:text-[#2563eb] transition-colors" href="#">Terms of Service</a>
+<a class="font-['Inter'] text-xs text-[#1a1c1c]/50 hover:text-[#2563eb] transition-colors" href="#">Contact Us</a>
+</div>
+</div>
+</footer>
+</body></html>
