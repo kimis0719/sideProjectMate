@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline": "#737686",
+              "tertiary-container": "#bc4800",
+              "on-primary-container": "#eeefff",
+              "background": "#f9f9f8",
+              "surface-tint": "#0053db",
+              "on-secondary-container": "#394c84",
+              "on-error-container": "#93000a",
+              "primary-fixed": "#dbe1ff",
+              "on-tertiary-fixed-variant": "#7d2d00",
+              "on-background": "#1a1c1c",
+              "on-tertiary": "#ffffff",
+              "on-surface": "#1a1c1c",
+              "tertiary-fixed-dim": "#ffb596",
+              "on-primary-fixed-variant": "#003ea8",
+              "inverse-surface": "#2f3130",
+              "surface-container-highest": "#e2e2e2",
+              "primary-container": "#2563eb",
+              "on-tertiary-container": "#ffede6",
+              "surface": "#f9f9f8",
+              "tertiary": "#943700",
+              "surface-container": "#eeeeed",
+              "error-container": "#ffdad6",
+              "on-tertiary-fixed": "#360f00",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary": "#ffffff",
+              "on-primary-fixed": "#00174b",
+              "error": "#ba1a1a",
+              "tertiary-fixed": "#ffdbcd",
+              "on-secondary-fixed-variant": "#31447b",
+              "surface-container-high": "#e8e8e7",
+              "surface-variant": "#e2e2e2",
+              "on-error": "#ffffff",
+              "surface-bright": "#f9f9f8",
+              "secondary-fixed": "#dbe1ff",
+              "on-surface-variant": "#434655",
+              "secondary": "#495c95",
+              "primary-fixed-dim": "#b4c5ff",
+              "on-secondary-fixed": "#00174b",
+              "surface-dim": "#dadad9",
+              "secondary-fixed-dim": "#b4c5ff",
+              "primary": "#004ac6",
+              "outline-variant": "#c3c6d7",
+              "on-primary": "#ffffff",
+              "inverse-primary": "#b4c5ff",
+              "surface-container-low": "#f3f4f3",
+              "secondary-container": "#acbfff",
+              "inverse-on-surface": "#f1f1f0"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .bg-branding-gradient {
+        background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%);
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        color: #1a1c1c;
+      }
+    </style>
+</head>
+<body class="bg-surface selection:bg-primary-fixed">
+<main class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+<!-- Left Side: Branding -->
+<section class="hidden lg:flex flex-col justify-between p-16 bg-branding-gradient relative overflow-hidden">
+<!-- Background Decorative Elements -->
+<div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+<div class="absolute bottom-0 left-0 w-64 h-64 bg-primary-container/20 rounded-full blur-2xl -ml-10 -mb-10"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-24">
+<span class="text-white font-headline font-extrabold text-2xl tracking-tighter">SPM</span>
+</div>
+<h1 class="font-headline font-bold text-[3.5rem] leading-tight text-white mb-6">
+                    다시 만나서 반갑습니다.
+                </h1>
+<p class="font-body text-lg text-white/80 max-w-md">
+                    프로젝트의 다음 단계를 이어가세요.
+                </p>
+</div>
+<div class="relative z-10 mt-auto">
+<div class="flex flex-col gap-6">
+<div class="flex -space-x-3">
+<img alt="User 1" class="w-10 h-10 rounded-full border-2 border-primary ring-2 ring-primary/20" data-alt="professional woman headshot with warm lighting and friendly expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJwiE1-oF_Ib-UTe4XlT_Ay6Roi5HrvzUzBbABkGpxrvTavb0LGsqRfwbrLERF5l79OG51pMr7IsDrKZBW7ssvlFb0rs1ikqxiurIqFyygmR6pDfAl6HyuTmVC26Nl4044Srel7QpCImn0To7NSGzwDfUb0OVg2VAuNHuiqIS2rzhi4H-KepNOlNfH1jwLY0BQ2MdGC9MMEIek-tnE9D0UKZ2bbgo6HdIwqJN2f_2OHhzk8lfTqyI9fDJ88gNc0KRh0-Ne33AW_Yng"/>
+<img alt="User 2" class="w-10 h-10 rounded-full border-2 border-primary ring-2 ring-primary/20" data-alt="modern young man portrait with clean minimalist background and soft focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcJSlhbe_keh4haYLwBLGSZiCj89ZzvwV5VKkftZ27tWmXq6JweNiflW2nuMfP6MgS39YWifBMcstyhmy0AW40gk4ERHcJHHbAA2HyCZ_Bs_3J9JauDzxQDNoG8tiDNOcZe29PkjyM3T28dMa9jk5VfgSJoetusbL3AyAIEfdATHuINcJ6ICOEiIMHIgxPM-CG-fxZjl_Kpz9tDP01C9mcXW5BQQJEEcmWz7o3v_ROpTqqGykeCQke2GrBUC1QgMLpjXrFgsq8W0h6"/>
+<img alt="User 3" class="w-10 h-10 rounded-full border-2 border-primary ring-2 ring-primary/20" data-alt="confident professional in business attire with natural morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3kOBqMC2GZN-1Q_Fx7Qcxy535NZaItw0ULuELqBWC6V1JMUfqECvQGvc2F9AgwW88GMBBf4EATD0KrK_1y8OLIYUTLejX9TJ3CxykqhnDfpsusymFZBa9H9HQE97sdg8OtkHq8zFzy80MpVevnhCN_ep_vKXuANSg36ZW_US1rrJtQ8to2mk37zOChmb2WTejQSx0ajFUPqQIx7PF3rxuR7T9hBPmky-hNEevdq8wm6nTJN2g5Fvaweem0xIQnm_rSD37EoM1z1H9"/>
+<div class="w-10 h-10 rounded-full border-2 border-primary bg-primary-container flex items-center justify-center text-xs font-bold text-white">+2.4k</div>
+</div>
+<p class="font-body text-sm font-medium text-white/90">
+                        2,400명의 메이커가 함께하고 있습니다.
+                    </p>
+</div>
+</div>
+</section>
+<!-- Right Side: Login Form -->
+<section class="flex flex-col items-center justify-center p-8 md:p-16 lg:p-24 bg-surface">
+<div class="w-full max-w-md">
+<!-- Mobile Logo -->
+<div class="lg:hidden mb-12 flex justify-center">
+<span class="text-primary font-headline font-extrabold text-3xl tracking-tighter">SPM</span>
+</div>
+<div class="mb-10 text-center lg:text-left">
+<h2 class="font-headline font-semibold text-2xl text-on-surface mb-2">로그인</h2>
+<p class="font-body text-on-surface-variant">계정에 로그인하고 프로젝트를 이어가세요.</p>
+</div>
+<!-- Social Login -->
+<div class="grid grid-cols-2 gap-4 mb-8">
+<button class="flex items-center justify-center gap-2 py-3 px-4 bg-surface-container-lowest rounded-lg font-body font-medium text-on-surface-variant hover:bg-surface-bright transition-all active:scale-[0.98]">
+<img alt="Google" class="w-5 h-5" data-alt="google multi-color icon logo on white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUsTINwNJJfBasXYR82cRsQbonP-Ru0jpl7FISgJe63fWDenaLpt0AIHIXuyO3WPEzMBqR3-scg6iW38QoAnAVg0atIiRoQz_wvNS_lb_2S7_GEGq3o_0VeFc2fyJO9uxhCRZDz91FY-4CtYj1nmPbaUICgDKxMzSV60598QPcpro3qlLEa6N7FdEEWGVChgS3IblboOUZtWOgLPWuZFCd4v1uONqSWcp4E8GV5QSaE4UO71Qh_62deW0pr_-WFigvoafZMWoNuoJE"/>
+<span class="text-sm">Google</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-3 px-4 bg-surface-container-lowest rounded-lg font-body font-medium text-on-surface-variant hover:bg-surface-bright transition-all active:scale-[0.98]">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg>
+<span class="text-sm">GitHub</span>
+</button>
+</div>
+<div class="relative flex items-center mb-8">
+<div class="flex-grow h-px bg-surface-container-high"></div>
+<span class="px-4 text-xs font-label font-semibold text-outline tracking-widest uppercase">또는</span>
+<div class="flex-grow h-px bg-surface-container-high"></div>
+</div>
+<!-- Form -->
+<form class="space-y-6">
+<div class="space-y-1.5">
+<label class="block font-label text-[11px] font-bold text-outline tracking-wider uppercase ml-1" for="email">이메일</label>
+<div class="relative">
+<input class="w-full px-5 py-3.5 bg-surface-container-low rounded-lg text-on-surface font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all border-none placeholder:text-outline/50" id="email" placeholder="name@example.com" type="email"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<div class="flex justify-between items-center px-1">
+<label class="block font-label text-[11px] font-bold text-outline tracking-wider uppercase" for="password">비밀번호</label>
+<a class="text-[11px] font-bold text-primary hover:text-surface-tint transition-colors" href="#">비밀번호를 잊으셨나요?</a>
+</div>
+<div class="relative">
+<input class="w-full px-5 py-3.5 bg-surface-container-low rounded-lg text-on-surface font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all border-none placeholder:text-outline/50" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<div class="pt-2">
+<button class="w-full py-4 bg-primary-container text-on-primary font-body font-semibold rounded-lg shadow-sm hover:shadow-md hover:translate-y-[-1px] transition-all active:scale-[0.98] active:translate-y-0" type="submit">
+                            로그인
+                        </button>
+</div>
+</form>
+<div class="mt-10 text-center">
+<p class="font-body text-sm text-on-surface-variant">
+                        계정이 없으신가요? 
+                        <a class="ml-1 font-bold text-primary hover:text-surface-tint underline decoration-primary/30 underline-offset-4" href="#">회원가입</a>
+</p>
+</div>
+</div>
+<!-- Footer Meta Links -->
+<div class="mt-auto pt-12 flex gap-6">
+<a class="text-[10px] font-label font-bold text-outline tracking-widest uppercase hover:text-on-surface transition-colors" href="#">이용약관</a>
+<a class="text-[10px] font-label font-bold text-outline tracking-widest uppercase hover:text-on-surface transition-colors" href="#">개인정보처리방침</a>
+<a class="text-[10px] font-label font-bold text-outline tracking-widest uppercase hover:text-on-surface transition-colors" href="#">고객지원</a>
+</div>
+</section>
+</main>
+</body></html>

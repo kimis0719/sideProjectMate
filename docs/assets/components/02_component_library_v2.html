@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SPM Component Library | Side Project Mate</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-high": "#e8e8e7",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c3c6d7",
+                        "on-background": "#1a1c1c",
+                        "primary": "#004ac6",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#0053db",
+                        "secondary": "#495c95",
+                        "on-secondary-container": "#394c84",
+                        "on-primary-fixed": "#00174b",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#943700",
+                        "primary-container": "#2563eb",
+                        "tertiary-fixed": "#ffdbcd",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#2f3130",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#00174b",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "inverse-on-surface": "#f1f1f0",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "on-surface-variant": "#434655",
+                        "surface-dim": "#dadad9",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#bc4800",
+                        "on-tertiary-fixed": "#360f00",
+                        "surface-container-low": "#f3f4f3",
+                        "surface-variant": "#e2e2e2",
+                        "surface-bright": "#f9f9f8",
+                        "on-primary-container": "#eeefff",
+                        "surface": "#f9f9f8",
+                        "secondary-container": "#acbfff",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-tertiary-container": "#ffede6",
+                        "outline": "#737686",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-fixed": "#dbe1ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#1a1c1c",
+                        "surface-container-highest": "#e2e2e2",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-container": "#eeeeed",
+                        "background": "#f9f9f8"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-shadow {
+            box-shadow: 0 20px 40px rgba(26,28,28,0.04);
+        }
+        .no-line-border {
+            border: none !important;
+        }
+        .signature-btn:hover {
+            padding-left: calc(1rem + 4px);
+            padding-right: calc(1rem + 4px);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-[#FAFAF9] font-body text-on-surface overflow-x-hidden">
+<!-- TopAppBar Component -->
+<header class="fixed top-0 w-full z-50 bg-[#FAFAF9]/80 backdrop-blur-md dark:bg-neutral-900/80 shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+<div class="flex justify-between items-center px-8 py-4 w-full max-w-[1440px] mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-extrabold tracking-tighter text-[#1a1c1c] dark:text-white">Side Project Mate</span>
+<nav class="hidden md:flex gap-6 font-headline font-bold tracking-tight text-[#1a1c1c] dark:text-neutral-100">
+<a class="text-[#2563EB] relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-[#2563EB]" href="#">Explore</a>
+<a class="text-[#1a1c1c]/60 dark:text-neutral-400 hover:text-[#1a1c1c] dark:hover:text-white transition-colors" href="#">Projects</a>
+<a class="text-[#1a1c1c]/60 dark:text-neutral-400 hover:text-[#1a1c1c] dark:hover:text-white transition-colors" href="#">Community</a>
+<a class="text-[#1a1c1c]/60 dark:text-neutral-400 hover:text-[#1a1c1c] dark:hover:text-white transition-colors" href="#">Curations</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center bg-surface-container-low rounded-xl px-4 py-2 gap-2">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48" placeholder="Search projects..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant relative">
+                    notifications
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full border-2 border-surface"></span>
+</button>
+<img alt="User Profile" class="w-10 h-10 rounded-full object-cover" data-alt="Close-up portrait of a professional man with a friendly expression, soft studio lighting, minimalist background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdyhxb7YxVnKWyvLnjHVb4OJFozgvWUqhF4FIoJ4BQjs5Y2iRddJvOf8hwYOpt6M4L5NVM15J65c2bGXBqN2CmkxthiXUHvGRS2Dl7OTAF8vS4FaJTIVxasusv23bqP19ja5Hi0hrc1ZmTPVMbX3x1JOlfDBXaz5Ce3-_YgbRezqwAvv7W-Vp2vFtqKhX_nwDqxlvtyLXS-nbFZXVtH1wl2-J8QAkYQv54VNIyPH3zVlQKPGvIXi5E7bbfShJnA9oP-2KtK0qVnUia"/>
+</div>
+</div>
+<div class="bg-[#f3f4f3] dark:bg-neutral-800 h-[1px] w-full"></div>
+</header>
+<div class="pt-24 flex max-w-[1440px] mx-auto min-h-screen">
+<!-- SideNavBar Component -->
+<aside class="hidden md:flex flex-col gap-2 p-6 h-[calc(100vh-80px)] border-r border-[#f3f4f3] dark:border-neutral-800 bg-[#FAFAF9] dark:bg-neutral-950 w-64 fixed left-0">
+<div class="mb-8 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-white font-bold">SPM</div>
+<div>
+<h2 class="font-headline font-bold text-[#1a1c1c] dark:text-white leading-none">SPM Workspace</h2>
+<p class="text-xs text-on-surface-variant">Digital Curator</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-[#ffffff] dark:bg-neutral-900 text-[#2563EB] font-semibold rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1a1c1c]/50 dark:text-neutral-500 hover:bg-[#f3f4f3] dark:hover:bg-neutral-900 rounded-lg hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">layers</span>
+                    Workspace
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1a1c1c]/50 dark:text-neutral-500 hover:bg-[#f3f4f3] dark:hover:bg-neutral-900 rounded-lg hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+                    Messages
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1a1c1c]/50 dark:text-neutral-500 hover:bg-[#f3f4f3] dark:hover:bg-neutral-900 rounded-lg hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">bookmarks</span>
+                    Collections
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#1a1c1c]/50 dark:text-neutral-500 hover:bg-[#f3f4f3] dark:hover:bg-neutral-900 rounded-lg hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+</nav>
+<button class="signature-btn mt-6 py-3 px-4 bg-primary-container text-on-primary rounded-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined">add</span>
+                New Entry
+            </button>
+<div class="mt-auto pt-4 border-t border-[#f3f4f3]">
+<a class="flex items-center gap-3 px-4 py-3 text-[#1a1c1c]/50 dark:text-neutral-500 hover:bg-[#f3f4f3] dark:hover:bg-neutral-900 rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+                    Help Center
+                </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-64 p-8 space-y-16">
+<header>
+<h1 class="text-4xl font-headline font-bold text-on-surface mb-2">Style Guide &amp; Component Library</h1>
+<p class="text-on-surface-variant max-w-2xl">A curated collection of UI patterns following the "Digital Curator" philosophy. High contrast, tonal layering, and minimal borders.</p>
+</header>
+<!-- 1. Form Elements Section -->
+<section class="space-y-8">
+<div class="flex items-baseline justify-between">
+<h2 class="text-2xl font-headline font-semibold">Form Elements</h2>
+<span class="text-xs font-label uppercase tracking-widest text-outline">Input States &amp; Logic</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<!-- Text Inputs -->
+<div class="space-y-6 p-8 bg-surface-container-low rounded-xl">
+<h3 class="font-headline font-bold mb-4">Input States</h3>
+<div class="space-y-4">
+<div>
+<label class="text-xs font-bold uppercase mb-1 block">Default State</label>
+<input class="w-full bg-surface-container-lowest p-4 rounded-lg border-none focus:ring-2 focus:ring-primary-container/20 transition-all shadow-sm" placeholder="Enter text..." type="text"/>
+</div>
+<div>
+<label class="text-xs font-bold uppercase mb-1 block">Focused State</label>
+<input class="w-full bg-surface-container-lowest p-4 rounded-lg border-none ring-2 ring-primary-container shadow-md" type="text" value="Active typing..."/>
+</div>
+<div>
+<label class="text-xs font-bold uppercase mb-1 block">Error State</label>
+<input class="w-full bg-surface-container-lowest p-4 rounded-lg border-none ring-2 ring-error shadow-sm" type="text" value="Invalid data"/>
+<p class="text-error text-xs mt-1 font-medium">Please enter a valid project name.</p>
+</div>
+<div>
+<label class="text-xs font-bold uppercase mb-1 block">Disabled State</label>
+<input class="w-full bg-surface-dim p-4 rounded-lg border-none cursor-not-allowed opacity-50" disabled="" type="text" value="System locked"/>
+</div>
+</div>
+</div>
+<!-- Selection Controls (New) -->
+<div class="space-y-6 p-8 bg-surface-container-low rounded-xl">
+<h3 class="font-headline font-bold mb-4">Selection Controls</h3>
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-4">
+<label class="text-xs font-bold uppercase block">Checkboxes</label>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-6 h-6 rounded bg-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-sm font-medium">Selected State</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-6 h-6 rounded bg-surface-container-lowest transition-all group-hover:bg-surface-container-high"></div>
+<span class="text-sm font-medium text-on-surface-variant">Default State</span>
+</label>
+</div>
+</div>
+<div class="space-y-4">
+<label class="text-xs font-bold uppercase block">Radio Buttons</label>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-6 h-6 rounded-full bg-surface-container-lowest flex items-center justify-center border-4 border-primary-container">
+<div class="w-2 h-2 rounded-full bg-primary-container"></div>
+</div>
+<span class="text-sm font-medium">Option A</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-6 h-6 rounded-full bg-surface-container-lowest border-0 transition-all group-hover:bg-surface-container-high"></div>
+<span class="text-sm font-medium text-on-surface-variant">Option B</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="w-6 h-6 rounded-full bg-surface-container-lowest border-0"></div>
+<span class="text-sm font-medium text-on-surface-variant">Option C</span>
+</label>
+</div>
+</div>
+</div>
+<div class="pt-4">
+<div class="flex justify-between items-center mb-4">
+<label class="text-xs font-bold uppercase">Slider</label>
+<span class="text-xs font-bold text-primary-container">65 / 100</span>
+</div>
+<div class="relative w-full h-2 bg-surface-container-high rounded-full overflow-visible">
+<div class="absolute top-0 left-0 h-full w-[65%] bg-primary-container rounded-full"></div>
+<div class="absolute top-1/2 left-[65%] -translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-primary-container rounded-full shadow-md cursor-pointer border-4 border-surface-container-lowest"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<!-- Select Dropdown States (New) -->
+<div class="space-y-6">
+<h3 class="font-headline font-bold mb-4">Select Dropdowns</h3>
+<div class="grid grid-cols-1 gap-6">
+<div>
+<label class="text-xs font-bold uppercase mb-1 block">Closed State</label>
+<div class="w-full bg-surface-container-low p-4 rounded-lg flex justify-between items-center cursor-pointer shadow-sm">
+<span class="text-sm font-medium">Select a category...</span>
+<span class="material-symbols-outlined text-outline">expand_more</span>
+</div>
+</div>
+<div>
+<label class="text-xs font-bold uppercase mb-1 block">Open State</label>
+<div class="relative">
+<div class="w-full bg-surface-container-low p-4 rounded-t-lg flex justify-between items-center cursor-pointer">
+<span class="text-sm font-bold text-primary-container">Visual Arts</span>
+<span class="material-symbols-outlined text-primary-container rotate-180 transition-transform">expand_more</span>
+</div>
+<div class="absolute top-full w-full bg-surface-container-lowest rounded-b-xl shadow-[0_20px_40px_rgba(26,28,28,0.04)] overflow-hidden z-10">
+<div class="px-4 py-3 hover:bg-surface-container-low cursor-pointer transition-colors flex justify-between items-center">
+<span class="text-sm font-medium">Interactive Media</span>
+</div>
+<div class="px-4 py-3 bg-primary-container/10 border-l-4 border-primary text-primary-container flex justify-between items-center">
+<span class="text-sm font-bold">Visual Arts</span>
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<div class="px-4 py-3 hover:bg-surface-container-low cursor-pointer transition-colors">
+<span class="text-sm font-medium">Sound Design</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Complex Inputs -->
+<div class="space-y-8">
+<div>
+<h3 class="font-headline font-bold mb-4">TextArea &amp; Counter</h3>
+<div class="bg-surface-container-low p-6 rounded-xl relative">
+<textarea class="w-full h-32 bg-surface-container-lowest p-4 rounded-lg border-none focus:ring-2 focus:ring-primary-container/20 resize-none shadow-sm" placeholder="Tell us about your project..."></textarea>
+<div class="absolute bottom-10 right-10 text-[10px] font-bold text-outline uppercase">342 / 500</div>
+</div>
+</div>
+<div>
+<h3 class="font-headline font-bold mb-4">TagInput &amp; Autocomplete</h3>
+<div class="bg-surface-container-low p-6 rounded-xl space-y-4">
+<div class="flex flex-wrap gap-2 bg-surface-container-lowest p-3 rounded-lg shadow-sm">
+<span class="bg-primary-container text-on-primary px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">React <span class="material-symbols-outlined text-sm">close</span></span>
+<span class="bg-primary-container text-on-primary px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">TypeScript <span class="material-symbols-outlined text-sm">close</span></span>
+<span class="bg-primary-container text-on-primary px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">Node.js <span class="material-symbols-outlined text-sm">close</span></span>
+<input class="border-none focus:ring-0 bg-transparent text-sm p-1 w-24" placeholder="Add tag..." type="text"/>
+</div>
+<!-- Autocomplete Dropdown -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.04)] overflow-hidden">
+<div class="px-4 py-2 hover:bg-surface-container-low cursor-pointer flex justify-between items-center transition-colors">
+<span class="text-sm font-medium">Next.js</span>
+<span class="text-[10px] font-bold text-outline">FRAMEWORK</span>
+</div>
+<div class="px-4 py-3 bg-primary-container/10 border-l-4 border-primary text-primary-container flex justify-between items-center">
+<span class="text-sm font-bold">NestJS</span>
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Navigation & Headers Section -->
+<section class="space-y-8">
+<div class="flex items-baseline justify-between">
+<h2 class="text-2xl font-headline font-semibold">Navigation &amp; Headers</h2>
+<span class="text-xs font-label uppercase tracking-widest text-outline">Responsive Shells</span>
+</div>
+<div class="space-y-12">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+<!-- Mobile Header Mockup -->
+<div class="lg:col-span-1 max-w-sm mx-auto bg-surface shadow-2xl rounded-3xl overflow-hidden border-8 border-inverse-surface h-fit">
+<div class="bg-surface/80 backdrop-blur-md px-6 py-4 flex justify-between items-center">
+<span class="font-headline font-extrabold tracking-tighter">SPM</span>
+<div class="flex gap-4">
+<span class="material-symbols-outlined">notifications</span>
+<span class="material-symbols-outlined">menu</span>
+</div>
+</div>
+<div class="h-48 bg-surface-container-low flex items-center justify-center text-outline italic text-sm">Content Canvas</div>
+</div>
+<!-- Small Profile Cards (New) -->
+<div class="lg:col-span-2 space-y-6">
+<h3 class="font-headline font-bold mb-4">Small Profile Cards</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-all cursor-pointer group">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="Portrait of a young professional woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjs-NHBbZ6jOdShNv2LL8H6aF8CE6-ZNKGYy_ALHdqVe76zBJztAadF9eImqfcfPz2BrLZeML_UrEsNERbt33CXUntoUexRHbHSCGvMcXFcFvK0y6uDxWqBUEmtvKOVPtY7fDmAZnpCzkZ8ujx0s7wuC4iGv5WWo1g5Wxs8szId5czhu8tQIr8gMgARjyDBfyxZpNGZ03ARC8FzTu_YgZe00mEt_JG6v8Lcq0ECJuEqJ1QeeWYa6XXxkp8gh5sn1AqOI_ukV9WbzdJ"/>
+<div>
+<h4 class="text-sm font-bold text-on-surface">Sarah Kim</h4>
+<p class="text-[11px] font-medium text-on-surface-variant">Lead Designer</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-all cursor-pointer group">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white text-[10px] font-bold">AR</div>
+<div>
+<h4 class="text-sm font-bold text-on-surface">Alex Rivera</h4>
+<p class="text-[11px] font-medium text-on-surface-variant">Full-stack Dev</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Nav Item States -->
+<div class="bg-surface-container-low p-6 rounded-xl mt-8">
+<h3 class="font-headline font-bold mb-4">Nav Item States</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex items-center gap-3 px-4 py-3 bg-[#ffffff] text-[#2563EB] font-semibold rounded-lg shadow-sm">
+<span class="material-symbols-outlined">favorite</span>
+                                Active Item
+                            </div>
+<div class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">favorite</span>
+                                Inactive Item
+                            </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Feedback & Alerts Section -->
+<section class="space-y-8">
+<div class="flex items-baseline justify-between">
+<h2 class="text-2xl font-headline font-semibold">Feedback &amp; Alerts</h2>
+<span class="text-xs font-label uppercase tracking-widest text-outline">User Guidance</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+<!-- Toasts -->
+<div class="space-y-4">
+<h3 class="font-headline font-bold mb-4">Toasts</h3>
+<div class="bg-[#eefcf3] p-4 rounded-xl border-l-4 border-[#10b981] flex gap-3 shadow-sm">
+<span class="material-symbols-outlined text-[#10b981]">check_circle</span>
+<div>
+<p class="text-sm font-bold text-[#064e3b]">Project Published</p>
+<p class="text-xs text-[#065f46]">Your curation is now live on the board.</p>
+</div>
+</div>
+<div class="bg-error-container p-4 rounded-xl border-l-4 border-error flex gap-3 shadow-sm">
+<span class="material-symbols-outlined text-error">error</span>
+<div>
+<p class="text-sm font-bold text-on-error-container">Upload Failed</p>
+<p class="text-xs text-on-error-container/80">File format not supported.</p>
+</div>
+</div>
+<div class="bg-secondary-container p-4 rounded-xl border-l-4 border-primary flex gap-3 shadow-sm">
+<span class="material-symbols-outlined text-primary">info</span>
+<div>
+<p class="text-sm font-bold text-on-secondary-container">Update Available</p>
+<p class="text-xs text-on-secondary-container/80">New tools added to the workspace.</p>
+</div>
+</div>
+</div>
+<!-- Notification Dropdown -->
+<div class="lg:col-span-2">
+<h3 class="font-headline font-bold mb-4">Notifications</h3>
+<div class="bg-surface-container-lowest rounded-2xl shadow-[0_20px_40px_rgba(26,28,28,0.04)] overflow-hidden">
+<div class="px-6 py-4 border-b border-surface-container-low flex justify-between items-center">
+<span class="font-bold text-sm">Recent Activity</span>
+<button class="text-primary-container text-xs font-bold uppercase">Mark all as read</button>
+</div>
+<div class="divide-y divide-surface-container-low">
+<div class="px-6 py-4 flex gap-4 bg-primary-container/5">
+<div class="w-2 h-2 mt-2 bg-primary-container rounded-full flex-shrink-0"></div>
+<div class="flex-1">
+<p class="text-sm"><span class="font-bold">Alex Rivera</span> liked your project "Ethereal UI"</p>
+<p class="text-xs text-outline mt-1">2 minutes ago</p>
+</div>
+</div>
+<div class="px-6 py-4 flex gap-4">
+<div class="w-2 h-2 mt-2 bg-transparent rounded-full flex-shrink-0"></div>
+<div class="flex-1 opacity-70">
+<p class="text-sm"><span class="font-bold">Sarah Kim</span> commented on your workspace</p>
+<p class="text-xs text-outline mt-1">1 hour ago</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Status & Data Section -->
+<section class="space-y-8">
+<div class="flex items-baseline justify-between">
+<h2 class="text-2xl font-headline font-semibold">Status &amp; Data</h2>
+<span class="text-xs font-label uppercase tracking-widest text-outline">Meta &amp; Loading</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+<!-- Avatars & Tabs -->
+<div class="space-y-12">
+<div>
+<h3 class="font-headline font-bold mb-4">Avatar Sizes</h3>
+<div class="flex items-end gap-6">
+<div class="flex flex-col items-center gap-2">
+<img class="w-8 h-8 rounded-full object-cover border-2 border-surface" data-alt="Close-up of a smiling young woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjs-NHBbZ6jOdShNv2LL8H6aF8CE6-ZNKGYy_ALHdqVe76zBJztAadF9eImqfcfPz2BrLZeML_UrEsNERbt33CXUntoUexRHbHSCGvMcXFcFvK0y6uDxWqBUEmtvKOVPtY7fDmAZnpCzkZ8ujx0s7wuC4iGv5WWo1g5Wxs8szId5czhu8tQIr8gMgARjyDBfyxZpNGZ03ARC8FzTu_YgZe00mEt_JG6v8Lcq0ECJuEqJ1QeeWYa6XXxkp8gh5sn1AqOI_ukV9WbzdJ"/>
+<span class="text-[10px] font-bold text-outline">SM (32px)</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-12 h-12 rounded-full bg-tertiary-container text-on-tertiary flex items-center justify-center font-bold text-lg">SK</div>
+<span class="text-[10px] font-bold text-outline">MD (48px)</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<img class="w-20 h-20 rounded-full object-cover border-4 border-surface shadow-md" data-alt="Portrait of a smiling professional man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRvsG5DXWpe1L0Jwx9uuFlgr1r1CnDtQuSyjm2Z8S4gQWtIQXYSfH6wkkf3vgsp3a-yINZ_VzqDzyNZVDGrWIryEARyI7M_wV8vpje-cBLziqO8gg2hrim6ZALNH5f4Bzfb53SKbB1sOLBWNjxREY4ZntPQSHelG_o1ZIvgvnyuKQT5Nytqcl7T1xbix13Tr7kwtEKj5N_O1TajCO_K4DTc3MpEwRSBNapCoBQiyrhZdvTZlRqT0j_0uJSJy9YSHNimDcFX-ZN90TY"/>
+<span class="text-[10px] font-bold text-outline">LG (80px)</span>
+</div>
+</div>
+</div>
+<div>
+<h3 class="font-headline font-bold mb-4">Interactive Tabs</h3>
+<div class="flex gap-8 border-b border-surface-container-low">
+<button class="pb-4 text-[#2563EB] font-bold relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-[#2563EB] flex items-center gap-2">
+                                    Active Projects
+                                    <span class="bg-primary-container text-on-primary text-[10px] px-1.5 py-0.5 rounded-full">12</span>
+</button>
+<button class="pb-4 text-on-surface-variant font-medium hover:text-on-surface transition-colors flex items-center gap-2">
+                                    Archived
+                                    <span class="bg-surface-container-high text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded-full">48</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Pagination & Skeletons -->
+<div class="space-y-12">
+<div>
+<h3 class="font-headline font-bold mb-4">Pagination</h3>
+<div class="flex items-center gap-2">
+<button class="p-2 text-outline-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="w-10 h-10 rounded-lg bg-primary-container text-on-primary font-bold">1</button>
+<button class="w-10 h-10 rounded-lg hover:bg-surface-container-low transition-colors font-medium">2</button>
+<button class="w-10 h-10 rounded-lg hover:bg-surface-container-low transition-colors font-medium">3</button>
+<span class="text-outline-variant px-2">...</span>
+<button class="w-10 h-10 rounded-lg hover:bg-surface-container-low transition-colors font-medium">12</button>
+<button class="p-2 text-outline-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+<div>
+<h3 class="font-headline font-bold mb-4">Loading Skeletons</h3>
+<div class="space-y-6">
+<div class="bg-surface-container-lowest p-4 rounded-2xl shadow-sm space-y-4 max-w-sm">
+<div class="w-full h-40 bg-surface-container-low animate-pulse rounded-xl"></div>
+<div class="space-y-2">
+<div class="h-4 w-3/4 bg-surface-container-low animate-pulse rounded"></div>
+<div class="h-3 w-1/2 bg-surface-container-low animate-pulse rounded"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Modal Basics Section -->
+<section class="space-y-8 pb-16">
+<div class="flex items-baseline justify-between">
+<h2 class="text-2xl font-headline font-semibold">Modal Basics</h2>
+<span class="text-xs font-label uppercase tracking-widest text-outline">Focused Interruption</span>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- Version A: Destructive -->
+<div class="relative h-[450px] w-full bg-surface-container-low rounded-3xl overflow-hidden flex items-center justify-center p-8">
+<div class="grid grid-cols-2 gap-4 w-full opacity-20 pointer-events-none">
+<div class="h-32 bg-surface-container-high rounded-xl"></div>
+<div class="h-32 bg-surface-container-high rounded-xl"></div>
+</div>
+<div class="absolute inset-0 bg-inverse-surface/10 backdrop-blur-sm flex items-center justify-center p-6">
+<div class="bg-surface-container-lowest max-w-sm w-full rounded-2xl shadow-[0_20px_40px_rgba(26,28,28,0.08)] p-8 space-y-6">
+<div class="space-y-2">
+<h3 class="text-xl font-headline font-bold">Discard Changes?</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Are you sure you want to discard the current draft? All unsaved data will be removed.</p>
+</div>
+<div class="flex gap-4">
+<button class="flex-1 py-3 px-4 rounded-lg font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">Cancel</button>
+<button class="flex-1 py-3 px-4 bg-error text-on-error rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all">Discard</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Version B: Primary (New) -->
+<div class="relative h-[450px] w-full bg-surface-container-low rounded-3xl overflow-hidden flex items-center justify-center p-8">
+<div class="grid grid-cols-2 gap-4 w-full opacity-20 pointer-events-none">
+<div class="h-32 bg-surface-container-high rounded-xl"></div>
+<div class="h-32 bg-surface-container-high rounded-xl"></div>
+</div>
+<div class="absolute inset-0 bg-inverse-surface/10 backdrop-blur-sm flex items-center justify-center p-6">
+<div class="bg-surface-container-lowest max-w-sm w-full rounded-2xl shadow-[0_20px_40px_rgba(26,28,28,0.08)] p-8 space-y-6">
+<div class="space-y-2">
+<h3 class="text-xl font-headline font-bold">Publish Project?</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">Ready to share your curation with the community? You can still edit this later from your workspace.</p>
+</div>
+<div class="flex gap-4">
+<button class="flex-1 py-3 px-4 rounded-lg font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">Later</button>
+<button class="flex-1 py-3 px-4 bg-[#2563EB] text-on-primary rounded-lg font-bold hover:opacity-90 active:scale-95 transition-all">Publish Now</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Footer Component -->
+<footer class="w-full py-12 px-8 border-t border-[#f3f4f3] dark:border-neutral-800 bg-[#FAFAF9] dark:bg-neutral-950 mt-20">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-[1440px] mx-auto gap-4">
+<span class="font-['Manrope'] font-semibold text-[#1a1c1c] dark:text-white">Side Project Mate</span>
+<p class="font-['Inter'] text-xs text-[#1a1c1c]/40 dark:text-neutral-500">© 2024 Side Project Mate. Editorial innovation for the modern creator.</p>
+<div class="flex gap-6">
+<a class="font-['Inter'] text-xs text-[#1a1c1c]/40 dark:text-neutral-500 hover:text-[#1a1c1c] dark:hover:text-white transition-colors hover:underline decoration-[#2563EB] underline-offset-4" href="#">Journal</a>
+<a class="font-['Inter'] text-xs text-[#1a1c1c]/40 dark:text-neutral-500 hover:text-[#1a1c1c] dark:hover:text-white transition-colors hover:underline decoration-[#2563EB] underline-offset-4" href="#">Twitter</a>
+</div>
+</div>
+</footer>
+</body></html>

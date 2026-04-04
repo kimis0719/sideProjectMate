@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SPM - 새 프로젝트 시작하기</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline": "#737686",
+              "tertiary-container": "#bc4800",
+              "on-primary-container": "#eeefff",
+              "background": "#f9f9f8",
+              "surface-tint": "#0053db",
+              "on-secondary-container": "#394c84",
+              "on-error-container": "#93000a",
+              "primary-fixed": "#dbe1ff",
+              "on-tertiary-fixed-variant": "#7d2d00",
+              "on-background": "#1a1c1c",
+              "on-tertiary": "#ffffff",
+              "on-surface": "#1a1c1c",
+              "tertiary-fixed-dim": "#ffb596",
+              "on-primary-fixed-variant": "#003ea8",
+              "inverse-surface": "#2f3130",
+              "surface-container-highest": "#e2e2e2",
+              "primary-container": "#2563eb",
+              "on-tertiary-container": "#ffede6",
+              "surface": "#f9f9f8",
+              "tertiary": "#943700",
+              "surface-container": "#eeeeed",
+              "error-container": "#ffdad6",
+              "on-tertiary-fixed": "#360f00",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary": "#ffffff",
+              "on-primary-fixed": "#00174b",
+              "error": "#ba1a1a",
+              "tertiary-fixed": "#ffdbcd",
+              "on-secondary-fixed-variant": "#31447b",
+              "surface-container-high": "#e8e8e7",
+              "surface-variant": "#e2e2e2",
+              "on-error": "#ffffff",
+              "surface-bright": "#f9f9f8",
+              "secondary-fixed": "#dbe1ff",
+              "on-surface-variant": "#434655",
+              "secondary": "#495c95",
+              "primary-fixed-dim": "#b4c5ff",
+              "on-secondary-fixed": "#00174b",
+              "surface-dim": "#dadad9",
+              "secondary-fixed-dim": "#b4c5ff",
+              "primary": "#004ac6",
+              "outline-variant": "#c3c6d7",
+              "on-primary": "#ffffff",
+              "inverse-primary": "#b4c5ff",
+              "surface-container-low": "#f3f4f3",
+              "secondary-container": "#acbfff",
+              "inverse-on-surface": "#f1f1f0"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f9f9f8;
+            color: #1a1c1c;
+            font-family: 'Inter', sans-serif;
+        }
+        .step-active {
+            color: #004ac6;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 w-full z-50 bg-[#f9f9f8]/80 backdrop-blur-xl">
+<div class="flex items-center justify-between px-8 py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-blue-600 font-['Manrope']">SPM</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-['Manrope'] font-semibold tracking-tight text-slate-500 hover:text-slate-900 transition-all" href="#">Discover</a>
+<a class="font-['Manrope'] font-semibold tracking-tight text-blue-600 border-b-2 border-blue-600 transition-all" href="#">My Projects</a>
+<a class="font-['Manrope'] font-semibold tracking-tight text-slate-500 hover:text-slate-900 transition-all" href="#">Messages</a>
+<a class="font-['Manrope'] font-semibold tracking-tight text-slate-500 hover:text-slate-900 transition-all" href="#">Network</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-500 p-2 hover:bg-blue-50/50 rounded-lg transition-all">notifications</button>
+<button class="material-symbols-outlined text-slate-500 p-2 hover:bg-blue-50/50 rounded-lg transition-all">settings</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="Close up professional headshot of a smiling designer in a creative studio setting with warm natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQ1TOzAHDpY9rzcGlFRlw5yEe2uZ86wjhkMzmVIBTd30pVBsALvINzsm7K5VLbeaeG157pJ2RfRKYl5ye_t8jTWZTRbGFLpbxUr_bc4BeuZnRX98DE2l0vjyxNz3axZu4FxnMyqR3XtcODgpYPUyo6Jt3hTkHkB81yAhVB8eBNd39uespxfpTBeKu6gTXbGNeOSfqGuoAxw5GJhxGf4VAy7gPEFwPQs2wrRmj6XGtdXIyBwEVk7CZ-HbzxYzVnALAXhL2AfSccrpuQ"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-[800px] mx-auto">
+<!-- Header Section -->
+<div class="mb-12 space-y-2">
+<h1 class="text-[3.5rem] font-bold font-headline leading-tight tracking-tight text-on-surface">새 프로젝트 시작하기</h1>
+<p class="text-lg text-on-surface-variant font-body">아이디어를 현실로 만들어보세요.</p>
+</div>
+<!-- Step Indicator -->
+<div class="flex items-center justify-between mb-12 bg-surface-container-low p-6 rounded-xl">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-bold">1</div>
+<div class="flex flex-col">
+<span class="text-[0.75rem] font-bold text-primary uppercase tracking-widest font-label">Step 1/4</span>
+<span class="text-on-surface font-semibold">핵심</span>
+</div>
+</div>
+<div class="hidden md:flex flex-1 items-center px-8">
+<div class="h-[2px] w-full bg-surface-container-highest"></div>
+</div>
+<div class="hidden md:flex items-center gap-12 text-on-surface-variant/40 font-semibold">
+<span class="hover:text-on-surface-variant transition-colors">진행</span>
+<span class="hover:text-on-surface-variant transition-colors">매칭</span>
+<span class="hover:text-on-surface-variant transition-colors">부가</span>
+</div>
+</div>
+<!-- Wizard Content -->
+<div class="space-y-12">
+<!-- Section 1: Core Info (Current) -->
+<section class="space-y-8">
+<div class="space-y-4">
+<label class="block text-sm font-bold uppercase tracking-widest text-primary font-label" for="project-title">프로젝트 이름</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border-none p-6 text-xl font-semibold rounded-xl focus:ring-2 focus:ring-primary transition-shadow placeholder:text-on-surface-variant/30" id="project-title" maxlength="50" placeholder="영감을 주는 프로젝트명을 입력하세요" type="text"/>
+<span class="absolute right-6 top-1/2 -translate-y-1/2 text-sm text-on-surface-variant/50 font-mono">0 / 50</span>
+</div>
+</div>
+<div class="space-y-4">
+<label class="block text-sm font-bold uppercase tracking-widest text-primary font-label" for="project-motivation">시작 동기 및 목표</label>
+<textarea class="w-full bg-surface-container-lowest border-none p-6 text-lg rounded-xl focus:ring-2 focus:ring-primary transition-shadow placeholder:text-on-surface-variant/30 resize-none" id="project-motivation" placeholder="이 프로젝트를 왜 시작하게 되었나요? 어떤 문제를 해결하고 싶은지 자유롭게 적어주세요." rows="6"></textarea>
+</div>
+</section>
+<!-- Placeholder Section 2: Progress Status -->
+<section class="opacity-30 pointer-events-none space-y-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant font-label">프로젝트 진행 단계 (대기 중)</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="p-6 bg-surface-container-low rounded-xl flex items-center gap-3">
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant"></div>
+<span class="font-medium">아이디어 구체화</span>
+</div>
+<div class="p-6 bg-surface-container-low rounded-xl flex items-center gap-3">
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant"></div>
+<span class="font-medium">기획 및 설계</span>
+</div>
+<div class="p-6 bg-surface-container-low rounded-xl flex items-center gap-3">
+<div class="w-5 h-5 rounded-full border-2 border-outline-variant"></div>
+<span class="font-medium">개발 중</span>
+</div>
+</div>
+</section>
+<!-- Placeholder Section 3: Matching Tags -->
+<section class="opacity-30 pointer-events-none space-y-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant font-label">필요한 팀원 태그 (대기 중)</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 bg-surface-container-high rounded-full text-sm font-semibold">#UI_DESIGN</span>
+<span class="px-4 py-2 bg-surface-container-high rounded-full text-sm font-semibold">#BACKEND</span>
+<span class="px-4 py-2 bg-surface-container-high rounded-full text-sm font-semibold">#MARKETING</span>
+<span class="px-4 py-2 bg-surface-container-high rounded-full text-sm font-semibold">#REACT</span>
+</div>
+</section>
+<!-- Placeholder Section 4: Image Uploader -->
+<section class="opacity-30 pointer-events-none space-y-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant font-label">대표 이미지 (대기 중)</h3>
+<div class="w-full h-48 bg-surface-container-low rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-outline-variant/30">
+<span class="material-symbols-outlined text-4xl mb-2">image</span>
+<p class="text-sm">이미지를 드래그하거나 클릭하여 업로드</p>
+</div>
+</section>
+</div>
+<!-- Action Buttons -->
+<div class="mt-16 flex items-center justify-end gap-4">
+<button class="hidden px-8 py-4 text-primary font-semibold hover:bg-primary-container/5 rounded-lg transition-all active:scale-95">이전</button>
+<button class="px-10 py-4 bg-primary-container text-on-primary font-bold rounded-lg shadow-sm hover:translate-x-1 transition-all active:scale-95 flex items-center gap-2">
+                다음 단계 
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar Shell (Mobile Only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full flex justify-around items-end px-6 pb-6 pt-2 bg-white/90 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.03)] z-50">
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] uppercase font-bold tracking-widest font-['Inter']">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="text-[10px] uppercase font-bold tracking-widest font-['Inter']">Inbox</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-blue-600 text-white rounded-2xl p-3 mb-2 transform -translate-y-2" href="#">
+<span class="material-symbols-outlined">folder_shared</span>
+<span class="text-[10px] uppercase font-bold tracking-widest font-['Inter']">Projects</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] uppercase font-bold tracking-widest font-['Inter']">Profile</span>
+</a>
+</nav>
+</body></html>

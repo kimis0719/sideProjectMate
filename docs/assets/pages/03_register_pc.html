@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>회원가입 | Side Project Mate</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Noto+Sans+KR:wght@400;500;700;900&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-high": "#e8e8e7",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-secondary-container": "#394c84",
+                        "secondary": "#495c95",
+                        "background": "#f9f9f8",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-primary-fixed": "#00174b",
+                        "surface-variant": "#e2e2e2",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#eeefff",
+                        "surface-bright": "#f9f9f8",
+                        "outline": "#737686",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#943700",
+                        "surface": "#f9f9f8",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-container": "#ffede6",
+                        "tertiary-container": "#bc4800",
+                        "surface-tint": "#0053db",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "outline-variant": "#c3c6d7",
+                        "on-background": "#1a1c1c",
+                        "primary": "#004ac6",
+                        "error": "#ba1a1a",
+                        "primary-container": "#2563eb",
+                        "surface-container": "#eeeeed",
+                        "inverse-on-surface": "#f1f1f0",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "surface-dim": "#dadad9",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#acbfff",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "inverse-surface": "#2f3130",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-surface": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f3f4f3",
+                        "on-secondary-fixed": "#00174b"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "Noto Sans KR"],
+                        "body": ["Noto Sans KR", "Inter"],
+                        "label": ["Noto Sans KR", "Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f9f9f8;
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+        }
+        .editorial-gradient {
+            background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex items-center justify-center p-4">
+<!-- Auth Layout Wrapper -->
+<main class="w-full max-w-[1100px] grid md:grid-cols-2 bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+<!-- Left: Brand / Narrative Section (Desktop Only) -->
+<section class="hidden md:flex flex-col justify-between p-12 editorial-gradient text-on-primary">
+<div>
+<div class="flex items-center gap-2 mb-12">
+<div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+<span class="text-primary font-extrabold text-xl font-headline">M</span>
+</div>
+<span class="font-headline font-bold text-xl tracking-tight">Side Project Mate</span>
+</div>
+<h1 class="font-headline text-4xl font-bold leading-tight mb-6">
+                    아이디어를 <br/>실현으로 바꾸는 공간.
+                </h1>
+<p class="font-body text-on-primary-container text-lg opacity-90 max-w-sm">
+                    함께할 팀원을 찾고 AI 기반 로드맵으로 프로젝트를 체계적으로 관리하세요.
+                </p>
+</div>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<div class="flex -space-x-2">
+<img class="w-10 h-10 rounded-full border-2 border-primary-container" data-alt="portrait of a young female designer with glasses in a minimalist studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZR53yx3v2DejmHLdEw4i3EOhIYf2BgORJ-0jMWB113E0greroMH1hQth-83yOJAV_VOmhQhM1ZaJ8r-vboFvtF4_PgmUx96kgV7eK2zkD_8GTxT2YBjEJvqcSzzTlRbC6jG82hegTt1hHDWyQKUAOpLwIWoE2MUGqPyg3c9B13_B6iJrGdy7eDa7cGFAiDNhMBxQ8psvt623Z4fsEFAyfYoREo1T9OYuoS2X5xhsba3n-uHNOl3NqjDC8OKo_roDPaVqk2T3Anlqh"/>
+<img class="w-10 h-10 rounded-full border-2 border-primary-container" data-alt="close up of a male developer smiling warmly with soft natural window lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy3EJVoxBBlTXyv-7_zWWfmOElX3yiIq6K9IWC37TkmHlV-vdClqIKozAKw8ao_Kmi8JkXBqglJbzPWQPp7-pCqhp6OnfuJi589YLc8ynWpadddeRR3yCpuUBJwuQM8lvWys8-GjM_-mZedJ6yL-DJ4iZ5R4CxFERhVo6La1_JhpvfpEpgdRJWEIJ1uHIfayrH_993ENm0TsmEJq7rfsI1IOORahmK4ZQLd0vFC4mbh6iXRnvL0h0nYCuDRv57bm5WS60-IoH5FsAj"/>
+<img class="w-10 h-10 rounded-full border-2 border-primary-container" data-alt="professional portrait of a diverse creative team member in a bright modern office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDx7ku3_XD1C9DpQ3MX8F3KGliRyI8nmYQsk4Zg_NsP49EcMv2C5GSEqUpQeC_aHXfW4LIcX60pJxeOKbQKAzN3UJY5jnwq8nUutP1XoMR_HboySqZ2Fj2IYGG3nlnDBPgxnYRYKLybzmvmI6wC0cUqUkumMXd93WVSID-BPIgt0HZs9rnjLehWYkkNodAPXhYi4QVGILoVIpt3On5ACpHVIIL7OXE-enrYrXY29euzyEIR3odLKGt21LK-NrZRwN-cxHWu1VJHKVqD"/>
+</div>
+<span class="text-sm font-label font-semibold">이번 주에만 + 2,400명의 멤버가 가입했습니다</span>
+</div>
+</div>
+</section>
+<!-- Right: Sign-up Form Section -->
+<section class="p-8 md:p-12 bg-surface-container-lowest flex flex-col justify-center">
+<!-- Mobile Brand Logo -->
+<div class="md:hidden flex items-center gap-2 mb-8">
+<span class="font-headline font-bold text-xl tracking-tight text-primary">SPM</span>
+</div>
+<div class="mb-8">
+<h2 class="font-headline text-2xl font-bold text-on-surface mb-2">계정 만들기</h2>
+<p class="text-on-surface-variant font-body text-sm">지금 바로 크리에이터와 빌더들의 생태계에 합류하세요.</p>
+</div>
+<!-- Social Logins -->
+<div class="grid grid-cols-2 gap-4 mb-8">
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-lg border border-outline-variant/30 hover:bg-surface-container-low transition-all duration-200 active:scale-95">
+<img alt="Google" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOsjj7Fa91tcMk0chdgTDDkJiLYePfAOnEy_ENoW33y5Jw1EbQZOAwYtNgnyx1Vc4ku7dGWoo2Xn4B4uwkQavuL8wjAqSdnPdMQFPOuVLhzXKFXHWP2Ah4IW4Wd5KGZOA7IaAugxNcGK9PBG39tHC4MvMyr0JcdeNa2hz72PG51Dc5FUguGpCa70il8T7qtyLLtlQkZtAIjzqdgh2Vpxq2V1l3CsT4e5V2psu8C1b8pbPqxCDZov8IIDevtN35ITwoknmkn6_PiVRh"/>
+<span class="text-sm font-semibold text-on-surface">Google</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-3 px-4 rounded-lg border border-outline-variant/30 hover:bg-surface-container-low transition-all duration-200 active:scale-95">
+<img alt="GitHub" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeHjX0UD-7hEABRC27gDpbzjcbjWnnwsC8TBXdpNC19XxeovScuZ6LpKeZe4j0rAVyA3ChqC-sGYDndNCzGxFekj-e0rvIjvYsLfC0jBLBkTkC2MP_1FyjGiJjoDmYgsmypf4DN_0aO-zk3jCiDdT-FErln_p8fmqO5-Zdu0ryAgqlO2Fh2JX7DNl-d_lPMNmkmFUZaUZSA6umzUc9-BmS4yqfCiMh9XbWFfPamXcAWCpE976HDs3Hzmva6l1vldcpDqq8WqnStGhF"/>
+<span class="text-sm font-semibold text-on-surface">GitHub</span>
+</button>
+</div>
+<div class="relative flex items-center gap-4 mb-8">
+<div class="flex-grow h-px bg-outline-variant/20"></div>
+<span class="text-xs font-label text-outline uppercase tracking-widest">또는</span>
+<div class="flex-grow h-px bg-outline-variant/20"></div>
+</div>
+<!-- Registration Form -->
+<form class="space-y-5">
+<div class="grid grid-cols-1 gap-5">
+<!-- Nickname -->
+<div class="space-y-1.5">
+<label class="block text-xs font-label font-bold text-on-surface-variant uppercase" for="nickname">닉네임</label>
+<input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-sm outline-none" id="nickname" name="nickname" placeholder="어떤 이름으로 불러드릴까요?" type="text"/>
+</div>
+<!-- Email -->
+<div class="space-y-1.5">
+<label class="block text-xs font-label font-bold text-on-surface-variant uppercase" for="email">이메일 주소</label>
+<input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-sm outline-none" id="email" name="email" placeholder="name@example.com" type="email"/>
+</div>
+<!-- Password -->
+<div class="space-y-1.5">
+<label class="block text-xs font-label font-bold text-on-surface-variant uppercase" for="password">비밀번호</label>
+<input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-sm outline-none" id="password" name="password" placeholder="••••••••" type="password"/>
+<!-- Password Strength Indicator -->
+<div class="pt-2">
+<div class="flex gap-1 h-1 w-full mb-1">
+<div class="flex-1 bg-primary rounded-full"></div>
+<div class="flex-1 bg-primary rounded-full"></div>
+<div class="flex-1 bg-surface-container-high rounded-full"></div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-[10px] font-label font-bold text-primary uppercase">보통</span>
+<span class="text-[10px] text-on-surface-variant opacity-60">문자, 숫자, 기호를 조합하세요</span>
+</div>
+</div>
+</div>
+<!-- Confirm Password -->
+<div class="space-y-1.5">
+<label class="block text-xs font-label font-bold text-on-surface-variant uppercase" for="confirm_password">비밀번호 확인</label>
+<input class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-sm outline-none" id="confirm_password" name="confirm_password" placeholder="••••••••" type="password"/>
+</div>
+</div>
+<!-- Policies -->
+<div class="space-y-3 pt-2">
+<label class="flex items-start gap-3 cursor-pointer group">
+<input class="mt-1 w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-xs text-on-surface-variant font-body leading-relaxed">
+<a class="text-primary font-semibold hover:underline" href="#">이용약관</a>에 동의하며 <a class="text-primary font-semibold hover:underline" href="#">개인정보 처리방침</a>을 확인했습니다.
+                        </span>
+</label>
+</div>
+<!-- Submit Action -->
+<div class="pt-4">
+<button class="w-full py-4 bg-primary-container text-on-primary font-bold rounded-lg shadow-sm hover:shadow-md hover:translate-y-[-1px] active:scale-[0.98] transition-all duration-200" type="submit">
+                        가입하기
+                    </button>
+</div>
+</form>
+<footer class="mt-8 text-center">
+<p class="text-sm text-on-surface-variant">
+                    이미 계정이 있으신가요? 
+                    <a class="text-primary font-bold hover:underline ml-1" href="#">로그인</a>
+</p>
+</footer>
+</section>
+</main>
+<!-- Background Decorative Elements -->
+<div class="fixed top-0 left-0 -z-10 w-full h-full opacity-40 pointer-events-none overflow-hidden">
+<div class="absolute top-[-10%] right-[-5%] w-[40rem] h-[40rem] bg-primary/5 rounded-full blur-[100px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[30rem] h-[30rem] bg-secondary/5 rounded-full blur-[80px]"></div>
+</div>
+</body></html>

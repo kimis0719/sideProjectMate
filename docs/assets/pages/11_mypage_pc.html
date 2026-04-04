@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>마이페이지 - The Digital Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+            background-color: #f9f9f8;
+            color: #1a1c1c;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary-container": "#2563eb",
+                "surface-tint": "#0053db",
+                "primary": "#004ac6",
+                "on-primary-container": "#eeefff",
+                "outline-variant": "#c3c6d7",
+                "on-primary-fixed-variant": "#003ea8",
+                "surface-container-low": "#f3f4f3",
+                "primary-fixed-dim": "#b4c5ff",
+                "inverse-primary": "#b4c5ff",
+                "tertiary-container": "#bc4800",
+                "on-secondary-fixed-variant": "#31447b",
+                "on-tertiary-fixed": "#360f00",
+                "on-surface-variant": "#434655",
+                "tertiary-fixed": "#ffdbcd",
+                "surface-container": "#eeeeed",
+                "secondary": "#495c95",
+                "on-surface": "#1a1c1c",
+                "inverse-surface": "#2f3130",
+                "background": "#f9f9f8",
+                "on-tertiary-fixed-variant": "#7d2d00",
+                "surface-variant": "#e2e2e2",
+                "surface-dim": "#dadad9",
+                "tertiary-fixed-dim": "#ffb596",
+                "surface": "#f9f9f8",
+                "on-secondary-fixed": "#00174b",
+                "on-secondary": "#ffffff",
+                "on-error": "#ffffff",
+                "on-primary-fixed": "#00174b",
+                "on-tertiary": "#ffffff",
+                "surface-container-highest": "#e2e2e2",
+                "error-container": "#ffdad6",
+                "surface-container-lowest": "#ffffff",
+                "on-background": "#1a1c1c",
+                "secondary-fixed-dim": "#b4c5ff",
+                "outline": "#737686",
+                "on-primary": "#ffffff",
+                "error": "#ba1a1a",
+                "tertiary": "#943700",
+                "surface-container-high": "#e8e8e7",
+                "secondary-container": "#acbfff",
+                "on-error-container": "#93000a",
+                "surface-bright": "#f9f9f8",
+                "primary-fixed": "#dbe1ff",
+                "inverse-on-surface": "#f1f1f0",
+                "on-tertiary-container": "#ffede6",
+                "on-secondary-container": "#394c84",
+                "secondary-fixed": "#dbe1ff"
+              },
+              fontFamily: {
+                "headline": ["Manrope"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#f9f9f8]/80 backdrop-blur-xl transition-all duration-300">
+<div class="flex justify-between items-center px-8 h-16 max-w-[1440px] mx-auto">
+<div class="text-xl font-bold tracking-tighter text-[#1a1c1c] font-headline">
+                The Digital Curator
+            </div>
+<div class="hidden md:flex gap-8 items-center font-['Manrope'] text-sm tracking-tight">
+<a class="text-[#1a1c1c]/60 hover:text-[#1a1c1c] transition-all" href="#">프로젝트</a>
+<a class="text-[#1a1c1c]/60 hover:text-[#1a1c1c] transition-all" href="#">대시보드</a>
+<a class="text-[#1a1c1c]/60 hover:text-[#1a1c1c] transition-all" href="#">채팅</a>
+<a class="text-[#2563EB] font-semibold border-b-2 border-[#2563EB] pb-1" href="#">마이페이지</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-all">notifications</button>
+<img alt="사용자 프로필" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0FXGcqeaBMIxu73YpMa06Pe496WEblsIb_wkFQHXarN_toToTq1tPxaSOwBAItREm2CRR9E3-RWG8TP_mZyfnI05YV3RvGb_EdXrhMvoJRRJLNw-Eckk9Dh7dn5Wt_2TbAzNgSgP-8K8AhKJILl5eAjFU8jUa04LNNgIPFBEgI3_M-3zd6J7z0WDmtFqyOOKTWl5P9vfJ2vyCaoNqNG8Ggd2X9Sy32URy2Zv-v1Y6IRI55jSHAnN36-p-vzCirfi8_fehvvd1YMQc"/>
+</div>
+</div>
+</nav>
+<main class="pt-32 pb-24 px-8 max-w-[1440px] mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- Sidebar: Profile Summary Card -->
+<section class="lg:col-span-4 space-y-6">
+<div class="bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center text-center shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+<div class="relative mb-6">
+<img class="w-20 h-20 rounded-full border-4 border-surface-container-low object-cover" data-alt="professional headshot of a smiling male developer in a clean modern studio setting with neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuC2pqW5hpwFt1HEsyz-nvkAqh7A6URVV_VCUR-sSIjm4yJ6ckjjb3cU2nMwrj5LUCCi2y9iYkrNxQJoatyO93TMFlvfh8DWojRItkU3hv9F34bsNjJnQWGOtL5iZzINdHe6JyPwxM1pMXBWS5zxMtOng2F1pfOh1yWAGNkjVP5r-g3Rn-2flHDDFFecqwHCVSwYJfAVKlQ2GyEXPwCOJXnAtiF5bru5nOZbJy0RP3HSqoLyin1dAI_erln0UTr0fqJa1ALagrLeVE"/>
+<div class="absolute bottom-0 right-0 w-6 h-6 bg-primary-container rounded-full border-2 border-surface-container-lowest flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-white" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+</div>
+<h2 class="text-2xl font-bold text-on-surface font-headline mb-1">홍길동</h2>
+<p class="text-on-surface-variant font-medium mb-6">프론트엔드 개발자 · 3년차</p>
+<div class="flex flex-wrap justify-center gap-2 mb-8">
+<span class="px-3 py-1 bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-wider rounded-full">React</span>
+<span class="px-3 py-1 bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-wider rounded-full">TypeScript</span>
+<span class="px-3 py-1 bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-wider rounded-full">Next.js</span>
+</div>
+<a class="w-full py-4 bg-primary-container text-white rounded-lg font-semibold hover:translate-x-1 transition-all duration-300 flex items-center justify-center gap-2 group" href="#">
+                        프로필 수정하기
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl">
+<h3 class="text-sm font-bold text-on-surface mb-4 font-headline uppercase tracking-widest">나의 프로젝트 바로가기</h3>
+<a class="text-primary font-semibold text-sm flex items-center gap-2 hover:underline" href="#">
+                        내 프로젝트 보기
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</section>
+<!-- Main Content: Application Status -->
+<section class="lg:col-span-8 space-y-8">
+<header>
+<h1 class="text-4xl font-bold tracking-tight font-headline mb-8">지원 현황</h1>
+<!-- Filter Chips -->
+<div class="flex flex-wrap gap-3 mb-10">
+<button class="px-5 py-2.5 bg-primary text-white rounded-full text-sm font-semibold transition-all">전체 6</button>
+<button class="px-5 py-2.5 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-medium hover:bg-surface-container-highest transition-all">대기중 2</button>
+<button class="px-5 py-2.5 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-medium hover:bg-surface-container-highest transition-all">수락됨 3</button>
+<button class="px-5 py-2.5 bg-surface-container-high text-on-surface-variant rounded-full text-sm font-medium hover:bg-surface-container-highest transition-all">거절됨 1</button>
+</div>
+</header>
+<div class="space-y-4">
+<!-- Application Card: Waiting -->
+<div class="bg-surface-container-lowest p-6 rounded-xl flex flex-col md:flex-row items-start md:items-center gap-6 group hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] transition-all">
+<div class="w-24 h-24 flex-shrink-0 bg-surface-container-low rounded-lg overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="clean UI design system preview with blue accents and abstract geometric shapes on a light background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2FUFxksQpO6gadH28HZoddAmk0vQNd9BLRD5bA9MxW2xMm-7cvGnsZNwL0QR8djvd5fud0-8XKlNVe80LxRxcwhdMKrrCG41KZr8ZsprewNmXHMAzjiZGvjx7X8NtaYwX9rD95I_sQl_EOkCTH5bU-jN0at2YnRth8E92tWfQwGGjAWrnEPzVukDR3Q5tTihb_fz1_pVUhjIIlsrW4w8VCGkbDlJSi3qOvA7JAHb2sNO7c8rDM3tCPC-8Lw-YvBcD5M5VM5JQP-zo"/>
+</div>
+<div class="flex-grow space-y-1">
+<div class="flex items-center gap-3">
+<h4 class="text-lg font-bold font-headline">글로벌 디자인 시스템 구축 프로젝트</h4>
+<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-tighter rounded-full">대기중</span>
+</div>
+<p class="text-sm text-on-surface-variant">지원 역할: Lead Frontend Architect</p>
+<p class="text-xs text-on-surface-variant opacity-60">지원일: 2024.05.20</p>
+</div>
+<div class="flex md:flex-col items-center gap-3 w-full md:w-auto">
+<button class="flex-grow md:w-32 py-2 px-4 border border-error/20 text-error rounded-lg text-sm font-medium hover:bg-error/5 transition-all">지원 취소</button>
+</div>
+</div>
+<!-- Application Card: Accepted -->
+<div class="bg-surface-container-lowest p-6 rounded-xl flex flex-col md:flex-row items-start md:items-center gap-6 group hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] transition-all">
+<div class="w-24 h-24 flex-shrink-0 bg-surface-container-low rounded-lg overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="abstract neural network visualization with soft blue and purple lighting on a white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUVL45DDdP4_nYyndEett8rancEdIluXSoI9-YXQJnFIeukq1TzGoPGaby67MIJ_yPCi6tRzHbbcT28js7fwl_Qr2df4aBFzWoR_2skrAJ-LobupZCfy7mH3aW3Lk7ZM8NS8YDjtxnU7-OQzjIe2inZWIHgHej5S6zyuUOwHjMGrofx0BhwmVojKTApc5j7dppUdMnnToIWgXXWCe4zz_GGPM1mM4WJCwri-JR6nOCA-cCMF4ljoJ0hyiUxwTYAzd7AwaYzqDzmVUm"/>
+</div>
+<div class="flex-grow space-y-1">
+<div class="flex items-center gap-3">
+<h4 class="text-lg font-bold font-headline">차세대 AI 분석 플랫폼 UI 개발</h4>
+<span class="px-2 py-0.5 bg-primary-container/10 text-primary-container text-[10px] font-bold uppercase tracking-tighter rounded-full">수락됨</span>
+</div>
+<p class="text-sm text-on-surface-variant">지원 역할: Senior Frontend Developer</p>
+<p class="text-xs text-on-surface-variant opacity-60">지원일: 2024.05.15</p>
+</div>
+<div class="flex md:flex-col items-center gap-3 w-full md:w-auto">
+<button class="flex-grow md:w-32 py-2 px-4 bg-surface-container-low text-on-surface-variant rounded-lg text-sm font-medium cursor-default">참여중</button>
+</div>
+</div>
+<!-- Application Card: Rejected -->
+<div class="bg-surface-container-lowest p-6 rounded-xl flex flex-col md:flex-row items-start md:items-center gap-6 group hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] transition-all">
+<div class="w-24 h-24 flex-shrink-0 bg-surface-container-low rounded-lg overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="modern fintech mobile app interface with clean typography and soft shadows on a white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDy7nFcKk4fb1d5MBLefaZqu13qK1ojB4rHPq0MwtAHDoQKgGTwzvNTrJTBqXrtKbCpJ6AhWoKxFRvq_VvqiDypdhel1cwjEHtQz1eKmW284tAz9sNib3rYmn3O5KdnuqBO2Qi1AKDWIwvI-bsJW3EMyP16V14pCc8zzVfwih_JY0cG0357xoIfezXpbY250ziv_55nTd5tmeFmUpvY4wnJogB5hwOXU22e-hDzcvecYgqp8ck2iyiKiFsRQfkay_MBVDM3I4Spt1S6"/>
+</div>
+<div class="flex-grow space-y-1">
+<div class="flex items-center gap-3">
+<h4 class="text-lg font-bold font-headline">핀테크 대시보드 리뉴얼</h4>
+<span class="px-2 py-0.5 bg-tertiary-fixed/40 text-on-tertiary-fixed-variant text-[10px] font-bold uppercase tracking-tighter rounded-full">거절됨</span>
+</div>
+<p class="text-sm text-on-surface-variant">지원 역할: Frontend Developer</p>
+<p class="text-xs text-on-surface-variant opacity-60">지원일: 2024.05.10</p>
+</div>
+<div class="flex md:flex-col items-center gap-3 w-full md:w-auto">
+<button class="flex-grow md:w-32 py-2 px-4 bg-surface-container-low text-on-surface-variant/40 rounded-lg text-sm font-medium cursor-not-allowed">결과 확인</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-[#f3f4f3] w-full py-12 transition-all duration-300">
+<div class="flex flex-col md:flex-row justify-between items-center px-8 gap-4 max-w-[1440px] mx-auto">
+<p class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-[#1a1c1c]/40">
+                © 2024 The Digital Curator. All rights reserved.
+            </p>
+<div class="flex gap-8">
+<a class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-[#1a1c1c]/40 hover:text-[#2563EB] transition-colors" href="#">이용약관</a>
+<a class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-[#1a1c1c]/40 hover:text-[#2563EB] transition-colors" href="#">개인정보처리방침</a>
+<a class="font-['Inter'] text-xs font-medium uppercase tracking-widest text-[#1a1c1c]/40 hover:text-[#2563EB] transition-colors" href="#">고객센터</a>
+</div>
+</div>
+</footer>
+</body></html>

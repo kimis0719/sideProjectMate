@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "secondary": "#495c95",
+            "on-primary": "#ffffff",
+            "secondary-fixed-dim": "#b4c5ff",
+            "on-surface-variant": "#434655",
+            "surface-container-low": "#f3f4f3",
+            "secondary-container": "#acbfff",
+            "primary": "#004ac6",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed-variant": "#7d2d00",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "surface": "#f9f9f8",
+            "on-secondary-container": "#394c84",
+            "on-primary-fixed": "#00174b",
+            "on-secondary-fixed": "#00174b",
+            "surface-dim": "#dadad9",
+            "surface-tint": "#0053db",
+            "surface-container-high": "#e8e8e7",
+            "on-primary-container": "#eeefff",
+            "background": "#f9f9f8",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed-variant": "#003ea8",
+            "tertiary-fixed": "#ffdbcd",
+            "primary-fixed-dim": "#b4c5ff",
+            "on-background": "#1a1c1c",
+            "tertiary-container": "#bc4800",
+            "on-secondary-fixed-variant": "#31447b",
+            "surface-bright": "#f9f9f8",
+            "inverse-on-surface": "#f1f1f0",
+            "outline-variant": "#c3c6d7",
+            "tertiary-fixed-dim": "#ffb596",
+            "primary-container": "#2563eb",
+            "on-error-container": "#93000a",
+            "inverse-surface": "#2f3130",
+            "primary-fixed": "#dbe1ff",
+            "on-tertiary-fixed": "#360f00",
+            "on-tertiary-container": "#ffede6",
+            "on-surface": "#1a1c1c",
+            "error": "#ba1a1a",
+            "tertiary": "#943700",
+            "surface-container-highest": "#e2e2e2",
+            "surface-container": "#eeeeed",
+            "outline": "#737686",
+            "secondary-fixed": "#dbe1ff",
+            "inverse-primary": "#b4c5ff",
+            "surface-variant": "#e2e2e2",
+            "on-secondary": "#ffffff"
+          },
+          fontFamily: {
+            "headline": ["Manrope", "Noto Sans KR"],
+            "body": ["Inter", "Noto Sans KR"],
+            "label": ["Inter", "Noto Sans KR"]
+          },
+          borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .canvas-grid {
+      background-image: radial-gradient(#dbe1ff 0.5px, transparent 0.5px);
+      background-size: 24px 24px;
+    }
+    body { font-family: 'Noto Sans KR', sans-serif; }
+  </style>
+</head>
+<body class="bg-surface text-on-surface overflow-hidden">
+<!-- Top AppBar Shell -->
+<header class="fixed top-0 left-0 w-full z-40 flex justify-between items-center px-8 h-16 bg-[#f9f9f8]/80 backdrop-blur-xl">
+<div class="flex items-center gap-6">
+<h1 class="text-[#1a1c1c] font-['Manrope'] font-bold text-xl uppercase tracking-widest">Curator Board</h1>
+<nav class="hidden lg:flex gap-8">
+<button class="text-[#2563EB] font-semibold border-b-2 border-[#2563EB] font-['Manrope'] text-lg tracking-tight">Workspace</button>
+<button class="text-[#1a1c1c]/60 font-medium hover:bg-[#f3f4f3] transition-colors duration-300 px-3 py-1 rounded">Analytics</button>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="bg-surface-container-high border-none rounded-lg pl-10 pr-4 py-2 text-sm w-64 focus:ring-2 focus:ring-primary" placeholder="검색..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-[#f3f4f3] rounded-full transition-colors">settings</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-[#f3f4f3] rounded-full transition-colors">account_circle</button>
+</div>
+</header>
+<!-- Main Layout Container -->
+<main class="flex h-screen pt-16">
+<!-- Left Side Navigation -->
+<aside class="hidden lg:flex flex-col h-screen fixed left-0 top-0 pt-20 pb-8 px-4 bg-[#f3f4f3] w-64 z-30 shadow-[20px_0_40px_rgba(26,28,28,0.02)]">
+<div class="mb-8 px-2">
+<h2 class="font-['Manrope'] font-bold text-[#1a1c1c] text-lg">Workspace</h2>
+<p class="text-xs text-on-surface-variant/70 uppercase tracking-tighter">Digital Curator</p>
+</div>
+<nav class="space-y-2 flex-1">
+<button class="w-full flex items-center gap-3 px-3 py-2.5 bg-[#ffffff] text-[#2563EB] rounded-lg shadow-sm font-semibold transition-all duration-200">
+<span class="material-symbols-outlined">view_kanban</span>
+<span class="text-sm font-['Inter']">Kanban</span>
+</button>
+<button class="w-full flex items-center gap-3 px-3 py-2.5 text-[#1a1c1c]/70 hover:pl-4 transition-all duration-200">
+<span class="material-symbols-outlined">inbox</span>
+<span class="text-sm font-['Inter']">Inbox</span>
+</button>
+<button class="w-full flex items-center gap-3 px-3 py-2.5 text-[#1a1c1c]/70 hover:pl-4 transition-all duration-200">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-['Inter']">Team</span>
+</button>
+<button class="w-full flex items-center gap-3 px-3 py-2.5 text-[#1a1c1c]/70 hover:pl-4 transition-all duration-200">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-sm font-['Inter']">Analytics</span>
+</button>
+</nav>
+<button class="mt-auto bg-primary-container text-on-primary py-3 rounded-lg font-semibold shadow-lg hover:translate-x-1 transition-transform">
+        New Note
+      </button>
+</aside>
+<!-- Infinite Canvas Area -->
+<section class="flex-1 ml-64 relative canvas-grid bg-surface overflow-hidden">
+<!-- Floating Content on Canvas -->
+<div class="absolute top-20 left-20 w-80 p-6 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/10">
+<div class="flex items-center gap-2 mb-4">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Active Project</span>
+</div>
+<h3 class="text-lg font-bold mb-2">서울 미니멀리즘 디자인 가이드</h3>
+<p class="text-sm text-on-surface-variant/80 mb-6 leading-relaxed">한국의 현대적 미학을 담은 인터페이스 구축을 위한 원칙과 색상 팔레트 정의.</p>
+<div class="flex -space-x-2">
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-surface-container-lowest" data-alt="professional portrait of a creative designer with clean background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACpDUsoVq_5h_qoFd4UeavMwbWou-1RQTwayJr3Iy9J7PNaTQ_0-gYBksRa1bX-yNFp5nSiTy8CPO1WghoN7YojeMtARadvKgeY_jLum-gz41YHUo0e_mvci2_sdvQQMATpKFj62GpgZOvicVMVXYOBwWDphvenB2QLqlw4LsNhRbdQUhPa2I1bsk_NXe915CQ2GolPB4EmY2f8L9EKRYLTl9-WFc0HImhAUl0P-BGOROD5s8SPTKunvz_sA7cTXSxzxUZjIMlH-Du"/>
+<img alt="User" class="w-8 h-8 rounded-full border-2 border-surface-container-lowest" data-alt="close-up of a smiling young professional in a modern office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIsapg2Myy-s9bvdw84VDcHjxoOzvTWzO9LQdMqBjGkh3PW5RA6BzGDPXICe52oHJh4B4kM0988sk5l-qS72uhXcY7CTofxwhzpKeX8d0-YuNlPWX3WyyCeYKjUOeM5WJMvi_tIbfMSVNM-7DLQUCXe5qYV8FcAQXAw_hcP9evb3dPE7JCXb5xBg9-G2OtMS7TAIPybdqp_JSE7nfyr7J1Axc-3IL1bCamDgJWNumLgKv_5xvbC83WxiAm53ugilykuwC61cm1Tyu1"/>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-[10px] font-bold border-2 border-surface-container-lowest">+3</div>
+</div>
+</div>
+<!-- Dragging State Feedback -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+<div class="w-64 h-32 border-2 border-dashed border-primary/40 rounded-xl flex items-center justify-center bg-primary/5">
+<span class="text-primary/60 text-xs font-bold uppercase tracking-widest">Drop here</span>
+</div>
+</div>
+<!-- Ghost Card being dragged -->
+<div class="absolute top-[48%] left-[45%] w-60 p-4 bg-surface-container-lowest rounded-lg shadow-2xl rotate-3 border-l-4 border-[#ffdbcd] pointer-events-none opacity-90">
+<div class="text-xs font-bold text-on-surface mb-1">인사이트 아카이브</div>
+<div class="flex items-center gap-2 mt-2">
+<img alt="User" class="w-5 h-5 rounded-full" data-alt="profile photo of a young man in a minimalist studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeCXksSTz3IhVWO812imZBXoWEh1LHldwVpekyEuTMY2Lf9uGe3kMKybEib0hMJ8Yv4yAcYTLd4JL91-cl9mayL8Cb449lHtxxBx9rLIrpUMYMI5uUpmq3mzI1bKEreUYDhXpB-KiWPiCURyuTP70wj6fJJ0FP_143ipB2FUIkYlF0weW5i4FgQ5xw7-rJCTWpDmLp30VoRK7pt-KLvE_ZQbsW4TiOhD0PpQ1SlFXNuoujvzzepJIgASrqW0Y2Y-l_ybcQqb9PhUPy"/>
+<span class="text-[10px] text-on-surface-variant">김민준 • 2분 전</span>
+</div>
+</div>
+</section>
+<!-- Right Inbox Panel -->
+<aside class="w-[300px] h-screen bg-surface-container-low z-50 flex flex-col shadow-[-20px_0_40px_rgba(0,0,0,0.02)]">
+<!-- Inbox Header -->
+<div class="p-6 flex items-center justify-between">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span>📥</span> 인박스
+        </h2>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high rounded-full p-1 transition-colors">close</button>
+</div>
+<!-- Scrollable Inbox Content -->
+<div class="flex-1 overflow-y-auto px-4 space-y-6">
+<!-- Section: Notes -->
+<div>
+<div class="flex items-center justify-between mb-3 px-2">
+<span class="text-[11px] font-bold text-on-surface-variant/60 uppercase tracking-widest">노트</span>
+<span class="text-[10px] bg-surface-container-high px-2 py-0.5 rounded-full">3</span>
+</div>
+<div class="space-y-3">
+<!-- Note Card 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border-l-4 border-primary-container shadow-sm hover:shadow-md transition-shadow group cursor-grab active:cursor-grabbing">
+<h4 class="text-sm font-semibold mb-3 leading-snug group-hover:text-primary transition-colors">새로운 브랜딩 폰트 제안</h4>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img alt="User" class="w-6 h-6 rounded-full" data-alt="professional female portrait in soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8LM4HUOKgIz7meaQ-WfelqMa954HzWLDuoALObZ5QwrkRWHbv4yp8_JYl_hpUbdOtGc6vAIxMIizInN95rA_sMJGDAn83qo1A1LjMtkMXwvpQZw-kDAlM_lhLJ2DKTWlxXrhp3QwmaCJiXdybH8weUQUlwxY7BawhX-Ajq-ZiYfgQabU4bUwlnrUXBnVBDzw_anEGgY2G0eTZRl88dXw3IkBhF971uNXj6RzUxzscR2-BFG-jVQWjl_CaGB238LOL4rfVZVF6JveF"/>
+<span class="text-[11px] font-medium">이지원</span>
+</div>
+<span class="text-[10px] text-on-surface-variant/60">12:45 PM</span>
+</div>
+</div>
+<!-- Note Card 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border-l-4 border-emerald-400 shadow-sm hover:shadow-md transition-shadow group cursor-grab">
+<h4 class="text-sm font-semibold mb-3 leading-snug group-hover:text-primary transition-colors">UI 컴포넌트 라이브러리 업데이트</h4>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img alt="User" class="w-6 h-6 rounded-full" data-alt="smiling male professional in casual attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXyDQyAT0nH4ya5qYMJ3iJVBVcoOj-rWwYyzKwPXO7OI0PEiscTakRAQFMfFl1HEa4N9eDP1tlF5A0l3YE3ov0c03TSBTeVeZZdMp-B4CiXHnlrGAnqJEr4IvYzAWeXErwbNtzB9wVNpXNca-VqOcZw29w9gY3J5pMCfdY-mnnvOOebt-jw_7RARJzA6gNZFDZ3CYfNpW8bhwC1lB_UHjwdh4g_QBEpIir4c3SOs9Z8ylrcNsFHJqXODtKNjAmmp4Bgfwh7M36Epw5"/>
+<span class="text-[11px] font-medium">박상혁</span>
+</div>
+<span class="text-[10px] text-on-surface-variant/60">어제</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Folder Sections -->
+<div>
+<div class="flex items-center justify-between mb-3 px-2">
+<span class="text-[11px] font-bold text-on-surface-variant/60 uppercase tracking-widest">섹션</span>
+<span class="text-[10px] bg-surface-container-high px-2 py-0.5 rounded-full">2</span>
+</div>
+<div class="space-y-2">
+<div class="flex items-center gap-3 bg-surface-container-lowest p-3 rounded-lg hover:bg-surface-bright transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[#2563EB]/60 group-hover:text-[#2563EB]">folder</span>
+<span class="text-sm font-medium">시장 조사 자료 (Q3)</span>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-lowest p-3 rounded-lg hover:bg-surface-bright transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[#2563EB]/60 group-hover:text-[#2563EB]">folder</span>
+<span class="text-sm font-medium">레퍼런스 이미지</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom CTA Panel -->
+<div class="p-6 bg-surface-container-low/80 backdrop-blur-sm">
+<button class="w-full flex items-center justify-center gap-2 bg-primary-container text-on-primary py-3.5 rounded-xl font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+<span>빠른 메모</span>
+</button>
+</div>
+</aside>
+</main>
+<!-- Mobile Bottom Nav (Suppressed for Desktop, but keeping for structural integrity if resized) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 lg:hidden flex justify-around items-center h-20 pb-safe px-6 bg-[#f9f9f8]/90 backdrop-blur-md border-t-[0.5px] border-[#c3c6d7]/15">
+<div class="flex flex-col items-center justify-center text-[#2563EB] bg-[#2563EB]/5 rounded-xl px-4 py-1">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter">Board</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1a1c1c]/40">
+<span class="material-symbols-outlined">move_to_inbox</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter">Inbox</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1a1c1c]/40">
+<span class="material-symbols-outlined">search</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter">Search</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#1a1c1c]/40">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+</div>
+</nav>
+</body></html>

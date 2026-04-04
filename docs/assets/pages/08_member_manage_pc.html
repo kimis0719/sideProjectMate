@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline": "#737686",
+              "tertiary-container": "#bc4800",
+              "on-primary-container": "#eeefff",
+              "background": "#f9f9f8",
+              "surface-tint": "#0053db",
+              "on-secondary-container": "#394c84",
+              "on-error-container": "#93000a",
+              "primary-fixed": "#dbe1ff",
+              "on-tertiary-fixed-variant": "#7d2d00",
+              "on-background": "#1a1c1c",
+              "on-tertiary": "#ffffff",
+              "on-surface": "#1a1c1c",
+              "tertiary-fixed-dim": "#ffb596",
+              "on-primary-fixed-variant": "#003ea8",
+              "inverse-surface": "#2f3130",
+              "surface-container-highest": "#e2e2e2",
+              "primary-container": "#2563eb",
+              "on-tertiary-container": "#ffede6",
+              "surface": "#f9f9f8",
+              "tertiary": "#943700",
+              "surface-container": "#eeeeed",
+              "error-container": "#ffdad6",
+              "on-tertiary-fixed": "#360f00",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary": "#ffffff",
+              "on-primary-fixed": "#00174b",
+              "error": "#ba1a1a",
+              "tertiary-fixed": "#ffdbcd",
+              "on-secondary-fixed-variant": "#31447b",
+              "surface-container-high": "#e8e8e7",
+              "surface-variant": "#e2e2e2",
+              "on-error": "#ffffff",
+              "surface-bright": "#f9f9f8",
+              "secondary-fixed": "#dbe1ff",
+              "on-surface-variant": "#434655",
+              "secondary": "#495c95",
+              "primary-fixed-dim": "#b4c5ff",
+              "on-secondary-fixed": "#00174b",
+              "surface-dim": "#dadad9",
+              "secondary-fixed-dim": "#b4c5ff",
+              "primary": "#004ac6",
+              "outline-variant": "#c3c6d7",
+              "on-primary": "#ffffff",
+              "inverse-primary": "#b4c5ff",
+              "surface-container-low": "#f3f4f3",
+              "secondary-container": "#acbfff",
+              "inverse-on-surface": "#f1f1f0"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#f9f9f8]/80 backdrop-blur-xl">
+<div class="flex items-center justify-between px-8 py-4 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-blue-600 font-headline">SPM</span>
+<div class="hidden md:flex items-center gap-6 font-headline font-semibold tracking-tight">
+<a class="text-slate-500 hover:text-slate-900 transition-all" href="#">Discover</a>
+<a class="text-blue-600 border-b-2 border-blue-600" href="#">My Projects</a>
+<a class="text-slate-500 hover:text-slate-900 transition-all" href="#">Messages</a>
+<a class="text-slate-500 hover:text-slate-900 transition-all" href="#">Network</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center bg-surface-container-low px-4 py-2 rounded-xl">
+<span class="material-symbols-outlined text-outline text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm ml-2" placeholder="Search projects..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-blue-50/50 p-2 rounded-full transition-all">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-blue-50/50 p-2 rounded-full transition-all">settings</button>
+<img alt="User profile" class="w-8 h-8 rounded-full object-cover ml-2 ring-2 ring-primary-container/20" data-alt="portrait of a professional creative designer with glasses in a bright studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLXv4F7p14O7eRa_1jBlNUhPehIokKf_vmsgaV9ZGCcHT8sVMnTrsllNaoi3m4zpoMmXcxWm0zL3SwVZbSIC0HEFjrSIJQWruYr9WItJua56brAenn9z9ccfCHglhOkuFLLgH0eK0Pb4wBDDdjFFrGvNYnR2gkiOc_qzBEmkuUo9pu9iGOM3xtlPLMAVe4yHtiJEng08rPAwx5k2Z1EpjEsf_HP2uX2YtsrrCcZ3Z48w419wK5zc063IvaOXrw-a8d_EBQA1-YWAiR"/>
+</div>
+</div>
+</nav>
+<div class="flex min-h-screen pt-[72px]">
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col p-6 gap-2 h-screen w-64 sticky top-[72px] bg-[#f3f4f3] overflow-y-auto">
+<div class="mb-8 px-2">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<div>
+<h3 class="font-headline font-extrabold text-blue-600 leading-tight">Project Alpha</h3>
+<p class="text-[10px] uppercase font-bold tracking-widest text-outline">Incubating Stage</p>
+</div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-transform cursor-pointer rounded-lg font-medium text-sm">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                    Dashboard
+                </div>
+<div class="flex items-center gap-3 px-4 py-3 bg-white text-blue-600 rounded-lg shadow-sm font-medium text-sm">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+                    Team
+                </div>
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-transform cursor-pointer rounded-lg font-medium text-sm">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+                    Active Chats
+                </div>
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-transform cursor-pointer rounded-lg font-medium text-sm">
+<span class="material-symbols-outlined" data-icon="group_add">group_add</span>
+                    Applications
+                </div>
+<div class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-white/50 transition-transform cursor-pointer rounded-lg font-medium text-sm">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+                    Analytics
+                </div>
+</div>
+<div class="mt-auto pt-8 space-y-1">
+<button class="w-full bg-primary-container text-on-primary py-3 rounded-xl font-bold text-sm mb-4 active:scale-95 transition-transform">
+                    Invite Member
+                </button>
+<div class="flex items-center gap-3 px-4 py-2 text-slate-600 hover:bg-white/50 transition-transform cursor-pointer rounded-lg font-medium text-sm">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+                    Support
+                </div>
+<div class="flex items-center gap-3 px-4 py-2 text-slate-600 hover:bg-white/50 transition-transform cursor-pointer rounded-lg font-medium text-sm">
+<span class="material-symbols-outlined" data-icon="archive">archive</span>
+                    Archive
+                </div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 px-8 lg:px-12 py-12 bg-surface">
+<!-- Page Header -->
+<header class="mb-12">
+<div class="flex items-center gap-2 mb-2">
+<span class="label-md px-2 py-0.5 bg-emerald-100 text-on-secondary-fixed-variant rounded-full text-[10px] font-bold uppercase tracking-widest">RECRUITING</span>
+<span class="text-outline text-sm">/</span>
+<span class="text-outline text-sm font-medium">Team Management</span>
+</div>
+<h1 class="display-lg text-on-surface mb-2 font-headline font-bold text-5xl tracking-tight">Member Management</h1>
+<p class="headline-sm text-outline font-headline font-semibold">서울 미니멀리즘 디자인 가이드</p>
+</header>
+<!-- Current Members Section -->
+<section class="mb-16">
+<div class="flex items-center justify-between mb-8">
+<h2 class="headline-sm font-headline font-semibold flex items-center gap-2">
+                        Current Members
+                        <span class="text-sm font-normal text-outline bg-surface-container-high px-2 py-0.5 rounded-full">4</span>
+</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+<!-- Member Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl hover:shadow-lg transition-all duration-300 group">
+<div class="flex items-center gap-4">
+<img alt="Member avatar" class="w-14 h-14 rounded-xl object-cover" data-alt="portrait of a focused male project manager in a minimalist white office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnNAmjoufGEHV4VoJ2dowi9abEwGiCtNUxgfBCQD4ZgHNQgEPH-Nb-XP54jraGVgRxNJh5DZsAh0lr8vqZvodl9HfpJI1ziugiz6uDRc2VXuiwft4Bg5A-QSu0Q7Wd5BNn7Ux6EJpO8UXxzld31WT-BdvpYkyCTIhHK2OQLiO09ltYwndcQfLLdxMo2aSiQwKsnqcRGljhbxniY879LmCNnUUQS3Do1se4vQG5CwlMBPBOf1M_Rcwnympi4w-OJiwwCGmnm7X_A3V2"/>
+<div>
+<h4 class="title-md text-on-surface font-semibold group-hover:text-primary transition-colors">김민수</h4>
+<span class="label-md text-[10px] tracking-widest uppercase font-bold text-primary bg-primary-fixed/30 px-2 py-0.5 rounded-full">Project Manager</span>
+</div>
+</div>
+</div>
+<!-- Member Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl hover:shadow-lg transition-all duration-300 group">
+<div class="flex items-center gap-4">
+<img alt="Member avatar" class="w-14 h-14 rounded-xl object-cover" data-alt="portrait of a confident female software engineer with tech equipment in background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgildJ-WphWpyANCzOQ6auTSbAV-59r28IS0SFgKzk8VPQULTaBWIN_2-7PnkNm1nhEfN4ouNn9fELawXCswqb7LJAOGKtlsUTgyQbbtekD0I2MLTT9-g-zQBneQsEknl5HRC7zneyQrXNVuTd3A8rhtUppxPsjoU4daA7enJ-NnoH6UK5HntYnoOy8CFfJXKqrSD3-1rOWaNsg89fKiVcAswtiRlMdMTcINL-DOk3DK9pf_1Z4t5vQubAam-gFMG_VKLe7IfU9JZ5"/>
+<div>
+<h4 class="title-md text-on-surface font-semibold group-hover:text-primary transition-colors">이지현</h4>
+<span class="label-md text-[10px] tracking-widest uppercase font-bold text-secondary bg-secondary-fixed/30 px-2 py-0.5 rounded-full">Backend</span>
+</div>
+</div>
+</div>
+<!-- Member Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl hover:shadow-lg transition-all duration-300 group">
+<div class="flex items-center gap-4">
+<img alt="Member avatar" class="w-14 h-14 rounded-xl object-cover" data-alt="professional portrait of a young man smiling in a modern architectural building" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoDitmDsTRdcXpx0I2zWU90dbmn2y8-08fwzlx4s6IAVYnDj_SdOWHWIRJ8cSwY8xAkkg6BqjnhJUVB2Gpobh6bUhg_i3kEWctPO5AzzpJBnQqdvioldW065OdsVYaCl6-aGS0jsEy6by_teutuBNMridvSR3ae38yYPgKefmiFLKubXIgxd9uPINU7EWdPsIOW_una-S0Fvw17uCDtu5e8egxzcI6etAjTyKsq7ucSa5HXt0SuuBjFmtxyVC6VewWAAM55uhGSIl-"/>
+<div>
+<h4 class="title-md text-on-surface font-semibold group-hover:text-primary transition-colors">박서준</h4>
+<span class="label-md text-[10px] tracking-widest uppercase font-bold text-tertiary-container bg-tertiary-fixed/30 px-2 py-0.5 rounded-full">Design</span>
+</div>
+</div>
+</div>
+<!-- Member Card 4 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl hover:shadow-lg transition-all duration-300 group">
+<div class="flex items-center gap-4">
+<img alt="Member avatar" class="w-14 h-14 rounded-xl object-cover" data-alt="portrait of a creative woman professional with artistic studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3X2YrMWwfxofiy2yy_P7sj9nWtBcDJpI1nuq7smTBKADQnq-ww9NNum8NbYOJg2BFEN7URR_EV80AZ8Xjozl7Pdza-g-rk8a8p2A1Xgf_wOSZ3-ZFQckld3iM6fYYcGjuMKaFzTsJbUkbNPNh_K0tT7pk7ZfX8w_f2322oHknq-h4MgmPdyThFdp8SDnTpIS9sHr9ESzQXfKIcg9GJhrOkfRSVJigVJdBIB2g6tjgkGRLnDOAj0sZEDwII_BKOBpP74U_TiSBSmqI"/>
+<div>
+<h4 class="title-md text-on-surface font-semibold group-hover:text-primary transition-colors">최수아</h4>
+<span class="label-md text-[10px] tracking-widest uppercase font-bold text-on-secondary-fixed-variant bg-emerald-100 px-2 py-0.5 rounded-full">Frontend</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Applicants Section -->
+<section>
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+<h2 class="headline-sm font-headline font-semibold">Applicants</h2>
+<!-- Status Tabs -->
+<div class="flex items-center bg-surface-container-low p-1.5 rounded-xl self-start">
+<button class="px-4 py-1.5 rounded-lg text-sm font-bold bg-primary text-on-primary shadow-sm transition-all">전체 4</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-white/50 transition-all">대기중 2</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-white/50 transition-all">수락 1</button>
+<button class="px-4 py-1.5 rounded-lg text-sm font-bold text-slate-500 hover:bg-white/50 transition-all">거절 1</button>
+</div>
+</div>
+<!-- Applicant Cards List -->
+<div class="space-y-6">
+<!-- Applicant Card 1 -->
+<div class="bg-surface-container-lowest p-8 rounded-xl flex flex-col gap-8 transition-all duration-300 border-l-4 border-primary">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="flex items-center gap-5">
+<img alt="Applicant avatar" class="w-20 h-20 rounded-xl object-cover" data-alt="headshot of a friendly professional man in a clean white shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAm2pcfvfQlvsayC79fm11_akQC_HP_l2GXjrMLMGCOo2jt2Qj87a_zN1LAjtVyvHHLkuz2lhbuJRsQwgikWhfnUStvnCKhM8M3AjPyXpbsg9iy3pYlH8SU-NgMUPnilex72mOzD6b4bMoIBS11iXg0h4NtJRtJ50i7Hq_l-vZvfAbTvR6ZWGWEQk3i8hcax65VFYI-FhDjAJGDxBe2hx88R4bD4EwqXh7--_1Jgqdf2RQCufKGcNSguLWN4-zk7m0Q4sROKrX9Rqt6"/>
+<div>
+<h4 class="text-xl font-bold text-on-surface mb-1">한지우</h4>
+<div class="flex items-center gap-2">
+<span class="label-md text-[10px] font-bold text-outline uppercase tracking-wider">Mobile UI Design</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant opacity-30"></span>
+<span class="label-md text-[10px] font-bold text-primary uppercase tracking-widest bg-primary-fixed/20 px-2 py-0.5 rounded-full">WAITING</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-low text-on-surface-variant font-bold text-sm hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+                                    대화하기
+                                </button>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-container text-on-primary font-bold text-sm hover:translate-x-1 transition-all active:scale-95">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+                                    수락
+                                </button>
+<button class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-error-container/10 text-error font-bold text-sm hover:bg-error-container/20 transition-all active:scale-95">
+<span class="material-symbols-outlined text-lg">cancel</span>
+                                    거절
+                                </button>
+</div>
+</div>
+<!-- Motivation Block -->
+<div class="relative pl-6 py-2 border-l-4 border-primary/20">
+<p class="italic text-on-surface-variant leading-relaxed font-body">
+                                "서울의 정적인 아름다움을 모바일 화면에 담고 싶어 지원했습니다. 미니멀리즘 디자인 가이드 프로젝트는 제 커리어의 방향성과 정확히 일치하며, 특히 타이포그래피 중심의 레이아웃 설계에 기여하고 싶습니다."
+                            </p>
+<span class="material-symbols-outlined absolute -left-3 -top-4 text-primary/10 text-4xl">format_quote</span>
+</div>
+<!-- Owner Memo -->
+<div>
+<label class="label-md text-[11px] font-bold text-outline uppercase tracking-widest mb-3 block">My Internal Note</label>
+<textarea class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary-fixed rounded-xl p-4 text-sm resize-none h-24 placeholder:text-outline-variant" placeholder="Write a private memo about this applicant..."></textarea>
+</div>
+</div>
+<!-- Applicant Card 2 (Secondary/Inactive) -->
+<div class="bg-surface-container-lowest p-8 rounded-xl flex flex-col gap-8 opacity-70 grayscale-[0.5] hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="flex items-center gap-5">
+<img alt="Applicant avatar" class="w-20 h-20 rounded-xl object-cover" data-alt="portrait of a professional woman looking forward in a soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWBaN_KqyiryBoMGQ8sAHTTh2q8XBkdmYcPZdDW303y1J-trLn0pSU5IHjbgO-xu77Ul2Hcn5lajHOg96NI7w1UOxUKDOIcDC-jKtyQlL4wf346DKz73QxCoq2rlHas-sOuwRx16S8ev76dRo03KUl2Kbtm0SK5pXEYftHVGXqM7oKWSqrzdRDIE03HaGHSe3JIrP3gF58iuDJsr-9UMPKAzSADpy1EjHOPswT1QIazjuUdT7Mix2tNyK14_O5pkwooREs5Of1NUen"/>
+<div>
+<h4 class="text-xl font-bold text-on-surface mb-1">정다은</h4>
+<div class="flex items-center gap-2">
+<span class="label-md text-[10px] font-bold text-outline uppercase tracking-wider">Frontend Engineer</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant opacity-30"></span>
+<span class="label-md text-[10px] font-bold text-error uppercase tracking-widest bg-error-container/40 px-2 py-0.5 rounded-full">REJECTED</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-5 py-2.5 rounded-lg bg-surface-container-low text-outline font-bold text-sm cursor-not-allowed">결과 통보 완료</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- BottomNavBar (Mobile) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full flex justify-around items-end px-6 pb-6 pt-2 bg-white/90 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.03)] z-50">
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[10px] uppercase font-bold tracking-widest font-['Inter'] mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="text-[10px] uppercase font-bold tracking-widest font-['Inter'] mt-1">Inbox</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-blue-600 text-white rounded-2xl p-3 mb-2 transform -translate-y-2 shadow-lg shadow-blue-600/30" href="#">
+<span class="material-symbols-outlined" data-icon="folder_shared">folder_shared</span>
+<span class="text-[10px] uppercase font-bold tracking-widest font-['Inter'] mt-1">Projects</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] uppercase font-bold tracking-widest font-['Inter'] mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

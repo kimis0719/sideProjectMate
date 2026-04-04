@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Curator Board - Kanban View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary": "#495c95",
+              "on-primary": "#ffffff",
+              "secondary-fixed-dim": "#b4c5ff",
+              "on-surface-variant": "#434655",
+              "surface-container-low": "#f3f4f3",
+              "secondary-container": "#acbfff",
+              "primary": "#004ac6",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-fixed-variant": "#7d2d00",
+              "error-container": "#ffdad6",
+              "on-error": "#ffffff",
+              "surface": "#f9f9f8",
+              "on-secondary-container": "#394c84",
+              "on-primary-fixed": "#00174b",
+              "on-secondary-fixed": "#00174b",
+              "surface-dim": "#dadad9",
+              "surface-tint": "#0053db",
+              "surface-container-high": "#e8e8e7",
+              "on-primary-container": "#eeefff",
+              "background": "#f9f9f8",
+              "on-tertiary": "#ffffff",
+              "on-primary-fixed-variant": "#003ea8",
+              "tertiary-fixed": "#ffdbcd",
+              "primary-fixed-dim": "#b4c5ff",
+              "on-background": "#1a1c1c",
+              "tertiary-container": "#bc4800",
+              "on-secondary-fixed-variant": "#31447b",
+              "surface-bright": "#f9f9f8",
+              "inverse-on-surface": "#f1f1f0",
+              "outline-variant": "#c3c6d7",
+              "tertiary-fixed-dim": "#ffb596",
+              "primary-container": "#2563eb",
+              "on-error-container": "#93000a",
+              "inverse-surface": "#2f3130",
+              "primary-fixed": "#dbe1ff",
+              "on-tertiary-fixed": "#360f00",
+              "on-tertiary-container": "#ffede6",
+              "on-surface": "#1a1c1c",
+              "error": "#ba1a1a",
+              "tertiary": "#943700",
+              "surface-container-highest": "#e2e2e2",
+              "surface-container": "#eeeeed",
+              "outline": "#737686",
+              "secondary-fixed": "#dbe1ff",
+              "inverse-primary": "#b4c5ff",
+              "surface-variant": "#e2e2e2",
+              "on-secondary": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Manrope", "Noto Sans KR"],
+              "body": ["Inter", "Noto Sans KR"],
+              "label": ["Inter", "Noto Sans KR"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f9f9f8; }
+        .material-symbols-outlined { font-size: 20px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background max-w-[375px] mx-auto min-h-screen relative overflow-x-hidden">
+<!-- Top AppBar (Mobile Style from JSON Mapping) -->
+<header class="fixed top-0 left-0 w-full z-40 flex justify-between items-center px-6 h-16 bg-[#f9f9f8]/80 backdrop-blur-xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface cursor-pointer">arrow_back</span>
+<h1 class="font-['Manrope'] font-bold text-lg tracking-tight text-on-surface">프로젝트 칸반</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface cursor-pointer" data-icon="settings">settings</span>
+<span class="material-symbols-outlined text-on-surface cursor-pointer" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- Separation Logic Line (from JSON) -->
+<div class="fixed top-16 left-0 h-[1px] w-full bg-[#f3f4f3] z-40"></div>
+<main class="pt-20 pb-32 px-4 space-y-6">
+<!-- Tabs -->
+<div class="flex border-b-0 gap-6 px-2 mb-4">
+<button class="pb-2 text-[#2563EB] font-semibold border-b-2 border-[#2563EB] text-sm">
+                📌 진행중 24
+            </button>
+<button class="pb-2 text-on-surface/60 font-medium text-sm">
+                ✅ 완료 12
+            </button>
+</div>
+<!-- 1. Inbox Section (Expandable/Different BG) -->
+<section class="bg-surface-container-high rounded-xl p-4 transition-all duration-300">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">move_to_inbox</span>
+<h2 class="font-semibold text-on-surface">인박스 (3)</h2>
+</div>
+<span class="material-symbols-outlined text-on-surface/40">expand_less</span>
+</div>
+<div class="space-y-3">
+<!-- Inbox Card 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm flex items-start gap-3 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-300"></div>
+<input class="mt-1 rounded-sm border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<h3 class="font-semibold text-sm text-on-surface truncate">API 문서 초안 작성</h3>
+<div class="flex items-center mt-3 gap-2">
+<img class="w-5 h-5 rounded-full object-cover" data-alt="close up profile photo of a professional man in a minimal office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFt38oFcmdlv2OFI-2mwJkAsdAQagrnTHhBt9XKAvq29VMTt94TY75mItznO8GuS8BhllTyDT_UqwPrBq9KCgEZdFG_B_S5AVZgEkhIOKjALQTxV_DVecmrZmrmlkgioIjxladaWxalYhHT2x-e0Dhl3Jl7jWYOzoXB1_kiIobh1az2wis8K8oZQWqiFvLET-PP2l1LqNxQ-kkDv_BL0PE8m-VIAL_I5LdEEin15zX3UHbDKdgfWZ0ooTA13j5sUYefGcFXEBp_pPV"/>
+<span class="text-[11px] font-medium text-on-surface/60">김민준</span>
+<span class="ml-auto bg-emerald-100/40 text-[10px] font-bold uppercase tracking-tighter text-on-secondary-fixed-variant px-2 py-0.5 rounded-full">RECRUITING</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Accordion Section (Open) -->
+<section class="space-y-3">
+<div class="flex items-center justify-between px-2 mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface/60">expand_more</span>
+<h2 class="font-bold text-on-surface text-base">백엔드 리팩토링 (3)</h2>
+</div>
+<span class="material-symbols-outlined text-on-surface/40">more_horiz</span>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm flex items-start gap-3 relative overflow-hidden transition-all active:scale-[0.98]">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-purple-300"></div>
+<input class="mt-1 rounded-sm border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<h3 class="font-semibold text-sm text-on-surface">데이터베이스 인덱스 최적화</h3>
+<div class="flex items-center mt-3 gap-2">
+<img class="w-5 h-5 rounded-full object-cover" data-alt="minimalist studio portrait of a woman with short hair wearing a linen shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOJsCMuTLazKBaDkeDZnkIkGlWf3Gs9uOp7G0cQQakwL7iNXucPSesjkt5Rbujgf6-4al2AB-z7V4cOVvyOq4vfEnok9ejitjDmhXEWCMqziBNLRrRbTGnXBoyMaJeGzpUWdnTWVpZDq4VcGwQXt9MSKuXZiCJPjvUcJ27qVGlPvXTve1t0EzdK49ppw1lUigLmfGYmsHlLklJwdDJkIpGV9CvkZLh1tAJFrgegnN3v9XdPfOanm2sducR-MV7KNwSJrPwjZ3SCpCm"/>
+<span class="text-[11px] font-medium text-on-surface/60">이지은</span>
+<div class="flex gap-1 ml-auto">
+<span class="text-[10px] text-primary/70 bg-primary/5 px-2 py-0.5 rounded border border-primary/10">CORE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-sm flex items-start gap-3 relative overflow-hidden transition-all active:scale-[0.98]">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-amber-300"></div>
+<input class="mt-1 rounded-sm border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex-1 min-w-0">
+<h3 class="font-semibold text-sm text-on-surface">Auth 미들웨어 구조 변경</h3>
+<div class="flex items-center mt-3 gap-2">
+<img class="w-5 h-5 rounded-full object-cover" data-alt="professional portrait of a young man with glasses in a modern architect studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlfqy3XuGyEKUxiLdcnUMls_Iskwt2ZLzPb1NlLSBNyK4FGZhM6ByTQGed-KJuN6c8RJH0ddf9n--8xdwWOrhtErfatyydepkWnR8gmBX63SvJd35K-TLhYsenAHTQBDoAJG8hQ09hswXrM5FXHp7UYLtON-iARdubjkaUgKOaMpxElXyb6powegJyiNwk6-zGidTURWPssLjTsLyLJJZaXoK7oj6vnoPYqkjAKFdCH1SynRbD0FyEjECdomsiLDSh4mEFfWsggPG3"/>
+<span class="text-[11px] font-medium text-on-surface/60">박도현</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Collapsed Section -->
+<section class="pt-4 border-t border-[#f3f4f3]">
+<div class="flex items-center gap-2 px-2 opacity-60">
+<span class="material-symbols-outlined">chevron_right</span>
+<h2 class="font-bold text-on-surface text-base">미소속 노트 (2)</h2>
+</div>
+</section>
+</main>
+<!-- Floating Action Buttons -->
+<div class="fixed bottom-24 right-6 flex flex-col gap-3 items-end pointer-events-none">
+<button class="pointer-events-auto bg-surface-container-lowest text-primary shadow-[0_10px_30px_rgba(0,0,0,0.08)] px-5 py-3 rounded-full flex items-center gap-2 font-bold text-sm border border-[#c3c6d7]/15 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">add</span>
+            섹션
+        </button>
+<button class="pointer-events-auto bg-primary-container text-on-primary shadow-[0_15px_35px_rgba(37,99,235,0.2)] px-6 py-4 rounded-full flex items-center gap-2 font-bold text-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined">edit_note</span>
+            노트
+        </button>
+</div>
+<!-- Bottom Navigation Bar (Mapped from JSON) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 lg:hidden flex justify-around items-center h-20 pb-safe px-6 bg-[#f9f9f8]/90 backdrop-blur-md shadow-[0_-10px_30px_rgba(0,0,0,0.03)] border-t-[0.5px] border-[#c3c6d7]/15">
+<a class="flex flex-col items-center justify-center text-[#2563EB] bg-[#2563EB]/5 rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter mt-1">Board</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1a1c1c]/40 hover:text-[#2563EB] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="move_to_inbox">move_to_inbox</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter mt-1">Inbox</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1a1c1c]/40 hover:text-[#2563EB] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter mt-1">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1a1c1c]/40 hover:text-[#2563EB] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-tighter mt-1">Profile</span>
+</a>
+</nav>
+</body></html>
