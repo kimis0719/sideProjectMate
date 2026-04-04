@@ -15,19 +15,4 @@
 #     reason: "실시간 소켓 로직 작업 중"
 #     expires: "2026-04-05"
 
-zones:
-  - path: 'src/app/api/ai/'
-    owner: 'kimis0719'
-    status: 'active'
-    reason: '#243 AI 지시서 실행결과 자동 완료처리'
-    expires: '2026-04-11'
-  - path: 'src/components/board/InstructionModal.tsx'
-    owner: 'kimis0719'
-    status: 'active'
-    reason: '#243 AI 지시서 실행결과 자동 완료처리'
-    expires: '2026-04-11'
-  - path: 'src/lib/models/kanban/NoteModel.ts'
-    owner: 'kimis0719'
-    status: 'active'
-    reason: '#243 AI 지시서 실행결과 자동 완료처리'
-    expires: '2026-04-11'
+zones: []

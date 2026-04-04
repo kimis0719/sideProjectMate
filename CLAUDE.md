@@ -26,6 +26,7 @@
 | 작업             | 읽을 파일                                        |
 | ---------------- | ------------------------------------------------ |
 | API 작업         | `src/app/api/MAP.md` → 해당 도메인 `MAP.md`      |
+| AI 기능 작업     | `src/app/api/ai/MAP.md`                          |
 | 칸반 작업        | `src/app/api/kanban/MAP.md` + `src/store/MAP.md` |
 | 프로젝트 작업    | `src/app/api/projects/MAP.md`                    |
 | 유저/프로필 작업 | `src/app/api/users/MAP.md`                       |
@@ -116,4 +117,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| `src/app/api/ai/`, `src/components/board/` | kimis0719 | 🟡 작업 중 | #243 AI 지시서 실행결과 자동 완료처리 |
+| (현재 작업 중인 항목 없음) | —      | 🟢 자유 | —         |
