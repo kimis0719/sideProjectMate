@@ -17,35 +17,15 @@ export default function ProjectHeader({
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'recruiting':
-        return {
-          label: '모집중',
-          color:
-            'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800',
-        };
+        return { label: '모집중', color: 'bg-emerald-100 text-emerald-800' };
       case 'in_progress':
-        return {
-          label: '진행중',
-          color:
-            'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
-        };
+        return { label: '진행중', color: 'bg-primary-container/15 text-primary-container' };
       case 'completed':
-        return {
-          label: '완료',
-          color:
-            'bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
-        };
+        return { label: '완료', color: 'bg-surface-container-high text-on-surface-variant' };
       case 'paused':
-        return {
-          label: '일시정지',
-          color:
-            'bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700',
-        };
+        return { label: '일시정지', color: 'bg-surface-container-high text-on-surface-variant' };
       default:
-        return {
-          label: '미정',
-          color:
-            'bg-gray-100 text-gray-700 border-gray-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
-        };
+        return { label: '미정', color: 'bg-surface-container-high text-on-surface-variant' };
     }
   };
 
@@ -71,57 +51,28 @@ export default function ProjectHeader({
               <select
                 value={project.status}
                 onChange={handleStatusChange}
-                className={`appearance-none pl-3 pr-8 py-0.5 rounded-full text-xs font-bold border cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${statusInfo.color}`}
+                className={`appearance-none pl-3 pr-8 py-1 rounded-full text-xs font-bold cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-container/20 ${statusInfo.color}`}
               >
-                <option
-                  value="recruiting"
-                  className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100"
-                >
-                  모집중
-                </option>
-                <option
-                  value="in_progress"
-                  className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100"
-                >
-                  진행중
-                </option>
-                <option
-                  value="completed"
-                  className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100"
-                >
-                  완료
-                </option>
-                <option
-                  value="paused"
-                  className="text-slate-900 bg-white dark:bg-slate-800 dark:text-slate-100"
-                >
-                  일시정지
-                </option>
+                <option value="recruiting">모집중</option>
+                <option value="in_progress">진행중</option>
+                <option value="completed">완료</option>
+                <option value="paused">일시정지</option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500 dark:text-slate-400">
-                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+                <span className="material-symbols-outlined text-[14px]">expand_more</span>
               </div>
             </div>
           ) : (
-            <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusInfo.color}`}
-            >
+            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${statusInfo.color}`}>
               {statusInfo.label}
             </span>
           )}
 
           {categoryLabel && (
-            <span className="text-sm text-slate-500 dark:text-slate-400">{categoryLabel}</span>
+            <span className="text-sm text-on-surface-variant">{categoryLabel}</span>
           )}
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+        <h1 className="text-3xl font-bold font-headline tracking-tight text-on-surface">
           {project.title}
         </h1>
       </div>

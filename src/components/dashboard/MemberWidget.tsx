@@ -58,17 +58,17 @@ export default function MemberWidget({ members, currentUserId, projectId }: Memb
   }, [currentUserId]);
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 h-full">
-      <h3 className="font-semibold mb-3 flex items-center justify-between dark:text-slate-100">
-        팀원{' '}
-        <span className="text-xs bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-gray-600 dark:text-slate-400">
+    <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.04)] p-6 md:p-8 h-full">
+      <h3 className="font-semibold font-headline text-on-surface mb-6 flex items-center justify-between">
+        팀원
+        <span className="text-xs bg-surface-container-high px-2 py-0.5 rounded-full text-on-surface-variant">
           {members.length}
         </span>
       </h3>
 
-      <ul className="space-y-3">
+      <ul className="space-y-4">
         {members.map((member) => {
-          const isOnline = onlineUserIds.has(member._id) || member._id === currentUserId; // 나 자신은 항상 온라인
+          const isOnline = onlineUserIds.has(member._id) || member._id === currentUserId;
           const displayName =
             member.nName || member.name || member.email?.split('@')[0] || 'Unknown';
           const initial = displayName[0].toUpperCase();
@@ -76,15 +76,14 @@ export default function MemberWidget({ members, currentUserId, projectId }: Memb
           return (
             <li key={member._id} className="flex items-center justify-between group">
               <div className="flex items-center gap-3">
-                {/* 아바타 */}
                 <div className="relative">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                  <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-bold text-on-surface-variant overflow-hidden">
                     {member.image ? (
                       <Image
                         src={member.image}
                         alt={displayName}
-                        width={32}
-                        height={32}
+                        width={40}
+                        height={40}
                         className="w-full h-full rounded-full object-cover"
                         unoptimized
                       />
@@ -92,38 +91,25 @@ export default function MemberWidget({ members, currentUserId, projectId }: Memb
                       initial
                     )}
                   </div>
-                  {/* 온라인 상태 점 */}
                   <span
-                    className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-white dark:border-slate-900 rounded-full ${isOnline ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`}
-                  ></span>
+                    className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-surface-container-lowest rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-surface-container-high'}`}
+                  />
                 </div>
 
-                {/* 이름 및 역할 */}
                 <div>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                    {displayName}
-                  </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                  <p className="text-sm font-semibold text-on-surface">{displayName}</p>
+                  <p className="text-[10px] text-on-surface-variant uppercase font-bold">
                     {member.role || 'Member'}
                   </p>
                 </div>
               </div>
-
-              {/* 상태 텍스트 (호버 시 표시 등) */}
-              <span
-                className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${isOnline ? 'text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400' : 'text-slate-400 bg-slate-50 dark:bg-slate-800 dark:text-slate-500'}`}
-              >
-                {isOnline ? 'ON' : 'OFF'}
-              </span>
             </li>
           );
         })}
       </ul>
 
       {members.length === 0 && (
-        <div className="text-sm text-gray-400 dark:text-slate-500 py-4 text-center">
-          팀원이 없습니다.
-        </div>
+        <div className="text-sm text-on-surface-variant/50 py-4 text-center">팀원이 없습니다.</div>
       )}
     </div>
   );

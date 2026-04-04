@@ -38,13 +38,13 @@ export default function ProjectOverview({ project, isAuthor, onUpdate }: Project
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 relative group">
+    <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.04)] p-6 md:p-8">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold dark:text-slate-100">프로젝트 개요</h2>
+        <h2 className="text-lg font-semibold font-headline text-on-surface">프로젝트 개요</h2>
         {isAuthor && !isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="transition-opacity text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700"
+            className="text-xs text-on-surface-variant hover:text-primary-container font-medium px-2 py-1 rounded-lg bg-surface-container-low transition-colors"
           >
             수정
           </button>
@@ -56,20 +56,20 @@ export default function ProjectOverview({ project, isAuthor, onUpdate }: Project
           <textarea
             value={overview}
             onChange={(e) => setOverview(e.target.value)}
-            className="w-full h-48 p-3 text-sm text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-slate-50 dark:bg-slate-800"
+            className="w-full h-48 p-4 text-sm text-on-surface bg-surface-container-low border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-container/20 resize-none"
             placeholder="프로젝트의 목표, 마일스톤, 현재 상황 등을 자유롭게 작성해주세요."
           />
           <div className="flex justify-end gap-2">
             <button
               onClick={handleCancel}
-              className="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+              className="px-4 py-2 text-xs font-medium text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"
               disabled={isLoading}
             >
               취소
             </button>
             <button
               onClick={handleSave}
-              className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-xs font-bold text-on-primary bg-primary-container hover:opacity-90 rounded-lg transition-colors disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? '저장 중...' : '저장 완료'}
@@ -77,11 +77,11 @@ export default function ProjectOverview({ project, isAuthor, onUpdate }: Project
           </div>
         </div>
       ) : (
-        <div className="prose max-w-none text-slate-600 dark:text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
+        <div className="max-w-none text-on-surface-variant whitespace-pre-wrap text-sm leading-relaxed break-all">
           {project.overview ? (
             project.overview
           ) : (
-            <span className="text-slate-400 dark:text-slate-500 italic">
+            <span className="text-on-surface-variant/50 italic">
               작성된 개요가 없습니다.
               {isAuthor && ' 우측 상단의 수정 버튼을 눌러 개요를 작성해보세요.'}
             </span>

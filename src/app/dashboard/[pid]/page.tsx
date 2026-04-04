@@ -261,9 +261,9 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
     }
   };
 
-  if (isLoading) return <div className="p-8">로딩 중...</div>;
-  if (error) return <div className="p-8 text-red-500">에러: {error}</div>;
-  if (!project) return <div className="p-8">프로젝트를 찾을 수 없습니다.</div>;
+  if (isLoading) return <div className="p-8 text-on-surface">로딩 중...</div>;
+  if (error) return <div className="p-8 text-error">에러: {error}</div>;
+  if (!project) return <div className="p-8 text-on-surface">프로젝트를 찾을 수 없습니다.</div>;
 
   // 작성자 권한 확인
   const authorId = typeof project.ownerId === 'string' ? project.ownerId : project.ownerId._id;
@@ -271,7 +271,7 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
   const isAuthor = userId === authorId;
 
   return (
-    <div className="container mx-auto p-4 lg:p-8 max-w-7xl">
+    <div className="px-6 lg:px-8 py-8 bg-surface">
       {/* 1. Header Area */}
       <ProjectHeader
         project={project as unknown as IProject}
@@ -280,11 +280,10 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
         onStatusChange={(newStatus) => handleUpdateProject({ status: newStatus })}
       />
 
-      {/* 2. Main Layout (2 Columns) */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Column (Main Content) - 3/4 width */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Project Overview Section */}
+      {/* 2. Bento Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        {/* Project Overview — 8칸 */}
+        <div className="md:col-span-8">
           <ProjectOverview
             project={project as unknown as IProject}
             isAuthor={isAuthor || false}
@@ -292,17 +291,16 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
           />
         </div>
 
-        {/* Right Column (Sidebar) - 1/4 width */}
-        <div className="lg:col-span-1 h-full space-y-4">
-          {/* ✨ 팀 채팅 진입 버튼 */}
+        {/* Member Widget — 4칸 */}
+        <div className="md:col-span-4 space-y-6">
+          {/* 팀 채팅 진입 버튼 */}
           <button
             onClick={handleTeamChat}
-            className="w-full py-3 px-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 bg-primary-container text-on-primary font-bold rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2"
           >
-            <span className="text-xl">💬</span>팀 채팅방 입장
+            <span className="material-symbols-outlined text-[20px]">chat_bubble</span>팀 채팅방 입장
           </button>
 
-          {/* Member List Widget (Real-time) */}
           {project && session?.user && (
             <MemberWidget
               members={(project.members || [])
