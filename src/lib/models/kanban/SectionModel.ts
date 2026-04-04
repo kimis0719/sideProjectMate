@@ -21,8 +21,8 @@ const SectionSchema = new Schema<ISection>(
   {
     boardId: { type: Schema.Types.ObjectId, ref: 'Board', required: true },
     title: { type: String, required: true, default: 'New Section' },
-    x: { type: Number, required: true, default: 0 },
-    y: { type: Number, required: true, default: 0 },
+    x: { type: Number, default: null },
+    y: { type: Number, default: null },
     width: { type: Number, required: true, default: 300 },
     height: { type: Number, required: true, default: 300 },
     color: { type: String, default: '#E5E7EB' }, // Default gray

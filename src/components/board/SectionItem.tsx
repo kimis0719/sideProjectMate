@@ -364,6 +364,7 @@ export default function SectionItem({ section, readOnly = false }: Props) {
     isDragging.current = true;
     hasMoved.current = false;
     lastPointerRef.current = { x: e.clientX, y: e.clientY };
+    useBoardStore.getState().setIsDraggingNote(true);
 
     // Capture start position
     currentVisual.current = {
@@ -486,6 +487,7 @@ export default function SectionItem({ section, readOnly = false }: Props) {
   const onPointerUpHeader = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDragging.current) return;
     isDragging.current = false;
+    useBoardStore.getState().setIsDraggingNote(false);
     (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
     setAlignmentGuides([]); // Clear guides
 
@@ -542,6 +544,45 @@ export default function SectionItem({ section, readOnly = false }: Props) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ parentSectionId: potentialParent.id, depth: 1 }),
         }).catch((err) => console.error('Failed to capture section into parent:', err));
+      }
+    }
+
+    // 인박스 영역 위에 드롭했는지 체크
+    const inboxEl = document.querySelector('[data-inbox-panel]');
+    if (inboxEl) {
+      const inboxRect = inboxEl.getBoundingClientRect();
+      if (
+        e.clientX >= inboxRect.left &&
+        e.clientX <= inboxRect.right &&
+        e.clientY >= inboxRect.top &&
+        e.clientY <= inboxRect.bottom
+      ) {
+        // 섹션 + 하위 노트 전부 인박스로 이동 (좌표 null)
+        debouncedSave.cancel();
+        const childNoteIds = notes.filter((n) => n.sectionId === section.id).map((n) => n.id);
+
+        // 섹션 좌표 null
+        updateSection(section.id, { x: null as unknown as number, y: null as unknown as number });
+        fetch(`/api/kanban/sections/${section.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ x: null, y: null }),
+        }).catch((err) => console.error('Failed to move section to inbox:', err));
+
+        // 하위 노트 좌표 null (sectionId는 유지)
+        if (childNoteIds.length > 0) {
+          const noteUpdates = childNoteIds.map((nid) => ({
+            id: nid,
+            changes: { x: null, y: null },
+          }));
+          updateNotes(noteUpdates as unknown as { id: string; changes: Partial<Note> }[]);
+          fetch('/api/kanban/notes/batch', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ updates: noteUpdates }),
+          }).catch((err) => console.error('Failed to move child notes to inbox:', err));
+        }
+        return;
       }
     }
 

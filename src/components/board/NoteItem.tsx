@@ -553,6 +553,7 @@ export default function NoteItem({
 
       isDragging.current = true;
       hasMoved.current = false;
+      useBoardStore.getState().setIsDraggingNote(true);
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
       totalDragRef.current = { x: 0, y: 0 };
 
@@ -721,6 +722,7 @@ export default function NoteItem({
       // 드래그 종료 처리
       if (!isDragging.current) return;
       isDragging.current = false;
+      useBoardStore.getState().setIsDraggingNote(false);
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
       setAlignmentGuides([]);
 
@@ -786,6 +788,29 @@ export default function NoteItem({
             snappedY = Math.round(snappedY / GRID_SIZE) * GRID_SIZE;
         }
 
+        // 인박스 영역 위에 드롭했는지 체크 (화면 우측 인박스 패널)
+        const inboxEl = document.querySelector('[data-inbox-panel]');
+        if (inboxEl) {
+          const inboxRect = inboxEl.getBoundingClientRect();
+          if (
+            e.clientX >= inboxRect.left &&
+            e.clientX <= inboxRect.right &&
+            e.clientY >= inboxRect.top &&
+            e.clientY <= inboxRect.bottom
+          ) {
+            // 인박스로 이동: 좌표 null
+            updateNote(id, {
+              x: null as unknown as number,
+              y: null as unknown as number,
+              sectionId: null,
+            });
+            saveChanges({ x: null, y: null, sectionId: null } as unknown as Partial<
+              Omit<Note, 'id'>
+            >);
+            return;
+          }
+        }
+
         moveNote(id, snappedX, snappedY); // Store Update (Undo 1회 저장)
         debouncedSave.cancel();
 
@@ -828,6 +853,7 @@ export default function NoteItem({
   const onPointerCancel = React.useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       isDragging.current = false;
+      useBoardStore.getState().setIsDraggingNote(false);
       isResizing.current = false;
       (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
       setAlignmentGuides([]);

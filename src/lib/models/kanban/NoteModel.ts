@@ -2,8 +2,8 @@ import mongoose, { Schema, models, model, Document } from 'mongoose';
 
 export interface INote extends Document {
   text: string;
-  x: number;
-  y: number;
+  x: number | null;
+  y: number | null;
   color: string;
   width: number;
   height: number;
@@ -28,11 +28,11 @@ const NoteSchema: Schema = new Schema(
     },
     x: {
       type: Number,
-      required: true,
+      default: null,
     },
     y: {
       type: Number,
-      required: true,
+      default: null,
     },
     color: {
       type: String,

@@ -126,6 +126,12 @@ type BoardState = {
   toggleSnap: () => void;
   toggleSelectionMode: () => void;
 
+  // Inbox
+  inboxOpen: boolean;
+  setInboxOpen: (open: boolean) => void;
+  isDraggingNote: boolean;
+  setIsDraggingNote: (dragging: boolean) => void;
+
   // Undo/Redo
   undo: () => void;
   redo: () => void;
@@ -180,6 +186,8 @@ export const useBoardStore = create<BoardState>()(
         currentUserId: null,
         peerSelections: {},
         activeUsers: [],
+        inboxOpen: false,
+        isDraggingNote: false,
         isSnapEnabled: false,
         isSelectionMode: false,
         isRemoteUpdate: false,
@@ -189,6 +197,8 @@ export const useBoardStore = create<BoardState>()(
 
         setActiveUsers: (users) => set({ activeUsers: users }),
 
+        setInboxOpen: (open) => set({ inboxOpen: open }),
+        setIsDraggingNote: (dragging) => set({ isDraggingNote: dragging }),
         toggleSnap: () => set((state) => ({ isSnapEnabled: !state.isSnapEnabled })),
         toggleSelectionMode: () => set((state) => ({ isSelectionMode: !state.isSelectionMode })),
 

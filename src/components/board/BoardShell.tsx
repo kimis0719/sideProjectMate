@@ -12,6 +12,7 @@ import ZoomController from '@/components/board/ZoomController';
 import ShortcutModal from '@/components/board/ShortcutModal';
 import InstructionModal from '@/components/board/InstructionModal';
 import HistoryModal from '@/components/board/HistoryModal';
+import InboxPanel from '@/components/board/InboxPanel';
 import { useInstructionStore } from '@/store/instructionStore';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -792,6 +793,74 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onDragOver={(e) => {
+          if (
+            e.dataTransfer.types.includes('application/inbox-note') ||
+            e.dataTransfer.types.includes('application/inbox-section')
+          ) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          }
+        }}
+        onDrop={(e) => {
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (!rect) return;
+          const { pan: curPan, zoom: curZoom } = useBoardStore.getState();
+          const dropX = (e.clientX - rect.left - curPan.x) / curZoom;
+          const dropY = (e.clientY - rect.top - curPan.y) / curZoom;
+
+          // 인박스 섹션 → 캔버스 드롭
+          const sectionData = e.dataTransfer.getData('application/inbox-section');
+          if (sectionData) {
+            e.preventDefault();
+            const { id: sectionId } = JSON.parse(sectionData);
+            const store = useBoardStore.getState();
+            // 섹션 좌표 부여
+            store.updateSection(sectionId, { x: dropX, y: dropY });
+            // 하위 노트들도 섹션 내부 좌표로 배치
+            const childNotes = store.notes.filter((n) => n.sectionId === sectionId);
+            if (childNotes.length > 0) {
+              const noteUpdates = childNotes.map((n, i) => ({
+                id: n.id,
+                changes: { x: dropX + 20, y: dropY + 50 + i * 160 },
+              }));
+              store.updateNotes(noteUpdates);
+            }
+            return;
+          }
+
+          // 인박스 노트 → 캔버스 드롭
+          const noteData = e.dataTransfer.getData('application/inbox-note');
+          if (!noteData) return;
+          e.preventDefault();
+          const { id: noteId } = JSON.parse(noteData);
+          // 좌표 부여 + 섹션 auto-capture
+          const allSections = useBoardStore.getState().sections;
+          const noteW = 200,
+            noteH = 140;
+          const noteCX = dropX + noteW / 2;
+          const noteCY = dropY + noteH / 2;
+          let capturedSectionId: string | null = null;
+          for (const sec of [...allSections].sort((a, b) => (b.depth || 0) - (a.depth || 0))) {
+            if (
+              noteCX >= sec.x &&
+              noteCX <= sec.x + sec.width &&
+              noteCY >= sec.y &&
+              noteCY <= sec.y + sec.height
+            ) {
+              capturedSectionId = sec.id;
+              break;
+            }
+          }
+          useBoardStore
+            .getState()
+            .updateNote(noteId, { x: dropX, y: dropY, sectionId: capturedSectionId });
+          useBoardStore
+            .getState()
+            .updateNotes([
+              { id: noteId, changes: { x: dropX, y: dropY, sectionId: capturedSectionId } },
+            ]);
+        }}
         style={{ cursor: isPanning ? 'grabbing' : 'default', touchAction: 'none' }}
       >
         <div
@@ -814,7 +883,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           {[...sections]
             .filter((s) =>
               viewMode === 'active'
-                ? (s.status || 'active') === 'active'
+                ? (s.status || 'active') === 'active' && s.x !== null && s.y !== null
                 : (s.status || 'active') === 'done'
             )
             .sort((a, b) => (a.depth || 0) - (b.depth || 0))
@@ -842,27 +911,29 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
               </div>
             </div>
           ) : viewMode === 'active' ? (
-            notes.map((note) => {
-              const zIndex = getNoteZIndex(note, sections);
-              return (
-                <NoteItem
-                  key={note.id}
-                  id={note.id}
-                  x={note.x}
-                  y={note.y}
-                  text={note.text}
-                  color={note.color}
-                  zIndex={zIndex}
-                  width={note.width}
-                  height={note.height}
-                  creatorId={note.creatorId}
-                  updaterId={note.updaterId}
-                  assigneeId={note.assigneeId}
-                  dueDate={note.dueDate}
-                  tags={note.tags}
-                />
-              );
-            })
+            notes
+              .filter((n) => n.x !== null && n.y !== null)
+              .map((note) => {
+                const zIndex = getNoteZIndex(note, sections);
+                return (
+                  <NoteItem
+                    key={note.id}
+                    id={note.id}
+                    x={note.x}
+                    y={note.y}
+                    text={note.text}
+                    color={note.color}
+                    zIndex={zIndex}
+                    width={note.width}
+                    height={note.height}
+                    creatorId={note.creatorId}
+                    updaterId={note.updaterId}
+                    assigneeId={note.assigneeId}
+                    dueDate={note.dueDate}
+                    tags={note.tags}
+                  />
+                );
+              })
           ) : /* 완료 탭 뷰 */
           completedNotes.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -1026,6 +1097,9 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           />
         </div>
       </main>
+
+      {/* 인박스 패널 (진행중 탭에서만 표시) */}
+      {viewMode === 'active' && <InboxPanel />}
     </div>
   );
 };
