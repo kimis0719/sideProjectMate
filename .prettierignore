@@ -16,8 +16,8 @@ coverage/
 *_report.html
 *-review.html
 
-# 디자인 에셋 (Stitch 생성 HTML — 코드가 아닌 참조용 파일)
-docs/assets/
+# 문서 및 디자인 에셋 (참조용 파일 — 코드가 아님)
+docs/
 
 # 마크다운 파일 (work-logs, docs, MAP.md 등 자동생성/수동관리)
 **/*.md

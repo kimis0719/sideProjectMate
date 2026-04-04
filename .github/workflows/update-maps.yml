@@ -53,4 +53,4 @@ jobs:
             --body "MAP.md 파일 자동 갱신 (GitHub Actions)" \
             --base main \
             --head "$BRANCH"
-          gh pr merge "$BRANCH" --auto --squash --delete-branch
+          gh pr merge "$BRANCH" --squash --delete-branch
