@@ -5,6 +5,7 @@ import type { SidebarMenuItem } from '@/components/common/SidebarShell';
 
 const PROJECTS_MENU: SidebarMenuItem[] = [
   { href: '/projects', icon: 'grid_view', label: '모든 프로젝트' },
+  { href: '/projects/favorites', icon: 'favorite', label: '즐겨찾기' },
   { href: '/dashboard', icon: 'workspaces', label: '내 워크스페이스' },
 ];
 
