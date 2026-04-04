@@ -52,21 +52,29 @@ export default function ExecutionResultConfirm() {
     try {
       const today = new Date().toISOString().slice(0, 10);
       const note = notes.find((n) => n.id === noteId);
-      const existing = note?.completionNote;
-      const appended = existing
-        ? `${existing}\n[유지 - ${today}] ${summary}`
+
+      // completionNote: 기존 값에 append (히스토리 보존용)
+      const existingCompletion = note?.completionNote;
+      const newCompletionNote = existingCompletion
+        ? `${existingCompletion}\n[유지 - ${today}] ${summary}`
         : `[유지 - ${today}] ${summary}`;
+
+      // text: 노트 카드에 바로 보이도록 append
+      const existingText = note?.text ?? '';
+      const newText = `${existingText}\n\n[유지 - ${today}] ${summary}`;
 
       const res = await fetch(`/api/kanban/notes/${noteId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completionNote: appended }),
+        body: JSON.stringify({ completionNote: newCompletionNote, text: newText }),
       });
 
       if (res.ok) {
-        // 로컬 스토어 갱신 — 이후 completeNote 호출 시 유지 기록이 보존되도록
+        // 로컬 스토어 갱신 — 노트 카드 즉시 반영 + 이후 completeNote 시 유지 기록 보존
         useBoardStore.setState((state) => ({
-          notes: state.notes.map((n) => (n.id === noteId ? { ...n, completionNote: appended } : n)),
+          notes: state.notes.map((n) =>
+            n.id === noteId ? { ...n, text: newText, completionNote: newCompletionNote } : n
+          ),
         }));
         setProcessed((prev) => new Set(prev).add(noteId));
         showToast('메모에 기록되었습니다');
