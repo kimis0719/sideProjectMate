@@ -113,10 +113,10 @@ describe('POST /api/auth/register', () => {
     expect(json.error).toBe('올바른 이메일 형식이 아닙니다.');
   });
 
-  it('비밀번호가 6자 미만이면 400을 반환한다', async () => {
+  it('비밀번호가 4자 미만이면 400을 반환한다', async () => {
     const req = createRequest({
       authorEmail: 'test@example.com',
-      password: '12345',
+      password: '123',
     });
 
     const res = await POST(req);
@@ -124,7 +124,7 @@ describe('POST /api/auth/register', () => {
 
     expect(res.status).toBe(400);
     expect(json.success).toBe(false);
-    expect(json.error).toBe('비밀번호는 최소 6자 이상이어야 합니다.');
+    expect(json.error).toBe('비밀번호는 최소 4자 이상이어야 합니다.');
   });
 
   it('중복 이메일로 가입하면 409를 반환한다', async () => {

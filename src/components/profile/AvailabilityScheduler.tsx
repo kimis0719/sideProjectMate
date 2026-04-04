@@ -1,10 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import ScheduleSelector from 'react-schedule-selector';
-import styled from 'styled-components';
-import { startOfWeek, addDays, format, parse, getDay } from 'date-fns';
-import { useTheme } from '@/components/ThemeProvider';
 
 interface TimeRange {
   start: string;
@@ -21,176 +17,151 @@ interface AvailabilitySchedulerProps {
   onChange: (schedule: DaySchedule[]) => void;
 }
 
-const Container = styled.div`
-  width: 100%;
-  & > div {
-    width: 100% !important;
-  }
-  /* 모든 컬럼(요일)을 균등 분배하여 '금' 셀 크기 불일치 방지 */
-  table {
-    table-layout: fixed;
-    width: 100%;
-  }
-  th,
-  td {
-    width: calc(100% / 8); /* 시간 라벨 컬럼 + 7요일 */
-  }
-`;
+const DAYS = [
+  { key: 'monday', label: 'Mon' },
+  { key: 'tuesday', label: 'Tue' },
+  { key: 'wednesday', label: 'Wed' },
+  { key: 'thursday', label: 'Thu' },
+  { key: 'friday', label: 'Fri' },
+  { key: 'saturday', label: 'Sat' },
+  { key: 'sunday', label: 'Sun' },
+];
 
-const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const BLOCKS = [
+  { key: 'morning', label: '아침', sub: '06-12', start: '06:00', end: '12:00' },
+  { key: 'afternoon', label: '점심', sub: '12-18', start: '12:00', end: '18:00' },
+  { key: 'evening', label: '저녁', sub: '18-24', start: '18:00', end: '00:00' },
+  { key: 'latenight', label: '심야', sub: '00-06', start: '00:00', end: '06:00' },
+];
+
+// 4블록 기준 시간 범위
+const BLOCK_RANGES: Record<string, { startHour: number; endHour: number }> = {
+  morning: { startHour: 6, endHour: 12 },
+  afternoon: { startHour: 12, endHour: 18 },
+  evening: { startHour: 18, endHour: 24 },
+  latenight: { startHour: 0, endHour: 6 },
+};
 
 export default function AvailabilityScheduler({
   initialSchedule = [],
   onChange,
 }: AvailabilitySchedulerProps) {
-  const { theme } = useTheme();
-  const [schedule, setSchedule] = useState<Date[]>([]);
+  // grid[dayIndex][blockIndex] = true/false
+  const [grid, setGrid] = useState<boolean[][]>(() =>
+    Array.from({ length: 7 }, () => Array(4).fill(false))
+  );
 
-  // startDate를 처음부터 00:00:00으로 정확하게 초기화하여 그리드 불일치 방지
-  const [startDate] = useState<Date>(() => {
-    const d = startOfWeek(new Date(), { weekStartsOn: 0 });
-    d.setHours(0, 0, 0, 0);
-    return d;
-  });
-
-  // 내부 변경에 의한 업데이트인지 추적하여 무한 루프 방지
   const isInternalUpdate = useRef(false);
 
-  // 초기 로드 시 DB 데이터를 Date[]로 변환
+  // initialSchedule → grid 변환
   useEffect(() => {
-    // 내부 변경 중이거나, 이미 스케줄 데이터가 있는데 props가 들어오는 경우 무시 (덮어쓰기 방지)
-    // 단, 부모에서 초기 데이터를 비동기로 늦게 가져오는 경우는 허용해야 함.
-    // 따라서 '내부 변경 플래그'가 true이면 절대 업데이트 금지.
     if (isInternalUpdate.current) {
       isInternalUpdate.current = false;
       return;
     }
+    if (!initialSchedule || initialSchedule.length === 0) return;
 
-    // startDate는 이미 초기값으로 고정되어 있으므로 다시 set할 필요 없음.
-    // 다만 Date Parsing을 위한 reference date는 startDate와 동일해야 함.
-    const referenceDate = new Date(startDate); // 복사해서 사용
+    const newGrid = Array.from({ length: 7 }, () => Array(4).fill(false));
 
-    // 초기 데이터가 있고, 현재 로컬 상태가 비어있을 때만 동기화 (또는 강제 리셋 로직 필요 시 추가)
-    if (initialSchedule && initialSchedule.length > 0) {
-      console.warn('초기 스케줄 로드 중:', initialSchedule);
-      const newSchedule: Date[] = [];
+    initialSchedule.forEach((daySch) => {
+      const dayIdx = DAYS.findIndex((d) => d.key === daySch.day);
+      if (dayIdx === -1) return;
 
-      initialSchedule.forEach((daySch) => {
-        const dayIndex = DAYS.indexOf(daySch.day);
-        if (dayIndex === -1) return;
+      daySch.timeRanges.forEach((range) => {
+        const startHour = parseInt(range.start.split(':')[0]);
+        const endHour = parseInt(range.end.split(':')[0]) || 24;
 
-        const targetDate = addDays(referenceDate, dayIndex);
-        const dateStr = format(targetDate, 'yyyy-MM-dd');
-
-        daySch.timeRanges.forEach((range) => {
-          // referenceDate를 start(자정 기준)로 설정하여 초/밀리초 불일치 방지
-          let curr = parse(`${dateStr} ${range.start}`, 'yyyy-MM-dd HH:mm', referenceDate);
-          let end = parse(`${dateStr} ${range.end}`, 'yyyy-MM-dd HH:mm', referenceDate);
-
-          // 종료 시간이 시작 시간보다 작거나 같으면(예: 00:00) 다음 날로 간주
-          if (end <= curr) {
-            end = addDays(end, 1);
-          }
-
-          while (curr < end) {
-            newSchedule.push(curr);
-            // 1시간 단위로 증가
-            curr = new Date(curr.getTime() + 60 * 60 * 1000);
+        BLOCKS.forEach((block, blockIdx) => {
+          const br = BLOCK_RANGES[block.key];
+          // 해당 블록 시간대에 1시간이라도 포함되면 활성
+          if (startHour < br.endHour && endHour > br.startHour) {
+            newGrid[dayIdx][blockIdx] = true;
           }
         });
       });
+    });
 
-      // 중복 제거 (Set 활용)
-      const uniqueTimestamps = Array.from(new Set(newSchedule.map((d) => d.getTime())));
-      const uniqueSchedule = uniqueTimestamps.map((t) => new Date(t));
+    setGrid(newGrid);
+  }, [initialSchedule]);
 
-      console.warn('변환된 스케줄 (Before Set):', uniqueSchedule);
-
-      // 데이터가 도착하면 무조건 업데이트 (최적화 제거)
-      setSchedule(uniqueSchedule);
-    }
-  }, [initialSchedule, startDate]);
-
-  const handleChange = useCallback(
-    (newSchedule: Date[]) => {
-      isInternalUpdate.current = true; // 내부 변경 플래그 설정
-
-      // 중복 제거
-      const uniqueTimestamps = Array.from(new Set(newSchedule.map((d) => d.getTime())));
-      const uniqueDates = uniqueTimestamps.map((t) => new Date(t));
-
-      setSchedule(uniqueDates);
-
-      // Date[] -> DaySchedule[] 변환
-      const converted: DaySchedule[] = [];
-
-      // 날짜별로 그룹화
-      const grouped: { [key: string]: Date[] } = {};
-      uniqueDates.forEach((date) => {
-        const dayName = DAYS[getDay(date)];
-        if (!grouped[dayName]) grouped[dayName] = [];
-        grouped[dayName].push(date);
-      });
-
-      // 각 요일별로 시간 범위 병합
-      Object.keys(grouped).forEach((day) => {
-        const dates = grouped[day].sort((a, b) => a.getTime() - b.getTime());
-        const ranges: TimeRange[] = [];
-
-        if (dates.length === 0) return;
-
-        let start = dates[0];
-        let end = new Date(start.getTime() + 60 * 60 * 1000); // 1시간 블록
-
-        for (let i = 1; i < dates.length; i++) {
-          const current = dates[i];
-          // 연속된 시간인지 확인
-          // 중복이 제거되었으므로 current > start 임이 보장됨
-          if (current.getTime() === end.getTime()) {
-            end = new Date(current.getTime() + 60 * 60 * 1000);
-          } else {
-            // 끊기면 저장하고 새로 시작
-            ranges.push({
-              start: format(start, 'HH:mm'),
-              end: format(end, 'HH:mm'),
-            });
-            start = current;
-            end = new Date(current.getTime() + 60 * 60 * 1000);
-          }
+  // grid 변경 시 부모에 DaySchedule[] 전달 (useEffect로 분리하여 렌더 중 setState 방지)
+  useEffect(() => {
+    const schedule: DaySchedule[] = [];
+    grid.forEach((dayBlocks, dayIdx) => {
+      const timeRanges: TimeRange[] = [];
+      dayBlocks.forEach((active, blockIdx) => {
+        if (active) {
+          timeRanges.push({
+            start: BLOCKS[blockIdx].start,
+            end: BLOCKS[blockIdx].end,
+          });
         }
-        // 마지막 범위 저장
-        ranges.push({
-          start: format(start, 'HH:mm'),
-          end: format(end, 'HH:mm'),
-        });
-
-        converted.push({
-          day: day,
-          timeRanges: ranges,
-        });
       });
+      if (timeRanges.length > 0) {
+        schedule.push({ day: DAYS[dayIdx].key, timeRanges });
+      }
+    });
 
-      onChange(converted);
-    },
-    [onChange]
-  );
+    isInternalUpdate.current = true;
+    onChange(schedule);
+  }, [grid, onChange]);
+
+  const toggleCell = (dayIdx: number, blockIdx: number) => {
+    setGrid((prev) => {
+      const newGrid = prev.map((row) => [...row]);
+      newGrid[dayIdx][blockIdx] = !newGrid[dayIdx][blockIdx];
+      return newGrid;
+    });
+  };
 
   return (
-    <Container>
-      <ScheduleSelector
-        key={schedule.length} // 데이터 로드 시 강제 리렌더링 유도
-        selection={schedule}
-        numDays={7}
-        minTime={0} // 자정부터
-        maxTime={24} // 자정까지
-        hourlyChunks={1} // 1시간 단위
-        dateFormat="ddd" // 요일만 표시
-        startDate={startDate}
-        onChange={handleChange}
-        selectedColor={theme === 'dark' ? '#60a5fa' : '#3b82f6'} // blue-400 : blue-500
-        unselectedColor={theme === 'dark' ? '#1f2937' : '#f3f4f6'} // gray-800 : gray-100
-        hoveredColor={theme === 'dark' ? '#1e40af' : '#93c5fd'} // blue-800 : blue-300
-      />
-    </Container>
+    <div className="w-full select-none">
+      <div className="grid grid-cols-[4.5rem_repeat(7,1fr)] gap-[4px]">
+        {/* 헤더 행 */}
+        <div className="h-8" />
+        {DAYS.map((day) => (
+          <div
+            key={day.key}
+            className={`text-[10px] font-bold text-center uppercase flex items-center justify-center ${
+              day.key === 'saturday' || day.key === 'sunday'
+                ? 'text-primary'
+                : 'text-on-surface-variant'
+            }`}
+          >
+            {day.label}
+          </div>
+        ))}
+
+        {/* 4블록 행 */}
+        {BLOCKS.map((block, blockIdx) => (
+          <React.Fragment key={block.key}>
+            {/* 행 라벨 */}
+            <div className="text-[9px] font-bold text-outline text-right pr-3 flex items-center justify-end h-10 leading-none">
+              {block.label}
+              <br />
+              <span className="text-[8px] font-normal opacity-70">{block.sub}</span>
+            </div>
+            {/* 7일 셀 */}
+            {DAYS.map((day, dayIdx) => {
+              const isActive = grid[dayIdx][blockIdx];
+              return (
+                <button
+                  key={`${day.key}-${block.key}`}
+                  type="button"
+                  onClick={() => toggleCell(dayIdx, blockIdx)}
+                  className={`h-10 rounded-md transition-colors cursor-pointer ${
+                    isActive ? 'bg-primary shadow-sm' : 'bg-[#F3F4F6] hover:bg-[#F3F4F6]/80'
+                  }`}
+                  aria-label={`${day.label} ${block.label} ${isActive ? '활성' : '비활성'}`}
+                />
+              );
+            })}
+          </React.Fragment>
+        ))}
+      </div>
+      <p className="mt-6 text-[10px] text-on-surface-variant italic leading-relaxed text-center">
+        * 클릭하여 가용 가능한 시간대를 선택해 주세요.
+      </p>
+    </div>
   );
 }

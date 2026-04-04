@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Curator Profile - Side Project Mate</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;600;700&amp;family=Noto+Sans+KR:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f9f9f8",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#00174b",
+                        "on-secondary-container": "#394c84",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-container": "#eeeeed",
+                        "secondary-fixed": "#dbe1ff",
+                        "primary-container": "#2563eb",
+                        "tertiary-fixed": "#ffdbcd",
+                        "inverse-surface": "#2f3130",
+                        "surface-tint": "#0053db",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#f3f4f3",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#943700",
+                        "secondary-container": "#acbfff",
+                        "on-tertiary-container": "#ffede6",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-primary-fixed": "#00174b",
+                        "on-surface-variant": "#434655",
+                        "tertiary-container": "#bc4800",
+                        "surface-container-high": "#e8e8e7",
+                        "on-surface": "#1a1c1c",
+                        "surface-variant": "#e2e2e2",
+                        "surface": "#f9f9f8",
+                        "outline-variant": "#c3c6d7",
+                        "primary": "#004ac6",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "surface-dim": "#dadad9",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#495c95",
+                        "on-background": "#1a1c1c",
+                        "inverse-on-surface": "#f1f1f0",
+                        "background": "#f9f9f8",
+                        "primary-fixed": "#dbe1ff",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#eeefff",
+                        "inverse-primary": "#b4c5ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "outline": "#737686"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope", "Noto Sans KR"],
+                        "body": ["Inter", "Noto Sans KR"],
+                        "label": ["Inter", "Noto Sans KR"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f9f9f8;
+            color: #1a1c1c;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="font-body">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-50 bg-[#f9f9f8] dark:bg-slate-950 flex items-center justify-between px-6 py-4 transition-all duration-200">
+<div class="flex items-center gap-4">
+<button class="hover:bg-slate-200/50 transition-all duration-200 active:scale-95 p-2 rounded-lg">
+<span class="material-symbols-outlined text-slate-500" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-['Manrope'] font-semibold text-lg text-slate-500">Curator Profile</h1>
+</div>
+<button class="text-blue-600 dark:text-blue-400 font-bold hover:bg-slate-200/50 transition-all duration-200 active:scale-95 px-4 py-2 rounded-lg">
+        Save
+    </button>
+</header>
+<main class="max-w-md mx-auto px-6 pb-32 space-y-8">
+<!-- Profile Header -->
+<section class="flex flex-col items-center pt-4">
+<div class="relative mb-4">
+<div class="w-20 h-20 rounded-xl overflow-hidden ring-4 ring-white shadow-sm">
+<img alt="Profile Avatar" class="w-full h-full object-cover" data-alt="close-up portrait of a professional male software developer in a minimal studio setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBboSzWRrRGKmOG_jXLvLao73NBHaiSyr905z-hP-SMgTbwKirfHQVto8djDHEocXUgmIVS3UHJAJMcSw_aLCnNSnsmu6mD-j9n8cXm_Qj07ojGFCtu8tjrlIvZxgZzRhK65BkGo9ZU1FXHBHKDH1-es6NHnzIGL6gdlz80BV7HmkWX-X1rfPHCurTzvZYFVlJf4Zw-g4kueaPNzfNfrL9E8HTcMbRPq_Uj8sYRo5RUF4waJzN9y7e5EA-_JN4eO4EeTwr7Dm7YbaYv"/>
+</div>
+<div class="absolute -bottom-1 -right-1 bg-primary-container text-white p-1 rounded-lg">
+<span class="material-symbols-outlined text-xs" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<h2 class="font-['Noto Sans KR'] font-bold text-xl mb-3">김민재 Minjae Kim</h2>
+<div class="flex flex-wrap justify-center gap-2">
+<span class="bg-surface-container-low px-3 py-1 rounded-full text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider">Senior Frontend</span>
+<span class="bg-surface-container-low px-3 py-1 rounded-full text-[10px] font-bold text-on-secondary-fixed-variant uppercase tracking-wider">8+ Years Exp</span>
+</div>
+</section>
+<!-- Bio Section -->
+<section class="bg-surface-container-lowest p-6 rounded-xl">
+<h3 class="font-headline font-semibold text-sm text-slate-400 mb-3 uppercase tracking-widest">About</h3>
+<p class="font-['Noto Sans KR'] text-sm leading-relaxed text-on-surface">
+            사용자 중심의 가치를 실현하는 시니어 프론트엔드 개발자입니다. 복잡한 도메인을 단순한 인터페이스로 해결하는 것을 즐기며, 현재는 디자인 시스템 고도화와 팀 생산성 도구 구축에 관심이 많습니다. 오픈 소스 기여와 지식 공유를 가치있게 생각합니다.
+        </p>
+</section>
+<!-- Technical Skills & Interests -->
+<section class="space-y-4">
+<h3 class="font-headline font-semibold text-sm text-slate-400 uppercase tracking-widest px-1">Expertise</h3>
+<div class="flex flex-wrap gap-2">
+<span class="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200">React</span>
+<span class="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200">TypeScript</span>
+<span class="bg-surface-container-high text-on-surface px-4 py-2 rounded-xl text-xs font-bold">Tailwind CSS</span>
+<span class="bg-surface-container-high text-on-surface px-4 py-2 rounded-xl text-xs font-bold">Next.js</span>
+<span class="bg-surface-container-high text-on-surface px-4 py-2 rounded-xl text-xs font-bold">Figma</span>
+<span class="bg-surface-container-high text-on-surface px-4 py-2 rounded-xl text-xs font-bold">Design Systems</span>
+</div>
+</section>
+<!-- Weekly Availability - Updated to 4x7 Grid -->
+<section class="bg-surface-container-lowest p-5 rounded-xl space-y-4">
+<div class="flex justify-between items-center mb-2">
+<h3 class="font-headline font-semibold text-sm text-slate-400 uppercase tracking-widest">Availability</h3>
+<span class="bg-[#10b981]/10 text-[#065f46] px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">25 hours/week</span>
+</div>
+<div class="grid grid-cols-[3rem_repeat(7,1fr)] gap-1 text-center font-['Noto Sans KR']">
+<!-- Header Row: Days -->
+<div class=""></div>
+<div class="text-[11px] font-bold text-slate-400 py-1">월</div>
+<div class="text-[11px] font-bold text-slate-400 py-1">화</div>
+<div class="text-[11px] font-bold text-slate-400 py-1">수</div>
+<div class="text-[11px] font-bold text-slate-400 py-1">목</div>
+<div class="text-[11px] font-bold text-slate-400 py-1">금</div>
+<div class="text-[11px] font-bold text-slate-400 py-1 text-blue-500/70">토</div>
+<div class="text-[11px] font-bold text-slate-400 py-1 text-red-500/70">일</div>
+<!-- Row 1: 아침 -->
+<div class="flex items-center justify-start text-[10px] font-bold text-slate-400">아침</div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<!-- Row 2: 점심 -->
+<div class="flex items-center justify-start text-[10px] font-bold text-slate-400">점심</div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<!-- Row 3: 저녁 -->
+<div class="flex items-center justify-start text-[10px] font-bold text-slate-400">저녁</div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<!-- Row 4: 심야 -->
+<div class="flex items-center justify-start text-[10px] font-bold text-slate-400">심야</div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-[#2563EB] rounded-md shadow-sm shadow-blue-200"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+<div class="aspect-square bg-surface-container-low rounded-md"></div>
+</div>
+</section>
+<!-- External Activity -->
+<section class="space-y-4">
+<h3 class="font-headline font-semibold text-sm text-slate-400 uppercase tracking-widest px-1">Engagement</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-4 rounded-xl flex flex-col gap-2">
+<div class="flex items-center gap-2 text-slate-500">
+<span class="material-symbols-outlined text-sm" data-icon="terminal">terminal</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">GitHub Commits</span>
+</div>
+<span class="text-2xl font-bold">1,240</span>
+<div class="h-1 w-full bg-surface-container-low rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[75%]"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl flex flex-col justify-between">
+<div class="flex items-center gap-2 text-slate-500">
+<span class="material-symbols-outlined text-sm" data-icon="grade">grade</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Solved.ac</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-300 to-yellow-600 flex items-center justify-center text-white font-bold text-xs">G3</div>
+<span class="font-bold text-sm">Gold III</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Social Links -->
+<section class="bg-surface-container-lowest rounded-xl overflow-hidden">
+<div class="p-4 border-b border-surface-container-low/20">
+<h3 class="font-headline font-semibold text-sm text-slate-400 uppercase tracking-widest">Connect</h3>
+</div>
+<div class="divide-y divide-surface-container-low/20">
+<a class="flex items-center justify-between p-4 hover:bg-surface-bright transition-colors group" href="#">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-blue-600" data-icon="link">link</span>
+</div>
+<span class="text-sm font-medium">LinkedIn Profile</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 hover:bg-surface-bright transition-colors group" href="#">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-700" data-icon="description">description</span>
+</div>
+<span class="text-sm font-medium">Portfolio / Blog</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</a>
+</div>
+</section>
+<!-- Received Reviews -->
+<section class="space-y-4">
+<h3 class="font-headline font-semibold text-sm text-slate-400 uppercase tracking-widest px-1">Peer Reviews</h3>
+<div class="space-y-4">
+<div class="bg-surface-container-lowest p-5 rounded-xl space-y-3">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden">
+<img alt="Reviewer 1" class="w-full h-full object-cover" data-alt="headshot of a smiling young asian woman with creative energy and modern style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbYTH1e1wRdLVi6y4ZUtSHQ-miLxGGLY47rluRQddyhJUX5xpwPwUSqJe06CDY3pEzNIoeX1d7_3n2WUaeNyUyx-sAf21OKZTJod2zXooReXPkJ6yv3STD3o-ArPTiE-AuCMmhJ0Kbf1GE8MCSCcCguc-B-0pqJyEyTNu2aEzS7HEelX5iF7F8qyUDGfpF3a21XPdbLMwaCOo5_g-Dr1qJmUZG45QZD_hSe71Iaf47KF0bv0t6VzEOUrAC-43JS_X12QJROKWUwlN5"/>
+</div>
+<div>
+<p class="text-xs font-bold">Sara Lee</p>
+<p class="text-[10px] text-slate-400">Designer at Pixels</p>
+</div>
+</div>
+<div class="flex gap-0.5">
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<p class="text-xs text-on-surface leading-relaxed">
+                    "민재님은 디자인 시스템에 대한 이해도가 정말 높으세요. 덕분에 협업 과정이 매우 매끄러웠고 코드 퀄리티도 훌륭합니다."
+                </p>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-xl space-y-3">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-slate-100 overflow-hidden">
+<img alt="Reviewer 2" class="w-full h-full object-cover" data-alt="portrait of a male tech professional with glasses in a professional studio setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCL1wzI0E6aCYv6SsAEzj8wuCn29ELDtHQ5LJORP7JBOnFaMlPTvEJxadpSIU0gNCXd7ombvNM3DzDp_sUJL5AISVRC-UonZbhEwA9zlgGZGpbanraeI0-WnUKU6uyFwYs5AkWKdzAM7H5e8fzbfRHsfzl7vxnZwLj_hKOM-sFPSklZ8thFJS6bFYb5g3x9E_31p7PqBsyt85-bPB-OSyYUtwoicDAScDnPIXzXA-nx_AuueAkqg4kh3wcOkOp2iH_aP_6rfHxWzkwp"/>
+</div>
+<div>
+<p class="text-xs font-bold">Jason Park</p>
+<p class="text-[10px] text-slate-400">Project Manager</p>
+</div>
+</div>
+<div class="flex gap-0.5">
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-yellow-400 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-slate-200 text-sm" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<p class="text-xs text-on-surface leading-relaxed">
+                    "빠른 배포 역량과 문제 해결 능력이 탁월한 동료입니다. 프로젝트의 핵심적인 부분을 책임감 있게 완수해주셨습니다."
+                </p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 px-4 pb-6 bg-[#f9f9f8]/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_-20px_40px_rgba(26,28,28,0.04)]">
+<div class="flex justify-around items-center w-full max-w-md mx-auto">
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:text-blue-500 transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="explore">explore</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-wider">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:text-blue-500 transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="group">group</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-wider">Collab</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:text-blue-500 transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-wider">Inbox</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-blue-600 text-white rounded-xl px-4 py-2 scale-110 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-['Inter'] text-[10px] font-bold uppercase tracking-wider">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

@@ -1,276 +1,156 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
-const slides = [
-  {
-    id: 1,
-    label: '팀 매칭',
-    title: '아이디어를 빠르게\n실행할 동료를 찾아요',
-    description: '기술 역할이 아니라 같은 문제에 꽂힌 사람을 찾는 팀 매칭 플랫폼',
-    accent: '#4f46e5',
-  },
-  {
-    id: 2,
-    label: 'AI 협업',
-    title: '당신의 아이디어를\n현실로 만들어보세요',
-    description: 'AI 칸반 보드로 혼자서도, 팀으로도 더 빠르게 실행하세요',
-    accent: '#7c3aed',
-  },
-  {
-    id: 3,
-    label: '빠른 실행',
-    title: '같은 문제에 꽂힌 사람과\n함께 만들어가세요',
-    description: '도메인 관심사와 실행 스타일로 진짜 맞는 팀원을 찾아보세요',
-    accent: '#0891b2',
-  },
-];
-
 const features = [
   {
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.8}
-          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-        />
-      </svg>
-    ),
-    title: 'AI 지시서',
+    icon: 'group_add',
+    title: 'AI 스마트 도메인 매칭',
     description:
-      'AI가 프로젝트 맥락을 읽고 칸반 보드에 맞는 실행 지시서를 자동으로 생성해줍니다. 무엇부터 시작할지 고민할 필요 없어요.',
-    color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+      '당신의 경력과 기술 스택, 그리고 프로젝트의 성향을 AI가 정밀 분석하여 가장 시너지가 날 수 있는 팀원을 추천합니다.',
+    tags: ['Recruiting', 'Domain Expert'],
+    colSpan: 'md:col-span-8',
   },
   {
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.8}
-          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-        />
-      </svg>
-    ),
-    title: '팀원 매칭',
+    icon: 'dashboard',
+    title: '실시간 AI 칸반 보드',
     description:
-      '도메인 관심사와 실행 스타일로 진짜 맞는 동료를 찾아보세요. 기술 역할이 아닌 같은 문제를 보는 사람과 함께하세요.',
-    color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400',
+      'AI가 프로젝트 맥락을 읽고 실행 지시서를 자동 생성합니다. 드래그 앤 드롭으로 실시간 협업하세요.',
+    tags: ['Real-time', 'AI Powered'],
+    colSpan: 'md:col-span-4',
   },
   {
-    icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.8}
-          d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
-        />
-      </svg>
-    ),
-    title: '실시간 칸반 보드',
+    icon: 'route',
+    title: '자동 로드맵 생성',
+    description: 'WBS 기반 로드맵을 AI가 자동으로 생성하고, 마일스톤별 진행률을 한눈에 추적하세요.',
+    tags: ['Automation'],
+    colSpan: 'md:col-span-4',
+  },
+  {
+    icon: 'chat_bubble',
+    title: '팀 커뮤니케이션',
     description:
-      '드래그 앤 드롭으로 할 일을 관리하고, 실시간으로 팀원과 함께 작업 상태를 공유하세요.',
-    color: 'bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400',
+      '실시간 채팅과 알림으로 팀원과 소통하세요. 프로젝트별 채팅방에서 맥락을 잃지 않고 대화할 수 있습니다.',
+    tags: ['Chat', 'Notifications'],
+    colSpan: 'md:col-span-8',
   },
 ];
 
 export default function HeroSection() {
   const { data: session } = useSession();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  const goNext = useCallback(() => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  }, []);
-
-  const goPrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
-  useEffect(() => {
-    if (isPaused) return;
-    const timer = setInterval(goNext, 4000);
-    return () => clearInterval(timer);
-  }, [isPaused, goNext]);
-
-  const slide = slides[currentSlide];
 
   return (
     <>
-      {/* ══════════════════════════════════════
-                Hero Section
-            ══════════════════════════════════════ */}
-      <section
-        className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-indigo-950"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-        aria-label="메인 배너"
-      >
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div
-            className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-20 blur-3xl"
-            style={{ backgroundColor: slide.accent, transition: 'background-color 0.8s ease' }}
-          />
-          <div
-            className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-10 blur-3xl"
-            style={{ backgroundColor: slide.accent, transition: 'background-color 0.8s ease' }}
-          />
-          <div
-            className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
-            style={{
-              backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)',
-              backgroundSize: '32px 32px',
-            }}
-          />
-        </div>
-
-        <div className="container mx-auto px-4 py-20 md:py-28 relative">
-          <div className="max-w-2xl mx-auto text-center">
-            <div
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6"
-              style={{ transition: 'all 0.4s ease' }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              {slide.label}
-            </div>
-
-            <h1
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-5 leading-tight whitespace-pre-line"
-              style={{ transition: 'opacity 0.4s ease' }}
-            >
-              {slide.title}
-            </h1>
-
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed">
-              {slide.description}
-            </p>
-
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              {session ? (
-                <>
-                  <Link href="/projects" className="btn-primary px-6 py-3 text-base">
-                    프로젝트 탐색
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </Link>
-                  <Link href="/projects/new" className="btn-secondary px-6 py-3 text-base">
-                    + 새 프로젝트
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/register" className="btn-primary px-6 py-3 text-base">
-                    무료로 시작하기
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </Link>
-                  <Link href="/projects" className="btn-secondary px-6 py-3 text-base">
-                    프로젝트 둘러보기
-                  </Link>
-                </>
-              )}
-            </div>
+      {/* Hero Section */}
+      <section className="min-h-[600px] lg:min-h-[720px] flex flex-col md:flex-row items-center px-8 lg:px-24 py-20 bg-surface">
+        <div className="w-full md:w-1/2 flex flex-col gap-8">
+          <h1 className="text-4xl md:text-[3.5rem] leading-[1.1] font-bold font-headline tracking-tight text-on-surface">
+            아이디어를 현실로,
+            <br />
+            최적의 팀원을 만나보세요
+          </h1>
+          <p className="text-xl text-on-surface-variant max-w-lg leading-relaxed">
+            AI 기반 도메인 매칭과 자동 생성되는 로드맵으로 사이드 프로젝트의 시작부터 끝까지, SPM이
+            당신의 완벽한 메이트가 되어드립니다.
+          </p>
+          <div className="flex flex-wrap gap-4 pt-4">
+            {session ? (
+              <>
+                <Link
+                  href="/projects"
+                  className="bg-primary-container text-on-primary px-8 py-4 rounded-lg font-semibold text-lg transition-all hover:translate-x-1 shadow-sm"
+                >
+                  프로젝트 탐색
+                </Link>
+                <Link
+                  href="/projects/new"
+                  className="text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-container-low transition-all"
+                >
+                  + 새 프로젝트
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="bg-primary-container text-on-primary px-8 py-4 rounded-lg font-semibold text-lg transition-all hover:translate-x-1 shadow-sm"
+                >
+                  시작하기
+                </Link>
+                <Link
+                  href="/projects"
+                  className="text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-container-low transition-all"
+                >
+                  프로젝트 둘러보기
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
-        {/* 슬라이드 컨트롤 */}
-        <button
-          onClick={goPrev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background p-2.5 rounded-full shadow-md border border-border transition-all"
-          aria-label="이전 슬라이드"
-        >
-          <svg
-            className="w-5 h-5 text-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <button
-          onClick={goNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/80 backdrop-blur-sm hover:bg-background p-2.5 rounded-full shadow-md border border-border transition-all"
-          aria-label="다음 슬라이드"
-        >
-          <svg
-            className="w-5 h-5 text-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              aria-label={`슬라이드 ${i + 1}`}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === currentSlide
-                  ? 'bg-primary w-8'
-                  : 'bg-foreground/20 w-1.5 hover:bg-foreground/40'
-              }`}
-            />
-          ))}
+        <div className="w-full md:w-1/2 mt-16 md:mt-0 relative">
+          <div className="bg-surface-container-lowest p-4 rounded-xl shadow-[0_40px_80px_rgba(26,28,28,0.08)] transform md:rotate-2">
+            <div className="rounded-lg w-full h-64 md:h-80 bg-surface-container-low flex items-center justify-center border border-outline-variant/15">
+              <span className="material-symbols-outlined text-6xl text-on-surface-variant/30">
+                dashboard
+              </span>
+            </div>
+          </div>
+          <div className="absolute -bottom-8 -left-8 bg-surface-container-lowest p-6 rounded-xl shadow-lg hidden lg:block">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-emerald-600">check_circle</span>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-on-surface">AI Matching Complete</p>
+                <p className="text-xs text-on-surface-variant">
+                  3명의 새로운 팀원이 제안되었습니다.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════
-                핵심 기능 소개 섹션
-            ══════════════════════════════════════ */}
-      <section className="py-16 md:py-20 bg-background" aria-label="주요 기능">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
-              왜 Side Project Mate인가요?
+      {/* Features Bento Grid */}
+      <section className="py-24 px-8 lg:px-24 bg-surface-container-low" aria-label="주요 기능">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-16">
+            <span className="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-4 block">
+              Key Features
             </span>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-              아이디어에서 실행까지, 더 빠르게
+            <h2 className="text-4xl font-bold font-headline text-on-surface">
+              프로젝트 성공을 위한 올인원 솔루션
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              AI가 실행을 돕고, 맞는 동료를 찾고, 실시간으로 함께 만들어가세요
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {features.map((feat) => (
               <div
                 key={feat.title}
-                className="group p-6 rounded-2xl border border-border bg-card hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                className={`${feat.colSpan} bg-surface-container-lowest p-10 rounded-xl flex flex-col justify-between min-h-[280px]`}
               >
-                <div
-                  className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${feat.color}`}
-                >
-                  {feat.icon}
+                <div>
+                  <span className="material-symbols-outlined text-primary text-4xl mb-6">
+                    {feat.icon}
+                  </span>
+                  <h3 className="text-2xl font-bold text-on-surface mb-4">{feat.title}</h3>
+                  <p className="text-on-surface-variant leading-relaxed max-w-md">
+                    {feat.description}
+                  </p>
                 </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{feat.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feat.description}</p>
+                <div className="mt-8 flex gap-2">
+                  {feat.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-4 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold uppercase"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

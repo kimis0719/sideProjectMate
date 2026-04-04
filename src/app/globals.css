@@ -3,6 +3,38 @@
 @tailwind utilities;
 
 @layer base {
+  /* 한국어 어절 단위 줄바꿈 — 글자 단위 끊김 방지 */
+  * {
+    word-break: keep-all;
+  }
+
+  /* 레인지 슬라이더 커스텀 */
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 12px;
+    border-radius: 9999px;
+  }
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--primary, #004ac6);
+    cursor: pointer;
+    margin-top: -4px;
+  }
+  input[type='range']::-moz-range-track {
+    height: 12px;
+    border-radius: 9999px;
+  }
+  input[type='range']::-moz-range-thumb {
+    width: 24px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--primary, #004ac6);
+    border: none;
+    cursor: pointer;
+  }
+
   :root {
     /*
       Semantic Colors (시맨틱 컬러) 정의
