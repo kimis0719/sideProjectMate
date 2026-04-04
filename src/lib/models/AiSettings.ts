@@ -34,6 +34,9 @@ export interface IAiSettings extends Document {
   // 기본 프리셋
   defaultPresets: IDefaultPreset[];
 
+  // 가드레일 패턴 (정규식 문자열 배열, 서버 사이드 검증용)
+  guardRailPatterns: string[];
+
   // 메타
   updatedBy: Types.ObjectId;
   updatedAt: Date;
@@ -167,6 +170,22 @@ const AiSettingsSchema = new Schema<IAiSettings>(
     defaultPresets: {
       type: [DefaultPresetSchema],
       default: DEFAULT_PRESETS,
+    },
+
+    guardRailPatterns: {
+      type: [String],
+      default: [
+        '너는\\s*(?:이제|이다)',
+        '역할을?\\s*바꿔',
+        '이전\\s*(?:지시|명령).*무시',
+        '(?:위|앞).*명령.*무시',
+        'ignore\\s+(?:above|previous|instructions)',
+        'forget\\s+(?:everything|all)',
+        '\\d+번\\s*반복',
+        '위\\s*내용.*반복',
+        'api\\s*키.*(?:출력|알려|보여)',
+        '비밀번호.*(?:알려|출력|보여)',
+      ],
     },
 
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
