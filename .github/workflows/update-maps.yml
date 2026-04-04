@@ -12,6 +12,7 @@ jobs:
 
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -26,10 +27,30 @@ jobs:
       - name: MAP.md 갱신 실행
         run: node scripts/generate-maps.js
 
-      - name: 변경사항 커밋 & 푸시
+      - name: 변경사항 확인
+        id: check
         run: |
+          git add src/**/MAP.md
+          if git diff --staged --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: PR 생성
+        if: steps.check.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="auto/update-maps-$(date +%Y%m%d-%H%M%S)"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add src/**/MAP.md
-          git diff --staged --quiet || git commit -m "docs: auto-update MAP.md files"
-          git push
+          git checkout -b "$BRANCH"
+          git commit -m "docs: auto-update MAP.md files"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "docs: auto-update MAP.md files" \
+            --body "MAP.md 파일 자동 갱신 (GitHub Actions)" \
+            --base main \
+            --head "$BRANCH"
+          gh pr merge "$BRANCH" --auto --squash --delete-branch
