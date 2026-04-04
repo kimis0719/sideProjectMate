@@ -43,7 +43,6 @@ export default function ImageEditModal({
       setIsUploading(true);
       let finalUrl = previewUrl;
 
-      // 파일이 새로 선택된 경우에만 업로드 진행
       if (file) {
         const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
         const uploadPreset =
@@ -77,54 +76,60 @@ export default function ImageEditModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-on-background/20 backdrop-blur-md p-4"
+      onClick={onClose}
+    >
       <div
-        className="bg-white dark:bg-card w-full max-w-sm rounded-xl shadow-xl border border-gray-100 dark:border-border p-6"
+        className="bg-surface-container-lowest w-full max-w-[480px] rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.04)] p-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-bold text-gray-900 dark:text-foreground mb-4">
-          프로필 이미지 변경
-        </h3>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-xl font-bold font-headline text-on-surface">이미지 업로드</h2>
+          <button
+            onClick={onClose}
+            className="text-outline hover:text-on-surface transition-colors"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
 
-        <form onSubmit={handleUpload} className="space-y-6">
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 dark:border-muted shadow-inner">
-              {previewUrl ? (
+        <form onSubmit={handleUpload} className="space-y-8">
+          {/* 프리뷰 영역 */}
+          <label className="relative aspect-square bg-surface-container-low rounded-xl flex items-center justify-center overflow-hidden border-2 border-dashed border-outline-variant/30 cursor-pointer group">
+            {previewUrl ? (
+              <>
                 <Image
                   src={previewUrl}
                   alt="Preview"
                   fill
-                  sizes="128px"
+                  sizes="480px"
                   className="object-cover"
                   unoptimized
                 />
-              ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                  No Image
+                {/* 원형 크롭 가이드 — 영역 최대 크기, 시각적 가이드만 */}
+                <div className="absolute inset-0 bg-on-surface/30 pointer-events-none" />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-[calc(100%-2rem)] h-[calc(100%-2rem)] border-2 border-white rounded-full shadow-[0_0_0_1000px_rgba(0,0,0,0.15)]" />
                 </div>
-              )}
-            </div>
-
-            <label className="cursor-pointer">
-              <span className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-muted dark:hover:bg-muted/80 text-sm font-medium rounded-lg transition-colors">
-                이미지 선택하기
-              </span>
+              </>
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-outline group-hover:text-on-surface-variant transition-colors">
+                <span className="material-symbols-outlined text-4xl">add_photo_alternate</span>
+                <span className="text-sm">클릭하여 이미지를 선택해주세요</span>
+              </div>
+            )}
+            {!previewUrl && (
               <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-            </label>
-          </div>
+            )}
+          </label>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              취소
-            </button>
+          {/* 액션 버튼 */}
+          <div className="space-y-3">
             <button
               type="submit"
               disabled={isUploading}
-              className="px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="w-full bg-primary-container text-on-primary py-4 rounded-lg font-bold hover:shadow-md transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isUploading ? (
                 <>
@@ -132,9 +137,32 @@ export default function ImageEditModal({
                   업로드 중...
                 </>
               ) : (
-                '저장하기'
+                '변경사항 저장'
               )}
             </button>
+            {previewUrl && (
+              <div className="flex gap-3">
+                <label className="flex-1 py-4 text-center text-on-surface-variant font-semibold hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer">
+                  다시 업로드
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await onSave('');
+                    onClose();
+                  }}
+                  className="flex-1 py-4 text-on-error font-semibold bg-error hover:bg-error/90 rounded-lg transition-colors active:scale-[0.98]"
+                >
+                  이미지 삭제
+                </button>
+              </div>
+            )}
           </div>
         </form>
       </div>

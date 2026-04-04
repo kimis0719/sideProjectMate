@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Application | The Digital Curator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dadad9",
+                      "surface-bright": "#f9f9f8",
+                      "on-background": "#1a1c1c",
+                      "on-secondary-container": "#394c84",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "tertiary-container": "#bc4800",
+                      "on-secondary-fixed": "#00174b",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed": "#360f00",
+                      "on-surface": "#1a1c1c",
+                      "inverse-on-surface": "#f1f1f0",
+                      "surface-container-highest": "#e2e2e2",
+                      "surface-container-high": "#e8e8e7",
+                      "surface-tint": "#0053db",
+                      "secondary-container": "#acbfff",
+                      "surface-container-low": "#f3f4f3",
+                      "on-secondary-fixed-variant": "#31447b",
+                      "on-primary-container": "#eeefff",
+                      "on-surface-variant": "#434655",
+                      "error-container": "#ffdad6",
+                      "primary": "#004ac6",
+                      "surface": "#f9f9f8",
+                      "secondary-fixed": "#dbe1ff",
+                      "inverse-surface": "#2f3130",
+                      "primary-container": "#2563eb",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-tertiary-container": "#ffede6",
+                      "inverse-primary": "#b4c5ff",
+                      "tertiary": "#943700",
+                      "primary-fixed": "#dbe1ff",
+                      "surface-variant": "#e2e2e2",
+                      "secondary": "#495c95",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "on-tertiary-fixed-variant": "#7d2d00",
+                      "error": "#ba1a1a",
+                      "surface-container": "#eeeeed",
+                      "outline": "#737686",
+                      "on-error-container": "#93000a",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "tertiary-fixed": "#ffdbcd",
+                      "on-tertiary": "#ffffff",
+                      "background": "#f9f9f8",
+                      "surface-container-lowest": "#ffffff",
+                      "outline-variant": "#c3c6d7",
+                      "on-primary-fixed": "#00174b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope", "Noto Sans KR"],
+                      "body": ["Inter", "Noto Sans KR"],
+                      "label": ["Inter", "Noto Sans KR"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-[#FAFAF9] text-on-surface antialiased min-h-screen flex items-center justify-center p-4">
+<!-- Modal Overlay -->
+<div class="fixed inset-0 bg-on-background/20 backdrop-blur-md z-40"></div>
+<!-- Application Modal -->
+<div class="relative z-50 w-full max-w-xl bg-surface-container-lowest rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.06)] overflow-hidden">
+<!-- Modal Header -->
+<div class="px-8 pt-8 pb-6 bg-surface-container-low/50">
+<div class="flex justify-between items-start mb-4">
+<h1 class="text-xl font-bold tracking-tight text-on-surface">프로젝트 지원하기</h1>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="space-y-3">
+<h2 class="text-lg font-bold text-primary">서울 미니멀리즘 디자인 가이드</h2>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant text-[11px] font-bold tracking-wider rounded-full uppercase">
+                        주 10h
+                    </span>
+<span class="px-3 py-1 bg-tertiary-fixed/40 text-on-tertiary-fixed-variant text-[11px] font-bold tracking-wider rounded-full uppercase">
+                        마법사
+                    </span>
+</div>
+</div>
+</div>
+<!-- Modal Body -->
+<div class="px-8 py-6 space-y-8">
+<!-- Motivation Input -->
+<div class="space-y-3">
+<div class="flex justify-between items-end">
+<label class="text-sm font-bold text-on-surface">지원 동기 *</label>
+<span class="text-[11px] font-medium text-outline">18/500</span>
+</div>
+<div class="relative">
+<textarea class="w-full h-32 px-4 py-3 bg-surface-container-low border-0 rounded-lg focus:ring-2 focus:ring-primary/20 text-sm placeholder:text-outline/60 resize-none transition-all" placeholder="지원 동기는 최소 20자 이상부터."></textarea>
+</div>
+<p class="text-[12px] font-medium text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">error</span>
+                    2자 더 입력해주세요
+                </p>
+</div>
+<!-- Time Commitment -->
+<div class="space-y-4">
+<label class="text-sm font-bold text-on-surface">주당 투자 가능 시간 *</label>
+<div class="flex flex-wrap gap-2">
+<!-- Option 5h -->
+<button class="px-5 py-2.5 bg-surface-container-high text-on-surface-variant text-sm font-semibold rounded-lg hover:bg-surface-dim transition-colors">
+                        5h
+                    </button>
+<!-- Option 10h (Active) -->
+<button class="px-5 py-2.5 bg-primary-container text-on-primary text-sm font-bold rounded-lg shadow-sm">
+                        10h
+                    </button>
+<!-- Option 15h -->
+<button class="px-5 py-2.5 bg-surface-container-high text-on-surface-variant text-sm font-semibold rounded-lg hover:bg-surface-dim transition-colors">
+                        15h
+                    </button>
+<!-- Option 20h -->
+<button class="px-5 py-2.5 bg-surface-container-high text-on-surface-variant text-sm font-semibold rounded-lg hover:bg-surface-dim transition-colors">
+                        20h
+                    </button>
+<!-- Option 30h+ -->
+<button class="px-5 py-2.5 bg-surface-container-high text-on-surface-variant text-sm font-semibold rounded-lg hover:bg-surface-dim transition-colors">
+                        30h+
+                    </button>
+</div>
+</div>
+<!-- Message Input -->
+<div class="space-y-3">
+<label class="text-sm font-bold text-on-surface">추가 메시지 (선택)</label>
+<textarea class="w-full h-24 px-4 py-3 bg-surface-container-low border-0 rounded-lg focus:ring-2 focus:ring-primary/20 text-sm placeholder:text-outline/60 resize-none transition-all" placeholder="프로젝트 리더에게 전달하고 싶은 말이 있다면 남겨주세요."></textarea>
+</div>
+</div>
+<!-- Modal Footer Actions -->
+<div class="px-8 py-6 bg-surface-container-low/30 flex gap-3">
+<button class="flex-1 py-4 text-on-surface-variant font-bold text-sm bg-surface-container-high rounded-lg hover:bg-surface-dim active:scale-[0.98] transition-all">
+                취소
+            </button>
+<button class="flex-[2] py-4 bg-primary/40 text-on-primary font-bold text-sm rounded-lg cursor-not-allowed transition-all">
+                지원서 제출
+            </button>
+</div>
+</div>
+<!-- Background Decoration (Subtle Tonal Shifts as per DS) -->
+<div class="fixed top-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[120px] pointer-events-none"></div>
+<div class="fixed bottom-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-secondary/5 blur-[120px] pointer-events-none"></div>
+</body></html>

@@ -326,8 +326,8 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
         onClick={() => setIsResourceModalOpen(!isResourceModalOpen)}
         className={`fixed right-8 bottom-8 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 ${
           isResourceModalOpen
-            ? 'bg-slate-800 text-white rotate-45'
-            : 'bg-white text-slate-800 border border-slate-200 hover:border-slate-300'
+            ? 'bg-primary-container text-on-primary rotate-45'
+            : 'bg-surface-container-lowest text-on-surface shadow-[0_4px_12px_rgba(26,28,28,0.08)] hover:shadow-[0_8px_24px_rgba(26,28,28,0.12)]'
         }`}
         aria-label="Toggle Resource Box"
       >

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Manrope:wght@600;700;800&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#f9f9f8",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#394c84",
+                    "on-secondary-fixed": "#00174b",
+                    "on-secondary-fixed-variant": "#31447b",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "secondary-fixed": "#dbe1ff",
+                    "surface-container": "#eeeeed",
+                    "primary-container": "#2563eb",
+                    "surface-container-low": "#f3f4f3",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#ffdbcd",
+                    "inverse-surface": "#2f3130",
+                    "surface-tint": "#0053db",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#943700",
+                    "secondary-container": "#acbfff",
+                    "on-tertiary-container": "#ffede6",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-primary-fixed": "#00174b",
+                    "surface-variant": "#e2e2e2",
+                    "surface": "#f9f9f8",
+                    "on-surface-variant": "#434655",
+                    "tertiary-container": "#bc4800",
+                    "surface-container-high": "#e8e8e7",
+                    "on-surface": "#1a1c1c",
+                    "primary": "#004ac6",
+                    "surface-container-highest": "#e2e2e2",
+                    "outline-variant": "#c3c6d7",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "surface-dim": "#dadad9",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#1a1c1c",
+                    "secondary": "#495c95",
+                    "on-primary-container": "#eeefff",
+                    "inverse-primary": "#b4c5ff",
+                    "on-tertiary-fixed": "#360f00",
+                    "inverse-on-surface": "#f1f1f0",
+                    "background": "#f9f9f8",
+                    "primary-fixed": "#dbe1ff",
+                    "on-error": "#ffffff",
+                    "outline": "#737686"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope", "Noto Sans KR"],
+                    "body": ["Inter", "Noto Sans KR"],
+                    "label": ["Inter", "Noto Sans KR"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; }
+        .dot-grid {
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e2e2;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center p-4 dot-grid">
+<!-- Glassmorphism Overlay (Full Screen) -->
+<div class="fixed inset-0 bg-surface/40 backdrop-blur-md z-0"></div>
+<!-- Modal Canvas -->
+<div class="relative z-10 w-full max-w-3xl h-[870px] bg-surface-container-lowest rounded-xl flex flex-col overflow-hidden shadow-[0_20px_40px_rgba(26,28,28,0.06)]">
+<!-- TopAppBar (From JSON Anchor) -->
+<header class="bg-[#f9f9f8]/80 backdrop-blur-xl flex justify-between items-center w-full px-6 py-4 sticky top-0 z-20">
+<h1 class="text-xl font-bold text-[#1a1c1c] font-['Manrope'] tracking-tight">지시서 히스토리</h1>
+<div class="flex items-center gap-2">
+<button class="hover:bg-[#f3f4f3] transition-colors p-2 rounded-lg scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[#1a1c1c]/60">close</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar - Suppressed for Modal focused view as per Shell Visibility Rule -->
+<!-- Content Area -->
+<main class="flex-1 overflow-y-auto custom-scrollbar px-6 py-8">
+<div class="space-y-6">
+<!-- History Item 1 (Expanded) -->
+<section class="bg-surface-container-low rounded-xl overflow-hidden">
+<!-- Header Info -->
+<div class="p-6 flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="bg-[#e2f5e9] text-[#065f46] text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">기능 구현</span>
+<div class="flex items-center gap-1.5 text-on-surface-variant text-sm">
+<span class="material-symbols-outlined text-sm">segment</span>
+<span class="font-medium">4 섹션</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant text-xs font-medium">
+<span>issaac</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span>0분 전</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex gap-4 items-center">
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant/60 font-bold uppercase tracking-tighter">Model</span>
+<span class="text-sm font-semibold text-primary">gemini-2.5-flash</span>
+</div>
+<div class="h-6 w-px bg-outline-variant/30"></div>
+<div class="flex flex-col">
+<span class="text-[10px] text-on-surface-variant/60 font-bold uppercase tracking-tighter">Tokens</span>
+<span class="text-sm font-semibold">808 / 1,105</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/40">expand_less</span>
+</div>
+</div>
+<!-- Markdown Content (Expanded Area) -->
+<div class="mx-6 mb-6 p-6 bg-surface-container-lowest rounded-lg">
+<div class="prose prose-sm max-w-none text-on-surface space-y-4">
+<h2 class="text-lg font-bold font-headline">## AI 코딩 에이전트 지시서</h2>
+<p class="text-sm leading-relaxed text-on-surface-variant">
+                                이 문서는 새로운 UI 시스템을 위한 AI 에이전트 가이드라인을 정의합니다. 모든 컴포넌트는 Seoul Minimalist 철학을 따르며, 불필요한 라인을 제거하고 톤의 차이만으로 구조를 형성합니다.
+                            </p>
+<ul class="space-y-2 list-disc pl-4 text-sm text-on-surface-variant">
+<li><strong>Color Strategy:</strong> surface-container 계열을 활용한 레이어링</li>
+<li><strong>Typography:</strong> Manrope와 Noto Sans KR의 조화</li>
+<li><strong>Component:</strong> Rounded-xl(0.5rem)을 기본으로 하는 현대적 형태</li>
+</ul>
+<div class="mt-4 p-4 bg-surface-container-low rounded border-l-4 border-primary/20 italic text-xs text-on-surface-variant">
+                                "지시서의 핵심은 간결함과 명확한 우선순위 전달에 있습니다."
+                            </div>
+</div>
+</div>
+<!-- Actions -->
+<div class="px-6 py-4 bg-surface-container-high/50 flex justify-end gap-3">
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-highest transition-colors rounded-lg">
+<span class="material-symbols-outlined text-lg">content_copy</span>
+                            복사
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-primary-container text-on-primary hover:bg-primary transition-all duration-200 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-lg">download</span>
+                            MD 다운로드
+                        </button>
+</div>
+</section>
+<!-- History Item 2 (Collapsed) -->
+<section class="bg-surface-container-low/60 hover:bg-surface-container-low transition-colors rounded-xl overflow-hidden cursor-pointer">
+<div class="p-6 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="bg-[#e2f5e9]/60 text-[#065f46]/80 text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">UI 개선</span>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">레이아웃 그리드 시스템 수정 지시</span>
+<span class="text-xs text-on-surface-variant/70">gemini-2.0-pro · 15분 전</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right hidden sm:block">
+<span class="block text-[10px] text-on-surface-variant/40 font-bold uppercase tracking-tighter">Tokens</span>
+<span class="text-xs font-medium text-on-surface-variant">420 / 1,000</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/40">expand_more</span>
+</div>
+</div>
+</section>
+<!-- History Item 3 (Collapsed) -->
+<section class="bg-surface-container-low/60 hover:bg-surface-container-low transition-colors rounded-xl overflow-hidden cursor-pointer">
+<div class="p-6 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="bg-primary-container/10 text-primary-container text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">신규 프로젝트</span>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Curator AI 대시보드 기획안 작성</span>
+<span class="text-xs text-on-surface-variant/70">gemini-2.5-flash · 1시간 전</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right hidden sm:block">
+<span class="block text-[10px] text-on-surface-variant/40 font-bold uppercase tracking-tighter">Tokens</span>
+<span class="text-xs font-medium text-on-surface-variant">1,250 / 2,000</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/40">expand_more</span>
+</div>
+</div>
+</section>
+<!-- History Item 4 (Collapsed) -->
+<section class="bg-surface-container-low/60 hover:bg-surface-container-low transition-colors rounded-xl overflow-hidden cursor-pointer">
+<div class="p-6 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="bg-[#fff1f2] text-[#9f1239] text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider uppercase">버그 픽스</span>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">다크모드 컬러 토큰 불일치 해결 지시</span>
+<span class="text-xs text-on-surface-variant/70">gpt-4o · 2시간 전</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right hidden sm:block">
+<span class="block text-[10px] text-on-surface-variant/40 font-bold uppercase tracking-tighter">Tokens</span>
+<span class="text-xs font-medium text-on-surface-variant">290 / 500</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant/40">expand_more</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Empty State / Footer Hint -->
+<div class="mt-12 text-center">
+<p class="text-xs text-on-surface-variant/40 font-medium">최근 30일간의 히스토리만 보관됩니다.</p>
+</div>
+</main>
+<!-- Sticky Footer Branding -->
+<footer class="px-6 py-4 border-t border-outline-variant/10 flex justify-center items-center gap-2">
+<span class="text-[10px] font-bold tracking-[0.2em] text-on-surface-variant/30 uppercase">Curated by Curator AI Workspace</span>
+</footer>
+</div>
+</body></html>

@@ -81,25 +81,26 @@ export default function InstructionModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-        {/* ── 헤더 ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">AI 지시서 생성</h2>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-on-surface/10 backdrop-blur-md">
+      <div className="bg-surface-container-lowest w-full max-w-xl rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.08)] overflow-hidden flex flex-col mx-4 max-h-[90vh]">
+        {/* 헤더 */}
+        <div className="px-6 py-5 flex items-center justify-between">
+          <h2 className="text-xl font-bold font-headline text-on-surface tracking-tight">
+            AI 지시서 생성
+          </h2>
           <button
             onClick={closeModal}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl"
+            className="text-on-surface-variant hover:text-on-surface transition-colors"
           >
-            &times;
+            <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        {/* ── 본문 (스크롤) ── */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
-          {/* 결과가 없을 때: 설정 UI */}
+        {/* 본문 */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8">
           {!resultMarkdown && (
             <>
-              {/* ① 지시 대상 */}
+              {/* 지시 대상 */}
               <ScopeSelector
                 label="지시 대상 (작업으로 변환할 노트)"
                 target={target}
@@ -117,60 +118,60 @@ export default function InstructionModal() {
                 onChange={setReference}
               />
 
-              {/* 프로젝트 정보 안내 */}
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+              {/* 안내 박스 */}
+              <div className="p-4 bg-primary-container/10 rounded-xl flex gap-3 items-start border border-primary-container/5">
+                <span className="material-symbols-outlined text-primary text-xl">info</span>
+                <p className="text-sm text-on-surface leading-relaxed">
                   <span className="font-medium">자동 포함되는 정보:</span> 프로젝트 등록 시 설정한
-                  기술스택, 프로젝트명, 상태, 마감일이 AI 컨텍스트에 자동으로 포함됩니다. 참조
-                  노트를 별도로 선택하지 않아도 기본 프로젝트 정보는 전달됩니다.
-                </p>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  관리자 설정에서 프로젝트 개요, 리소스, 팀원 목록 포함 여부를 조절할 수 있습니다.
+                  기술스택, 프로젝트명, 상태, 마감일이 AI 컨텍스트에 자동으로 포함됩니다.
                 </p>
               </div>
 
-              {/* ② 프리셋 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+              {/* 프리셋 */}
+              <section className="space-y-3">
+                <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">
                   프리셋
                 </label>
-                <select
-                  value={preset}
-                  onChange={(e) => {
-                    const selected = presets.find((p) => p.name === e.target.value);
-                    setPreset(e.target.value, selected?.roleInstruction ?? '');
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                             bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
-                >
-                  <option value="">선택 안 함</option>
-                  {presets.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {p.name} — {p.description}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="relative">
+                  <select
+                    value={preset}
+                    onChange={(e) => {
+                      const selected = presets.find((p) => p.name === e.target.value);
+                      setPreset(e.target.value, selected?.roleInstruction ?? '');
+                    }}
+                    className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 appearance-none focus:ring-2 focus:ring-primary transition-all text-sm"
+                  >
+                    <option value="">선택 안 함</option>
+                    {presets.map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.name} — {p.description}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
+                    expand_more
+                  </span>
+                </div>
+              </section>
 
-              {/* ③ 추가 지시 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+              {/* 추가 지시 */}
+              <section className="space-y-3">
+                <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">
                   추가 지시 (선택)
                 </label>
                 <textarea
                   value={additionalInstruction}
                   onChange={(e) => setAdditionalInstruction(e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                             bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm resize-y"
+                  rows={3}
+                  className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary resize-none text-sm placeholder:text-on-surface-variant/50"
                   placeholder="예: 각 작업의 예상 소요시간도 포함해줘"
                 />
-              </div>
+              </section>
 
-              {/* 에러 + 모델 테스트 */}
               {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
-                  {error}
+                <div className="p-3 bg-error-container/40 text-on-error-container rounded-lg text-sm flex items-start gap-2">
+                  <span className="material-symbols-outlined text-base mt-0.5">warning</span>
+                  <span>{error}</span>
                 </div>
               )}
             </>
@@ -179,16 +180,16 @@ export default function InstructionModal() {
           {/* 결과 미리보기 */}
           {resultMarkdown && (
             <div>
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+              <h3 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
                 결과 미리보기
               </h3>
-              <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
-                <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">
+              <div className="p-6 bg-surface-container-low rounded-xl max-h-96 overflow-y-auto">
+                <pre className="whitespace-pre-wrap text-sm text-on-surface font-mono leading-relaxed">
                   {resultMarkdown}
                 </pre>
               </div>
               {usage && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-xs text-on-surface-variant mt-2">
                   입력 {usage.inputTokens.toLocaleString()} / 출력{' '}
                   {usage.outputTokens.toLocaleString()} 토큰
                 </p>
@@ -197,28 +198,31 @@ export default function InstructionModal() {
           )}
         </div>
 
-        {/* ── 푸터 ── */}
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        {/* 푸터 */}
+        <div className="px-8 py-6 bg-surface-container-low/50 flex items-center justify-between">
           {resultMarkdown ? (
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={handleCopy}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg"
               >
+                <span className="material-symbols-outlined text-lg">content_copy</span>
                 복사
               </button>
               <button
                 onClick={handleDownload}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg"
               >
+                <span className="material-symbols-outlined text-lg">download</span>
                 MD 다운로드
               </button>
               <button
                 onClick={() => {
                   useInstructionStore.setState({ resultMarkdown: '', error: null, usage: null });
                 }}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg"
               >
+                <span className="material-symbols-outlined text-lg">refresh</span>
                 재생성
               </button>
               {boardId && historyId && (
@@ -227,8 +231,9 @@ export default function InstructionModal() {
                     openExecutionResult(boardId, historyId);
                     closeModal();
                   }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-primary-container text-on-primary rounded-lg hover:bg-primary transition-colors shadow-sm"
                 >
+                  <span className="material-symbols-outlined text-lg">task_alt</span>
                   결과 보고
                 </button>
               )}
@@ -239,9 +244,14 @@ export default function InstructionModal() {
           <button
             onClick={generate}
             disabled={isGenerating}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium
-                       hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-8 py-3 bg-primary-container text-on-primary font-bold rounded-xl hover:translate-x-1 active:opacity-80 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              auto_awesome
+            </span>
             {isGenerating ? '생성 중...' : '생성하기'}
           </button>
         </div>
@@ -308,44 +318,42 @@ function ScopeSelector({
     : notes;
 
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+    <section className="space-y-3">
+      <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">
         {label}
       </label>
-      <div className="space-y-2">
-        {/* 라디오: 전체 */}
-        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+      <div className="grid grid-cols-1 gap-3">
+        <label className="flex items-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all">
           <input
             type="radio"
             checked={mode === 'all'}
             onChange={() => handleModeChange('all')}
-            className="text-blue-600"
+            className="w-4 h-4 text-primary border-outline-variant focus:ring-primary"
           />
-          보드 전체 ({notes.length}개 노트)
+          <span className="ml-3 font-medium text-sm">보드 전체 ({notes.length}개 노트)</span>
         </label>
 
-        {/* 라디오: 섹션 선택 */}
-        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+        <label className="flex items-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all">
           <input
             type="radio"
             checked={mode === 'sections'}
             onChange={() => handleModeChange('sections')}
-            className="text-blue-600"
+            className="w-4 h-4 text-primary border-outline-variant focus:ring-primary"
           />
-          섹션 선택
+          <span className="ml-3 font-medium text-sm">섹션 선택</span>
         </label>
         {mode === 'sections' && (
           <div className="ml-6 space-y-1">
             {sections.map((s) => (
               <label
                 key={s.id}
-                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer"
+                className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer py-1"
               >
                 <input
                   type="checkbox"
                   checked={selectedSections.has(s.id)}
                   onChange={() => toggleSection(s.id)}
-                  className="rounded text-blue-600"
+                  className="rounded text-primary border-outline-variant focus:ring-primary"
                 />
                 {s.title} ({noteCountBySection.get(s.id) ?? 0}개 노트)
               </label>
@@ -353,15 +361,14 @@ function ScopeSelector({
           </div>
         )}
 
-        {/* 라디오: 노트 직접 선택 */}
-        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+        <label className="flex items-center p-4 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all">
           <input
             type="radio"
             checked={mode === 'notes'}
             onChange={() => handleModeChange('notes')}
-            className="text-blue-600"
+            className="w-4 h-4 text-primary border-outline-variant focus:ring-primary"
           />
-          노트 직접 선택
+          <span className="ml-3 font-medium text-sm">노트 직접 선택</span>
         </label>
         {mode === 'notes' && (
           <div className="ml-6 space-y-2">
@@ -369,21 +376,20 @@ function ScopeSelector({
               type="text"
               value={noteSearch}
               onChange={(e) => setNoteSearch(e.target.value)}
-              className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+              className="w-full px-3 py-2 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary"
               placeholder="검색..."
             />
             <div className="max-h-40 overflow-y-auto space-y-1">
               {filteredNotes.map((n) => (
                 <label
                   key={n.id}
-                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer"
+                  className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer py-1"
                 >
                   <input
                     type="checkbox"
                     checked={selectedNotes.has(n.id)}
                     onChange={() => toggleNote(n.id)}
-                    className="rounded text-blue-600"
+                    className="rounded text-primary border-outline-variant focus:ring-primary"
                   />
                   <span className="truncate">{n.text}</span>
                 </label>
@@ -392,7 +398,7 @@ function ScopeSelector({
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -422,29 +428,29 @@ function ReferenceSelector({
   };
 
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+    <section className="space-y-3">
+      <label className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">
         참조 컨텍스트 (배경 정보로 AI에게 전달)
       </label>
       <div className="ml-2 space-y-1">
         {sections.map((s) => (
           <label
             key={s.id}
-            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer"
+            className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer py-1"
           >
             <input
               type="checkbox"
               checked={selectedSections.has(s.id)}
               onChange={() => toggleSection(s.id)}
-              className="rounded text-blue-600"
+              className="rounded text-primary border-outline-variant focus:ring-primary"
             />
             {s.title} ({noteCountBySection.get(s.id) ?? 0}개 노트)
           </label>
         ))}
         {sections.length === 0 && (
-          <p className="text-xs text-gray-400 dark:text-gray-500">섹션이 없습니다.</p>
+          <p className="text-xs text-on-surface-variant/50">섹션이 없습니다.</p>
         )}
       </div>
-    </div>
+    </section>
   );
 }

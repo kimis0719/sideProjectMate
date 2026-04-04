@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>팀원 리뷰 작성 | CollabHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Manrope:wght@600;700;800&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error-container": "#93000a",
+                      "on-primary": "#ffffff",
+                      "outline-variant": "#c3c6d7",
+                      "surface-container-high": "#e8e8e7",
+                      "on-surface": "#1a1c1c",
+                      "primary-container": "#2563eb",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "secondary-fixed": "#dbe1ff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f3f4f3",
+                      "primary-fixed": "#dbe1ff",
+                      "inverse-primary": "#b4c5ff",
+                      "inverse-on-surface": "#f1f1f0",
+                      "secondary-container": "#acbfff",
+                      "background": "#f9f9f8",
+                      "tertiary": "#943700",
+                      "on-tertiary-fixed-variant": "#7d2d00",
+                      "on-tertiary-fixed": "#360f00",
+                      "surface-tint": "#0053db",
+                      "on-secondary-container": "#394c84",
+                      "tertiary-fixed": "#ffdbcd",
+                      "tertiary-container": "#bc4800",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "outline": "#737686",
+                      "on-secondary-fixed": "#00174b",
+                      "surface": "#f9f9f8",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary-container": "#ffede6",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "error-container": "#ffdad6",
+                      "on-surface-variant": "#434655",
+                      "inverse-surface": "#2f3130",
+                      "on-tertiary": "#ffffff",
+                      "surface-dim": "#dadad9",
+                      "surface-container-highest": "#e2e2e2",
+                      "on-error": "#ffffff",
+                      "on-secondary-fixed-variant": "#31447b",
+                      "primary": "#004ac6",
+                      "on-primary-fixed": "#00174b",
+                      "surface-variant": "#e2e2e2",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "secondary": "#495c95",
+                      "on-background": "#1a1c1c",
+                      "surface-bright": "#f9f9f8",
+                      "surface-container": "#eeeeed",
+                      "on-primary-container": "#eeefff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope", "Noto Sans KR"],
+                      "body": ["Inter", "Noto Sans KR"],
+                      "label": ["Inter", "Noto Sans KR"]
+              }
+            },
+          }
+        }
+      </script>
+<style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .glass-overlay { backdrop-filter: blur(12px); background-color: rgba(249, 249, 248, 0.8); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e2e2; border-radius: 10px; }
+      </style>
+</head>
+<body class="bg-[#FAFAF9] min-h-screen flex items-center justify-center p-4">
+<!-- Modal Overlay -->
+<div class="fixed inset-0 glass-overlay z-40 flex items-center justify-center">
+<!-- Modal Container -->
+<div class="bg-surface-container-lowest w-full max-w-lg rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.1)] overflow-hidden flex flex-col max-h-[921px]">
+<!-- Modal Header -->
+<div class="px-6 py-5 flex justify-between items-center bg-surface-container-lowest">
+<h2 class="text-on-surface font-headline font-bold text-lg tracking-tight">팀원 리뷰 작성</h2>
+<button class="p-2 hover:bg-surface-container-low rounded-xl transition-colors duration-200">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="close">close</span>
+</button>
+</div>
+<div class="overflow-y-auto custom-scrollbar">
+<!-- Profile Section -->
+<div class="px-8 py-6 flex flex-col items-center border-b border-surface-container-low">
+<div class="relative mb-3">
+<img alt="초록장사꾼" class="w-20 h-20 rounded-full object-cover shadow-sm" data-alt="portrait of a friendly young korean entrepreneur with warm lighting professional soft focus background editorial style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxoVPLF1RHDACP9CNRVE50YrYq9MP8eFoxhM49mAG3GxuwtN8NF-MKMJJRkoiZiMa0uy6gQ6DwcnA3t7fPccIgaUz4XKKXeIwr0oc7o54PBX3A2kXoDC-hnL0mubi5ZpO20HYA2lg4LvKHeU3AP6HMXVZW-jHsFh2Dr6zjqKWHbCjN2ab1N1M7Xb89qJSi6rXZ-BenDg6jqqC1X52kXZXVlx7iDaWZupYRX7HgqJV_k0is00pqSYZMS6G3NmC-_HLGROJ350DPKKZ_"/>
+</div>
+<h3 class="text-on-surface font-headline font-bold text-xl tracking-tight">초록장사꾼</h3>
+<p class="text-on-surface-variant font-body text-xs opacity-60">r</p>
+</div>
+<!-- Review Form -->
+<div class="p-8 space-y-8">
+<!-- Star Rating -->
+<section class="space-y-3">
+<label class="text-on-surface-variant font-label text-sm font-semibold uppercase tracking-wider flex items-center gap-1">
+                            별점 <span class="text-primary">*</span>
+</label>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-primary-container text-3xl cursor-pointer" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary-container text-3xl cursor-pointer" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary-container text-3xl cursor-pointer" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-primary-container text-3xl cursor-pointer" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-outline-variant text-3xl cursor-pointer hover:text-primary-container" data-icon="star">star</span>
+</div>
+</section>
+<!-- Tag Selection -->
+<section class="space-y-4">
+<label class="text-on-surface-variant font-label text-sm font-semibold uppercase tracking-wider">태그 선택 (복수 가능)</label>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 bg-primary-container text-on-primary text-xs font-medium rounded-full transition-all duration-200 shadow-sm">책임감있어요</button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-xs font-medium rounded-full hover:bg-surface-container-high transition-all duration-200">소통잘해요</button>
+<button class="px-4 py-2 bg-primary-container text-on-primary text-xs font-medium rounded-full transition-all duration-200 shadow-sm">실력있어요</button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-xs font-medium rounded-full hover:bg-surface-container-high transition-all duration-200">일정관리잘해요</button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-xs font-medium rounded-full hover:bg-surface-container-high transition-all duration-200">배려깊어요</button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-xs font-medium rounded-full hover:bg-surface-container-high transition-all duration-200">기술력뛰어나요</button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-xs font-medium rounded-full hover:bg-surface-container-high transition-all duration-200">아이디어가풍부해요</button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant text-xs font-medium rounded-full hover:bg-surface-container-high transition-all duration-200">적극적이에요</button>
+</div>
+</section>
+<!-- Comment -->
+<section class="space-y-3">
+<div class="flex justify-between items-center">
+<label class="text-on-surface-variant font-label text-sm font-semibold uppercase tracking-wider">코멘트 (선택)</label>
+<span class="text-[10px] text-outline font-body tracking-widest">0/200</span>
+</div>
+<div class="relative group">
+<textarea class="w-full h-32 p-4 bg-surface-container-low border-none rounded-xl text-on-surface text-sm focus:ring-2 focus:ring-primary-container/20 placeholder-outline-variant resize-none transition-all duration-200" placeholder="팀원에 대한 솔직한 리뷰를 남겨주세요..."></textarea>
+</div>
+</section>
+<!-- Public Toggle -->
+<div class="flex justify-end items-center gap-3">
+<span class="text-on-surface-variant font-label text-xs font-semibold uppercase">공개 리뷰</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-high rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Modal Footer Buttons -->
+<div class="px-8 py-6 bg-surface-container-lowest flex gap-3">
+<button class="flex-1 py-3 text-sm font-headline font-bold text-primary-container bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-all duration-200 active:scale-95">
+                    취소
+                </button>
+<button class="flex-[2] py-3 text-sm font-headline font-bold text-on-primary bg-primary-container rounded-xl hover:bg-primary transition-all duration-200 shadow-lg shadow-primary-container/20 active:scale-95">
+                    리뷰 제출
+                </button>
+</div>
+</div>
+</div>
+</body></html>
