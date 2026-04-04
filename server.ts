@@ -1,3 +1,4 @@
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import express from 'express';
 import { createServer } from 'http';
 import { parse } from 'url';
@@ -155,6 +156,18 @@ app.prepare().then(() => {
     socket.on('delete-section', (data) => {
       const { boardId, sectionId } = data;
       socket.to(boardId).emit('section-deleted', sectionId);
+    });
+
+    // 7-2. 섹션 완료
+    socket.on('section-completed', (data) => {
+      const { boardId, sectionId, completedAt, noteIds } = data;
+      socket.to(boardId).emit('section-completed', { sectionId, completedAt, noteIds });
+    });
+
+    // 7-3. 섹션 되돌리기
+    socket.on('section-reverted', (data) => {
+      const { boardId, sectionId, noteIds } = data;
+      socket.to(boardId).emit('section-reverted', { sectionId, noteIds });
     });
 
     // 8. 잠금 요청 (Generic)

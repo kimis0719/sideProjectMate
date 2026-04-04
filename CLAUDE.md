@@ -116,4 +116,4 @@ feature/* / fix/* /
 
 | 담당 영역                  | 작업자 | 상태    | 작업 내용 |
 | -------------------------- | ------ | ------- | --------- |
-| (현재 작업 중인 항목 없음) | — | 🟢 자유 | — |
+| src/app/api/kanban/, src/store/boardStore.ts, src/components/board/ | HyunJin | 🟡 작업 중 | Phase 3.5 칸반보드 2.0 전면 개편 (#231) |

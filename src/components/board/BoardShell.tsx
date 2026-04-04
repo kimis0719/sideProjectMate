@@ -182,6 +182,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           socket.off('section-created');
           socket.off('section-updated');
           socket.off('section-deleted');
+          socket.off('section-completed');
+          socket.off('section-reverted');
           socket.off('note-selected');
           socket.off('note-deselected');
           socket.off('board-synced');
@@ -509,74 +511,73 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)]">
-      <header className="flex items-center justify-between p-4 border-b border-border bg-background z-10 h-16 shadow-sm">
+    <div className="relative h-[calc(100vh-80px)]">
+      {/* 칸반 전용 헤더 — 캔버스 위에 떠있는 글래스 헤더 */}
+      <header className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 bg-white/60 backdrop-blur-md border-b border-zinc-200/50 z-20 h-16">
+        {/* 좌측: 보드 타이틀 + 상태 뱃지 + 멤버 아바타 */}
         <div className="flex items-center gap-4 pl-12 sm:pl-0">
-          <div className="text-lg font-semibold text-foreground tracking-tight">
-            {pid ? `Project Board` : `Public Board`}
-            {pid && <span className="text-xs text-muted-foreground ml-2 font-normal">#{pid}</span>}
-          </div>
-        </div>
-
-        {/* 멀티셀렉트 액션바 */}
-        {selectedNoteIds.length >= 2 && viewMode === 'active' && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-            <span className="text-xs font-medium text-primary">
-              {selectedNoteIds.length}개 선택
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-zinc-900 tracking-tight">
+              {pid ? 'Project Board' : 'Public Board'}
             </span>
-            <div className="w-px h-4 bg-primary/20" />
-            <button
-              onClick={() => batchCompleteNotes(selectedNoteIds)}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-500 transition-colors"
-              title="선택한 노트 일괄 완료"
-            >
-              <span>✅</span>
-              <span>선택 완료</span>
-            </button>
-            <button
-              onClick={() => selectNotes([])}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
-              title="선택 해제"
-            >
-              ✕
-            </button>
+            {pid && <span className="text-sm text-zinc-400 font-normal">#{pid}</span>}
           </div>
-        )}
 
-        <div className="flex items-center gap-3">
-          {/* 진행중 / 완료 탭 */}
-          <div className="flex items-center rounded-full border border-secondary bg-secondary/50 overflow-hidden">
+          {/* 진행중 / 완료 뱃지 */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => handleTabSwitch('active')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                 viewMode === 'active'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-red-50 text-red-600'
+                  : 'bg-zinc-100 text-zinc-400 hover:bg-red-50 hover:text-red-500'
               }`}
             >
-              <span>📌 진행중</span>
-              <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold text-[10px]">
-                {notesCount}
-              </span>
+              <span>📌</span>
+              <span>진행중</span>
+              <span className="ml-0.5 font-bold">{notesCount}</span>
             </button>
             <button
               onClick={() => handleTabSwitch('done')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                 viewMode === 'done'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-green-50 text-green-600'
+                  : 'bg-zinc-100 text-zinc-400 hover:bg-green-50 hover:text-green-500'
               }`}
             >
-              <span>✅ 완료</span>
-              <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full font-bold text-[10px]">
-                {completedNotes.length}
-              </span>
+              <span>✅</span>
+              <span>완료</span>
+              <span className="ml-0.5 font-bold">{completedNotes.length}</span>
             </button>
           </div>
 
-          {/* 접속자 아바타 그룹 (Presence UI) */}
-          <div className="flex items-center -space-x-2 mr-2 ml-1" id="board-presence-area">
-            {/* 1. 서버에 로드된 멤버 정보에서 내 프로필을 우선적으로 찾아 매칭 */}
+          {/* 멀티셀렉트 액션바 */}
+          {selectedNoteIds.length >= 2 && viewMode === 'active' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+              <span className="text-xs font-medium text-primary">
+                {selectedNoteIds.length}개 선택
+              </span>
+              <div className="w-px h-4 bg-primary/20" />
+              <button
+                onClick={() => batchCompleteNotes(selectedNoteIds)}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-green-600 text-white hover:bg-green-500 transition-colors"
+                title="선택한 노트 일괄 완료"
+              >
+                <span>✅</span>
+                <span>선택 완료</span>
+              </button>
+              <button
+                onClick={() => selectNotes([])}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
+                title="선택 해제"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* 접속자 아바타 그룹 */}
+          <div className="flex items-center -space-x-2 ml-2" id="board-presence-area">
             {[
               ...(session?.user
                 ? [
@@ -590,22 +591,22 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
               ...(activeUsers || []).filter((u) => u._id !== session?.user?.id),
             ]
               .slice(0, 5)
-              .map((user) => (
-                <div key={user._id} className="relative group">
+              .map((user, idx) => (
+                <div key={`${user._id}-${idx}`} className="relative group">
                   {user.avatarUrl ? (
                     <Image
                       src={user.avatarUrl}
                       alt={user.nName}
                       title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
-                      width={32}
-                      height={32}
-                      className={`w-8 h-8 rounded-full border-2 border-background object-cover z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'border-primary' : 'bg-secondary'}`}
+                      width={28}
+                      height={28}
+                      className={`w-7 h-7 rounded-full border-2 border-white object-cover z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'border-blue-400' : ''}`}
                       unoptimized
                     />
                   ) : (
                     <div
                       title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
-                      className={`w-8 h-8 rounded-full border-2 border-background flex items-center justify-center text-[10px] font-bold z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground'}`}
+                      className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'bg-blue-600 text-white border-blue-400' : 'bg-zinc-200 text-zinc-500'}`}
                     >
                       {user.nName ? user.nName.charAt(0).toUpperCase() : '?'}
                     </div>
@@ -615,49 +616,52 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             {activeUsers.length > 5 && (
               <div
                 title={`${activeUsers.length - 5}명 더 접속 중`}
-                className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-background bg-muted text-muted-foreground text-[10px] font-bold z-10 shadow-sm"
+                className="flex items-center justify-center w-7 h-7 rounded-full border-2 border-white bg-zinc-200 text-zinc-500 text-[10px] font-bold z-10 shadow-sm"
               >
                 +{activeUsers.length - 5}
               </div>
             )}
           </div>
+        </div>
 
-          <div className="h-6 w-px bg-border mx-1 hidden sm:block"></div>
-
-          {/* AI 지시서 생성 버튼 */}
+        {/* 우측: 액션 버튼들 */}
+        <div className="flex items-center gap-2">
+          {/* 지시서 버튼 */}
           {viewMode === 'active' && (
             <button
               onClick={() => {
                 const bid = useBoardStore.getState().boardId;
                 if (bid) useInstructionStore.getState().openModal(bid);
               }}
-              className="px-3 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 shadow-sm transition-colors hidden sm:flex items-center gap-1.5"
+              className="px-3 py-2 rounded-lg bg-[#7c3aed] text-white text-sm font-medium hover:bg-[#6d28d9] shadow-sm transition-colors hidden sm:flex items-center gap-1.5"
               title="AI 지시서 생성"
             >
               <span>📄</span>
               <span>지시서</span>
             </button>
           )}
+
+          {/* 히스토리 버튼 */}
           <button
             onClick={() => setIsHistoryModalOpen(true)}
-            className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium
-                       hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors hidden sm:flex items-center gap-1.5
-                       text-gray-700 dark:text-gray-300"
+            className="px-3 py-2 rounded-lg bg-orange-50 text-orange-600 text-sm font-medium
+                       hover:bg-orange-100 transition-colors hidden sm:flex items-center gap-1.5"
             title="지시서 히스토리"
           >
-            <span>📜</span>
+            <span>🕐</span>
             <span>히스토리</span>
           </button>
 
+          {/* 도움말 버튼 */}
           <button
             onClick={() => setIsShortcutModalOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400 transition-colors"
             title="Shortcuts (?)"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -671,7 +675,11 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             </svg>
           </button>
 
-          <div className={`flex items-center gap-3 ${viewMode !== 'active' ? 'invisible' : ''}`}>
+          {/* 구분선 */}
+          <div className="h-6 w-px bg-zinc-200 mx-1 hidden sm:block"></div>
+
+          {/* 노트/섹션 추가 버튼 */}
+          <div className="flex items-center gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -681,7 +689,12 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                   addNote();
                 }
               }}
-              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 shadow-sm transition-colors"
+              disabled={viewMode !== 'active'}
+              className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors ${
+                viewMode === 'active'
+                  ? 'bg-blue-600 text-white hover:bg-blue-500 cursor-pointer'
+                  : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+              }`}
             >
               <span className="hidden sm:inline">+ 노트 추가</span>
               <span className="sm:hidden">+</span>
@@ -691,7 +704,12 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                 e.stopPropagation();
                 handleAddSection();
               }}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 shadow-sm transition-colors"
+              disabled={viewMode !== 'active'}
+              className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors ${
+                viewMode === 'active'
+                  ? 'bg-blue-600 text-white hover:bg-blue-500 cursor-pointer'
+                  : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+              }`}
             >
               <span className="hidden sm:inline">+ 섹션 추가</span>
               <span className="sm:hidden">+</span>
@@ -763,8 +781,8 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
       <main
         ref={containerRef}
-        className={`relative flex-1 overflow-hidden select-none transition-colors duration-300 ${
-          viewMode === 'done' ? 'bg-gray-100 dark:bg-gray-900' : 'bg-background'
+        className={`absolute inset-0 overflow-hidden select-none transition-colors duration-300 ${
+          viewMode === 'done' ? 'bg-gray-100 dark:bg-gray-900' : 'bg-[#f9f9f8]'
         }`}
         aria-label="화이트보드"
         onPointerDown={handlePointerDown}
@@ -788,12 +806,17 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           }}
         >
           <div
-            className="absolute inset-[-10000px] bg-[radial-gradient(var(--border)_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"
-            style={{ opacity: 0.5 }}
+            className="absolute inset-[-10000px] bg-[radial-gradient(#d1d1d1_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none"
+            style={{ opacity: 0.7 }}
           />
 
           {/* Sections (Render First) - 부모 먼저, 자식 나중에 렌더 */}
           {[...sections]
+            .filter((s) =>
+              viewMode === 'active'
+                ? (s.status || 'active') === 'active'
+                : (s.status || 'active') === 'done'
+            )
             .sort((a, b) => (a.depth || 0) - (b.depth || 0))
             .map((section) => {
               // zIndex 계층 계산
@@ -939,8 +962,59 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
           })}
         </svg>
 
-        {/* 미니맵 */}
-        <div className="absolute bottom-4 right-4 z-[10000]">
+        {/* === 하단 컨트롤 바 === */}
+
+        {/* 좌측 — 줌 컨트롤 */}
+        <div className="absolute bottom-8 left-8 z-40" onPointerDown={(e) => e.stopPropagation()}>
+          <ZoomController
+            onFit={() => {
+              if (containerRef.current) {
+                fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
+              }
+            }}
+          />
+        </div>
+
+        {/* 중앙 — AI ASSISTANT + ZOOM + MINIMAP 토글 */}
+        <div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-zinc-50 px-2 py-1.5">
+            {/* AI ASSISTANT 버튼 */}
+            <button
+              onClick={() => {
+                const bid = useBoardStore.getState().boardId;
+                if (bid) useInstructionStore.getState().openModal(bid);
+              }}
+              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-xl hover:bg-blue-500 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M21 10.975V8a2 2 0 0 0-2-2h-6V4.688c.305-.274.5-.668.5-1.11a1.5 1.5 0 0 0-3 0c0 .442.195.836.5 1.11V6H5a2 2 0 0 0-2 2v2.998l-.072.005A.999.999 0 0 0 2 12v2a1 1 0 0 0 1 1v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a1 1 0 0 0 1-1v-2a1 1 0 0 0-.996-.998l-.004-.027zM9 13.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+              </svg>
+              <span className="text-[11px] uppercase font-black tracking-widest">AI ASSISTANT</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="text-yellow-300"
+              >
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* 우측 — 미니맵 */}
+        <div className="absolute bottom-8 right-8 z-40" onPointerDown={(e) => e.stopPropagation()}>
           <Minimap
             notes={notes}
             sections={sections}
@@ -949,17 +1023,6 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
             containerWidth={containerRef.current?.clientWidth || 0}
             containerHeight={containerRef.current?.clientHeight || 0}
             setPan={setPan}
-          />
-        </div>
-
-        {/* 줌 컨트롤 (통합형) */}
-        <div className="absolute bottom-6 left-6 z-[10000]">
-          <ZoomController
-            onFit={() => {
-              if (containerRef.current) {
-                fitToContent(containerRef.current.clientWidth, containerRef.current.clientHeight);
-              }
-            }}
           />
         </div>
       </main>

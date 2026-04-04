@@ -14,6 +14,72 @@ async function handlePatch(req: NextRequest, { params }: { params: { id: string 
 
     await dbConnect();
 
+    // 섹션 완료 처리: status가 'done'으로 변경되면 하위 노트도 일괄 완료
+    if (body.status === 'done') {
+      const now = new Date();
+      const updatedSection = await Section.findByIdAndUpdate(
+        id,
+        { status: 'done', completedAt: now },
+        { new: true }
+      ).lean();
+
+      if (!updatedSection) {
+        return NextResponse.json({ success: false, error: 'Section not found' }, { status: 404 });
+      }
+
+      // 하위 노트 일괄 완료
+      const result = await Note.updateMany(
+        { sectionId: id, status: { $ne: 'done' } },
+        { $set: { status: 'done', completedAt: now } }
+      );
+
+      // 완료된 노트 ID 목록 조회
+      const completedNotes = await Note.find({ sectionId: id, status: 'done' })
+        .select('_id')
+        .lean();
+      const noteIds = completedNotes.map((n) => String(n._id));
+
+      return NextResponse.json({
+        success: true,
+        data: updatedSection,
+        completedNoteIds: noteIds,
+        completedAt: now,
+        notesAffected: result.modifiedCount,
+      });
+    }
+
+    // 섹션 되돌리기: status가 'active'로 변경되면 하위 노트도 일괄 되돌리기
+    if (body.status === 'active') {
+      const updatedSection = await Section.findByIdAndUpdate(
+        id,
+        { status: 'active', completedAt: null },
+        { new: true }
+      ).lean();
+
+      if (!updatedSection) {
+        return NextResponse.json({ success: false, error: 'Section not found' }, { status: 404 });
+      }
+
+      // 하위 노트 일괄 되돌리기
+      const result = await Note.updateMany(
+        { sectionId: id, status: 'done' },
+        { $set: { status: 'active', completedAt: null } }
+      );
+
+      const revertedNotes = await Note.find({ sectionId: id, status: 'active' })
+        .select('_id')
+        .lean();
+      const noteIds = revertedNotes.map((n) => String(n._id));
+
+      return NextResponse.json({
+        success: true,
+        data: updatedSection,
+        revertedNoteIds: noteIds,
+        notesAffected: result.modifiedCount,
+      });
+    }
+
+    // 일반 업데이트 (위치, 크기, 색상, 타이틀 등)
     const updatedSection = await Section.findByIdAndUpdate(id, body, { new: true }).lean();
 
     if (!updatedSection) {

@@ -45,6 +45,8 @@ export type Section = {
   zIndex?: number;
   parentSectionId?: string | null;
   depth?: number;
+  status?: 'active' | 'done';
+  completedAt?: Date | null;
 };
 
 const COLOR_PALETTE = ['#FFFB8F', '#B7F0AD', '#FFD6E7', '#C7E9FF', '#E9D5FF', '#FEF3C7'] as const;
@@ -115,6 +117,8 @@ type BoardState = {
   updateSection: (id: string, patch: Partial<Section>) => void;
   removeSection: (id: string) => void;
   moveSection: (id: string, x: number, y: number) => void;
+  completeSection: (sectionId: string) => Promise<void>;
+  revertSection: (sectionId: string) => Promise<void>;
 
   // Mobile/UX Logic
   isSnapEnabled: boolean;
@@ -366,6 +370,43 @@ export const useBoardStore = create<BoardState>()(
           socket.off('section-deleted');
           socket.on('section-deleted', (sectionId: string) => {
             get().applyRemoteSectionDeletion(sectionId);
+          });
+
+          socket.off('section-completed');
+          socket.on(
+            'section-completed',
+            (data: { sectionId: string; completedAt: Date; noteIds: string[] }) => {
+              set((state) => ({
+                sections: state.sections.map((s) =>
+                  s.id === data.sectionId
+                    ? { ...s, status: 'done' as const, completedAt: data.completedAt }
+                    : s
+                ),
+                notes: state.notes.filter((n) => !data.noteIds.includes(n.id)),
+                completedNotes: [
+                  ...state.completedNotes,
+                  ...state.notes
+                    .filter((n) => data.noteIds.includes(n.id))
+                    .map((n) => ({ ...n, status: 'done' as const, completedAt: data.completedAt })),
+                ],
+              }));
+            }
+          );
+
+          socket.off('section-reverted');
+          socket.on('section-reverted', (data: { sectionId: string; noteIds: string[] }) => {
+            set((state) => ({
+              sections: state.sections.map((s) =>
+                s.id === data.sectionId ? { ...s, status: 'active' as const, completedAt: null } : s
+              ),
+              completedNotes: state.completedNotes.filter((n) => !data.noteIds.includes(n.id)),
+              notes: [
+                ...state.notes,
+                ...state.completedNotes
+                  .filter((n) => data.noteIds.includes(n.id))
+                  .map((n) => ({ ...n, status: 'active' as const, completedAt: undefined })),
+              ],
+            }));
           });
 
           // Peer Selection
@@ -853,12 +894,21 @@ export const useBoardStore = create<BoardState>()(
         setPan: (x, y) => set({ pan: { x, y } }),
 
         fitToContent: (containerWidth: number, containerHeight?: number) => {
-          // containerHeight가 없으면 현재 창 높이 또는 임의 값 사용 (방어 코드)
-          const safeContainerHeight = containerHeight || 800;
+          const HEADER_HEIGHT = 64; // 칸반 전용 헤더 높이
+          const safeContainerHeight = (containerHeight || 800) - HEADER_HEIGHT;
 
-          const { notes, sections } = get();
-          if (notes.length === 0 && sections.length === 0) {
-            set({ zoom: 1, pan: { x: 0, y: 0 } });
+          const { notes, sections, viewMode, completedNotes } = get();
+
+          // viewMode에 따라 대상 노트/섹션 결정
+          const targetNotes = viewMode === 'done' ? completedNotes : notes;
+          const targetSections = sections.filter((s) =>
+            viewMode === 'done'
+              ? (s.status || 'active') === 'done'
+              : (s.status || 'active') === 'active'
+          );
+
+          if (targetNotes.length === 0 && targetSections.length === 0) {
+            set({ zoom: 1, pan: { x: 0, y: HEADER_HEIGHT } });
             return;
           }
 
@@ -867,14 +917,14 @@ export const useBoardStore = create<BoardState>()(
             maxX = -Infinity,
             maxY = -Infinity;
 
-          notes.forEach((n) => {
+          targetNotes.forEach((n) => {
             minX = Math.min(minX, n.x);
             minY = Math.min(minY, n.y);
             maxX = Math.max(maxX, n.x + (n.width || 200));
             maxY = Math.max(maxY, n.y + (n.height || 140));
           });
 
-          sections.forEach((s) => {
+          targetSections.forEach((s) => {
             minX = Math.min(minX, s.x);
             minY = Math.min(minY, s.y);
             maxX = Math.max(maxX, s.x + s.width);
@@ -894,7 +944,7 @@ export const useBoardStore = create<BoardState>()(
           const contentCenterY = (minY + maxY) / 2;
 
           const newPanX = -contentCenterX * newZoom + containerWidth / 2;
-          const newPanY = -contentCenterY * newZoom + safeContainerHeight / 2;
+          const newPanY = -contentCenterY * newZoom + safeContainerHeight / 2 + HEADER_HEIGHT;
 
           set({ zoom: newZoom, pan: { x: newPanX, y: newPanY } });
         },
@@ -923,6 +973,13 @@ export const useBoardStore = create<BoardState>()(
               socket.emit('update-section', { boardId, section: updatedSection });
             }
 
+            // DB 영속화
+            fetch(`/api/kanban/sections/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(patch),
+            }).catch((err) => console.error('Failed to persist section update:', err));
+
             return {
               sections: state.sections.map((s) => (s.id === id ? updatedSection : s)),
             };
@@ -936,6 +993,77 @@ export const useBoardStore = create<BoardState>()(
           if (boardId) {
             const socket = socketClient.connect();
             socket.emit('delete-section', { boardId, sectionId: id });
+          }
+        },
+
+        completeSection: async (sectionId) => {
+          const { boardId } = get();
+          try {
+            const res = await fetch(`/api/kanban/sections/${sectionId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'done' }),
+            });
+            const data = await res.json();
+            if (!data.success) return;
+
+            const completedAt = data.completedAt;
+            const noteIds: string[] = data.completedNoteIds || [];
+
+            set((state) => ({
+              sections: state.sections.map((s) =>
+                s.id === sectionId ? { ...s, status: 'done' as const, completedAt } : s
+              ),
+              notes: state.notes.filter((n) => !noteIds.includes(n.id)),
+              completedNotes: [
+                ...state.completedNotes,
+                ...state.notes
+                  .filter((n) => noteIds.includes(n.id))
+                  .map((n) => ({ ...n, status: 'done' as const, completedAt })),
+              ],
+            }));
+
+            if (boardId) {
+              const socket = socketClient.connect();
+              socket.emit('section-completed', { boardId, sectionId, completedAt, noteIds });
+            }
+          } catch (err) {
+            console.error('Failed to complete section:', err);
+          }
+        },
+
+        revertSection: async (sectionId) => {
+          const { boardId } = get();
+          try {
+            const res = await fetch(`/api/kanban/sections/${sectionId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'active' }),
+            });
+            const data = await res.json();
+            if (!data.success) return;
+
+            const noteIds: string[] = data.revertedNoteIds || [];
+
+            set((state) => ({
+              sections: state.sections.map((s) =>
+                s.id === sectionId ? { ...s, status: 'active' as const, completedAt: null } : s
+              ),
+              completedNotes: state.completedNotes.filter((n) => !noteIds.includes(n.id)),
+              notes: [
+                ...state.notes,
+                ...state.completedNotes
+                  .filter((n) => noteIds.includes(n.id))
+                  .map((n) => ({ ...n, status: 'active' as const, completedAt: undefined })),
+              ],
+            }));
+
+            if (boardId) {
+              const socket = socketClient.connect();
+              socket.emit('section-reverted', { boardId, sectionId, noteIds });
+            }
+          } catch (err) {
+            console.error('Failed to revert section:', err);
           }
         },
 
@@ -1036,17 +1164,46 @@ export const useBoardStore = create<BoardState>()(
         },
 
         undo: () => {
-          const { notes: oldNotes, sections: oldSections, boardId } = get();
+          const {
+            notes: oldNotes,
+            sections: oldSections,
+            completedNotes: oldCompleted,
+            boardId,
+          } = get();
           useBoardStore.temporal.getState().undo();
-          const { notes: newNotes, sections: newSections } = get();
+          const { notes: newNotes, sections: newSections, completedNotes: newCompleted } = get();
 
           if (!boardId) return;
           const socket = socketClient.connect();
 
+          // 완료 상태 변경 감지 → 서버 동기화
+          // notes → completedNotes로 이동한 노트 (완료 처리)
+          newCompleted.forEach((cn) => {
+            if (!oldCompleted.find((oc) => oc.id === cn.id)) {
+              fetch(`/api/kanban/notes/${cn.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'done', completedAt: cn.completedAt || new Date() }),
+              }).catch((err) => console.error('Undo: failed to sync note completion:', err));
+            }
+          });
+          // completedNotes → notes로 이동한 노트 (되돌리기)
+          newNotes.forEach((n) => {
+            if (
+              oldCompleted.find((oc) => oc.id === n.id) &&
+              !newCompleted.find((nc) => nc.id === n.id)
+            ) {
+              fetch(`/api/kanban/notes/${n.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'active', completedAt: null }),
+              }).catch((err) => console.error('Undo: failed to sync note revert:', err));
+            }
+          });
+
           // 1. 변경된 노트들만 식별하여 전송 (Differential Sync)
           newNotes.forEach((note) => {
             const oldNote = oldNotes.find((on) => on.id === note.id);
-            // 과거 스냅샷과 현재가 다르면 해당 노트만 전송
             if (!oldNote || JSON.stringify(oldNote) !== JSON.stringify(note)) {
               socket.emit('update-note', { boardId, note });
             }
@@ -1071,6 +1228,18 @@ export const useBoardStore = create<BoardState>()(
             const oldSection = oldSections.find((os) => os.id === section.id);
             if (!oldSection || JSON.stringify(oldSection) !== JSON.stringify(section)) {
               socket.emit('update-section', { boardId, section });
+              // 섹션 status 변경 시 DB 동기화
+              if (oldSection && oldSection.status !== section.status) {
+                fetch(`/api/kanban/sections/${section.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    status: section.status || 'active',
+                    completedAt:
+                      section.status === 'done' ? section.completedAt || new Date() : null,
+                  }),
+                }).catch((err) => console.error('Undo: failed to sync section status:', err));
+              }
             }
           });
 
@@ -1090,12 +1259,40 @@ export const useBoardStore = create<BoardState>()(
         },
 
         redo: () => {
-          const { notes: oldNotes, sections: oldSections, boardId } = get();
+          const {
+            notes: oldNotes,
+            sections: oldSections,
+            completedNotes: oldCompleted,
+            boardId,
+          } = get();
           useBoardStore.temporal.getState().redo();
-          const { notes: newNotes, sections: newSections } = get();
+          const { notes: newNotes, sections: newSections, completedNotes: newCompleted } = get();
 
           if (!boardId) return;
           const socket = socketClient.connect();
+
+          // 완료 상태 변경 감지 → 서버 동기화
+          newCompleted.forEach((cn) => {
+            if (!oldCompleted.find((oc) => oc.id === cn.id)) {
+              fetch(`/api/kanban/notes/${cn.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'done', completedAt: cn.completedAt || new Date() }),
+              }).catch((err) => console.error('Redo: failed to sync note completion:', err));
+            }
+          });
+          newNotes.forEach((n) => {
+            if (
+              oldCompleted.find((oc) => oc.id === n.id) &&
+              !newCompleted.find((nc) => nc.id === n.id)
+            ) {
+              fetch(`/api/kanban/notes/${n.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'active', completedAt: null }),
+              }).catch((err) => console.error('Redo: failed to sync note revert:', err));
+            }
+          });
 
           // Undo와 동일한 로직으로 변경된 페이로드만 전송
           newNotes.forEach((note) => {
@@ -1124,6 +1321,18 @@ export const useBoardStore = create<BoardState>()(
             const oldSection = oldSections.find((os) => os.id === section.id);
             if (!oldSection || JSON.stringify(oldSection) !== JSON.stringify(section)) {
               socket.emit('update-section', { boardId, section });
+              // 섹션 status 변경 시 DB 동기화
+              if (oldSection && oldSection.status !== section.status) {
+                fetch(`/api/kanban/sections/${section.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    status: section.status || 'active',
+                    completedAt:
+                      section.status === 'done' ? section.completedAt || new Date() : null,
+                  }),
+                }).catch((err) => console.error('Redo: failed to sync section status:', err));
+              }
             }
           });
 
@@ -1170,7 +1379,7 @@ export const useBoardStore = create<BoardState>()(
           const completedAt = new Date();
           const completedNote: Note = { ...note, status: 'done', completedAt, completionNote };
 
-          // Optimistic update
+          // Optimistic update (undo 히스토리 제외)
           set((state) => ({
             notes: state.notes.filter((n) => n.id !== noteId),
             completedNotes: completedNotesLoaded
@@ -1441,6 +1650,7 @@ export const useBoardStore = create<BoardState>()(
         partialize: (state) => ({
           notes: state.notes,
           sections: state.sections,
+          completedNotes: state.completedNotes,
         }),
         equality: (pastState, currentState) => {
           // notes와 sections의 변화를 심층 비교하되, height 변화는 무시
@@ -1488,3 +1698,8 @@ export const useBoardStore = create<BoardState>()(
     )
   )
 );
+
+// 개발 환경에서 콘솔 디버깅용
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  (window as any).__boardStore = useBoardStore;
+}

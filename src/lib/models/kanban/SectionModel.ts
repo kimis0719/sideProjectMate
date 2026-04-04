@@ -11,6 +11,8 @@ export interface ISection extends Document {
   zIndex: number;
   parentSectionId: mongoose.Types.ObjectId | null;
   depth: number;
+  status: 'active' | 'done';
+  completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +35,15 @@ const SectionSchema = new Schema<ISection>(
     depth: {
       type: Number,
       default: 0,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'done'],
+      default: 'active',
+    },
+    completedAt: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }

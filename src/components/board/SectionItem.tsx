@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useBoardStore, Section } from '@/store/boardStore';
+import { useBoardStore, Section, Note } from '@/store/boardStore';
 import { socketClient } from '@/lib/socket';
 import { useSession } from 'next-auth/react';
 import { useModal } from '@/hooks/useModal';
@@ -189,6 +189,28 @@ const calculateSectionResizeSnap = (
   return { w: snappedWidth, h: snappedHeight, guides };
 };
 
+const SECTION_COLORS = [
+  { value: '#93C5FD', label: 'blue' }, // blue-300
+  { value: '#C4B5FD', label: 'purple' }, // violet-300
+  { value: '#86EFAC', label: 'green' }, // green-300
+  { value: '#FCA5A5', label: 'red' }, // red-300
+  { value: '#FDBA74', label: 'orange' }, // orange-300
+  { value: '#E5E7EB', label: 'gray' }, // gray-200 (기본)
+] as const;
+
+// border(연한) → title(진한) 톤 매핑
+const SECTION_TITLE_COLOR_MAP: Record<string, string> = {
+  '#93C5FD': '#1D4ED8', // blue-300 → blue-700
+  '#C4B5FD': '#6D28D9', // violet-300 → violet-700
+  '#86EFAC': '#15803D', // green-300 → green-700
+  '#FCA5A5': '#B91C1C', // red-300 → red-700
+  '#FDBA74': '#C2410C', // orange-300 → orange-700
+  '#E5E7EB': '#374151', // gray-200 → gray-700
+};
+
+const getSectionTitleColor = (sectionColor: string | undefined) =>
+  SECTION_TITLE_COLOR_MAP[sectionColor || '#E5E7EB'] || '#374151';
+
 type Props = {
   section: Section;
   readOnly?: boolean;
@@ -239,6 +261,19 @@ export default function SectionItem({ section, readOnly = false }: Props) {
 
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
   const [titleDraft, setTitleDraft] = React.useState(section.title);
+  const [isColorOpen, setIsColorOpen] = React.useState(false);
+  const colorRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!isColorOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (colorRef.current && !colorRef.current.contains(e.target as Node)) {
+        setIsColorOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
+  }, [isColorOpen]);
   const isDragging = React.useRef(false);
   const hasMoved = React.useRef(false);
   const isResizing = React.useRef(false);
@@ -626,7 +661,7 @@ export default function SectionItem({ section, readOnly = false }: Props) {
     // Resize 종료 시 capture/release
     const NOTE_WIDTH = 200;
     const NOTE_HEIGHT = 140;
-    const updates: { id: string; changes: Partial<any> }[] = [];
+    const updates: { id: string; changes: Partial<Note> }[] = [];
 
     const currentNotes = useBoardStore.getState().notes;
 
@@ -818,7 +853,7 @@ export default function SectionItem({ section, readOnly = false }: Props) {
       if (childNotes.length > 0) {
         const updates = childNotes.map((n) => ({
           id: n.id,
-          changes: { sectionId: null as any },
+          changes: { sectionId: null },
         }));
         updateNotes(updates);
       }
@@ -837,8 +872,11 @@ export default function SectionItem({ section, readOnly = false }: Props) {
         zIndex: section.zIndex || 0,
         display: 'flex',
         flexDirection: 'column',
-        border: isLockedByOther ? `3px solid ${lockedColor}` : 'none',
-        borderRadius: isLockedByOther ? 8 : 0,
+        border: isLockedByOther
+          ? `3px solid ${lockedColor}`
+          : `2px dashed ${section.color || '#E5E7EB'}`,
+        borderRadius: 16,
+        backgroundColor: 'rgba(243, 244, 243, 0.2)',
         opacity: readOnly ? 0.4 : 1,
         pointerEvents: readOnly ? 'none' : 'auto',
       }}
@@ -873,13 +911,13 @@ export default function SectionItem({ section, readOnly = false }: Props) {
         onDoubleClick={startEditTitle}
         style={{
           height: 40,
-          background: section.color || '#E5E7EB',
-          borderTopLeftRadius: 8,
-          borderTopRightRadius: 8,
+          background: 'transparent',
+          borderTopLeftRadius: 14,
+          borderTopRightRadius: 14,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 12px',
+          padding: '0 16px',
           cursor: isLockedByOther ? 'not-allowed' : 'grab',
           userSelect: 'none',
           touchAction: 'none',
@@ -904,45 +942,124 @@ export default function SectionItem({ section, readOnly = false }: Props) {
             }}
           />
         ) : (
-          <span style={{ fontSize: 16, fontWeight: 'bold', color: '#374151' }}>
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: -0.5,
+              color: readOnly ? '#9CA3AF' : getSectionTitleColor(section.color),
+              textDecoration: readOnly ? 'line-through' : 'none',
+            }}
+          >
+            {readOnly && '✅ '}
             {section.title}
           </span>
         )}
 
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!isLockedByOther) handleDelete();
-          }}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 18,
-            color: '#6B7280',
-            opacity: isLockedByOther ? 0.5 : 1,
-            pointerEvents: isLockedByOther ? 'none' : 'auto',
-          }}
-        >
-          ×
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {/* 색상 변경 버튼 */}
+          <div ref={colorRef} style={{ position: 'relative' }}>
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onDoubleClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!isLockedByOther) setIsColorOpen(!isColorOpen);
+              }}
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                background: section.color || '#E5E7EB',
+                border: '2px solid rgba(255,255,255,0.8)',
+                cursor: 'pointer',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                opacity: isLockedByOther ? 0.5 : 1,
+                pointerEvents: isLockedByOther ? 'none' : 'auto',
+              }}
+              title="섹션 색상 변경"
+            />
+            {isColorOpen && (
+              <div
+                onPointerDown={(e) => e.stopPropagation()}
+                style={{
+                  position: 'absolute',
+                  top: 24,
+                  right: 0,
+                  background: 'white',
+                  borderRadius: 12,
+                  padding: 8,
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                  border: '1px solid #F3F4F6',
+                  display: 'flex',
+                  gap: 6,
+                  zIndex: 50,
+                }}
+              >
+                {SECTION_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateSection(section.id, { color: c.value });
+                      setIsColorOpen(false);
+                    }}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      background: c.value,
+                      border:
+                        c.value === section.color
+                          ? '2px solid #3B82F6'
+                          : '1px solid rgba(0,0,0,0.1)',
+                      cursor: 'pointer',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 삭제 버튼 */}
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isLockedByOther) handleDelete();
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 18,
+              color: '#9CA3AF',
+              opacity: isLockedByOther ? 0.5 : 1,
+              pointerEvents: isLockedByOther ? 'none' : 'auto',
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              (e.target as HTMLElement).style.color = '#6B7280';
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLElement).style.color = '#9CA3AF';
+            }}
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {/* Body (Container) */}
       <div
         style={{
           flex: 1,
-          // 자식 섹션은 약간 짙은 배경 (opacity 차이)
-          background:
-            section.depth === 1
-              ? `${section.color || '#E5E7EB'}55`
-              : `${section.color || '#E5E7EB'}33`,
-          border: `2px dashed ${section.color || '#E5E7EB'}`,
-          borderTop: 'none',
-          borderBottomLeftRadius: 8,
-          borderBottomRightRadius: 8,
+          background: 'transparent',
+          border: 'none',
+          borderBottomLeftRadius: 14,
+          borderBottomRightRadius: 14,
           pointerEvents: 'none',
         }}
       />
@@ -967,8 +1084,8 @@ export default function SectionItem({ section, readOnly = false }: Props) {
           pointerEvents: isLockedByOther ? 'none' : 'auto',
         }}
       >
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M10 0L0 10H10V0Z" fill="#9CA3AF" />
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#CBD5E1">
+          <path d="M22 22H20V20H22V22ZM22 18H20V16H22V18ZM18 22H16V20H18V22ZM22 14H20V12H22V14ZM18 18H16V16H18V18ZM14 22H12V20H14V22Z" />
         </svg>
       </div>
     </div>

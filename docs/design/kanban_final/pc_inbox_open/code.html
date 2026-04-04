@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Side Project Mate - PC Kanban Board</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f3f4f3",
+                        "secondary": "#495c95",
+                        "on-secondary-container": "#394c84",
+                        "inverse-surface": "#2f3130",
+                        "secondary-fixed": "#dbe1ff",
+                        "background": "#f9f9f8",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-container": "#ffede6",
+                        "surface-bright": "#f9f9f8",
+                        "on-secondary-fixed": "#00174b",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-container": "#eeeeed",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-surface": "#1a1c1c",
+                        "on-primary-container": "#eeefff",
+                        "inverse-primary": "#b4c5ff",
+                        "outline": "#737686",
+                        "surface-container-high": "#e8e8e7",
+                        "on-tertiary-fixed": "#360f00",
+                        "primary-container": "#2563eb",
+                        "on-background": "#1a1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-secondary": "#ffffff",
+                        "primary": "#004ac6",
+                        "secondary-container": "#acbfff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "tertiary": "#943700",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#bc4800",
+                        "outline-variant": "#c3c6d7",
+                        "on-error": "#ffffff",
+                        "surface": "#f9f9f8",
+                        "surface-dim": "#dadad9",
+                        "on-primary-fixed": "#00174b",
+                        "tertiary-fixed": "#ffdbcd",
+                        "primary-fixed": "#dbe1ff",
+                        "on-surface-variant": "#434655",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "inverse-on-surface": "#f1f1f0",
+                        "on-secondary-fixed-variant": "#31447b",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "Noto Sans KR"],
+                        "body": ["Inter", "Noto Sans KR"],
+                        "label": ["Inter", "Noto Sans KR"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .dot-grid {
+            background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .canvas-section {
+            border: 2px dashed rgba(0,0,0,0.1);
+            background-color: rgba(243, 244, 243, 0.2);
+        }
+        .sticky-note {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .sticky-note:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 10;
+        }
+        .inbox-card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        }
+        .resize-handle {
+            cursor: nwse-resize;
+            transition: color 0.2s;
+        }
+        .resize-handle:hover {
+            color: #3b82f6;
+        }
+        .drop-dim {
+            background-color: rgba(0, 0, 0, 0.05);
+            pointer-events: none;
+        }
+        /* No-Line Rule styling */
+        .no-line { border: none !important; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e2e2e2; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+<!-- Dual Header Structure -->
+<div class="fixed top-0 w-full z-50">
+<!-- Main Header (Top) -->
+<header class="h-16 w-full bg-white flex items-center justify-between px-8 shadow-sm">
+<div class="flex items-center gap-10">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl" data-icon="bolt">bolt</span>
+</div>
+<span class="text-xl font-bold text-zinc-900">Side Project Mate</span>
+</div>
+<nav class="flex items-center gap-8 text-[15px] font-medium text-zinc-600">
+<a class="hover:text-zinc-900 transition-colors" href="#">프로필</a>
+<a class="hover:text-zinc-900 transition-colors" href="#">프로젝트</a>
+<a class="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-lg font-bold" href="#">대시보드</a>
+<a class="hover:text-zinc-900 transition-colors" href="#">관리자</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-zinc-500">
+<button class="hover:text-zinc-900"><span class="material-symbols-outlined" data-icon="dark_mode">dark_mode</span></button>
+<button class="hover:text-zinc-900"><span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span></button>
+<div class="relative">
+<button class="hover:text-zinc-900"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<span class="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">C</div>
+<span class="material-symbols-outlined text-zinc-400 text-lg" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+</div>
+</header>
+<!-- Kanban Header (Bottom) -->
+<header class="h-16 w-full bg-white/80 backdrop-blur-md flex items-center justify-between px-8 border-t border-zinc-100">
+<div class="flex items-center gap-8">
+<h1 class="text-lg font-bold text-zinc-800">Project Board <span class="text-zinc-400 font-normal ml-1">#26</span></h1>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 bg-red-50 px-2.5 py-1 rounded-md">
+<span class="material-symbols-outlined text-red-400 text-sm" data-icon="push_pin" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+<span class="text-xs font-bold text-red-600">진행중</span>
+<span class="text-xs font-bold text-red-400">3</span>
+</div>
+<div class="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-md">
+<span class="material-symbols-outlined text-green-400 text-sm" data-icon="check_box" style="font-variation-settings: 'FILL' 1;">check_box</span>
+<span class="text-xs font-bold text-green-600">완료</span>
+<span class="text-xs font-bold text-green-400">17</span>
+</div>
+<div class="flex -space-x-2 ml-2">
+<img alt="User" class="w-7 h-7 rounded-full border-2 border-white object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA62hNVtySS3GSTvSkZHYLsAT20ZyYq5Q9Atb9-S-KfZ-mbfe7JxUFNgtPqv0YbXCbLiITTM-4RK2IFwaFvbspHUX1tFK7SgzEyswD783Wf2VJZ9JslMrqbA5crUZbcjIc6srXlO8kLzsPXgkqYzYiLWCh8fYlfb1JmHRpt8f_eHHq64Na2UxVYlCxzShwnbDg1-5Z3Ax-vHeehmI9jkDE4wXt26IDy2t4jiW9wphjj1PjiF9u_hWF0RG5257IYTcaIGyCFSSEPZ30q"/>
+<div class="w-7 h-7 rounded-full border-2 border-white bg-zinc-800 flex items-center justify-center text-[10px] text-white font-bold">+2</div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 bg-[#7c3aed] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-[#6d28d9] transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="description">description</span>
+                지시서
+            </button>
+<button class="flex items-center gap-2 bg-orange-50 text-orange-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-100 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="history">history</span>
+                히스토리
+            </button>
+<button class="text-zinc-400 hover:text-zinc-600 mx-2">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-6 w-px bg-zinc-200 mx-1"></div>
+<button class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700 transition-colors">
+                + 노트 추가
+            </button>
+<button class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700 transition-colors">
+                + 섹션 추가
+            </button>
+</div>
+</header>
+</div>
+<!-- Main Workspace Container -->
+<main class="flex h-screen pt-32 overflow-hidden">
+<!-- Infinite Canvas Area -->
+<section class="flex-1 relative overflow-auto dot-grid bg-surface">
+<!-- Interactive Feedback: Dimming overlay (for demo purpose, toggleable class) -->
+<div class="absolute inset-0 drop-dim opacity-0 transition-opacity"></div>
+<div class="p-12 min-w-[2000px] min-h-[2000px] relative z-10">
+<div class="flex gap-16 items-start">
+<!-- Section: To-Do -->
+<div class="w-[450px] min-h-[500px] p-6 rounded-2xl canvas-section border-blue-200 relative group">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-base font-bold text-blue-600">할 일들</h2>
+<button class="text-zinc-400 hover:text-zinc-600"><span class="material-symbols-outlined text-lg" data-icon="close">close</span></button>
+</div>
+<div class="relative min-h-[400px]">
+<!-- Sticky Note: Yellow -->
+<div class="sticky-note absolute top-4 left-4 p-6 bg-[#fef9c3] rounded-lg w-56 h-44 flex flex-col justify-between cursor-grab active:cursor-grabbing group/note">
+<div class="flex justify-between items-start">
+<p class="text-[15px] font-medium leading-relaxed text-zinc-800">칸반보드 리디자인</p>
+<span class="material-symbols-outlined text-zinc-400 text-lg" data-icon="more_vert">more_vert</span>
+</div>
+<div class="absolute bottom-1 right-1">
+<span class="material-symbols-outlined text-zinc-400 text-base resize-handle" data-icon="south_east">south_east</span>
+</div>
+</div>
+<!-- Sticky Note: Green -->
+<div class="sticky-note absolute top-36 left-48 p-6 bg-[#dcfce7] rounded-lg w-56 h-44 flex flex-col justify-between cursor-grab active:cursor-grabbing group/note">
+<div class="flex justify-between items-start">
+<p class="text-[15px] font-medium leading-relaxed text-zinc-800">칸반보드 2.0 개발</p>
+<span class="material-symbols-outlined text-zinc-400 text-lg" data-icon="more_vert">more_vert</span>
+</div>
+<div class="absolute bottom-1 right-1">
+<span class="material-symbols-outlined text-zinc-400 text-base resize-handle" data-icon="south_east">south_east</span>
+</div>
+</div>
+</div>
+<!-- Section Resize Handle -->
+<div class="absolute bottom-2 right-2">
+<span class="material-symbols-outlined text-zinc-300 text-xl resize-handle" data-icon="south_east">south_east</span>
+</div>
+</div>
+<!-- Section: Completed -->
+<div class="w-[450px] min-h-[500px] p-6 rounded-2xl canvas-section border-purple-200 relative">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-base font-bold text-purple-600">완료 건들</h2>
+<button class="text-zinc-400 hover:text-zinc-600"><span class="material-symbols-outlined text-lg" data-icon="close">close</span></button>
+</div>
+<div class="relative min-h-[400px]">
+<!-- Sticky Note: Pink -->
+<div class="sticky-note absolute top-20 left-12 p-6 bg-[#fce7f3] rounded-lg w-80 h-44 flex flex-col justify-between cursor-grab active:cursor-grabbing group/note">
+<div class="flex justify-between items-start">
+<p class="text-[15px] font-medium leading-relaxed text-zinc-800">스티치 사용해서 디자인</p>
+<span class="material-symbols-outlined text-zinc-400 text-lg" data-icon="more_vert">more_vert</span>
+</div>
+<div class="absolute bottom-1 right-1">
+<span class="material-symbols-outlined text-zinc-400 text-base resize-handle" data-icon="south_east">south_east</span>
+</div>
+</div>
+</div>
+<!-- Section Resize Handle -->
+<div class="absolute bottom-2 right-2">
+<span class="material-symbols-outlined text-zinc-300 text-xl resize-handle" data-icon="south_east">south_east</span>
+</div>
+</div>
+<!-- Section: Ideas (Green) -->
+<div class="w-[450px] min-h-[500px] p-6 rounded-2xl canvas-section border-green-200 relative">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-base font-bold text-green-600">아이디어 뱅크</h2>
+<button class="text-zinc-400 hover:text-zinc-600"><span class="material-symbols-outlined text-lg" data-icon="close">close</span></button>
+</div>
+<div class="relative min-h-[400px] flex items-center justify-center border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
+<p class="text-zinc-400 text-sm">노트를 드래그해 오세요</p>
+</div>
+<div class="absolute bottom-2 right-2">
+<span class="material-symbols-outlined text-zinc-300 text-xl resize-handle" data-icon="south_east">south_east</span>
+</div>
+</div>
+</div>
+<!-- Fold Toggle Button on Left Edge -->
+<div class="fixed left-0 top-1/2 -translate-y-1/2 z-40">
+<button class="w-8 h-20 bg-white shadow-md rounded-r-xl border border-l-0 border-zinc-100 flex items-center justify-center text-zinc-400 hover:text-blue-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Right Inbox Panel (Redesigned) -->
+<aside class="w-80 bg-surface-container-lowest shadow-[-4px_0_12px_rgba(0,0,0,0.03)] z-10 flex flex-col border-l border-zinc-100">
+<div class="p-6 flex justify-between items-center bg-white border-b border-zinc-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-600 text-xl" data-icon="inbox">inbox</span>
+<h3 class="text-[15px] font-bold text-zinc-800 tracking-tight">INBOX</h3>
+</div>
+<div class="flex items-center gap-3">
+<span class="bg-zinc-100 text-zinc-500 text-[11px] px-2 py-0.5 rounded-full font-bold">12 Items</span>
+<button class="text-zinc-400 hover:text-zinc-600">
+<span class="material-symbols-outlined text-lg" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-8">
+<!-- Inbox Section: New Ideas (Mini Container style) -->
+<div class="p-3 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/30 space-y-3">
+<div class="flex items-center justify-between px-1">
+<span class="text-[12px] font-bold text-blue-600">신규 아이디어</span>
+<span class="bg-white px-1.5 py-0.5 rounded text-[10px] font-bold text-blue-300">2</span>
+</div>
+<div class="space-y-2">
+<div class="inbox-card relative bg-white rounded-lg p-3 border-l-4 border-[#fef9c3] hover:-translate-y-0.5 transition-transform cursor-grab active:cursor-grabbing">
+<p class="text-xs text-zinc-700 font-medium leading-snug">실시간 채팅 SDK 조사</p>
+<div class="mt-2 flex items-center justify-between">
+<span class="text-[9px] text-zinc-400">2h ago</span>
+<span class="material-symbols-outlined text-zinc-300 text-xs" data-icon="drag_indicator">drag_indicator</span>
+</div>
+</div>
+<div class="inbox-card relative bg-white rounded-lg p-3 border-l-4 border-[#fce7f3] hover:-translate-y-0.5 transition-transform cursor-grab active:cursor-grabbing">
+<p class="text-xs text-zinc-700 font-medium leading-snug">결제 연동 초안</p>
+<div class="mt-2 flex items-center justify-between">
+<span class="text-[9px] text-zinc-400">5h ago</span>
+<span class="material-symbols-outlined text-zinc-300 text-xs" data-icon="drag_indicator">drag_indicator</span>
+</div>
+</div>
+</div>
+<div class="flex justify-end pr-0.5">
+<span class="material-symbols-outlined text-blue-200 text-sm" data-icon="south_east">south_east</span>
+</div>
+</div>
+<!-- Inbox Section: References (Mini Container style) -->
+<div class="p-3 rounded-xl border-2 border-dashed border-green-200 bg-green-50/30 space-y-3">
+<div class="flex items-center justify-between px-1">
+<span class="text-[12px] font-bold text-green-600">참고 레퍼런스</span>
+<span class="bg-white px-1.5 py-0.5 rounded text-[10px] font-bold text-green-300">2</span>
+</div>
+<div class="space-y-2">
+<div class="inbox-card relative bg-white rounded-lg p-3 border-l-4 border-[#dcfce7] hover:-translate-y-0.5 transition-transform cursor-grab active:cursor-grabbing">
+<p class="text-xs text-zinc-700 font-medium leading-snug">UI 인터랙션 캡처</p>
+<div class="mt-2 flex items-center justify-between">
+<span class="text-[9px] text-zinc-400">Yesterday</span>
+<span class="material-symbols-outlined text-zinc-300 text-xs" data-icon="drag_indicator">drag_indicator</span>
+</div>
+</div>
+</div>
+<div class="flex justify-end pr-0.5">
+<span class="material-symbols-outlined text-green-200 text-sm" data-icon="south_east">south_east</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Floating UI: AI Assistant & Canvas Controls -->
+<div class="fixed bottom-8 left-8 right-8 pointer-events-none z-50 flex justify-between items-end">
+<!-- Canvas Controls (Bottom Left) -->
+<div class="pointer-events-auto bg-white/90 backdrop-blur-md rounded-2xl p-1.5 shadow-xl border border-zinc-100 flex items-center gap-1">
+<div class="flex items-center gap-2 px-4 py-2 text-[13px] font-bold text-zinc-500">
+<button class="hover:text-zinc-900"><span class="material-symbols-outlined text-lg" data-icon="remove">remove</span></button>
+<span class="w-12 text-center">109%</span>
+<button class="hover:text-zinc-900"><span class="material-symbols-outlined text-lg" data-icon="add">add</span></button>
+</div>
+<div class="w-px h-4 bg-zinc-200"></div>
+<button class="px-4 py-2 text-[11px] font-black text-blue-600 tracking-widest hover:bg-blue-50 rounded-xl transition-colors">FIT</button>
+</div>
+<!-- AI Assistant (Center) -->
+<div class="absolute left-1/2 -translate-x-1/2 pointer-events-auto bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-2 border border-zinc-50 flex items-center gap-4">
+<button class="flex items-center gap-3 bg-blue-600 text-white px-6 py-3.5 rounded-xl hover:scale-105 transition-transform shadow-lg group">
+<span class="material-symbols-outlined text-xl" data-icon="smart_toy" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<span class="text-[11px] uppercase font-black tracking-widest">AI ASSISTANT</span>
+<span class="material-symbols-outlined text-yellow-300 group-hover:animate-pulse" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+<div class="h-8 w-[1px] bg-zinc-200"></div>
+<div class="flex items-center gap-6 pr-4">
+<button class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-800 transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="zoom_in">zoom_in</span>
+<span class="text-[9px] uppercase font-bold tracking-widest">Zoom</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-800 transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="map">map</span>
+<span class="text-[9px] uppercase font-bold tracking-widest">Minimap</span>
+</button>
+</div>
+</div>
+<!-- Mini Map (Bottom Right Overlay) -->
+<div class="pointer-events-auto w-56 h-36 bg-zinc-50/80 backdrop-blur border border-zinc-200 rounded-2xl overflow-hidden shadow-2xl relative">
+<div class="absolute inset-0 dot-grid opacity-20"></div>
+<div class="w-full h-full p-4 relative">
+<!-- Mini map elements mirroring canvas -->
+<div class="absolute top-6 left-6 w-14 h-18 border-2 border-dashed border-blue-200 bg-white rounded-sm p-1">
+<div class="w-4 h-4 bg-yellow-200 rounded-[2px] mb-1"></div>
+<div class="w-4 h-4 bg-green-200 rounded-[2px] ml-4"></div>
+</div>
+<div class="absolute top-6 left-24 w-14 h-18 border-2 border-dashed border-purple-200 bg-white rounded-sm p-1 flex items-center justify-center">
+<div class="w-8 h-4 bg-pink-200 rounded-[2px]"></div>
+</div>
+<!-- Viewport indicator -->
+<div class="absolute top-4 left-4 right-4 bottom-4 border-[1.5px] border-blue-500 rounded-lg bg-blue-50/5"></div>
+</div>
+<div class="absolute top-2 right-2">
+<button class="w-6 h-6 bg-white border border-zinc-100 rounded-md shadow-sm flex items-center justify-center text-zinc-400">
+<span class="material-symbols-outlined text-sm" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
