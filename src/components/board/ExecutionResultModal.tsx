@@ -10,18 +10,18 @@ export default function ExecutionResultModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-on-surface/10 backdrop-blur-md">
+      <div className="bg-surface-container-lowest rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.08)] w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden mx-4">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between px-6 py-5">
+          <h2 className="text-lg font-bold font-headline text-on-surface tracking-tight">
             {step === 'input' ? '실행결과 보고' : '파싱 결과 확인'}
           </h2>
           <button
             onClick={close}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none"
+            className="text-on-surface-variant hover:text-on-surface transition-colors"
           >
-            &times;
+            <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
@@ -29,10 +29,10 @@ export default function ExecutionResultModal() {
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {step === 'input' ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-on-surface-variant">
                 Agent(Claude Code, Cursor 등)의 실행결과를 붙여넣으세요.
                 <br />
-                <span className="text-xs text-gray-400 dark:text-gray-500">
+                <span className="text-xs text-on-surface-variant/50">
                   spm-result 코드블록 또는 JSON 형식을 자동으로 파싱합니다.
                 </span>
               </p>
@@ -40,14 +40,15 @@ export default function ExecutionResultModal() {
                 value={rawInput}
                 onChange={(e) => setRawInput(e.target.value)}
                 rows={10}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm
-                           font-mono resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-surface-container-low border-none rounded-xl
+                           text-on-surface text-sm font-mono resize-y
+                           focus:outline-none focus:ring-2 focus:ring-primary-container/20"
                 placeholder={`\`\`\`spm-result\n{\n  "instructionId": "...",\n  "completedNotes": [...]\n}\n\`\`\``}
               />
               {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
-                  {error}
+                <div className="p-3 bg-error-container/40 text-on-error-container rounded-lg text-sm flex items-start gap-2">
+                  <span className="material-symbols-outlined text-base mt-0.5">warning</span>
+                  <span>{error}</span>
                 </div>
               )}
             </div>
@@ -56,20 +57,20 @@ export default function ExecutionResultModal() {
           )}
         </div>
 
-        {/* 푸터 (input 단계에서만 표시) */}
+        {/* 푸터 (input 단계에서만) */}
         {step === 'input' && (
-          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+          <div className="px-6 py-4 bg-surface-container-low/50 flex justify-end gap-3">
             <button
               onClick={close}
-              className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
+              className="px-4 py-2.5 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"
             >
               취소
             </button>
             <button
               onClick={submit}
               disabled={isProcessing || !rawInput.trim()}
-              className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium
-                         hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2.5 bg-primary-container text-on-primary rounded-lg text-sm font-bold
+                         hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isProcessing ? '파싱 중...' : '파싱 & 완료처리'}
             </button>

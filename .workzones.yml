@@ -31,3 +31,8 @@ zones:
     status: 'active'
     reason: '#243 AI 지시서 실행결과 자동 완료처리'
     expires: '2026-04-11'
+  - path: 'src/components/projects/ApplyModal.tsx, src/components/profile/modals/ImageEditModal.tsx, src/components/projects/ReviewModal.tsx'
+    owner: 'FFLINA-PC'
+    status: 'active'
+    reason: 'feat: UI/UX 전면 개편 Phase 7 — 모달 디자인 교체 (7-1, 7-4, 7-5) (#247)'
+    expires: '2026-04-11'

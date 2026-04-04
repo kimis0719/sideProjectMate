@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Seoul Minimalist AI - AI 지시서 생성</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#495c95",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "surface-variant": "#e2e2e2",
+                    "surface-dim": "#dadad9",
+                    "on-tertiary-fixed-variant": "#7d2d00",
+                    "on-secondary-fixed-variant": "#31447b",
+                    "primary": "#004ac6",
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "primary-container": "#2563eb",
+                    "outline": "#737686",
+                    "on-primary-fixed": "#00174b",
+                    "secondary-fixed": "#dbe1ff",
+                    "inverse-on-surface": "#f1f1f0",
+                    "on-error": "#ffffff",
+                    "surface-container-high": "#e8e8e7",
+                    "on-primary-container": "#eeefff",
+                    "outline-variant": "#c3c6d7",
+                    "on-tertiary-container": "#ffede6",
+                    "on-surface-variant": "#434655",
+                    "surface-bright": "#f9f9f8",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#943700",
+                    "on-secondary-container": "#394c84",
+                    "inverse-surface": "#2f3130",
+                    "tertiary-container": "#bc4800",
+                    "surface-tint": "#0053db",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#acbfff",
+                    "on-background": "#1a1c1c",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "surface-container": "#eeeeed",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#360f00",
+                    "error": "#ba1a1a",
+                    "surface-container-highest": "#e2e2e2",
+                    "background": "#f9f9f8",
+                    "surface-container-low": "#f3f4f3",
+                    "surface": "#f9f9f8",
+                    "tertiary-fixed": "#ffdbcd",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-surface": "#1a1c1c",
+                    "inverse-primary": "#b4c5ff",
+                    "on-secondary-fixed": "#00174b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope", "Noto Sans KR"],
+                    "body": ["Inter", "Noto Sans KR"],
+                    "label": ["Inter", "Noto Sans KR"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .dot-grid {
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased overflow-hidden">
+<!-- Background Canvas (Kanban Board Simulation) -->
+<div class="fixed inset-0 dot-grid opacity-30 z-0"></div>
+<!-- Main Navigation (Shared Component Mock) -->
+<header class="fixed top-0 w-full z-40 bg-[#f9f9f8]/80 backdrop-blur-xl flex justify-between items-center px-8 h-16 w-full max-w-screen-2xl mx-auto">
+<div class="text-xl font-bold text-[#1a1c1c] font-headline tracking-tight">Seoul Minimalist AI</div>
+<nav class="hidden md:flex gap-x-8">
+<a class="text-[#1a1c1c]/60 hover:text-blue-600 transition-colors duration-200 font-semibold text-sm" href="#">Dashboard</a>
+<a class="text-blue-600 border-b-2 border-blue-600 transition-colors duration-200 font-semibold text-sm" href="#">Projects</a>
+<a class="text-[#1a1c1c]/60 hover:text-blue-600 transition-colors duration-200 font-semibold text-sm" href="#">Templates</a>
+</nav>
+<div class="flex items-center gap-x-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">settings</span>
+<div class="h-8 w-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User profile" data-alt="close up of a professional user profile avatar in a clean minimalist style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnkXibzuMR0K1RaQrKwaBvhkGpxL9Xb3-KlzizVdz6TmxbNpgxOcyntFSwAqEM_UtZmXzTBbA1DrfaixkXd9TwejVXrBwpEmV7eNFidFTAm9lM3X2DYjSASbZ_JebOQYtMrqftbfYfWc-zI4SCgO6mGuyGfivMeMFd8DX8WzmdZ45AnRkTEgNjD-up0yBSfqcyQqhm8-p3mHF9gTsvv86-RBDj1J2KCngP5P9_jgm52MPpUX2ud2Qh1vQ3cVcSCbF_ZmnOQrUGqDQT"/>
+</div>
+</div>
+</header>
+<!-- Kanban Background Mockup -->
+<main class="pt-24 px-8 grid grid-cols-3 gap-8 max-w-screen-2xl mx-auto blur-sm">
+<div class="space-y-4">
+<h3 class="font-headline font-semibold text-on-surface-variant">TODO</h3>
+<div class="bg-surface-container-lowest p-6 rounded-xl h-32"></div>
+<div class="bg-surface-container-lowest p-6 rounded-xl h-48"></div>
+</div>
+<div class="space-y-4">
+<h3 class="font-headline font-semibold text-on-surface-variant">IN PROGRESS</h3>
+<div class="bg-surface-container-lowest p-6 rounded-xl h-56"></div>
+</div>
+<div class="space-y-4">
+<h3 class="font-headline font-semibold text-on-surface-variant">DONE</h3>
+<div class="bg-surface-container-lowest p-6 rounded-xl h-32"></div>
+</div>
+</main>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/10 backdrop-blur-md">
+<!-- AI Instruction Generator Modal -->
+<div class="bg-surface-container-lowest w-full max-w-xl rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.08)] overflow-hidden flex flex-col mx-4">
+<!-- Modal Header -->
+<div class="px-6 py-5 flex items-center justify-between">
+<h2 class="text-xl font-bold font-headline text-on-surface tracking-tight">AI 지시서 생성</h2>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Content -->
+<div class="px-8 py-6 space-y-8 overflow-y-auto max-h-[819px]">
+<!-- Target Section -->
+<section class="space-y-3">
+<label class="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">지시 대상 (작업으로 변환할 노트)</label>
+<div class="grid grid-cols-1 gap-3">
+<label class="flex items-center p-4 rounded-xl border border-transparent bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all">
+<input checked="" class="w-4 h-4 text-primary border-outline-variant focus:ring-primary" name="target" type="radio"/>
+<span class="ml-3 font-medium">보드 전체</span>
+</label>
+<label class="flex items-center p-4 rounded-xl border border-transparent bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all">
+<input class="w-4 h-4 text-primary border-outline-variant focus:ring-primary" name="target" type="radio"/>
+<span class="ml-3 font-medium">섹션 선택</span>
+</label>
+<label class="flex items-center p-4 rounded-xl border border-transparent bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all">
+<input class="w-4 h-4 text-primary border-outline-variant focus:ring-primary" name="target" type="radio"/>
+<span class="ml-3 font-medium">노트 직접 선택</span>
+</label>
+</div>
+</section>
+<!-- Context Section -->
+<section class="space-y-3">
+<label class="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">참조 컨텍스트 (배경 정보로 AI에게 전달)</label>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="rounded-lg w-5 h-5 text-primary border-outline-variant focus:ring-primary" type="checkbox"/>
+<span class="text-sm font-medium uppercase tracking-tighter bg-emerald-500/10 text-on-secondary-fixed-variant px-2 py-1 rounded-full">DONE :: 완료</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input checked="" class="rounded-lg w-5 h-5 text-primary border-outline-variant focus:ring-primary" type="checkbox"/>
+<span class="text-sm font-medium uppercase tracking-tighter bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-full">TODO :: 해야할일</span>
+</label>
+</div>
+</section>
+<!-- Info Box -->
+<div class="p-4 bg-primary-container/10 rounded-xl flex gap-3 items-start border border-primary-container/5">
+<span class="material-symbols-outlined text-primary text-xl">info</span>
+<p class="text-sm text-on-surface leading-relaxed">
+                        선택된 대상의 모든 텍스트 내용과 메타데이터가 AI에게 지시를 내리기 위한 배경 데이터로 자동 포함됩니다.
+                    </p>
+</div>
+<!-- Preset Selection -->
+<section class="space-y-3">
+<label class="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">프리셋</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 appearance-none focus:ring-2 focus:ring-primary transition-all">
+<option selected="">선택 안 함</option>
+<option>신규 프로젝트 요약</option>
+<option>주간 업무 보고서 생성</option>
+<option>아이디어 브레인스토밍</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</section>
+<!-- Additional Instructions -->
+<section class="space-y-3">
+<label class="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">추가 지시 (선택)</label>
+<textarea class="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary resize-none placeholder:text-on-surface-variant/50" placeholder="예: 각 작업의 예상 소요시간도 포함해줘" rows="3"></textarea>
+</section>
+</div>
+<!-- Modal Footer -->
+<div class="px-8 py-6 bg-surface-container-low/50 flex justify-end items-center">
+<button class="px-8 py-3 bg-primary-container text-on-primary font-bold rounded-xl hover:translate-x-1 active:opacity-80 transition-all duration-300 flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                    생성하기
+                </button>
+</div>
+</div>
+</div>
+</body></html>
