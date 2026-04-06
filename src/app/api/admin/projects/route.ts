@@ -24,12 +24,17 @@ async function handleGet(request: NextRequest) {
       query.status = status;
     if (search) query.title = { $regex: search, $options: 'i' };
 
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const order = searchParams.get('order') === 'asc' ? 1 : -1;
+    const allowedSortFields = ['pid', 'views', 'likeCount', 'createdAt', 'title'];
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+
     const skip = (page - 1) * limit;
     const [projects, total] = await Promise.all([
       Project.find(query)
         .select('pid title status delYn views likeCount createdAt ownerId members')
         .populate('ownerId', 'nName authorEmail')
-        .sort({ createdAt: -1 })
+        .sort({ [sortField]: order })
         .skip(skip)
         .limit(limit)
         .lean(),

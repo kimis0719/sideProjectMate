@@ -7,10 +7,10 @@ interface AdminStatCardProps {
 }
 
 const COLOR_MAP = {
-  blue: 'bg-blue-50 text-blue-600',
-  green: 'bg-green-50 text-green-600',
-  yellow: 'bg-yellow-50 text-yellow-600',
-  purple: 'bg-purple-50 text-purple-600',
+  blue: 'bg-primary/5 text-primary',
+  green: 'bg-emerald-50 text-emerald-600',
+  yellow: 'bg-amber-50 text-amber-600',
+  purple: 'bg-secondary-container text-on-secondary-container',
 };
 
 export default function AdminStatCard({
@@ -21,16 +21,18 @@ export default function AdminStatCard({
   color = 'blue',
 }: AdminStatCardProps) {
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-border p-5 flex items-start gap-4">
+    <div className="bg-surface-container-lowest rounded-lg p-6 hover:bg-surface-bright hover:shadow-ambient transition-all duration-200">
       <div
         className={`w-11 h-11 rounded-lg flex items-center justify-center text-xl shrink-0 ${COLOR_MAP[color]}`}
       >
         {icon}
       </div>
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground font-medium mb-0.5">{label}</p>
-        <p className="text-2xl font-bold text-foreground leading-tight">{value}</p>
-        {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
+      <div className="min-w-0 mt-4">
+        <p className="font-body text-label-md text-on-surface-variant font-medium mb-0.5">
+          {label}
+        </p>
+        <p className="font-headline text-[2rem] font-bold text-on-surface leading-tight">{value}</p>
+        {sub && <p className="font-body text-label-md text-on-surface-variant mt-1">{sub}</p>}
       </div>
     </div>
   );

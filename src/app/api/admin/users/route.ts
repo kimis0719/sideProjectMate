@@ -26,11 +26,16 @@ async function handleGet(request: NextRequest) {
       ];
     }
 
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const order = searchParams.get('order') === 'asc' ? 1 : -1;
+    const allowedSortFields = ['uid', 'createdAt', 'nName', 'authorEmail'];
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+
     const skip = (page - 1) * limit;
     const [users, total] = await Promise.all([
       User.find(query)
         .select('nName authorEmail memberType delYn createdAt avatarUrl uid')
-        .sort({ createdAt: -1 })
+        .sort({ [sortField]: order })
         .skip(skip)
         .limit(limit)
         .lean(),

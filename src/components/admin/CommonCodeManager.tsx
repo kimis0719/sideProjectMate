@@ -88,7 +88,7 @@ export default function CommonCodeManager() {
 
   const handleEditStart = (code: CommonCode) => {
     setEditingId(code._id);
-    setEditForm({ label: code.label, order: code.order });
+    setEditForm({ code: code.code, label: code.label, order: code.order });
   };
 
   const handleEditSave = async (id: string) => {
@@ -154,19 +154,21 @@ export default function CommonCodeManager() {
     <div>
       {/* 그룹 탭 */}
       {groupsLoading ? (
-        <p className="text-muted-foreground text-sm py-4">그룹 로딩 중...</p>
+        <p className="text-on-surface-variant font-body text-body-md py-4">그룹 로딩 중...</p>
       ) : groups.length === 0 ? (
-        <p className="text-muted-foreground text-sm py-4">등록된 그룹이 없습니다.</p>
+        <p className="text-on-surface-variant font-body text-body-md py-4">
+          등록된 그룹이 없습니다.
+        </p>
       ) : (
-        <div className="flex gap-2 mb-6 border-b border-border flex-wrap">
+        <div className="flex gap-2 mb-6 border-b border-outline-variant/15 flex-wrap">
           {groups.map(({ group, groupName, isActive }) => (
             <button
               key={group}
               onClick={() => setActiveGroup(group)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              className={`font-body text-body-md px-4 py-2 border-b-2 transition-colors ${
                 activeGroup === group
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  ? 'border-b-2 border-primary text-primary font-semibold'
+                  : 'border-transparent text-on-surface-variant hover:text-on-surface'
               } ${!isActive ? 'opacity-40 line-through' : ''}`}
             >
               {groupName}
@@ -179,7 +181,7 @@ export default function CommonCodeManager() {
       <div className="flex justify-end mb-4">
         <button
           onClick={() => setShowAddForm((v) => !v)}
-          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary-container text-on-primary rounded-lg font-body text-body-md hover:bg-primary-container/80 transition-colors"
         >
           {showAddForm ? '취소' : '+ 코드 추가'}
         </button>
@@ -187,37 +189,43 @@ export default function CommonCodeManager() {
 
       {/* 추가 폼 */}
       {showAddForm && (
-        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-3 flex-wrap items-end">
+        <div className="mb-4 bg-primary/5 rounded-lg p-6 space-y-4 flex gap-3 flex-wrap items-end">
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">코드 *</label>
+            <label className="block font-body text-label-md text-on-surface-variant mb-1">
+              코드 *
+            </label>
             <input
-              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-24"
+              className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-24"
               placeholder="예: 01"
               value={addForm.code}
               onChange={(e) => setAddForm((f) => ({ ...f, code: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">레이블 *</label>
+            <label className="block font-body text-label-md text-on-surface-variant mb-1">
+              레이블 *
+            </label>
             <input
-              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-36"
+              className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-36"
               placeholder="예: 프론트엔드"
               value={addForm.label}
               onChange={(e) => setAddForm((f) => ({ ...f, label: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">순서</label>
+            <label className="block font-body text-label-md text-on-surface-variant mb-1">
+              순서
+            </label>
             <input
               type="number"
-              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-20"
+              className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-20"
               value={addForm.order}
               onChange={(e) => setAddForm((f) => ({ ...f, order: parseInt(e.target.value) || 0 }))}
             />
           </div>
           <button
             onClick={handleAdd}
-            className="px-4 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+            className="px-4 py-1.5 bg-primary-container text-on-primary rounded-lg font-body text-body-md hover:bg-primary-container/80 transition-colors"
           >
             저장
           </button>
@@ -226,65 +234,87 @@ export default function CommonCodeManager() {
 
       {/* 테이블 */}
       {loading ? (
-        <p className="text-muted-foreground text-sm py-8 text-center">로딩 중...</p>
+        <p className="text-on-surface-variant font-body text-body-md py-8 text-center">
+          로딩 중...
+        </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-muted-foreground">
+        <div className="overflow-x-auto rounded-lg border border-outline-variant/15">
+          <table className="w-full font-body text-body-md">
+            <thead className="bg-surface-container-low">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">코드</th>
-                <th className="px-4 py-3 text-left font-medium">레이블</th>
-                <th className="px-4 py-3 text-left font-medium w-20">순서</th>
-                <th className="px-4 py-3 text-left font-medium">활성</th>
-                <th className="px-4 py-3 text-right font-medium">액션</th>
+                <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant">
+                  코드
+                </th>
+                <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant">
+                  레이블
+                </th>
+                <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant w-20">
+                  순서
+                </th>
+                <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant">
+                  활성
+                </th>
+                <th className="px-4 py-3 text-right font-body text-label-md font-semibold text-on-surface-variant">
+                  액션
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border bg-card">
+            <tbody className="divide-y divide-outline-variant/15 bg-surface-container-lowest">
               {codes.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <td colSpan={5} className="text-center py-8 text-on-surface-variant">
                     코드가 없습니다.
                   </td>
                 </tr>
               )}
               {codes.map((code) => (
-                <tr key={code._id} className="hover:bg-muted/30">
-                  <td className="px-4 py-3 font-mono text-foreground">{code.code}</td>
+                <tr key={code._id} className="hover:bg-surface-bright transition-colors">
                   <td className="px-4 py-3">
                     {editingId === code._id ? (
                       <input
-                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm w-full max-w-xs"
+                        className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md font-mono w-full max-w-[120px]"
+                        value={editForm.code ?? ''}
+                        onChange={(e) => setEditForm((f) => ({ ...f, code: e.target.value }))}
+                      />
+                    ) : (
+                      <span className="font-mono text-on-surface">{code.code}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {editingId === code._id ? (
+                      <input
+                        className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-full max-w-xs"
                         value={editForm.label ?? ''}
                         onChange={(e) => setEditForm((f) => ({ ...f, label: e.target.value }))}
                       />
                     ) : (
-                      <span className="text-foreground">{code.label}</span>
+                      <span className="text-on-surface">{code.label}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     {editingId === code._id ? (
                       <input
                         type="number"
-                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm w-16"
+                        className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-16"
                         value={editForm.order ?? 0}
                         onChange={(e) =>
                           setEditForm((f) => ({ ...f, order: parseInt(e.target.value) || 0 }))
                         }
                       />
                     ) : (
-                      <span className="text-foreground">{code.order}</span>
+                      <span className="text-on-surface">{code.order}</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleToggleActive(code)}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                        code.isActive ? 'bg-blue-600' : 'bg-muted-foreground/40'
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${
+                        code.isActive ? 'bg-primary' : 'bg-surface-container-high'
                       }`}
                     >
                       <span
-                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                          code.isActive ? 'translate-x-4' : 'translate-x-1'
+                        className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                          code.isActive ? 'translate-x-4' : ''
                         }`}
                       />
                     </button>
@@ -295,13 +325,13 @@ export default function CommonCodeManager() {
                         <>
                           <button
                             onClick={() => handleEditSave(code._id)}
-                            className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="font-body text-label-md px-3 py-1 bg-primary-container text-on-primary rounded-lg hover:bg-primary-container/80"
                           >
                             저장
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="text-xs px-3 py-1 bg-muted text-foreground rounded hover:bg-muted/70"
+                            className="font-body text-label-md px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-lg hover:bg-surface-container-high/70"
                           >
                             취소
                           </button>
@@ -310,13 +340,13 @@ export default function CommonCodeManager() {
                         <>
                           <button
                             onClick={() => handleEditStart(code)}
-                            className="text-xs px-3 py-1 bg-muted text-foreground rounded hover:bg-muted/70"
+                            className="font-body text-label-md px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-lg hover:bg-surface-container-high/70"
                           >
                             편집
                           </button>
                           <button
                             onClick={() => handleDelete(code)}
-                            className="text-xs px-3 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 rounded hover:bg-red-100 dark:hover:bg-red-950/50"
+                            className="font-body text-label-md px-3 py-1 bg-error text-on-error rounded-lg hover:bg-error/80"
                           >
                             삭제
                           </button>

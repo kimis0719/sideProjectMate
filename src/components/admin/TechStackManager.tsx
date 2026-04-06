@@ -119,15 +119,15 @@ export default function TechStackManager() {
   return (
     <div>
       {/* 카테고리 탭 */}
-      <div className="flex gap-2 mb-6 flex-wrap border-b border-border">
+      <div className="flex gap-2 mb-6 flex-wrap border-b border-outline-variant/15">
         {CATEGORIES.map(({ value, label }) => (
           <button
             key={value}
             onClick={() => setActiveCategory(value)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`font-body text-body-md px-4 py-2 border-b-2 transition-colors ${
               activeCategory === value
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'border-b-2 border-primary text-primary font-semibold'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
             }`}
           >
             {label}
@@ -139,7 +139,7 @@ export default function TechStackManager() {
       <div className="flex justify-end mb-4">
         <button
           onClick={() => setShowAddForm((v) => !v)}
-          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-primary-container text-on-primary rounded-lg font-body text-body-md hover:bg-primary-container/80 transition-colors"
         >
           {showAddForm ? '취소' : '+ 기술 추가'}
         </button>
@@ -147,20 +147,24 @@ export default function TechStackManager() {
 
       {/* 추가 폼 */}
       {showAddForm && (
-        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg flex gap-3 flex-wrap items-end">
+        <div className="mb-4 bg-primary/5 rounded-lg p-6 space-y-4 flex gap-3 flex-wrap items-end">
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">기술명 *</label>
+            <label className="block font-body text-label-md text-on-surface-variant mb-1">
+              기술명 *
+            </label>
             <input
-              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-36"
+              className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-36"
               placeholder="예: React"
               value={addForm.name}
               onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
             />
           </div>
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">카테고리 *</label>
+            <label className="block font-body text-label-md text-on-surface-variant mb-1">
+              카테고리 *
+            </label>
             <select
-              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm"
+              className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md"
               value={addForm.category}
               onChange={(e) =>
                 setAddForm((f) => ({ ...f, category: e.target.value as TechCategory }))
@@ -174,9 +178,11 @@ export default function TechStackManager() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-muted-foreground mb-1">로고 URL (선택)</label>
+            <label className="block font-body text-label-md text-on-surface-variant mb-1">
+              로고 URL (선택)
+            </label>
             <input
-              className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm w-48"
+              className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-48"
               placeholder="비워두면 자동 생성"
               value={addForm.logoUrl}
               onChange={(e) => setAddForm((f) => ({ ...f, logoUrl: e.target.value }))}
@@ -195,12 +201,12 @@ export default function TechStackManager() {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
-              <span className="text-xs text-muted-foreground">미리보기</span>
+              <span className="font-body text-label-md text-on-surface-variant">미리보기</span>
             </div>
           )}
           <button
             onClick={handleAdd}
-            className="px-4 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+            className="px-4 py-1.5 bg-primary-container text-on-primary rounded-lg font-body text-body-md hover:bg-primary-container/80 transition-colors"
           >
             저장
           </button>
@@ -209,29 +215,41 @@ export default function TechStackManager() {
 
       {/* 테이블 */}
       {loading ? (
-        <p className="text-muted-foreground text-sm py-8 text-center">로딩 중...</p>
+        <p className="text-on-surface-variant font-body text-body-md py-8 text-center">
+          로딩 중...
+        </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-muted-foreground">
+        <div className="overflow-x-auto rounded-lg border border-outline-variant/15">
+          <table className="w-full font-body text-body-md">
+            <thead className="bg-surface-container-low">
               <tr>
-                <th className="px-4 py-3 text-left font-medium w-12">아이콘</th>
-                <th className="px-4 py-3 text-left font-medium">기술명</th>
-                <th className="px-4 py-3 text-left font-medium">카테고리</th>
-                <th className="px-4 py-3 text-left font-medium">로고 URL</th>
-                <th className="px-4 py-3 text-right font-medium">액션</th>
+                <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant w-12">
+                  아이콘
+                </th>
+                <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant">
+                  기술명
+                </th>
+                <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant">
+                  카테고리
+                </th>
+                <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant">
+                  로고 URL
+                </th>
+                <th className="px-4 py-3 text-right font-body text-label-md font-semibold text-on-surface-variant">
+                  액션
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border bg-card">
+            <tbody className="divide-y divide-outline-variant/15 bg-surface-container-lowest">
               {stacks.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <td colSpan={5} className="text-center py-8 text-on-surface-variant">
                     기술 스택이 없습니다.
                   </td>
                 </tr>
               )}
               {stacks.map((stack) => (
-                <tr key={stack._id} className="hover:bg-muted/30">
+                <tr key={stack._id} className="hover:bg-surface-bright transition-colors">
                   <td className="px-4 py-3">
                     <Image
                       src={getIconUrl(
@@ -248,10 +266,10 @@ export default function TechStackManager() {
                       }}
                     />
                   </td>
-                  <td className="px-4 py-3 font-medium text-foreground">
+                  <td className="px-4 py-3 font-medium text-on-surface">
                     {editingId === stack._id ? (
                       <input
-                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm w-36"
+                        className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-36"
                         value={editForm.name ?? ''}
                         onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
                       />
@@ -259,10 +277,10 @@ export default function TechStackManager() {
                       stack.name
                     )}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="px-4 py-3 text-on-surface-variant">
                     {editingId === stack._id ? (
                       <select
-                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm"
+                        className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md"
                         value={editForm.category ?? stack.category}
                         onChange={(e) =>
                           setEditForm((f) => ({ ...f, category: e.target.value as TechCategory }))
@@ -278,10 +296,10 @@ export default function TechStackManager() {
                       (CATEGORIES.find((c) => c.value === stack.category)?.label ?? stack.category)
                     )}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs max-w-xs truncate">
+                  <td className="px-4 py-3 text-on-surface-variant font-body text-label-md max-w-xs truncate">
                     {editingId === stack._id ? (
                       <input
-                        className="border border-border bg-background text-foreground rounded px-2 py-0.5 text-sm w-full"
+                        className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 font-body text-body-md w-full"
                         placeholder="비워두면 자동"
                         value={editForm.logoUrl ?? ''}
                         onChange={(e) => setEditForm((f) => ({ ...f, logoUrl: e.target.value }))}
@@ -296,13 +314,13 @@ export default function TechStackManager() {
                         <>
                           <button
                             onClick={() => handleEditSave(stack._id)}
-                            className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            className="font-body text-label-md px-3 py-1 bg-primary-container text-on-primary rounded-lg hover:bg-primary-container/80"
                           >
                             저장
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="text-xs px-3 py-1 bg-muted text-foreground rounded hover:bg-muted/70"
+                            className="font-body text-label-md px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-lg hover:bg-surface-container-high/70"
                           >
                             취소
                           </button>
@@ -311,13 +329,13 @@ export default function TechStackManager() {
                         <>
                           <button
                             onClick={() => handleEditStart(stack)}
-                            className="text-xs px-3 py-1 bg-muted text-foreground rounded hover:bg-muted/70"
+                            className="font-body text-label-md px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-lg hover:bg-surface-container-high/70"
                           >
                             편집
                           </button>
                           <button
                             onClick={() => handleDelete(stack)}
-                            className="text-xs px-3 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 rounded hover:bg-red-100 dark:hover:bg-red-950/50"
+                            className="font-body text-label-md px-3 py-1 bg-error text-on-error rounded-lg hover:bg-error/80"
                           >
                             삭제
                           </button>

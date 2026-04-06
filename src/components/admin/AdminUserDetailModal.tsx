@@ -27,6 +27,11 @@ interface UserDetail {
   };
   techTags?: string[];
   level?: number;
+  bio?: string;
+  domains?: string[];
+  workStyle?: string[];
+  weeklyAvailability?: number;
+  portfolioLinks?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -106,16 +111,16 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-surface/80 backdrop-blur-[16px] p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface-container-lowest rounded-lg shadow-modal w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card z-10">
-          <h2 className="text-base font-semibold text-foreground">사용자 상세 정보</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/15 sticky top-0 bg-surface-container-lowest z-10">
+          <h2 className="font-body text-body-md font-semibold text-on-surface">사용자 상세 정보</h2>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors text-xl leading-none"
+            className="text-on-surface-variant hover:text-on-surface transition-colors text-xl leading-none"
           >
             ×
           </button>
@@ -124,13 +129,13 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
         {/* 본문 */}
         <div className="px-6 py-5">
           {loading && (
-            <div className="flex justify-center items-center py-12 text-muted-foreground text-sm">
+            <div className="flex justify-center items-center py-12 text-on-surface-variant font-body text-body-md">
               불러오는 중...
             </div>
           )}
 
           {!loading && !user && (
-            <div className="text-center py-12 text-muted-foreground text-sm">
+            <div className="text-center py-12 text-on-surface-variant font-body text-body-md">
               사용자를 찾을 수 없습니다.
             </div>
           )}
@@ -145,44 +150,48 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
                     alt={user.nName || ''}
                     width={64}
                     height={64}
-                    className="w-16 h-16 rounded-full object-cover border border-border"
+                    className="w-16 h-16 rounded-full object-cover"
                     unoptimized
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl text-muted-foreground border border-border">
+                  <div className="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center text-2xl text-on-surface-variant">
                     {(user.nName || user.authorEmail)?.[0]?.toUpperCase() || '?'}
                   </div>
                 )}
                 <div>
-                  <p className="font-semibold text-foreground text-lg">
+                  <p className="font-headline text-title-md font-semibold text-on-surface">
                     {user.nName || '(이름 없음)'}
                   </p>
-                  <p className="text-sm text-muted-foreground">{user.authorEmail}</p>
-                  <p className="text-xs text-muted-foreground font-mono mt-0.5">UID: {user.uid}</p>
+                  <p className="font-body text-body-md text-on-surface-variant">
+                    {user.authorEmail}
+                  </p>
+                  <p className="font-body text-label-md text-on-surface-variant font-mono mt-0.5">
+                    UID: {user.uid}
+                  </p>
                 </div>
               </div>
 
               {/* 권한 & 상태 (표시 전용) */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-muted/40 rounded-lg p-3">
-                  <p className="text-xs text-muted-foreground mb-2">권한</p>
+                <div className="bg-surface-container-low rounded-lg p-4">
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">권한</p>
                   <span
-                    className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+                    className={`inline-flex px-2 py-0.5 rounded font-body text-label-md font-medium ${
                       user.memberType === 'admin'
-                        ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
-                        : 'bg-muted text-muted-foreground'
+                        ? 'bg-secondary-container text-on-secondary-container'
+                        : 'bg-surface-container-low text-on-surface-variant'
                     }`}
                   >
                     {user.memberType === 'admin' ? '관리자' : '일반 사용자'}
                   </span>
                 </div>
-                <div className="bg-muted/40 rounded-lg p-3">
-                  <p className="text-xs text-muted-foreground mb-2">계정 상태</p>
+                <div className="bg-surface-container-low rounded-lg p-4">
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">계정 상태</p>
                   <span
-                    className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+                    className={`inline-flex px-2 py-0.5 rounded font-body text-label-md font-medium ${
                       user.delYn
-                        ? 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400'
-                        : 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400'
+                        ? 'bg-error-container text-on-error-container'
+                        : 'bg-emerald-50 text-emerald-600'
                     }`}
                   >
                     {user.delYn ? '비활성' : '활성'}
@@ -191,7 +200,7 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
               </div>
 
               {/* 기본 정보 */}
-              <div className="border border-border rounded-lg divide-y divide-border">
+              <div className="rounded-lg divide-y divide-outline-variant/15">
                 {user.position && <InfoRow label="직군" value={user.position} />}
                 {user.career && <InfoRow label="경력" value={user.career} />}
                 {user.status && <InfoRow label="활동 상태" value={user.status} />}
@@ -210,11 +219,21 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
                 />
               </div>
 
+              {/* 한 줄 소개 */}
+              {user.bio && (
+                <div>
+                  <p className="font-body text-label-md text-on-surface-variant mb-1.5">
+                    한 줄 소개
+                  </p>
+                  <p className="font-body text-body-md text-on-surface">{user.bio}</p>
+                </div>
+              )}
+
               {/* 소개 */}
               {user.introduction && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1.5">자기소개</p>
-                  <p className="text-sm text-foreground bg-muted/30 rounded-lg p-3 leading-relaxed">
+                  <p className="font-body text-label-md text-on-surface-variant mb-1.5">자기소개</p>
+                  <p className="font-body text-body-md text-on-surface bg-surface-container-low rounded-lg p-4 leading-relaxed">
                     {user.introduction}
                   </p>
                 </div>
@@ -223,12 +242,12 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
               {/* 기술 태그 */}
               {user.techTags && user.techTags.length > 0 && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">기술 스택</p>
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">기술 스택</p>
                   <div className="flex flex-wrap gap-1.5">
                     {user.techTags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 text-xs rounded"
+                        className="bg-primary/5 text-primary rounded-full px-3 py-1 font-body text-label-md font-semibold"
                       >
                         {tag}
                       </span>
@@ -237,10 +256,75 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
                 </div>
               )}
 
+              {/* 관심 도메인 */}
+              {user.domains && user.domains.length > 0 && (
+                <div>
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">
+                    관심 도메인
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {user.domains.map((domain) => (
+                      <span
+                        key={domain}
+                        className="bg-surface-container-low text-on-surface rounded-full px-3 py-1 font-body text-label-md"
+                      >
+                        {domain}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 협업 스타일 */}
+              {user.workStyle && user.workStyle.length > 0 && (
+                <div>
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">
+                    협업 스타일
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {user.workStyle.map((style) => (
+                      <span
+                        key={style}
+                        className="bg-secondary-container/30 text-on-secondary-container rounded-full px-3 py-1 font-body text-label-md"
+                      >
+                        {style}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 주당 가용 시간 */}
+              {user.weeklyAvailability != null && user.weeklyAvailability > 0 && (
+                <div className="rounded-lg divide-y divide-outline-variant/15">
+                  <InfoRow label="주당 가용시간" value={`${user.weeklyAvailability}시간`} />
+                </div>
+              )}
+
+              {/* 포트폴리오 링크 */}
+              {user.portfolioLinks && user.portfolioLinks.length > 0 && (
+                <div>
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">포트폴리오</p>
+                  <div className="flex flex-col gap-1">
+                    {user.portfolioLinks.map((link, i) => (
+                      <a
+                        key={i}
+                        href={link.startsWith('http') ? link : `https://${link}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-body text-body-md text-primary hover:underline truncate"
+                      >
+                        {link}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* 소셜 링크 */}
               {user.socialLinks && Object.values(user.socialLinks).some(Boolean) && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">소셜 링크</p>
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">소셜 링크</p>
                   <div className="flex flex-col gap-1">
                     {user.socialLinks.github && (
                       <SocialLink label="GitHub" url={user.socialLinks.github} />
@@ -262,11 +346,9 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
               )}
 
               {/* 계정 관리 (Danger Zone) */}
-              <div className="border border-red-200 dark:border-red-900/50 rounded-lg p-4 bg-red-50/50 dark:bg-red-950/10">
-                <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">
-                  계정 관리
-                </p>
-                <p className="text-xs text-muted-foreground mb-3">
+              <div className="bg-error-container/10 rounded-lg p-4">
+                <p className="font-body text-label-md font-semibold text-error mb-1">계정 관리</p>
+                <p className="font-body text-label-md text-on-surface-variant mb-3">
                   {user.delYn
                     ? '계정을 활성화하면 해당 사용자가 다시 로그인할 수 있습니다.'
                     : '계정을 비활성화하면 해당 사용자의 로그인이 즉시 차단됩니다.'}
@@ -274,10 +356,10 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
                 <button
                   onClick={handleToggleActive}
                   disabled={saving}
-                  className={`w-full py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                  className={`w-full py-2 rounded-lg font-body text-body-md font-medium transition-colors disabled:opacity-50 ${
                     user.delYn
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-red-600 hover:bg-red-700 text-white'
+                      ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'
+                      : 'bg-error hover:bg-error/90 text-on-error'
                   }`}
                 >
                   {saving ? '처리 중...' : user.delYn ? '계정 활성화' : '계정 비활성화'}
@@ -289,18 +371,18 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
 
         {/* 푸터 */}
         {!loading && user && (
-          <div className="flex justify-between items-center px-6 py-4 border-t border-border bg-muted/20">
+          <div className="flex justify-between items-center px-6 py-4 border-t border-outline-variant/15 bg-surface-container-low">
             <a
               href={`/profile/${user._id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              className="font-body text-body-md text-primary hover:underline"
             >
               프로필 보기 ↗
             </a>
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm bg-muted text-muted-foreground rounded-lg hover:bg-muted/70 transition-colors"
+              className="px-4 py-2 font-body text-body-md bg-surface-container-high text-on-surface-variant rounded-lg hover:bg-surface-container-high/70 transition-colors"
             >
               닫기
             </button>
@@ -314,8 +396,8 @@ export default function AdminUserDetailModal({ userId, onClose, onUpdated }: Pro
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center px-3 py-2">
-      <span className="text-xs text-muted-foreground w-24 shrink-0">{label}</span>
-      <span className="text-sm text-foreground">{value}</span>
+      <span className="font-body text-label-md text-on-surface-variant w-24 shrink-0">{label}</span>
+      <span className="font-body text-body-md text-on-surface">{value}</span>
     </div>
   );
 }
@@ -327,9 +409,9 @@ function SocialLink({ label, url }: { label: string; url: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+      className="flex items-center gap-2 font-body text-body-md text-primary hover:underline"
     >
-      <span className="text-xs text-muted-foreground w-16 shrink-0">{label}</span>
+      <span className="font-body text-label-md text-on-surface-variant w-16 shrink-0">{label}</span>
       <span className="truncate">{url}</span>
     </a>
   );

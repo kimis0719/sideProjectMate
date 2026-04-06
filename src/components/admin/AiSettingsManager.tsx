@@ -173,8 +173,8 @@ export default function AiSettingsManager() {
     return (
       <div className="p-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
-          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-8 bg-surface-container-low rounded w-1/3" />
+          <div className="h-64 bg-surface-container-low rounded" />
         </div>
       </div>
     );
@@ -185,22 +185,20 @@ export default function AiSettingsManager() {
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI 지시서 설정</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-on-surface">AI 지시서 설정</h1>
+          <p className="font-body text-body-md text-on-surface-variant mt-1">
             AI 지시서 생성에 사용되는 LLM, 프롬프트, 프리셋을 관리합니다.
           </p>
         </div>
         <div className="flex items-center gap-3">
           {dirty && (
-            <span className="text-sm text-amber-600 dark:text-amber-400">
-              저장되지 않은 변경사항
-            </span>
+            <span className="font-body text-body-md text-amber-600">저장되지 않은 변경사항</span>
           )}
           <button
             onClick={handleSave}
             disabled={saving || !dirty}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium
-                       hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="bg-primary-container text-on-primary rounded-lg px-6 py-2.5 font-body text-body-md font-semibold disabled:opacity-40
+                       transition-colors"
           >
             {saving ? '저장 중...' : '저장하기'}
           </button>
@@ -208,16 +206,16 @@ export default function AiSettingsManager() {
       </div>
 
       {/* 탭 */}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
+      <div className="flex gap-1 border-b border-outline-variant/15 mb-6">
         <nav className="flex gap-6">
           {TABS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`pb-3 transition-colors ${
                 activeTab === key
-                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  ? 'text-primary border-b-2 border-primary font-semibold px-4 py-2.5 font-body text-body-md'
+                  : 'text-on-surface-variant hover:text-on-surface px-4 py-2.5 font-body text-body-md'
               }`}
             >
               {label}
@@ -266,13 +264,13 @@ type ConnectionStatus =
 
 const STATUS_CONFIG: Record<ConnectionStatus, { label: string; color: string }> = {
   idle: { label: '', color: '' },
-  checking: { label: '확인 중...', color: 'text-gray-500' },
-  connected: { label: '연결됨', color: 'text-green-600 dark:text-green-400' },
-  rate_limited: { label: '할당량 초과', color: 'text-amber-600 dark:text-amber-400' },
-  not_found: { label: '모델 없음', color: 'text-red-600 dark:text-red-400' },
-  auth_error: { label: 'API 키 오류', color: 'text-red-600 dark:text-red-400' },
-  error: { label: '연결 실패', color: 'text-red-600 dark:text-red-400' },
-  unsupported: { label: '미지원', color: 'text-gray-500' },
+  checking: { label: '확인 중...', color: 'text-amber-600 animate-pulse' },
+  connected: { label: '연결됨', color: 'bg-emerald-50 text-emerald-600' },
+  rate_limited: { label: '할당량 초과', color: 'bg-amber-50 text-amber-600' },
+  not_found: { label: '모델 없음', color: 'bg-surface-container-high text-on-surface-variant' },
+  auth_error: { label: 'API 키 오류', color: 'bg-error-container text-on-error-container' },
+  error: { label: '연결 실패', color: 'bg-error-container text-on-error-container' },
+  unsupported: { label: '미지원', color: 'bg-surface-container-high text-on-surface-variant' },
 };
 
 function BasicTab({
@@ -340,22 +338,22 @@ function BasicTab({
   return (
     <div className="space-y-6">
       {/* 기능 ON/OFF */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg">
         <div>
-          <h3 className="font-medium text-gray-900 dark:text-white">AI 지시서 기능</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <h3 className="font-semibold text-on-surface font-body text-body-md">AI 지시서 기능</h3>
+          <p className="font-body text-body-md text-on-surface-variant">
             비활성화하면 모든 사용자에게 지시서 생성 버튼이 숨겨집니다.
           </p>
         </div>
         <button
           onClick={() => update('enabled', !settings.enabled)}
-          className={`relative w-12 h-6 rounded-full transition-colors ${
-            settings.enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+          className={`relative inline-flex items-center w-12 h-6 rounded-full transition-colors duration-200 ${
+            settings.enabled ? 'bg-primary' : 'bg-surface-container-high'
           }`}
         >
           <span
-            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-              settings.enabled ? 'translate-x-6' : ''
+            className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+              settings.enabled ? 'translate-x-6' : 'translate-x-0.5'
             }`}
           />
         </button>
@@ -366,8 +364,7 @@ function BasicTab({
         <select
           value={settings.provider}
           onChange={(e) => handleProviderChange(e.target.value as AiSettingsData['provider'])}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+          className="w-full bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
         >
           {PROVIDERS.map(({ value, label }) => (
             <option key={value} value={value}>
@@ -383,7 +380,9 @@ function BasicTab({
         desc="할당량 초과 시 다음 순위 모델로 자동 전환됩니다 (최대 3개)"
       >
         {modelsLoading ? (
-          <div className="px-3 py-2 text-gray-400 text-sm">모델 목록 불러오는 중...</div>
+          <div className="px-3 py-2 text-on-surface-variant font-body text-body-md">
+            모델 목록 불러오는 중...
+          </div>
         ) : (
           <div className="space-y-3">
             {[1, 2, 3].map((priority) => {
@@ -392,7 +391,7 @@ function BasicTab({
 
               return (
                 <div key={priority} className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400 w-6 shrink-0">
+                  <span className="font-body text-label-md font-bold text-on-surface-variant w-6 shrink-0">
                     #{priority}
                   </span>
                   <div className="flex-1">
@@ -409,8 +408,7 @@ function BasicTab({
                         // 1순위 모델은 modelName과 동기화
                         if (priority === 1) update('modelName', val);
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                                 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                      className="w-full bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     >
                       <option value="">
                         {priority === 1 ? '모델을 선택하세요' : '(사용 안 함)'}
@@ -424,15 +422,15 @@ function BasicTab({
                   </div>
                   {/* 토큰 한도 표시 */}
                   {selectedModel && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap shrink-0">
-                      <span className="text-blue-600 dark:text-blue-400 font-medium">
+                    <div className="font-body text-label-md text-on-surface-variant whitespace-nowrap shrink-0">
+                      <span className="text-primary font-medium">
                         {Math.round(selectedModel.inputTokenLimit / 1000)}K
                       </span>
                       {' / '}
-                      <span className="text-green-600 dark:text-green-400 font-medium">
+                      <span className="text-tertiary font-medium">
                         {Math.round(selectedModel.outputTokenLimit / 1000)}K
                       </span>
-                      <span className="ml-1 text-gray-400">(in/out)</span>
+                      <span className="ml-1 text-on-surface-variant">(in/out)</span>
                     </div>
                   )}
                 </div>
@@ -454,8 +452,7 @@ function BasicTab({
           min={0}
           value={settings.cooldownMinutes}
           onChange={(e) => update('cooldownMinutes', Number(e.target.value))}
-          className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+          className="w-32 bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
       </FieldGroup>
 
@@ -466,8 +463,7 @@ function BasicTab({
           min={1}
           value={settings.dailyLimitPerProject}
           onChange={(e) => update('dailyLimitPerProject', Number(e.target.value))}
-          className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                     bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+          className="w-32 bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
       </FieldGroup>
     </div>
@@ -493,12 +489,12 @@ function PromptTab({
         {/* 시스템 프롬프트 */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="font-body text-body-md font-semibold text-on-surface">
               시스템 프롬프트 템플릿
             </label>
             <button
               onClick={onReset}
-              className="text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors"
+              className="font-body text-label-md text-on-surface-variant hover:text-error transition-colors"
             >
               기본값 복원
             </button>
@@ -507,8 +503,7 @@ function PromptTab({
             value={settings.systemPromptTemplate}
             onChange={(e) => update('systemPromptTemplate', e.target.value)}
             rows={20}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm
+            className="w-full bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary
                        font-mono leading-relaxed resize-y"
             placeholder="시스템 프롬프트를 입력하세요..."
           />
@@ -516,7 +511,7 @@ function PromptTab({
 
         {/* 컨텍스트 포함 토글 */}
         <div>
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+          <h3 className="font-body text-body-md font-semibold text-on-surface mb-3">
             컨텍스트 포함 설정
           </h3>
           <div className="space-y-3">
@@ -530,13 +525,13 @@ function PromptTab({
             ).map(({ key, label }) => (
               <label
                 key={key}
-                className="flex items-center gap-3 cursor-pointer text-sm text-gray-700 dark:text-gray-300"
+                className="flex items-center gap-3 cursor-pointer font-body text-body-md text-on-surface-variant"
               >
                 <input
                   type="checkbox"
                   checked={settings[key]}
                   onChange={(e) => update(key, e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="w-4 h-4 rounded border-outline-variant/15 text-primary focus:ring-primary"
                 />
                 {label} 포함
               </label>
@@ -547,24 +542,24 @@ function PromptTab({
 
       {/* 오른쪽: 변수 레퍼런스 */}
       <div className="lg:col-span-1">
-        <div className="sticky top-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+        <div className="sticky top-6 p-4 bg-surface-container-low rounded-lg">
+          <h3 className="font-body text-body-md font-semibold text-on-surface mb-3">
             사용 가능한 변수
           </h3>
           <div className="space-y-2">
             {TEMPLATE_VARIABLES.map(({ name, desc }) => (
-              <div key={name} className="text-xs">
-                <code className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded font-mono">
+              <div key={name} className="font-body text-label-md">
+                <code className="px-1.5 py-0.5 bg-primary-container text-on-primary-container rounded font-mono">
                   {`{{${name}}}`}
                 </code>
-                <span className="ml-2 text-gray-500 dark:text-gray-400">{desc}</span>
+                <span className="ml-2 text-on-surface-variant">{desc}</span>
               </div>
             ))}
           </div>
-          <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-4 pt-3 border-t border-outline-variant/15">
+            <p className="font-body text-label-md text-on-surface-variant">
               조건부 블록:
-              <code className="block mt-1 px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded font-mono">
+              <code className="block mt-1 px-1.5 py-0.5 bg-surface-container-high rounded font-mono">
                 {'{{#if 변수}}...{{/if}}'}
               </code>
             </p>
@@ -592,77 +587,72 @@ function PresetsTab({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="font-body text-body-md text-on-surface-variant">
           모든 프로젝트에 기본으로 제공되는 프리셋입니다. 프로젝트별로 추가 프리셋을 만들 수도
           있습니다.
         </p>
         <button
           onClick={addPreset}
-          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium
-                     hover:bg-blue-700 transition-colors"
+          className="bg-primary-container text-on-primary rounded-lg px-6 py-2.5 font-body text-body-md font-semibold
+                     transition-colors"
         >
           + 프리셋 추가
         </button>
       </div>
 
       {presets.length === 0 && (
-        <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-          등록된 프리셋이 없습니다.
-        </div>
+        <div className="text-center py-12 text-on-surface-variant">등록된 프리셋이 없습니다.</div>
       )}
 
       {presets.map((preset, i) => (
         <div
           key={preset._id ?? `new-${i}`}
-          className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg space-y-3"
+          className="p-4 bg-surface-container-low rounded-lg space-y-3"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block font-body text-label-md font-semibold text-on-surface-variant mb-1">
                   이름
                 </label>
                 <input
                   type="text"
                   value={preset.name}
                   onChange={(e) => updatePreset(i, 'name', e.target.value)}
-                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg
-                             bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                  className="w-full bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="예: 기능 구현"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block font-body text-label-md font-semibold text-on-surface-variant mb-1">
                   설명
                 </label>
                 <input
                   type="text"
                   value={preset.description}
                   onChange={(e) => updatePreset(i, 'description', e.target.value)}
-                  className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg
-                             bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                  className="w-full bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="프리셋에 대한 짧은 설명"
                 />
               </div>
             </div>
             <button
               onClick={() => removePreset(i)}
-              className="mt-5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm"
+              className="mt-5 text-on-surface-variant hover:text-error transition-colors font-body text-body-md"
               title="삭제"
             >
               삭제
             </button>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block font-body text-label-md font-semibold text-on-surface-variant mb-1">
               역할 지시 (Role Instruction)
             </label>
             <textarea
               value={preset.roleInstruction}
               onChange={(e) => updatePreset(i, 'roleInstruction', e.target.value)}
               rows={3}
-              className="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm resize-y"
+              className="w-full bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary resize-y"
               placeholder="이 프리셋을 선택했을 때 AI에게 전달할 역할 지시를 입력하세요."
             />
           </div>
@@ -684,10 +674,10 @@ function FieldGroup({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">
+      <label className="font-body text-body-md font-semibold text-on-surface mb-1 block">
         {label}
       </label>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{desc}</p>
+      <p className="font-body text-label-md text-on-surface-variant mb-2">{desc}</p>
       {children}
     </div>
   );

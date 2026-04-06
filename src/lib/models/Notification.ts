@@ -10,7 +10,8 @@ export interface INotification extends Document {
     | 'application_accepted'
     | 'application_rejected'
     | 'assign_note'
-    | 'review_request'; // 알림 종류
+    | 'review_request'
+    | 'announcement'; // 알림 종류
   project: IProject['_id']; // 관련 프로젝트
   read: boolean; // 읽음 여부
   metadata?: Record<string, unknown>; // 추가 데이터 (예: noteId)
@@ -38,12 +39,13 @@ const NotificationSchema: Schema = new Schema(
         'application_rejected',
         'assign_note',
         'review_request',
+        'announcement',
       ],
     },
     project: {
       type: Schema.Types.ObjectId,
       ref: 'Project',
-      required: true,
+      required: false,
     },
     read: {
       type: Boolean,
