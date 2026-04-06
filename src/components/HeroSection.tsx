@@ -44,70 +44,72 @@ export default function HeroSection() {
   return (
     <>
       {/* Hero Section */}
-      <section className="min-h-[600px] lg:min-h-[720px] flex flex-col md:flex-row items-center px-8 lg:px-24 py-20 bg-surface">
-        <div className="w-full md:w-1/2 flex flex-col gap-8">
-          <h1 className="text-4xl md:text-[3.5rem] leading-[1.1] font-bold font-headline tracking-tight text-on-surface">
-            아이디어를 현실로,
-            <br />
-            최적의 팀원을 만나보세요
-          </h1>
-          <p className="text-xl text-on-surface-variant max-w-lg leading-relaxed">
-            AI 기반 도메인 매칭과 자동 생성되는 로드맵으로 사이드 프로젝트의 시작부터 끝까지, SPM이
-            당신의 완벽한 메이트가 되어드립니다.
-          </p>
-          <div className="flex flex-wrap gap-4 pt-4">
-            {session ? (
-              <>
-                <Link
-                  href="/projects"
-                  className="bg-primary-container text-on-primary px-8 py-4 rounded-lg font-semibold text-lg transition-all hover:translate-x-1 shadow-sm"
-                >
-                  프로젝트 탐색
-                </Link>
-                <Link
-                  href="/projects/new"
-                  className="text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-container-low transition-all"
-                >
-                  + 새 프로젝트
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/register"
-                  className="bg-primary-container text-on-primary px-8 py-4 rounded-lg font-semibold text-lg transition-all hover:translate-x-1 shadow-sm"
-                >
-                  시작하기
-                </Link>
-                <Link
-                  href="/projects"
-                  className="text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-container-low transition-all"
-                >
-                  프로젝트 둘러보기
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="w-full md:w-1/2 mt-16 md:mt-0 relative">
-          <div className="bg-surface-container-lowest p-4 rounded-xl shadow-[0_40px_80px_rgba(26,28,28,0.08)] transform md:rotate-2">
-            <div className="rounded-lg w-full h-64 md:h-80 bg-surface-container-low flex items-center justify-center border border-outline-variant/15">
-              <span className="material-symbols-outlined text-6xl text-on-surface-variant/30">
-                dashboard
-              </span>
+      <section className="py-20 px-8 lg:px-24 bg-surface">
+        <div className="max-w-7xl mx-auto min-h-[480px] lg:min-h-[560px] flex flex-col md:flex-row items-center">
+          <div className="w-full md:w-1/2 flex flex-col gap-8">
+            <h1 className="text-4xl md:text-[3.5rem] leading-[1.1] font-bold font-headline tracking-tight text-on-surface">
+              아이디어를 현실로,
+              <br />
+              최적의 팀원을 만나보세요
+            </h1>
+            <p className="text-xl text-on-surface-variant max-w-lg leading-relaxed">
+              AI 기반 도메인 매칭과 자동 생성되는 로드맵으로 사이드 프로젝트의 시작부터 끝까지,
+              SPM이 당신의 완벽한 메이트가 되어드립니다.
+            </p>
+            <div className="flex flex-wrap gap-4 pt-4">
+              {session ? (
+                <>
+                  <Link
+                    href="/projects"
+                    className="bg-primary-container text-on-primary px-8 py-4 rounded-lg font-semibold text-lg transition-all hover:translate-x-1 shadow-sm"
+                  >
+                    프로젝트 탐색
+                  </Link>
+                  <Link
+                    href="/projects/new"
+                    className="text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-container-low transition-all"
+                  >
+                    + 새 프로젝트
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/register"
+                    className="bg-primary-container text-on-primary px-8 py-4 rounded-lg font-semibold text-lg transition-all hover:translate-x-1 shadow-sm"
+                  >
+                    시작하기
+                  </Link>
+                  <Link
+                    href="/projects"
+                    className="text-primary px-8 py-4 rounded-lg font-semibold text-lg hover:bg-surface-container-low transition-all"
+                  >
+                    프로젝트 둘러보기
+                  </Link>
+                </>
+              )}
             </div>
           </div>
-          <div className="absolute -bottom-8 -left-8 bg-surface-container-lowest p-6 rounded-xl shadow-lg hidden lg:block">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-emerald-600">check_circle</span>
+
+          <div className="w-full md:w-1/2 mt-16 md:mt-0 relative">
+            <div className="bg-surface-container-lowest p-4 rounded-xl shadow-[0_40px_80px_rgba(26,28,28,0.08)] transform md:rotate-2">
+              <div className="rounded-lg w-full h-64 md:h-80 bg-surface-container-low flex items-center justify-center border border-outline-variant/15">
+                <span className="material-symbols-outlined text-6xl text-on-surface-variant/30">
+                  dashboard
+                </span>
               </div>
-              <div>
-                <p className="text-sm font-bold text-on-surface">AI Matching Complete</p>
-                <p className="text-xs text-on-surface-variant">
-                  3명의 새로운 팀원이 제안되었습니다.
-                </p>
+            </div>
+            <div className="absolute -bottom-8 -left-8 bg-surface-container-lowest p-6 rounded-xl shadow-lg hidden lg:block">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-emerald-600">check_circle</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-on-surface">AI Matching Complete</p>
+                  <p className="text-xs text-on-surface-variant">
+                    3명의 새로운 팀원이 제안되었습니다.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
