@@ -91,9 +91,9 @@ export default function HeroSection() {
             </div>
           </div>
 
-          <div className="w-full md:w-1/2 mt-16 md:mt-0 relative">
-            <div className="bg-surface-container-lowest p-4 rounded-xl shadow-[0_40px_80px_rgba(26,28,28,0.08)] transform md:rotate-2">
-              <div className="rounded-lg w-full h-64 md:h-80 bg-surface-container-low flex items-center justify-center border border-outline-variant/15">
+          <div className="w-full md:w-1/2 mt-16 md:mt-0 relative flex justify-center">
+            <div className="bg-surface-container-lowest p-4 rounded-xl shadow-[0_40px_80px_rgba(26,28,28,0.08)] transform md:rotate-2 w-full max-w-[520px]">
+              <div className="rounded-lg w-full h-[320px] bg-surface-container-low flex items-center justify-center border border-outline-variant/15">
                 <span className="material-symbols-outlined text-6xl text-on-surface-variant/30">
                   dashboard
                 </span>
