@@ -3,6 +3,7 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { requireAdmin } from '@/lib/adminAuth';
 import { withApiLogging } from '@/lib/apiLogger';
+import { logAdminAction, getClientIp } from '@/lib/utils/adminAuditLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,6 +76,23 @@ async function handlePatch(request: NextRequest, { params }: { params: { id: str
         { success: false, message: '사용자를 찾을 수 없습니다.' },
         { status: 404 }
       );
+    }
+
+    // 감사 로그
+    const actions: string[] = [];
+    if (typeof delYn === 'boolean') actions.push(delYn ? 'user.deactivate' : 'user.activate');
+    if (memberType) actions.push('user.role_change');
+    for (const action of actions) {
+      logAdminAction({
+        adminId: session!.user._id,
+        adminEmail: session!.user.email ?? '',
+        action,
+        targetType: 'user',
+        targetId: params.id,
+        targetLabel: updated.nName || updated.authorEmail,
+        detail: JSON.stringify(allowedFields),
+        ip: getClientIp(request),
+      });
     }
 
     return NextResponse.json({ success: true, data: updated });

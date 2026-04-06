@@ -3,6 +3,7 @@ import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import { requireAdmin } from '@/lib/adminAuth';
 import { withApiLogging } from '@/lib/apiLogger';
+import { logAdminAction, getClientIp } from '@/lib/utils/adminAuditLog';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,6 @@ async function handleGet(_request: NextRequest, { params }: { params: { pid: str
 
     const project = await Project.findOne({ pid })
       .populate('ownerId', 'nName authorEmail avatarUrl')
-      .populate('tags', 'name logoUrl category')
       .lean();
 
     if (!project) {
@@ -49,7 +49,7 @@ async function handleGet(_request: NextRequest, { params }: { params: { pid: str
 
 // PATCH /api/admin/projects/[pid] — 프로젝트 비활성화/재활성화
 async function handlePatch(request: NextRequest, { params }: { params: { pid: string } }) {
-  const { error } = await requireAdmin();
+  const { session, error } = await requireAdmin();
   if (error) return error;
 
   try {
@@ -73,9 +73,11 @@ async function handlePatch(request: NextRequest, { params }: { params: { pid: st
       );
     }
 
-    const updated = await Project.findOneAndUpdate({ pid }, { $set: { delYn } }, { new: true })
-      .populate('ownerId', 'nName authorEmail avatarUrl')
-      .populate('tags', 'name logoUrl category');
+    const updated = await Project.findOneAndUpdate(
+      { pid },
+      { $set: { delYn } },
+      { new: true }
+    ).populate('ownerId', 'nName authorEmail avatarUrl');
 
     if (!updated) {
       return NextResponse.json(
@@ -83,6 +85,17 @@ async function handlePatch(request: NextRequest, { params }: { params: { pid: st
         { status: 404 }
       );
     }
+
+    logAdminAction({
+      adminId: session!.user._id,
+      adminEmail: session!.user.email ?? '',
+      action: delYn ? 'project.deactivate' : 'project.activate',
+      targetType: 'project',
+      targetId: String(pid),
+      targetLabel: updated.title,
+      detail: `delYn: ${!delYn} → ${delYn}`,
+      ip: getClientIp(request),
+    });
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error: unknown) {
@@ -98,8 +111,8 @@ async function handlePatch(request: NextRequest, { params }: { params: { pid: st
 }
 
 // DELETE /api/admin/projects/[pid] — 프로젝트 강제 삭제 (pid 기준)
-async function handleDelete(_request: NextRequest, { params }: { params: { pid: string } }) {
-  const { error } = await requireAdmin();
+async function handleDelete(request: NextRequest, { params }: { params: { pid: string } }) {
+  const { session, error } = await requireAdmin();
   if (error) return error;
 
   try {
@@ -121,6 +134,17 @@ async function handleDelete(_request: NextRequest, { params }: { params: { pid: 
         { status: 404 }
       );
     }
+
+    logAdminAction({
+      adminId: session!.user._id,
+      adminEmail: session!.user.email ?? '',
+      action: 'project.delete',
+      targetType: 'project',
+      targetId: String(pid),
+      targetLabel: deleted.title,
+      detail: '영구 삭제',
+      ip: getClientIp(request),
+    });
 
     return NextResponse.json({ success: true, message: `프로젝트 #${pid}가 삭제되었습니다.` });
   } catch (error: unknown) {

@@ -12,10 +12,15 @@ vi.mock('@/lib/auth', () => ({ authOptions: {} }));
 // requireAdmin은 getServerSession에 의존하므로 실제 모듈 사용
 // (이미 next-auth를 mock했으므로 requireAdmin 내부에서 mock된 세션을 받음)
 
+import { NextRequest } from 'next/server';
 import User from '@/lib/models/User';
 import Project from '@/lib/models/Project';
 import Application from '@/lib/models/Application';
 import { GET } from './route';
+
+function makeRequest(period = 'week') {
+  return new NextRequest(`http://localhost:3000/api/admin/stats?period=${period}`);
+}
 
 async function createTestUser(overrides?: Record<string, unknown>) {
   return User.create({
@@ -63,7 +68,7 @@ describe('GET /api/admin/stats', () => {
       message: '지원',
     });
 
-    const response = await GET();
+    const response = await GET(makeRequest());
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -84,7 +89,7 @@ describe('GET /api/admin/stats', () => {
       expires: '2099-12-31',
     });
 
-    const response = await GET();
+    const response = await GET(makeRequest());
     const body = await response.json();
 
     // admin + user 2명 = 3명
@@ -139,7 +144,7 @@ describe('GET /api/admin/stats', () => {
       },
     ]);
 
-    const response = await GET();
+    const response = await GET(makeRequest());
     const body = await response.json();
 
     expect(body.data.projects.total).toBe(4);
@@ -186,7 +191,7 @@ describe('GET /api/admin/stats', () => {
       },
     ]);
 
-    const response = await GET();
+    const response = await GET(makeRequest());
     const body = await response.json();
 
     expect(body.data.applications.total).toBe(2);
@@ -197,7 +202,7 @@ describe('GET /api/admin/stats', () => {
   it('미인증 시 401을 반환한다', async () => {
     mockGetServerSession.mockResolvedValue(null);
 
-    const response = await GET();
+    const response = await GET(makeRequest());
     const body = await response.json();
 
     expect(response.status).toBe(401);
@@ -211,7 +216,7 @@ describe('GET /api/admin/stats', () => {
       expires: '2099-12-31',
     });
 
-    const response = await GET();
+    const response = await GET(makeRequest());
     const body = await response.json();
 
     expect(response.status).toBe(403);
@@ -225,7 +230,7 @@ describe('GET /api/admin/stats', () => {
       expires: '2099-12-31',
     });
 
-    const response = await GET();
+    const response = await GET(makeRequest());
     const body = await response.json();
 
     expect(body.data.applications.acceptanceRate).toBe(0);

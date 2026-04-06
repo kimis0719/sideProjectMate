@@ -28,14 +28,14 @@ interface PaginatedResult {
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   recruiting: {
     label: '모집중',
-    color: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',
+    color: 'bg-primary/5 text-primary',
   },
   in_progress: {
     label: '진행중',
-    color: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400',
+    color: 'bg-amber-50 text-amber-600',
   },
-  completed: { label: '완료', color: 'bg-muted text-muted-foreground' },
-  paused: { label: '일시정지', color: 'bg-gray-100 dark:bg-gray-800 text-gray-500' },
+  completed: { label: '완료', color: 'bg-surface-container-high text-on-surface-variant' },
+  paused: { label: '일시정지', color: 'bg-surface-container-high text-on-surface-variant' },
 };
 
 const STATUS_FILTERS = [
@@ -59,11 +59,34 @@ export default function ProjectModerateTable() {
   const [selectedPid, setSelectedPid] = useState<number | null>(null);
   const [selectedPids, setSelectedPids] = useState<Set<number>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+    setPage(1);
+  };
+
+  const SortIcon = ({ field }: { field: string }) => (
+    <span className="ml-1 text-on-surface-variant/50">
+      {sortField === field ? (sortOrder === 'asc' ? '▲' : '▼') : '⇅'}
+    </span>
+  );
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(LIMIT),
+        sortBy: sortField,
+        order: sortOrder,
+      });
       if (statusFilter) params.set('status', statusFilter);
       if (search) params.set('search', search);
       const res = await fetch(`/api/admin/projects?${params}`);
@@ -72,7 +95,7 @@ export default function ProjectModerateTable() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, search]);
+  }, [page, statusFilter, search, sortField, sortOrder]);
 
   useEffect(() => {
     fetchProjects();
@@ -233,10 +256,10 @@ export default function ProjectModerateTable() {
                   setStatusFilter(value);
                   setPage(1);
                 }}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                className={`px-3 py-1.5 font-body text-body-md rounded-lg border transition-colors ${
                   statusFilter === value
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-card text-muted-foreground border-border hover:border-foreground/40'
+                    ? 'bg-primary-container text-on-primary rounded-lg border-primary-container'
+                    : 'bg-transparent text-on-surface-variant rounded-lg hover:bg-surface-container-low border-outline-variant/15'
                 }`}
               >
                 {label}
@@ -244,14 +267,14 @@ export default function ProjectModerateTable() {
             ))}
           </div>
           <input
-            className="border border-border bg-background text-foreground rounded-lg px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="bg-surface-container-lowest text-on-surface border border-outline-variant/15 focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-lg px-3 py-1.5 font-body text-body-md w-56 focus:outline-none"
             placeholder="제목 검색 후 Enter"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleSearchKeyDown}
           />
           {data && (
-            <span className="text-sm text-muted-foreground">
+            <span className="font-body text-body-md text-on-surface-variant">
               {rangeStart}–{rangeEnd} / 총 <strong>{data.total}</strong>개
             </span>
           )}
@@ -259,33 +282,33 @@ export default function ProjectModerateTable() {
 
         {selectedPids.size > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              <strong className="text-foreground">{selectedPids.size}개</strong> 선택됨
+            <span className="font-body text-body-md text-on-surface-variant">
+              <strong className="text-on-surface">{selectedPids.size}개</strong> 선택됨
             </span>
             <button
               onClick={() => handleBulkToggle(true)}
               disabled={bulkLoading}
-              className="text-sm px-3 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors disabled:opacity-50"
+              className="font-body text-body-md px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors disabled:opacity-50"
             >
               일괄 비활성화
             </button>
             <button
               onClick={() => handleBulkToggle(false)}
               disabled={bulkLoading}
-              className="text-sm px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-950/50 transition-colors disabled:opacity-50"
+              className="font-body text-body-md px-3 py-1.5 rounded-lg bg-green-50 text-emerald-600 hover:bg-green-100 transition-colors disabled:opacity-50"
             >
               일괄 재활성화
             </button>
             <button
               onClick={handleBulkDelete}
               disabled={bulkLoading}
-              className="text-sm px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors disabled:opacity-50"
+              className="font-body text-body-md px-3 py-1.5 rounded-lg bg-red-50 text-error hover:bg-red-100 transition-colors disabled:opacity-50"
             >
               일괄 삭제
             </button>
             <button
               onClick={() => setSelectedPids(new Set())}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="font-body text-body-md text-on-surface-variant hover:text-on-surface transition-colors"
             >
               선택 해제
             </button>
@@ -294,40 +317,72 @@ export default function ProjectModerateTable() {
       </div>
 
       {/* 테이블 */}
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-muted-foreground">
+      <div className="overflow-x-auto rounded-lg border border-outline-variant/15">
+        <table className="w-full font-body text-body-md">
+          <thead className="bg-surface-container-low">
             <tr>
               <th className="px-3 py-3 w-10">
                 <input
                   type="checkbox"
                   checked={allCurrentSelected}
                   onChange={toggleSelectAll}
-                  className="rounded border-border cursor-pointer"
+                  className="rounded border-outline-variant/15 cursor-pointer"
                   title="현재 페이지 전체 선택"
                 />
               </th>
-              <th className="px-4 py-3 text-left font-medium w-16">PID</th>
-              <th className="px-4 py-3 text-left font-medium">제목</th>
-              <th className="px-4 py-3 text-left font-medium">작성자</th>
-              <th className="px-4 py-3 text-left font-medium">상태</th>
-              <th className="px-4 py-3 text-left font-medium">조회</th>
-              <th className="px-4 py-3 text-left font-medium">좋아요</th>
-              <th className="px-4 py-3 text-left font-medium">생성일</th>
-              <th className="px-4 py-3 text-right font-medium">액션</th>
+              <th
+                className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant tracking-wider w-16 cursor-pointer select-none"
+                onClick={() => handleSort('pid')}
+              >
+                PID
+                <SortIcon field="pid" />
+              </th>
+              <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant tracking-wider">
+                제목
+              </th>
+              <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant tracking-wider">
+                작성자
+              </th>
+              <th className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant tracking-wider">
+                상태
+              </th>
+              <th
+                className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant tracking-wider cursor-pointer select-none"
+                onClick={() => handleSort('views')}
+              >
+                조회
+                <SortIcon field="views" />
+              </th>
+              <th
+                className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant tracking-wider cursor-pointer select-none"
+                onClick={() => handleSort('likeCount')}
+              >
+                좋아요
+                <SortIcon field="likeCount" />
+              </th>
+              <th
+                className="px-4 py-3 text-left font-body text-label-md font-semibold text-on-surface-variant tracking-wider cursor-pointer select-none"
+                onClick={() => handleSort('createdAt')}
+              >
+                생성일
+                <SortIcon field="createdAt" />
+              </th>
+              <th className="px-4 py-3 text-right font-body text-label-md font-semibold text-on-surface-variant tracking-wider">
+                액션
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border bg-card">
+          <tbody className="bg-surface-container-lowest divide-y divide-outline-variant/15">
             {loading && (
               <tr>
-                <td colSpan={9} className="text-center py-8 text-muted-foreground">
+                <td colSpan={9} className="text-center py-8 text-on-surface-variant">
                   로딩 중...
                 </td>
               </tr>
             )}
             {!loading && data?.projects.length === 0 && (
               <tr>
-                <td colSpan={9} className="text-center py-8 text-muted-foreground">
+                <td colSpan={9} className="text-center py-8 text-on-surface-variant">
                   프로젝트가 없습니다.
                 </td>
               </tr>
@@ -336,13 +391,13 @@ export default function ProjectModerateTable() {
               data?.projects.map((project) => {
                 const statusInfo = STATUS_MAP[project.status] ?? {
                   label: project.status,
-                  color: 'bg-muted text-muted-foreground',
+                  color: 'bg-surface-container-high text-on-surface-variant',
                 };
                 return (
                   <tr
                     key={project._id}
-                    className={`hover:bg-muted/30 cursor-pointer transition-colors ${
-                      selectedPids.has(project.pid) ? 'bg-blue-50/50 dark:bg-blue-950/10' : ''
+                    className={`hover:bg-surface-bright cursor-pointer transition-colors ${
+                      selectedPids.has(project.pid) ? 'bg-primary/5' : ''
                     }`}
                     onClick={() => setSelectedPid(project.pid)}
                   >
@@ -351,54 +406,54 @@ export default function ProjectModerateTable() {
                         type="checkbox"
                         checked={selectedPids.has(project.pid)}
                         onChange={() => toggleSelect(project.pid)}
-                        className="rounded border-border cursor-pointer"
+                        className="rounded border-outline-variant/15 cursor-pointer"
                       />
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
+                    <td className="px-4 py-3 text-on-surface-variant font-mono font-body text-label-md">
                       {project.pid}
                     </td>
-                    <td className="px-4 py-3 font-medium text-foreground max-w-xs">
+                    <td className="px-4 py-3 font-medium text-on-surface max-w-xs">
                       <div className="flex items-center gap-1.5">
-                        <span className="hover:text-blue-600 hover:underline line-clamp-1">
+                        <span className="hover:text-primary hover:underline line-clamp-1">
                           {project.title}
                         </span>
                         {project.delYn && (
-                          <span className="shrink-0 inline-flex px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-950/40 text-red-500 dark:text-red-400">
+                          <span className="shrink-0 inline-flex px-1.5 py-0.5 rounded font-body text-label-md font-medium bg-error/10 text-error">
                             비활성
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                    <td className="px-4 py-3 text-on-surface-variant font-body text-label-md">
                       {project.ownerId ? (
                         <Link
                           href={`/profile/${project.ownerId._id}`}
                           target="_blank"
-                          className="hover:text-blue-600 hover:underline"
+                          className="hover:text-primary hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {project.ownerId.nName}
                         </Link>
                       ) : (
-                        <span className="text-muted-foreground/60">알 수 없음</span>
+                        <span className="text-on-surface-variant/60">알 수 없음</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusInfo.color}`}
+                        className={`inline-flex px-2 py-0.5 rounded font-body text-label-md font-medium ${statusInfo.color}`}
                       >
                         {statusInfo.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{project.views}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{project.likeCount ?? 0}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                    <td className="px-4 py-3 text-on-surface-variant">{project.views}</td>
+                    <td className="px-4 py-3 text-on-surface-variant">{project.likeCount ?? 0}</td>
+                    <td className="px-4 py-3 text-on-surface-variant font-body text-label-md">
                       {new Date(project.createdAt).toLocaleDateString('ko-KR')}
                     </td>
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleDelete(project)}
-                        className="text-xs px-3 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 rounded hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors"
+                        className="font-body text-label-md px-3 py-1 bg-error/10 text-error rounded hover:bg-error/20 transition-colors"
                       >
                         삭제
                       </button>
@@ -416,31 +471,31 @@ export default function ProjectModerateTable() {
           <button
             onClick={() => setPage(1)}
             disabled={page === 1}
-            className="px-2 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
+            className="px-2 py-1.5 font-body text-body-md border border-outline-variant/15 rounded text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40"
           >
             «
           </button>
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
+            className="px-3 py-1.5 font-body text-body-md border border-outline-variant/15 rounded text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40"
           >
             이전
           </button>
-          <span className="px-3 py-1.5 text-sm text-muted-foreground">
+          <span className="px-3 py-1.5 font-body text-body-md text-on-surface-variant">
             {page} / {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
+            className="px-3 py-1.5 font-body text-body-md border border-outline-variant/15 rounded text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40"
           >
             다음
           </button>
           <button
             onClick={() => setPage(totalPages)}
             disabled={page === totalPages}
-            className="px-2 py-1.5 text-sm border border-border rounded hover:bg-muted disabled:opacity-40"
+            className="px-2 py-1.5 font-body text-body-md border border-outline-variant/15 rounded text-on-surface-variant hover:bg-surface-container-low disabled:opacity-40"
           >
             »
           </button>

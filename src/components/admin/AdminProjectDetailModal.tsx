@@ -6,13 +6,6 @@ import { createPortal } from 'react-dom';
 import { useModal } from '@/hooks/useModal';
 import AdminUserDetailModal from '@/components/admin/AdminUserDetailModal';
 
-interface TagDetail {
-  _id: string;
-  name: string;
-  logoUrl?: string;
-  category?: string;
-}
-
 interface ProjectDetail {
   _id: string;
   pid: number;
@@ -24,11 +17,18 @@ interface ProjectDetail {
   overview?: string;
   deadline?: string;
   views: number;
-  likes: string[];
+  likeCount: number;
   images: string[];
-  members: { role: string; current: number; max: number }[];
-  tags: TagDetail[];
+  members: { userId: string; role: string; status: string; joinedAt: string }[];
+  techStacks: string[];
   ownerId: { _id: string; nName: string; authorEmail: string; avatarUrl?: string } | null;
+  currentStage?: string;
+  executionStyle?: string;
+  domains?: string[];
+  lookingFor?: string[];
+  weeklyHours?: number;
+  maxMembers?: number;
+  links?: { github?: string; figma?: string; deploy?: string; notion?: string };
   createdAt: string;
   updatedAt: string;
 }
@@ -43,14 +43,14 @@ interface Props {
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   recruiting: {
     label: '모집중',
-    color: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400',
+    color: 'text-primary bg-primary/5',
   },
   in_progress: {
     label: '진행중',
-    color: 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400',
+    color: 'text-amber-600 bg-amber-50',
   },
-  completed: { label: '완료', color: 'bg-muted text-muted-foreground' },
-  paused: { label: '일시정지', color: 'bg-gray-100 dark:bg-gray-800 text-gray-500' },
+  completed: { label: '완료', color: 'text-on-surface-variant bg-surface-container-high' },
+  paused: { label: '일시정지', color: 'text-on-surface-variant bg-surface-container-high' },
 };
 
 export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDeleted }: Props) {
@@ -147,7 +147,7 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
   const statusInfo = project
     ? (STATUS_MAP[project.status] ?? {
         label: project.status,
-        color: 'bg-muted text-muted-foreground',
+        color: 'text-on-surface-variant bg-surface-container-high',
       })
     : null;
 
@@ -165,16 +165,18 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
         )}
 
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-surface/80 backdrop-blur-[16px] p-4"
         onClick={handleBackdropClick}
       >
-        <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+        <div className="bg-surface-container-lowest rounded-lg shadow-modal w-full max-w-xl max-h-[90vh] overflow-y-auto">
           {/* 헤더 */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card z-10">
-            <h2 className="text-base font-semibold text-foreground">프로젝트 상세 정보</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/15 sticky top-0 bg-surface-container-lowest z-10">
+            <h2 className="font-body text-body-md font-semibold text-on-surface">
+              프로젝트 상세 정보
+            </h2>
             <button
               onClick={onClose}
-              className="text-muted-foreground hover:text-foreground transition-colors text-xl leading-none"
+              className="text-on-surface-variant hover:text-on-surface transition-colors text-xl leading-none"
             >
               ×
             </button>
@@ -183,13 +185,13 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
           {/* 본문 */}
           <div className="px-6 py-5">
             {loading && (
-              <div className="flex justify-center items-center py-12 text-muted-foreground text-sm">
+              <div className="flex justify-center items-center py-12 text-on-surface-variant font-body text-body-md">
                 불러오는 중...
               </div>
             )}
 
             {!loading && !project && (
-              <div className="text-center py-12 text-muted-foreground text-sm">
+              <div className="text-center py-12 text-on-surface-variant font-body text-body-md">
                 프로젝트를 찾을 수 없습니다.
               </div>
             )}
@@ -199,29 +201,29 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
                 {/* 제목 & 배지 */}
                 <div>
                   <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                    <span className="text-xs font-mono text-muted-foreground">
+                    <span className="font-body text-label-md font-mono text-on-surface-variant">
                       PID: {project.pid}
                     </span>
                     {statusInfo && (
                       <span
-                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusInfo.color}`}
+                        className={`inline-flex px-2 py-0.5 rounded font-body text-label-md font-medium ${statusInfo.color}`}
                       >
                         {statusInfo.label}
                       </span>
                     )}
                     {project.delYn && (
-                      <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400">
+                      <span className="inline-flex px-2 py-0.5 rounded font-body text-label-md font-medium bg-error-container text-on-error-container">
                         비활성화
                       </span>
                     )}
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground leading-snug">
+                  <h3 className="text-lg font-semibold text-on-surface leading-snug">
                     {project.title}
                   </h3>
                 </div>
 
                 {/* 기본 정보 */}
-                <div className="border border-border rounded-lg divide-y divide-border">
+                <div className="rounded-lg divide-y divide-outline-variant/15">
                   <InfoRow label="카테고리" value={project.category} />
                   {project.deadline && (
                     <InfoRow
@@ -230,7 +232,19 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
                     />
                   )}
                   <InfoRow label="조회수" value={String(project.views)} />
-                  <InfoRow label="좋아요" value={String(project.likes?.length ?? 0)} />
+                  <InfoRow label="좋아요" value={String(project.likeCount ?? 0)} />
+                  {project.currentStage && (
+                    <InfoRow label="프로젝트 단계" value={project.currentStage} />
+                  )}
+                  {project.executionStyle && (
+                    <InfoRow label="실행 스타일" value={project.executionStyle} />
+                  )}
+                  {project.weeklyHours != null && project.weeklyHours > 0 && (
+                    <InfoRow label="주당 시간" value={`${project.weeklyHours}시간`} />
+                  )}
+                  {project.maxMembers != null && (
+                    <InfoRow label="최대 인원" value={`${project.maxMembers}명`} />
+                  )}
                   <InfoRow
                     label="생성일"
                     value={new Date(project.createdAt).toLocaleDateString('ko-KR')}
@@ -243,7 +257,7 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
 
                 {/* 작성자 */}
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">작성자</p>
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">작성자</p>
                   {project.ownerId ? (
                     <div className="flex items-center gap-3">
                       {project.ownerId.avatarUrl ? (
@@ -252,75 +266,176 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
                           alt={project.ownerId.nName}
                           width={36}
                           height={36}
-                          className="w-9 h-9 rounded-full object-cover border border-border"
+                          className="w-9 h-9 rounded-full object-cover"
                           unoptimized
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm text-muted-foreground border border-border">
+                        <div className="w-9 h-9 rounded-full bg-surface-container-low flex items-center justify-center font-body text-body-md text-on-surface-variant">
                           {project.ownerId.nName?.[0]?.toUpperCase() || '?'}
                         </div>
                       )}
                       <div>
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="font-body text-body-md font-medium text-on-surface">
                           {project.ownerId.nName}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="font-body text-label-md text-on-surface-variant">
                           {project.ownerId.authorEmail}
                         </p>
                       </div>
                       <button
                         onClick={() => setAuthorModalId(project.ownerId!._id)}
-                        className="ml-auto text-xs px-2 py-1 rounded bg-muted hover:bg-muted/70 text-muted-foreground transition-colors"
+                        className="ml-auto font-body text-label-md px-2 py-1 rounded bg-surface-container-high hover:bg-surface-container-high/70 text-on-surface-variant transition-colors"
                       >
                         사용자 정보 보기
                       </button>
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">알 수 없음</span>
+                    <span className="font-body text-body-md text-on-surface-variant">
+                      알 수 없음
+                    </span>
                   )}
                 </div>
 
                 {/* 팀 구성 */}
-                {project.members && project.members.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2">팀 구성</p>
-                    <div className="flex flex-wrap gap-2">
-                      {project.members.map((m, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-1.5 bg-muted/40 rounded-lg px-3 py-1.5 text-sm"
-                        >
-                          <span className="text-foreground font-medium">{m.role}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {m.current}/{m.max}명
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                <div>
+                  <p className="font-body text-label-md text-on-surface-variant mb-2">팀 구성</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      const active =
+                        project.members?.filter((m) => m.status === 'active').length ?? 0;
+                      const inactive =
+                        project.members?.filter((m) => m.status === 'inactive').length ?? 0;
+                      const removed =
+                        project.members?.filter((m) => m.status === 'removed').length ?? 0;
+                      return (
+                        <>
+                          <div className="flex items-center gap-1.5 bg-surface-container-low rounded-lg px-3 py-1.5 font-body text-body-md">
+                            <span className="text-emerald-600 font-medium">활동중</span>
+                            <span className="text-on-surface-variant font-body text-label-md">
+                              {active}
+                              {project.maxMembers ? `/${project.maxMembers}` : ''}명
+                            </span>
+                          </div>
+                          {inactive > 0 && (
+                            <div className="flex items-center gap-1.5 bg-surface-container-low rounded-lg px-3 py-1.5 font-body text-body-md">
+                              <span className="text-on-surface-variant font-medium">비활성</span>
+                              <span className="text-on-surface-variant font-body text-label-md">
+                                {inactive}명
+                              </span>
+                            </div>
+                          )}
+                          {removed > 0 && (
+                            <div className="flex items-center gap-1.5 bg-surface-container-low rounded-lg px-3 py-1.5 font-body text-body-md">
+                              <span className="text-error font-medium">제외</span>
+                              <span className="text-on-surface-variant font-body text-label-md">
+                                {removed}명
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
-                )}
+                </div>
 
-                {/* 기술 스택 */}
-                {project.tags && project.tags.length > 0 && (
+                {/* 관련 도메인 */}
+                {project.domains && project.domains.length > 0 && (
                   <div>
-                    <p className="text-xs text-muted-foreground mb-2">기술 스택</p>
+                    <p className="font-body text-label-md text-on-surface-variant mb-2">
+                      관련 도메인
+                    </p>
                     <div className="flex flex-wrap gap-1.5">
-                      {project.tags.map((tag) => (
+                      {project.domains.map((domain) => (
                         <span
-                          key={tag._id}
-                          className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 text-xs rounded"
+                          key={domain}
+                          className="bg-surface-container-low text-on-surface rounded-full px-3 py-1 font-body text-label-md"
                         >
-                          {tag.name}
+                          {domain}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
 
+                {/* 찾는 역할 */}
+                {project.lookingFor && project.lookingFor.length > 0 && (
+                  <div>
+                    <p className="font-body text-label-md text-on-surface-variant mb-2">
+                      찾는 역할
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.lookingFor.map((role) => (
+                        <span
+                          key={role}
+                          className="bg-secondary-container/30 text-on-secondary-container rounded-full px-3 py-1 font-body text-label-md"
+                        >
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 기술 스택 */}
+                {project.techStacks && project.techStacks.length > 0 && (
+                  <div>
+                    <p className="font-body text-label-md text-on-surface-variant mb-2">
+                      기술 스택
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.techStacks.map((stack) => (
+                        <span
+                          key={stack}
+                          className="bg-primary/5 text-primary rounded-full px-3 py-1 font-body text-label-md font-semibold"
+                        >
+                          {stack}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 외부 링크 */}
+                {project.links && Object.values(project.links).some(Boolean) && (
+                  <div>
+                    <p className="font-body text-label-md text-on-surface-variant mb-2">
+                      외부 링크
+                    </p>
+                    <div className="flex flex-col gap-1">
+                      {project.links.github && (
+                        <ProjectLink label="GitHub" url={project.links.github} />
+                      )}
+                      {project.links.figma && (
+                        <ProjectLink label="Figma" url={project.links.figma} />
+                      )}
+                      {project.links.deploy && (
+                        <ProjectLink label="배포" url={project.links.deploy} />
+                      )}
+                      {project.links.notion && (
+                        <ProjectLink label="Notion" url={project.links.notion} />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 프로젝트 개요 */}
+                {project.overview && (
+                  <div>
+                    <p className="font-body text-label-md text-on-surface-variant mb-1.5">
+                      프로젝트 개요
+                    </p>
+                    <p className="font-body text-body-md text-on-surface bg-surface-container-low rounded-lg p-4 leading-relaxed whitespace-pre-wrap">
+                      {project.overview}
+                    </p>
+                  </div>
+                )}
+
                 {/* 프로젝트 설명 미리보기 */}
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1.5">프로젝트 설명</p>
-                  <div className="text-sm text-foreground bg-muted/30 rounded-lg p-3 leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap">
+                  <p className="font-body text-label-md text-on-surface-variant mb-1.5">
+                    프로젝트 설명
+                  </p>
+                  <div className="font-body text-body-md text-on-surface bg-surface-container-low rounded-lg p-4 leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap">
                     {project.content
                       ? project.content.replace(/<[^>]+>/g, '').slice(0, 500) +
                         (project.content.length > 500 ? '...' : '')
@@ -333,15 +448,15 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
 
           {/* 푸터 */}
           {!loading && project && (
-            <div className="flex justify-between items-center px-6 py-4 border-t border-border bg-muted/20 gap-2 flex-wrap">
+            <div className="flex justify-between items-center px-6 py-4 border-t border-outline-variant/15 bg-surface-container-low gap-2 flex-wrap">
               <div className="flex gap-2">
                 <button
                   onClick={handleToggleDeactivate}
                   disabled={saving}
-                  className={`text-sm px-3 py-2 rounded-lg transition-colors disabled:opacity-50 ${
+                  className={`font-body text-body-md px-3 py-2 rounded-lg transition-colors disabled:opacity-50 ${
                     project.delYn
-                      ? 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-950/50'
-                      : 'bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/50'
+                      ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                      : 'bg-amber-600 text-white hover:bg-amber-700'
                   }`}
                 >
                   {project.delYn ? '재활성화' : '비활성화'}
@@ -349,7 +464,7 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
                 <button
                   onClick={handleDelete}
                   disabled={saving}
-                  className="text-sm px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors disabled:opacity-50"
+                  className="font-body text-body-md px-3 py-2 rounded-lg bg-error text-on-error hover:bg-error/90 transition-colors disabled:opacity-50"
                 >
                   영구 삭제
                 </button>
@@ -359,13 +474,13 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
                   href={`/projects/${project.pid}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                  className="font-body text-body-md text-primary hover:underline"
                 >
                   프로젝트 보기 ↗
                 </a>
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm bg-muted text-muted-foreground rounded-lg hover:bg-muted/70 transition-colors"
+                  className="px-4 py-2 font-body text-body-md bg-surface-container-high text-on-surface-variant rounded-lg hover:bg-surface-container-high/70 transition-colors"
                 >
                   닫기
                 </button>
@@ -381,8 +496,23 @@ export default function AdminProjectDetailModal({ pid, onClose, onUpdated, onDel
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center px-3 py-2">
-      <span className="text-xs text-muted-foreground w-24 shrink-0">{label}</span>
-      <span className="text-sm text-foreground">{value}</span>
+      <span className="font-body text-label-md text-on-surface-variant w-24 shrink-0">{label}</span>
+      <span className="font-body text-body-md text-on-surface">{value}</span>
     </div>
+  );
+}
+
+function ProjectLink({ label, url }: { label: string; url: string }) {
+  const href = url.startsWith('http') ? url : `https://${url}`;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 font-body text-body-md text-primary hover:underline"
+    >
+      <span className="font-body text-label-md text-on-surface-variant w-16 shrink-0">{label}</span>
+      <span className="truncate">{url}</span>
+    </a>
   );
 }

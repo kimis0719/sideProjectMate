@@ -14,11 +14,11 @@ async function handlePut(request: NextRequest, { params }: { params: { id: strin
   try {
     await dbConnect();
     const body = await request.json();
-    const { label, order, isActive, groupName } = body;
+    const { code, label, order, isActive, groupName } = body;
 
     const updated = await CommonCode.findByIdAndUpdate(
       params.id,
-      { $set: { label, order, isActive, groupName } },
+      { $set: { code, label, order, isActive, groupName } },
       { new: true, runValidators: true }
     );
 
