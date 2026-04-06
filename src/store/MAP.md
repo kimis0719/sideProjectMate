@@ -29,7 +29,7 @@ export const useFooStore = create<FooState & FooActions>()(
 - Socket 이벤트 핸들러는 스토어 액션과 분리 (`useChatSocket.ts` 참고)
 
 ## 자동 생성 파일 목록
-> 마지막 갱신: 2026-04-04
+> 마지막 갱신: 2026-04-06
 
 - `applicationStore.ts`
 - `boardStore.ts`
