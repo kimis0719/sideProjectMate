@@ -20,5 +20,8 @@ services:
     ignoredPaths:
       - work-logs/**
       - docs/**
+      - '*.md'
       - '**/*.md'
       - .claude/**
+      - .github/**
+      - .workzones.yml

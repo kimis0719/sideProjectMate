@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
 
 jobs:
   update-maps:
@@ -50,7 +52,9 @@ jobs:
           git push -u origin "$BRANCH"
           gh pr create \
             --title "docs: auto-update MAP.md files" \
-            --body "MAP.md 파일 자동 갱신 (GitHub Actions)" \
+            --body "MAP.md 파일 자동 갱신 (GitHub Actions) — 코드 변경 없음, Render 배포 불필요" \
             --base main \
             --head "$BRANCH"
-          gh pr merge "$BRANCH" --squash --delete-branch
+          # auto-merge 하지 않음 — MAP.md는 ignoredPaths에 포함되지만,
+          # squash merge 시 Render가 배포를 트리거하는 문제 방지.
+          # 다음 코드 PR 머지 시 함께 처리하거나 수동 머지.
