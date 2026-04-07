@@ -58,11 +58,30 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
   // 🔧 버그 1 수정: "실제 새 메시지가 온 경우"에만 스크롤 내리도록 shouldAutoScroll Ref 추가
   const shouldAutoScroll = useRef<boolean>(false);
 
+  // 채팅 컨테이너 내부에서만 스크롤 (브라우저 전체 스크롤 방지)
+  const scrollToElement = (
+    el: HTMLElement | null,
+    behavior: ScrollBehavior = 'smooth',
+    block: 'center' | 'end' = 'center'
+  ) => {
+    const container = scrollContainerRef.current;
+    if (!el || !container) return;
+    if (block === 'end') {
+      container.scrollTop = container.scrollHeight;
+    } else {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const offsetTop = elRect.top - containerRect.top + container.scrollTop;
+      const targetScroll = offsetTop - container.clientHeight / 2 + elRect.height / 2;
+      container.scrollTo({ top: targetScroll, behavior });
+    }
+  };
+
   // ⬇️ Step 7.1: messages state가 바뀌었을 때 스크롤 로직 실행
   useEffect(() => {
     if (shouldAutoScroll.current) {
       // sentinel div를 뷰포트 안으로 스크롤 (입력창 겹침 없이 정확하게!)
-      messagesEndRef.current?.scrollIntoView({ behavior: 'instant', block: 'end' });
+      scrollToElement(messagesEndRef.current, 'instant', 'end');
       shouldAutoScroll.current = false;
     }
     // isLoadMoreAction이 true일 때 (8.1 데이터 로드) 스크롤 유지도 이쪽에서 진행
@@ -97,7 +116,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
     const idx = messages.findIndex((m) => m._id === targetMessageId);
     if (idx !== -1) {
       setTimeout(() => {
-        messageRefs.current[idx]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        scrollToElement(messageRefs.current[idx]);
       }, 80);
       setTargetMessageId(null);
     }
@@ -159,10 +178,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
         setIsSearchMode(true);
         setCurrentMatchIdx(0);
         // 첫 번째 결과로 스크롤
-        setTimeout(
-          () => messageRefs.current[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
-          100
-        );
+        setTimeout(() => scrollToElement(messageRefs.current[0]), 100);
       }
     } catch {
       // 검색 실패 시 조용히 유지
@@ -177,14 +193,14 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
     if (totalResults === 0) return;
     const next = (currentMatchIdx - 1 + totalResults) % totalResults;
     setCurrentMatchIdx(next);
-    messageRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    scrollToElement(messageRefs.current[next]);
   };
 
   const goToNextMatch = () => {
     if (totalResults === 0) return;
     const next = (currentMatchIdx + 1) % totalResults;
     setCurrentMatchIdx(next);
-    messageRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    scrollToElement(messageRefs.current[next]);
   };
 
   // 검색 키보드: Enter = 검색실행(결과 있으면 다음), Shift+Enter = 이전, Esc = 닫기
@@ -498,107 +514,89 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-background relative">
-      {/*
-              🌟 상단 헤더 영역 (Step 3.3 핵심 구현 부분)
-              - top border 박스로 컬러 라인을 명확하게 줬어!
-              - 배경색에도 살짝 투명도를 넣어서 대화방 성격을 은은하게 인지하도록 만들었지.
-            */}
-      <div
-        className="flex items-center justify-between p-4 shadow-sm z-10 border-t-4 flex-shrink-0"
-        style={{
-          borderTopColor: categoryColor,
-          // 배경에 아주 연하게(약 3% 불투명도) 카테고리 색상을 깔아서 분위기를 맞춤
-          backgroundColor: `color-mix(in srgb, ${categoryColor} 3%, var(--background))`,
-        }}
-      >
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            {/* 📱 [Step 8.3] 모바일에서만 보이는 뒤로가기 버튼 (PC에서는 hidden) */}
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="md:hidden p-1.5 -ml-1 rounded-full hover:bg-muted transition-colors text-foreground"
-                title="목록으로"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-            )}
-            {/* 📛 헤더에도 배지를 배치해서 현재 어떤 성격의 대화인지 확실히 각인! */}
-            <span
-              className="text-xs font-bold px-2 py-0.5 rounded-md"
-              style={{
-                backgroundColor: categoryColor,
-                color: 'white', // 여긴 눈에 띄게 흰 글씨로!
-              }}
+    <div className="flex-1 min-h-0 flex flex-col bg-surface relative">
+      {/* 상단 헤더 — glass 효과 */}
+      <header className="h-16 px-6 flex items-center justify-between backdrop-blur-xl bg-surface-container-lowest/80 z-10 flex-shrink-0 border-b border-outline-variant/10">
+        <div className="flex items-center gap-3">
+          {/* 모바일 뒤로가기 */}
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="md:hidden p-2 -ml-2 rounded-lg hover:bg-surface-container-high transition-colors"
+              title="목록으로"
             >
-              {room.category}
-            </span>
-            {/* STEP 3에서 getRoomDisplayName() 유틸로 교체 예정 */}
-            <h2 className="text-lg font-bold text-foreground">
+              <span className="material-symbols-outlined text-on-surface-variant">arrow_back</span>
+            </button>
+          )}
+          {/* 아바타 */}
+          {room.participants.length > 0 &&
+            (() => {
+              const other =
+                room.participants.find((p) => p._id !== currentUserId) || room.participants[0];
+              return other?.avatarUrl ? (
+                <Image
+                  src={other.avatarUrl}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full object-cover"
+                  alt={other.nName || ''}
+                  unoptimized
+                />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
+                  style={{ backgroundColor: `${categoryColor}20`, color: categoryColor }}
+                >
+                  {(other?.nName || room.category).charAt(0).toUpperCase()}
+                </div>
+              );
+            })()}
+          <div>
+            <h3 className="font-semibold text-on-surface leading-tight">
               {room.projectName || room.metadata?.name || room.category}
-            </h2>
+            </h3>
+            <span className="text-xs text-on-surface-variant">
+              {room.participants.length === 2
+                ? '1:1 채팅'
+                : `그룹 채팅 (${room.participants.length}명)`}
+            </span>
           </div>
-          {/* 👥 Step 8: 참여자 수 부제목 */}
-          <p className="text-xs text-muted-foreground pl-1">
-            {room.participants.length === 2
-              ? '1:1 채팅'
-              : `그룹 채팅 (${room.participants.length}명)`}
-          </p>
         </div>
 
         {/* 우측 도구 모음 */}
-        <div className="flex items-center gap-3 text-muted-foreground">
+        <div className="flex items-center gap-1 text-on-surface-variant">
           <button
             onClick={() => setIsSearchOpen((prev) => !prev)}
-            className={`hover:text-foreground transition-colors ${isSearchOpen ? 'text-foreground' : ''}`}
+            className={`p-2 rounded-lg hover:bg-surface-container-high transition-colors ${isSearchOpen ? 'text-primary bg-primary/5' : ''}`}
             title="메시지 검색"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <span className="material-symbols-outlined text-[20px]">search</span>
           </button>
 
-          {/* 👥 Step 8: 참여자 목록 버튼 */}
+          {/* 참여자 목록 */}
           <div className="relative">
             <button
               onClick={() => setIsParticipantsOpen((prev) => !prev)}
-              className="hover:text-foreground transition-colors"
+              className="p-2 rounded-lg hover:bg-surface-container-high transition-colors"
               title="참여자 목록"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+              <span className="material-symbols-outlined text-[20px]">group</span>
             </button>
             {isParticipantsOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIsParticipantsOpen(false)} />
-                <div className="absolute right-0 top-8 z-20 bg-popover border border-border rounded-xl shadow-lg overflow-hidden min-w-[200px]">
-                  <div className="px-4 py-2 border-b border-border">
-                    <p className="text-xs font-semibold text-muted-foreground">
+                <div className="absolute right-0 top-12 z-20 bg-surface-container-lowest border border-outline-variant/15 rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.12)] overflow-hidden min-w-[220px]">
+                  <div className="px-4 py-3 border-b border-outline-variant/10">
+                    <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                       참여자 {room.participants.length}명
                     </p>
                   </div>
                   <ul className="py-1">
                     {room.participants.map((p) => (
-                      <li key={p._id} className="flex items-center gap-2.5 px-4 py-2">
+                      <li
+                        key={p._id}
+                        className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-surface-container-low transition-colors"
+                      >
                         {p.avatarUrl ? (
                           <Image
                             src={p.avatarUrl}
@@ -609,13 +607,13 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                             unoptimized
                           />
                         ) : (
-                          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">
+                          <div className="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-bold text-on-surface-variant">
                             {p.nName?.charAt(0)?.toUpperCase() ?? '?'}
                           </div>
                         )}
-                        <span className="text-sm text-foreground">{p.nName ?? '알 수 없음'}</span>
+                        <span className="text-sm text-on-surface">{p.nName ?? '알 수 없음'}</span>
                         {p._id === currentUserId && (
-                          <span className="text-xs text-muted-foreground ml-1">(나)</span>
+                          <span className="text-xs text-on-surface-variant ml-1">(나)</span>
                         )}
                       </li>
                     ))}
@@ -625,32 +623,23 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
             )}
           </div>
 
-          {/* 🚪 Step 9.4: 점세개 메뉴 버튼 (채팅방 나가기 옵션 포함) */}
+          {/* 메뉴 (나가기) */}
           <div className="relative">
             <button
               onClick={() => setIsMenuOpen((prev) => !prev)}
-              className="hover:text-foreground transition-colors"
+              className="p-2 rounded-lg hover:bg-surface-container-high transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                />
-              </svg>
+              <span className="material-symbols-outlined text-[20px]">more_vert</span>
             </button>
-
-            {/* 드롭다운 메뉴 */}
             {isMenuOpen && (
               <>
-                {/* 바깥 클릭 시 메뉴 닫기 */}
                 <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)} />
-                <div className="absolute right-0 top-8 z-20 bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[140px]">
+                <div className="absolute right-0 top-12 z-20 bg-surface-container-lowest border border-outline-variant/15 rounded-xl shadow-[0_20px_40px_rgba(26,28,28,0.12)] py-1 min-w-[160px]">
                   <button
                     onClick={handleLeaveRoom}
-                    className="w-full px-4 py-2.5 text-sm text-left text-red-500 hover:bg-red-50 transition-colors font-medium"
+                    className="w-full px-4 py-2.5 text-sm text-left text-error hover:bg-error/5 transition-colors font-medium flex items-center gap-2"
                   >
+                    <span className="material-symbols-outlined text-[18px]">logout</span>
                     채팅방 나가기
                   </button>
                 </div>
@@ -658,28 +647,18 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
             )}
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* 🔍 메시지 검색바 */}
+      {/* 메시지 검색바 */}
       {isSearchOpen && (
-        <div className="flex flex-col bg-muted border-b border-border flex-shrink-0">
+        <div className="flex flex-col bg-surface-container-low border-b border-outline-variant/10 flex-shrink-0">
           <div className="flex items-center gap-2 px-4 py-2.5">
             {isSearchLoading ? (
-              <div className="w-4 h-4 border-2 border-border border-t-muted-foreground rounded-full animate-spin shrink-0" />
+              <div className="w-4 h-4 border-2 border-outline-variant border-t-primary rounded-full animate-spin shrink-0" />
             ) : (
-              <svg
-                className="w-4 h-4 text-muted-foreground shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+              <span className="material-symbols-outlined text-[18px] text-on-surface-variant shrink-0">
+                search
+              </span>
             )}
             <input
               ref={searchInputRef}
@@ -687,7 +666,6 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                // 입력 변경 시 이전 검색 결과 초기화
                 if (isSearchMode) {
                   setIsSearchMode(false);
                   setSearchResults([]);
@@ -695,74 +673,50 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
               }}
               onKeyDown={handleSearchKeyDown}
               placeholder="검색어 입력 후 Enter..."
-              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none"
             />
-            {/* 검색 결과 카운터 + 이동 버튼 */}
             {isSearchMode && (
               <>
-                <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+                <span className="text-xs text-on-surface-variant shrink-0 tabular-nums">
                   {totalResults > 0 ? `${currentMatchIdx + 1} / ${totalResults}` : '결과 없음'}
                 </span>
                 <button
                   onClick={goToPrevMatch}
                   disabled={totalResults === 0}
-                  className="p-1 hover:text-foreground transition-colors disabled:opacity-30"
+                  className="p-1 hover:text-on-surface transition-colors disabled:opacity-30"
                   title="이전 결과 (Shift+Enter)"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 15l7-7 7 7"
-                    />
-                  </svg>
+                  <span className="material-symbols-outlined text-[18px]">keyboard_arrow_up</span>
                 </button>
                 <button
                   onClick={goToNextMatch}
                   disabled={totalResults === 0}
-                  className="p-1 hover:text-foreground transition-colors disabled:opacity-30"
+                  className="p-1 hover:text-on-surface transition-colors disabled:opacity-30"
                   title="다음 결과 (Enter)"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                  <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
                 </button>
               </>
             )}
-            {/* 검색 실행 버튼 */}
             {!isSearchMode && searchQuery.trim() && (
               <button
                 onClick={handleSearchSubmit}
-                className="text-xs px-2.5 py-1 rounded-md bg-slate-800 text-white hover:bg-slate-700 transition-colors shrink-0"
+                className="text-xs px-2.5 py-1 rounded-lg bg-primary-container text-white hover:bg-primary-container/90 transition-colors shrink-0"
               >
                 검색
               </button>
             )}
             <button
               onClick={() => setIsSearchOpen(false)}
-              className="p-1 hover:text-foreground text-muted-foreground transition-colors shrink-0"
+              className="p-1 hover:text-on-surface text-on-surface-variant transition-colors shrink-0"
               title="닫기 (Esc)"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <span className="material-symbols-outlined text-[18px]">close</span>
             </button>
           </div>
-          {/* 검색 결과 모드 안내 배너 */}
           {isSearchMode && (
             <div className="px-4 pb-2 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-on-surface-variant">
                 {totalResults > 0
                   ? `"${searchQuery}" 검색 결과 ${totalResults}개`
                   : `"${searchQuery}"에 대한 결과가 없습니다.`}
@@ -773,7 +727,7 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                   setSearchResults([]);
                   setSearchQuery('');
                 }}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="text-xs text-on-surface-variant hover:text-on-surface transition-colors"
               >
                 결과 닫기
               </button>
@@ -782,29 +736,28 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
         </div>
       )}
 
-      {/* 🔌 Step 8.2: 오프라인(연결 끊김) 경고 배너 - 브라우저 isOnline 기준으로 체크 */}
+      {/* 오프라인 경고 배너 */}
       {!isOnline && (
-        <div className="bg-red-500 text-white text-xs font-bold text-center py-1.5 shadow-sm z-20">
+        <div className="bg-error text-on-error text-xs font-bold text-center py-1.5 shadow-sm z-20">
           인터넷 연결이 불안정하여 오프라인 모드로 전환되었습니다. 대기 중...
         </div>
       )}
 
-      {/* 메인 채팅 내역 영역 (무한 스크롤[Step 8.1] 적용) */}
+      {/* 메인 채팅 내역 영역 */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 scroll-smooth dark:[color-scheme:dark]"
+        className="flex-1 min-h-0 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth"
       >
-        {/* 📜 Step 8.1: 무한스크롤 로딩/시작 배너 (검색 모드에서는 숨김) */}
         {!isSearchMode && isLoadingMore && (
           <div className="flex justify-center py-2">
-            <span className="text-xs text-muted-foreground">이전 대화 불러오는 중...</span>
+            <span className="text-xs text-on-surface-variant">이전 대화 불러오는 중...</span>
           </div>
         )}
         {!isSearchMode && !hasNextPage && messages.length > 0 && (
           <div className="flex justify-center my-4">
-            <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
-              대화가 시작되었습니다.
+            <span className="px-4 py-1.5 bg-surface-container-high rounded-full text-[11px] font-bold tracking-widest text-on-surface-variant/70 font-label">
+              대화가 시작되었습니다
             </span>
           </div>
         )}
@@ -815,13 +768,14 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
 
           if (displayMessages.length === 0) {
             return (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50">
+              <div className="flex flex-col items-center justify-center h-full text-on-surface-variant/50">
                 {isSearchMode ? (
                   <p className="text-sm">검색 결과가 없습니다.</p>
                 ) : (
                   <>
+                    <span className="material-symbols-outlined text-4xl mb-2">chat</span>
                     <p className="text-sm">아직 아무런 대화가 없어요!</p>
-                    <p className="text-xs mt-1">첫 인사를 건네보세요 👋</p>
+                    <p className="text-xs mt-1">첫 인사를 건네보세요</p>
                   </>
                 )}
               </div>
@@ -847,55 +801,55 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                   messageRefs.current[idx] = el;
                 }}
                 onClick={isSearchMode ? () => handleSearchResultClick(msg) : undefined}
-                className={`flex items-start gap-3 scroll-mt-4 ${isMine ? 'flex-row-reverse' : ''} ${isSearchMode ? 'cursor-pointer rounded-xl p-1 -mx-1 hover:bg-muted/60 transition-colors' : ''}`}
+                className={`flex items-start gap-3 scroll-mt-4 ${isMine ? 'flex-row-reverse' : ''} max-w-[80%] md:max-w-[80%] ${isMine ? 'ml-auto' : ''} ${isSearchMode ? 'cursor-pointer rounded-xl p-1 hover:bg-surface-container-low/60 transition-colors' : ''}`}
               >
-                {/* 프로필 아바타 */}
-                {senderAvatar ? (
-                  <Image
-                    src={senderAvatar}
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full shrink-0 object-cover"
-                    alt={senderName}
-                    unoptimized
-                  />
-                ) : (
-                  <div
-                    className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold ${isMine ? 'bg-slate-700 text-white' : 'bg-muted text-foreground'}`}
-                  >
-                    {senderName.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                {/* 아바타 (상대방만, 내 메시지는 숨김) */}
+                {!isMine &&
+                  (senderAvatar ? (
+                    <Image
+                      src={senderAvatar}
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full shrink-0 object-cover mt-1"
+                      alt={senderName}
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold bg-surface-container-high text-on-surface-variant mt-1">
+                      {senderName.charAt(0).toUpperCase()}
+                    </div>
+                  ))}
                 <div className={`flex flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
-                  <span className="text-xs text-muted-foreground mx-1">{senderName}</span>
+                  {!isMine && (
+                    <span className="text-[11px] text-on-surface-variant mx-1">{senderName}</span>
+                  )}
 
                   <div className={`flex items-end gap-1 ${isMine ? 'flex-row-reverse' : ''}`}>
                     <div
-                      className={`p-3 rounded-2xl shadow-sm border max-w-md transition-all ${
+                      className={`p-4 text-sm leading-relaxed transition-all ${
                         isMine
-                          ? 'bg-slate-800 text-white rounded-tr-sm border-slate-700'
-                          : 'bg-card text-card-foreground rounded-tl-sm border-border'
+                          ? 'bg-primary-container text-white rounded-2xl rounded-tr-none shadow-md'
+                          : 'bg-surface-container-low text-on-surface rounded-2xl rounded-tl-none shadow-sm'
                       } ${isCurrentMatch ? 'ring-2 ring-yellow-400 ring-offset-1' : ''}`}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      <p className="whitespace-pre-wrap">
                         {highlightText(msg.content, searchQuery, isCurrentMatch)}
                       </p>
                     </div>
 
-                    {/* 읽음 처리 인디케이터 (검색 모드에서는 숨김) */}
                     {!isSearchMode && (
                       <div className="flex flex-col items-center justify-end mb-1">
                         {isMine &&
                           (() => {
                             const unread = room.participants.length - (msg.readBy?.length ?? 0);
                             return unread > 0 ? (
-                              <span className="text-[10px] text-yellow-500 font-bold mb-0.5">
+                              <span className="text-[10px] text-tertiary font-bold mb-0.5">
                                 {unread}
                               </span>
                             ) : null;
                           })()}
                         <span
-                          className="text-[10px] text-muted-foreground mx-1 min-w-fit"
+                          className="text-[10px] text-on-surface-variant/60 mx-1 min-w-fit"
                           suppressHydrationWarning
                         >
                           {new Date(msg.createdAt).toLocaleTimeString('ko-KR', {
@@ -905,10 +859,9 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
                         </span>
                       </div>
                     )}
-                    {/* 검색 모드에서는 날짜만 표시 */}
                     {isSearchMode && (
                       <span
-                        className="text-[10px] text-muted-foreground mx-1 min-w-fit"
+                        className="text-[10px] text-on-surface-variant/60 mx-1 min-w-fit"
                         suppressHydrationWarning
                       >
                         {new Date(msg.createdAt).toLocaleDateString('ko-KR', {
@@ -927,43 +880,34 @@ export default function ChatWindow({ room, onBack, onLeaveRoom }: ChatWindowProp
             );
           });
         })()}
-        {/* 스크롤 sentinel — 새 메시지 도착 시 이 div로 scrollIntoView */}
+        {/* 스크롤 sentinel — 새 메시지 도착 시 이 div 위치로 스크롤 */}
         <div ref={messagesEndRef} />
       </div>
 
       {/* 채팅 입력창 영역 */}
-      <div className="p-4 bg-background border-t border-border flex-shrink-0">
-        <div className="flex items-center gap-2 bg-muted border border-border rounded-full px-4 py-2 focus-within:ring-1 focus-within:ring-border transition-shadow">
+      <footer className="p-4 md:p-6 bg-surface-container-lowest flex-shrink-0">
+        <div className="flex items-center gap-3 bg-surface-container-low p-2 pr-4 rounded-2xl focus-within:ring-2 ring-primary-container/30 transition-all">
           <input
             type="text"
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="메시지를 입력하세요..."
-            className="flex-1 bg-transparent border-none focus:outline-none text-sm text-foreground px-2"
+            className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm text-on-surface py-2 px-2"
           />
           <button
             onClick={handleSendMessage}
             disabled={!messageInput.trim()}
-            className={`p-1.5 rounded-full transition-colors flex shrink-0 items-center justify-center h-8 w-8 
-                            ${messageInput.trim() ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-200 text-slate-400'}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0 ${
+              messageInput.trim()
+                ? 'bg-primary-container text-white hover:scale-105 active:scale-95'
+                : 'bg-surface-container-high text-on-surface-variant/40'
+            }`}
           >
-            <svg
-              className="w-4 h-4 translate-x-[-1px] translate-y-[1px]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
+            <span className="material-symbols-outlined text-[20px]">send</span>
           </button>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

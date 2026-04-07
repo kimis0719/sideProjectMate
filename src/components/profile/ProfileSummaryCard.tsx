@@ -48,7 +48,7 @@ export default function ProfileSummaryCard({ user, onClick }: ProfileSummaryCard
         </div>
         {/* 레벨 배지 (우측 하단) */}
         {user.level && (
-          <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm">
+          <div className="absolute -bottom-1 -right-1 bg-primary-container text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm">
             LV.{user.level}
           </div>
         )}
@@ -57,7 +57,7 @@ export default function ProfileSummaryCard({ user, onClick }: ProfileSummaryCard
       {/* 텍스트 정보 영역 */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <h3 className="font-bold text-gray-800 text-base truncate group-hover:text-indigo-600 transition-colors">
+          <h3 className="font-bold text-on-surface text-base truncate group-hover:text-primary transition-colors">
             {user.nName}
           </h3>
           <span className="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">

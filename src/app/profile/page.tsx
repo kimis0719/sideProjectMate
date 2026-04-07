@@ -45,7 +45,7 @@ export default function ProfilePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-        <div className="text-muted-foreground">프로필 정보를 불러오는 중...</div>
+        <div className="text-on-surface-variant">프로필 정보를 불러오는 중...</div>
       </div>
     );
   }

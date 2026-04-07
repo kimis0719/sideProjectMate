@@ -8,7 +8,6 @@ import { useSession, signOut } from 'next-auth/react';
 import { useNotificationStore } from '@/lib/store/notificationStore';
 import { socketClient } from '@/lib/socket';
 import { useModal } from '@/hooks/useModal';
-import { useTheme } from '@/components/ThemeProvider';
 import { useToastStore } from '@/components/common/Toast';
 
 interface Notification {
@@ -31,7 +30,7 @@ export default function Header() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { confirm } = useModal();
-  const { theme, toggleTheme } = useTheme();
+  // 다크모드 제거됨 (라이트모드만 지원)
 
   const { notifications, unreadCount, fetchNotifications } = useNotificationStore();
 
@@ -59,7 +58,7 @@ export default function Header() {
 
       const handleNewNotification = () => {
         fetchNotifications();
-        useToastStore.getState().show('새로운 알림이 도착했습니다.', 'default');
+        useToastStore.getState().show('새로운 알림이 도착했습니다.', 'info');
       };
       // 💬 Step 5: 채팅 메시지 수신 시 헤더 뱃지 카운터 증가
       // /chat 페이지에 있거나 내가 보낸 메시지면 증가 안 함
@@ -314,33 +313,6 @@ export default function Header() {
 
             {/* ── 우측: 액션 버튼들 */}
             <div className="flex items-center gap-2">
-              {/* 다크모드 토글 */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors"
-                aria-label="다크모드 토글"
-              >
-                {theme === 'dark' ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                    />
-                  </svg>
-                )}
-              </button>
-
               {status === 'loading' ? (
                 <div className="h-8 w-8 bg-surface-container-high rounded-full animate-pulse" />
               ) : session ? (

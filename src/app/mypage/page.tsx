@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import DetailProfileCard from '@/components/profile/DetailProfileCard';
+import Image from 'next/image';
 import ImageEditModal from '@/components/profile/modals/ImageEditModal';
 import { useModal } from '@/hooks/useModal';
 import Skeleton from '@/components/common/Skeleton';
@@ -20,27 +20,43 @@ interface MyApplication {
   status: 'pending' | 'accepted' | 'rejected';
 }
 
-type FilterTab = 'all' | 'pending' | 'accepted' | 'rejected';
+interface MyProject {
+  pid: number;
+  title: string;
+  status: string;
+  currentStage?: string;
+  images?: string[];
+}
+
+type FilterTab = 'all' | 'my_projects' | 'pending' | 'accepted' | 'rejected';
 
 const TAB_LABELS: Record<FilterTab, string> = {
   all: '전체',
+  my_projects: '내 프로젝트',
   pending: '대기중',
   accepted: '수락됨',
   rejected: '거절됨',
 };
 
+const PROJECT_STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  recruiting: { label: '모집중', className: 'bg-primary-container/10 text-primary-container' },
+  in_progress: { label: '진행중', className: 'bg-emerald-100 text-emerald-800' },
+  completed: { label: '완료', className: 'bg-surface-container-high text-on-surface-variant' },
+  paused: { label: '일시중지', className: 'bg-tertiary-fixed/40 text-on-tertiary-fixed-variant' },
+};
+
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   pending: {
     label: '대기중',
-    className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    className: 'bg-emerald-100 text-emerald-800',
   },
   accepted: {
     label: '수락됨',
-    className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    className: 'bg-primary-container/10 text-primary-container',
   },
   rejected: {
     label: '거절됨',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+    className: 'bg-tertiary-fixed/40 text-on-tertiary-fixed-variant',
   },
 };
 
@@ -49,13 +65,14 @@ export default function MyPage() {
   const router = useRouter();
   const { alert, confirm } = useModal();
 
-  // ✅ 모든 훅을 조건부 return 이전에 선언
   const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
+  const [myProjects, setMyProjects] = useState<MyProject[]>([]);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [userData, setUserData] = useState<any>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isAppsLoading, setIsAppsLoading] = useState(true);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
   const fetchMyApplications = useCallback(async () => {
@@ -72,6 +89,31 @@ export default function MyPage() {
       setIsAppsLoading(false);
     }
   }, []);
+
+  const fetchMyProjects = useCallback(async () => {
+    setIsProjectsLoading(true);
+    try {
+      const userId = session?.user?._id;
+      if (!userId) return;
+      const response = await fetch(`/api/projects?authorId=${userId}`);
+      const data = await response.json();
+      if (data.success) {
+        setMyProjects(
+          data.data.projects.map((p: MyProject) => ({
+            pid: p.pid,
+            title: p.title,
+            status: p.status,
+            currentStage: p.currentStage,
+            images: p.images,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('내 프로젝트를 불러오는 중 오류 발생', error);
+    } finally {
+      setIsProjectsLoading(false);
+    }
+  }, [session?.user?._id]);
 
   const fetchUserProfile = useCallback(async () => {
     setIsProfileLoading(true);
@@ -94,9 +136,10 @@ export default function MyPage() {
     }
     if (status === 'authenticated') {
       fetchMyApplications();
+      fetchMyProjects();
       fetchUserProfile();
     }
-  }, [status, router, fetchMyApplications, fetchUserProfile]);
+  }, [status, router, fetchMyApplications, fetchMyProjects, fetchUserProfile]);
 
   const handleSaveAvatar = async (url: string) => {
     const res = await fetch('/api/users/me', {
@@ -136,12 +179,16 @@ export default function MyPage() {
   // 로딩 중 상태(세션 체크)
   if (status === 'loading') {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <Skeleton.Profile />
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton.ListItem key={i} />
-          ))}
+      <div className="pt-32 pb-24 px-8 max-w-[1440px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          <div className="lg:col-span-4">
+            <Skeleton.Profile />
+          </div>
+          <div className="lg:col-span-8 space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton.ListItem key={i} />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -151,53 +198,326 @@ export default function MyPage() {
 
   // 탭 필터링
   const filteredApps =
-    activeTab === 'all' ? myApplications : myApplications.filter((app) => app.status === activeTab);
+    activeTab === 'all' || activeTab === 'my_projects'
+      ? myApplications
+      : myApplications.filter((app) => app.status === activeTab);
 
   // 탭별 카운트
   const tabCounts: Record<FilterTab, number> = {
-    all: myApplications.length,
+    all: myApplications.length + myProjects.length,
+    my_projects: myProjects.length,
     pending: myApplications.filter((a) => a.status === 'pending').length,
     accepted: myApplications.filter((a) => a.status === 'accepted').length,
     rejected: myApplications.filter((a) => a.status === 'rejected').length,
   };
 
+  // 아바타 이니셜
+  const initials = userData?.nName?.charAt(0) || '?';
+
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* ── 프로필 카드 섹션 */}
-      <section>
-        <div className="mb-4 flex items-center gap-2">
-          <h1 className="text-xl font-bold text-foreground">내 프로필 카드</h1>
-          <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
-            Preview
-          </span>
-        </div>
-        {isProfileLoading ? (
-          <Skeleton.Profile />
-        ) : userData ? (
-          <DetailProfileCard
-            user={userData}
-            onClick={() => router.push('/profile')}
-            isEditing={true}
-            onEditAvatar={() => setIsAvatarModalOpen(true)}
-          />
-        ) : null}
-        <div className="mt-3">
-          <Link
-            href="/profile"
-            className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+    <main className="pt-32 pb-24 px-4 sm:px-8 max-w-[1440px] mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {/* ── 좌측: 프로필 요약 카드 */}
+        <section className="lg:col-span-4 space-y-6">
+          {isProfileLoading ? (
+            <Skeleton.Profile />
+          ) : userData ? (
+            <>
+              <div className="bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center text-center shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+                {/* 아바타 */}
+                <div className="relative mb-6">
+                  {userData.avatarUrl ? (
+                    <Image
+                      src={userData.avatarUrl}
+                      alt={userData.nName}
+                      width={80}
+                      height={80}
+                      className="w-20 h-20 rounded-full border-4 border-surface-container-low object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full border-4 border-surface-container-low bg-surface-container-high flex items-center justify-center text-2xl font-bold text-on-surface-variant">
+                      {initials}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setIsAvatarModalOpen(true)}
+                    className="absolute bottom-0 right-0 w-6 h-6 bg-primary-container rounded-full border-2 border-surface-container-lowest flex items-center justify-center hover:scale-110 transition-transform"
+                  >
+                    <span
+                      className="material-symbols-outlined text-[14px] text-white"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      bolt
+                    </span>
+                  </button>
+                </div>
+
+                {/* 이름 + 포지션 */}
+                <h2 className="text-2xl font-bold text-on-surface font-headline mb-1">
+                  {userData.nName}
+                </h2>
+                <p className="text-on-surface-variant font-medium mb-6">
+                  {userData.position || '포지션 미설정'}
+                  {userData.career ? ` · ${userData.career}` : ''}
+                </p>
+
+                {/* 기술 태그 */}
+                {userData.techTags && userData.techTags.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2 mb-8">
+                    {userData.techTags.slice(0, 5).map((tag: string) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1 bg-surface-container-low text-on-surface-variant text-[11px] font-bold uppercase tracking-wider rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* 프로필 수정 버튼 */}
+                <Link
+                  href="/profile"
+                  className="w-full py-4 bg-primary-container text-white rounded-lg font-semibold hover:translate-x-1 transition-all duration-300 flex items-center justify-center gap-2 group"
+                >
+                  프로필 수정하기
+                  <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
+                    arrow_forward
+                  </span>
+                </Link>
+              </div>
+
+              {/* 프로젝트 바로가기 */}
+              <div className="bg-surface-container-low p-6 rounded-xl">
+                <h3 className="text-sm font-bold text-on-surface mb-4 font-headline uppercase tracking-widest">
+                  나의 프로젝트 바로가기
+                </h3>
+                <Link
+                  href="/projects/mine"
+                  className="text-primary font-semibold text-sm flex items-center gap-2 hover:underline"
+                >
+                  내 프로젝트 보기
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </Link>
+              </div>
+            </>
+          ) : null}
+        </section>
+
+        {/* ── 우측: 지원 현황 */}
+        <section className="lg:col-span-8 space-y-8">
+          <header>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight font-headline mb-8">
+              프로젝트 현황
+            </h1>
+
+            {/* 필터 칩 */}
+            <div className="flex flex-wrap gap-3 mb-10">
+              {(Object.keys(TAB_LABELS) as FilterTab[]).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                    activeTab === tab
+                      ? 'bg-primary text-white font-semibold'
+                      : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+                  }`}
+                >
+                  {TAB_LABELS[tab]} {tabCounts[tab]}
+                </button>
+              ))}
+            </div>
+          </header>
+
+          {/* 콘텐츠 */}
+          {/* ── 내 프로젝트 카드 (all 또는 my_projects 탭) */}
+          {(activeTab === 'all' || activeTab === 'my_projects') &&
+            (isProjectsLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <Skeleton.ListItem key={`proj-skel-${i}`} />
+                ))}
+              </div>
+            ) : myProjects.length > 0 ? (
+              <div className="space-y-4">
+                {activeTab === 'all' && (
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                    내 프로젝트
+                  </h3>
+                )}
+                {myProjects.map((project) => {
+                  const badge = PROJECT_STATUS_BADGE[project.status] || {
+                    label: project.status,
+                    className: 'bg-surface-container-high text-on-surface-variant',
+                  };
+                  return (
+                    <div
+                      key={project.pid}
+                      className="bg-surface-container-lowest p-6 rounded-xl flex flex-col md:flex-row items-start md:items-center gap-6 group hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] transition-all"
+                    >
+                      <div className="w-24 h-24 flex-shrink-0 bg-surface-container-low rounded-lg overflow-hidden flex items-center justify-center">
+                        {project.images &&
+                        project.images.length > 0 &&
+                        project.images[0] !== '🚀' ? (
+                          <Image
+                            src={project.images[0]}
+                            alt={project.title}
+                            width={96}
+                            height={96}
+                            className="w-full h-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <span className="text-3xl font-bold text-on-surface-variant/30">
+                            {project.title.charAt(0)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-grow space-y-1">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <Link
+                            href={`/projects/${project.pid}`}
+                            className="text-lg font-bold font-headline text-on-surface hover:text-primary transition-colors"
+                          >
+                            {project.title}
+                          </Link>
+                          <span
+                            className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter rounded-full ${badge.className}`}
+                          >
+                            {badge.label}
+                          </span>
+                        </div>
+                        {project.currentStage && (
+                          <p className="text-sm text-on-surface-variant">
+                            단계: {project.currentStage}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex md:flex-col items-center gap-3 w-full md:w-auto">
+                        <Link
+                          href={`/dashboard/${project.pid}`}
+                          className="flex-grow md:w-32 py-2 px-4 bg-primary-container text-white rounded-lg text-sm font-medium text-center hover:bg-primary-container/90 transition-all"
+                        >
+                          대시보드
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : activeTab === 'my_projects' ? (
+              <EmptyState
+                icon="folder"
+                title="아직 만든 프로젝트가 없습니다"
+                description="새로운 사이드 프로젝트를 시작해보세요!"
+                action={{ label: '프로젝트 만들기', href: '/projects/new' }}
               />
-            </svg>
-            프로필 수정하기
-          </Link>
-        </div>
-      </section>
+            ) : null)}
+
+          {/* ── 지원 현황 카드 (all 또는 대기중/수락됨/거절됨 탭) */}
+          {activeTab !== 'my_projects' &&
+            (isAppsLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton.ListItem key={`app-skel-${i}`} />
+                ))}
+              </div>
+            ) : filteredApps.length > 0 ? (
+              <div className="space-y-4">
+                {activeTab === 'all' && (
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                    지원 현황
+                  </h3>
+                )}
+                {filteredApps.map((app) => {
+                  const badge = STATUS_BADGE[app.status];
+                  return (
+                    <div
+                      key={app._id}
+                      className="bg-surface-container-lowest p-6 rounded-xl flex flex-col md:flex-row items-start md:items-center gap-6 group hover:shadow-[0_20px_40px_rgba(26,28,28,0.04)] transition-all"
+                    >
+                      <div className="w-24 h-24 flex-shrink-0 bg-surface-container-low rounded-lg overflow-hidden flex items-center justify-center">
+                        <span className="text-3xl font-bold text-on-surface-variant/30">
+                          {app.projectId?.title?.charAt(0) || '?'}
+                        </span>
+                      </div>
+                      <div className="flex-grow space-y-1">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          {app.projectId ? (
+                            <Link
+                              href={`/projects/${app.projectId.pid}`}
+                              className="text-lg font-bold font-headline text-on-surface hover:text-primary transition-colors"
+                            >
+                              {app.projectId.title}
+                            </Link>
+                          ) : (
+                            <span className="text-lg font-bold font-headline text-on-surface-variant">
+                              삭제된 프로젝트
+                            </span>
+                          )}
+                          <span
+                            className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter rounded-full ${badge.className}`}
+                          >
+                            {badge.label}
+                          </span>
+                        </div>
+                        <p className="text-sm text-on-surface-variant">지원 역할: {app.role}</p>
+                      </div>
+                      <div className="flex md:flex-col items-center gap-3 w-full md:w-auto">
+                        {app.status === 'pending' ? (
+                          <button
+                            onClick={() => handleCancelApplication(app._id)}
+                            className="flex-grow md:w-32 py-2 px-4 border border-error/20 text-error rounded-lg text-sm font-medium hover:bg-error/5 transition-all"
+                          >
+                            지원 취소
+                          </button>
+                        ) : app.status === 'accepted' ? (
+                          <span className="flex-grow md:w-32 py-2 px-4 bg-surface-container-low text-on-surface-variant rounded-lg text-sm font-medium text-center">
+                            참여중
+                          </span>
+                        ) : (
+                          <span className="flex-grow md:w-32 py-2 px-4 bg-surface-container-low text-on-surface-variant/40 rounded-lg text-sm font-medium text-center cursor-not-allowed">
+                            결과 확인
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                icon="inbox"
+                title={
+                  activeTab === 'all'
+                    ? '아직 지원한 프로젝트가 없습니다'
+                    : `${TAB_LABELS[activeTab]} 상태의 지원이 없습니다`
+                }
+                description={
+                  activeTab === 'all' ? '마음에 드는 프로젝트를 찾아 지원해보세요!' : undefined
+                }
+                action={
+                  activeTab === 'all' ? { label: '프로젝트 탐색', href: '/projects' } : undefined
+                }
+              />
+            ))}
+
+          {/* all 탭에서 프로젝트도 지원도 없는 경우 */}
+          {activeTab === 'all' &&
+            !isAppsLoading &&
+            !isProjectsLoading &&
+            myApplications.length === 0 &&
+            myProjects.length === 0 && (
+              <EmptyState
+                icon="inbox"
+                title="아직 프로젝트 활동이 없습니다"
+                description="프로젝트를 만들거나 마음에 드는 프로젝트에 지원해보세요!"
+                action={{ label: '프로젝트 탐색', href: '/projects' }}
+              />
+            )}
+        </section>
+      </div>
 
       <ImageEditModal
         isOpen={isAvatarModalOpen}
@@ -205,110 +525,6 @@ export default function MyPage() {
         onSave={handleSaveAvatar}
         currentUrl={userData?.avatarUrl}
       />
-
-      {/* ── 지원 현황 섹션 */}
-      <div className="bg-card shadow-sm rounded-xl p-6 border border-border">
-        <div className="flex justify-between items-center mb-5">
-          <h2 className="text-xl font-bold text-foreground">내 지원 현황</h2>
-          <Link
-            href={`/projects?authorId=${session.user?._id}`}
-            className="btn-secondary text-sm px-3 py-1.5"
-          >
-            내 프로젝트 보기
-          </Link>
-        </div>
-
-        {/* 탭 필터 */}
-        <div className="flex gap-1 border-b border-border mb-6">
-          {(Object.keys(TAB_LABELS) as FilterTab[]).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                activeTab === tab
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {TAB_LABELS[tab]}
-              {tabCounts[tab] > 0 && (
-                <span
-                  className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    activeTab === tab
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {tabCounts[tab]}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* 콘텐츠 */}
-        {isAppsLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton.ListItem key={i} />
-            ))}
-          </div>
-        ) : filteredApps.length > 0 ? (
-          <div className="space-y-3">
-            {filteredApps.map((app) => {
-              const badge = STATUS_BADGE[app.status];
-              return (
-                <div
-                  key={app._id}
-                  className="p-4 border border-border rounded-lg flex justify-between items-center bg-card hover:bg-muted/30 transition-colors"
-                >
-                  <div>
-                    {app.projectId ? (
-                      <Link
-                        href={`/projects/${app.projectId.pid}`}
-                        className="font-semibold text-foreground hover:text-primary hover:underline transition-colors"
-                      >
-                        {app.projectId.title}
-                      </Link>
-                    ) : (
-                      <span className="font-semibold text-muted-foreground">삭제된 프로젝트</span>
-                    )}
-                    <p className="text-sm text-muted-foreground mt-0.5">지원 역할: {app.role}</p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-full ${badge.className}`}
-                    >
-                      {badge.label}
-                    </span>
-                    {app.status === 'pending' && (
-                      <button
-                        onClick={() => handleCancelApplication(app._id)}
-                        className="text-xs text-destructive hover:underline"
-                      >
-                        취소
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <EmptyState
-            icon="inbox"
-            title={
-              activeTab === 'all'
-                ? '아직 지원한 프로젝트가 없습니다'
-                : `${TAB_LABELS[activeTab]} 상태의 지원이 없습니다`
-            }
-            description={
-              activeTab === 'all' ? '마음에 드는 프로젝트를 찾아 지원해보세요!' : undefined
-            }
-            action={activeTab === 'all' ? { label: '프로젝트 탐색', href: '/projects' } : undefined}
-          />
-        )}
-      </div>
-    </div>
+    </main>
   );
 }

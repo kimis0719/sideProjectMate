@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Seoul Minimalist Toast Gallery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&amp;family=Inter:wght@400;600&amp;family=Noto+Sans+KR:wght@400;500;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error": "#ba1a1a",
+                      "inverse-on-surface": "#f1f1f0",
+                      "background": "#f9f9f8",
+                      "tertiary": "#943700",
+                      "surface-dim": "#dadad9",
+                      "on-tertiary-container": "#ffede6",
+                      "outline-variant": "#c3c6d7",
+                      "on-secondary": "#ffffff",
+                      "surface-container-low": "#f3f4f3",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "tertiary-fixed": "#ffdbcd",
+                      "on-error-container": "#93000a",
+                      "error-container": "#ffdad6",
+                      "outline": "#737686",
+                      "surface-tint": "#0053db",
+                      "on-secondary-fixed": "#00174b",
+                      "on-surface": "#1a1c1c",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-background": "#1a1c1c",
+                      "inverse-primary": "#b4c5ff",
+                      "on-secondary-container": "#394c84",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "surface-container": "#eeeeed",
+                      "on-tertiary": "#ffffff",
+                      "primary-container": "#2563eb",
+                      "primary-fixed": "#dbe1ff",
+                      "on-primary-container": "#eeefff",
+                      "inverse-surface": "#2f3130",
+                      "secondary": "#495c95",
+                      "secondary-container": "#acbfff",
+                      "on-tertiary-fixed": "#360f00",
+                      "surface-bright": "#f9f9f8",
+                      "primary": "#004ac6",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed": "#00174b",
+                      "on-secondary-fixed-variant": "#31447b",
+                      "tertiary-container": "#bc4800",
+                      "surface-variant": "#e2e2e2",
+                      "surface-container-highest": "#e2e2e2",
+                      "secondary-fixed-dim": "#b4c5ff",
+                      "on-surface-variant": "#434655",
+                      "secondary-fixed": "#dbe1ff",
+                      "surface-container-high": "#e8e8e7",
+                      "on-primary": "#ffffff",
+                      "surface": "#f9f9f8",
+                      "on-tertiary-fixed-variant": "#7d2d00"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.5rem",
+                      "xl": "1rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Manrope", "Noto Sans KR"],
+                      "body": ["Inter", "Noto Sans KR"],
+                      "label": ["Inter", "Noto Sans KR"],
+                      "korean": ["Noto Sans KR"]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen">
+<!-- Top Navigation Overlay -->
+<nav class="fixed top-0 w-full z-50 bg-stone-50/80 backdrop-blur-xl flex justify-between items-center px-8 h-16 w-full max-w-screen-2xl mx-auto shadow-[0_20px_40px_rgba(26,28,28,0.04)]">
+<div class="text-xl font-bold tracking-tighter text-stone-900 font-headline">Seoul Minimalist</div>
+<div class="hidden md:flex items-center gap-8 text-sm font-medium">
+<a class="text-stone-500 hover:text-stone-900 transition-all" href="#">Gallery</a>
+<a class="text-blue-600 font-semibold border-b-2 border-blue-600" href="#">Insights</a>
+<a class="text-stone-500 hover:text-stone-900 transition-all" href="#">Collections</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-stone-500 cursor-pointer p-2 hover:bg-stone-200/50 rounded-full transition-all" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-stone-500 cursor-pointer p-2 hover:bg-stone-200/50 rounded-full transition-all" data-icon="settings">settings</span>
+</div>
+</nav>
+<!-- Content Canvas -->
+<main class="pt-32 pb-20 px-6 max-w-4xl mx-auto flex flex-col items-center">
+<!-- Header Section -->
+<div class="w-full text-center mb-16">
+<span class="text-[0.7rem] font-bold tracking-widest text-primary uppercase mb-3 block">Design System Preview</span>
+<h1 class="text-5xl font-bold tracking-tight font-headline text-on-surface mb-6">Editorial Feedback</h1>
+<p class="text-on-surface-variant max-w-lg mx-auto text-lg leading-relaxed">
+                A collection of toast notifications designed for the Digital Curator. Minimalist transitions, high-contrast states, and thoughtful spacing.
+            </p>
+</div>
+<!-- Toast Gallery Container -->
+<div class="w-full max-w-md flex flex-col gap-8">
+<!-- Toast 1: Success -->
+<div class="group relative bg-surface-container-lowest p-0 rounded-lg shadow-[0_20px_40px_rgba(26,28,28,0.04)] flex items-stretch overflow-hidden transition-all hover:scale-[1.02]">
+<div class="w-1 bg-emerald-500 shrink-0"></div>
+<div class="flex items-center gap-4 px-5 py-4 w-full">
+<span class="material-symbols-outlined text-emerald-500 text-2xl" data-icon="check_circle">check_circle</span>
+<p class="flex-grow text-[0.9375rem] font-medium text-on-surface font-korean">성공적으로 저장되었습니다.</p>
+<button class="text-stone-300 hover:text-stone-900 transition-colors p-1">
+<span class="material-symbols-outlined text-xl" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<!-- Toast 2: Error -->
+<div class="group relative bg-surface-container-lowest p-0 rounded-lg shadow-[0_20px_40px_rgba(26,28,28,0.04)] flex items-stretch overflow-hidden transition-all hover:scale-[1.02]">
+<div class="w-1 bg-rose-500 shrink-0"></div>
+<div class="flex items-center gap-4 px-5 py-4 w-full">
+<span class="material-symbols-outlined text-rose-500 text-2xl" data-icon="error">error</span>
+<p class="flex-grow text-[0.9375rem] font-medium text-on-surface font-korean">정보를 다시 확인해주세요.</p>
+<button class="text-stone-300 hover:text-stone-900 transition-colors p-1">
+<span class="material-symbols-outlined text-xl" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<!-- Toast 3: Info -->
+<div class="group relative bg-surface-container-lowest p-0 rounded-lg shadow-[0_20px_40px_rgba(26,28,28,0.04)] flex items-stretch overflow-hidden transition-all hover:scale-[1.02]">
+<div class="w-1 bg-primary-container shrink-0"></div>
+<div class="flex items-center gap-4 px-5 py-4 w-full">
+<span class="material-symbols-outlined text-primary-container text-2xl" data-icon="info">info</span>
+<p class="flex-grow text-[0.9375rem] font-medium text-on-surface font-korean">새로운 소식이 도착했습니다.</p>
+<button class="text-stone-300 hover:text-stone-900 transition-colors p-1">
+<span class="material-symbols-outlined text-xl" data-icon="close">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Design Rationale Section -->
+<div class="mt-24 grid grid-cols-1 md:grid-cols-2 gap-12 w-full max-w-4xl text-left border-t border-stone-100 pt-16">
+<div class="space-y-4">
+<h3 class="font-headline font-bold text-xl text-stone-900">Atmospheric Depth</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">
+                    By strictly adhering to the <span class="font-semibold">No-Line Rule</span>, we use a 40px diffuse shadow to separate notifications from the background canvas. This creates an organic elevation that feels integrated rather than appended.
+                </p>
+</div>
+<div class="space-y-4">
+<h3 class="font-headline font-bold text-xl text-stone-900">Functional Accents</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed">
+                    A singular 4px leading bar provides immediate semantic recognition without overwhelming the minimalist aesthetic. High-contrast labels ensure accessibility while maintaining the <span class="italic text-primary">Seoul Minimalist</span> tone.
+                </p>
+</div>
+</div>
+<!-- Contextual Visual -->
+<div class="mt-20 w-full aspect-video rounded-xl overflow-hidden shadow-sm relative group">
+<div class="absolute inset-0 bg-stone-900/10 group-hover:bg-stone-900/0 transition-all duration-700 z-10"></div>
+<img alt="Minimalist workspace" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" data-alt="clean minimalist desk setup with warm sunlight shadows, high-end design magazines, and a sleek modern monitor showing abstract patterns" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvrPb_-V3M9ung37noTU25QWQK5ndQKlZn5Kz5A2rNAVfSonqb_Z2FInaoCgtHfokKSFgscILFyJUzJQpuJnz1IDv6qxdAltSEBhwGd2II28FFa1a6-Jwdnx_yPftNT2zA7LgZj7uQQpQnSVlYAg1BPC8mggMRYm7zqYGA0ZZ2rhWvWYOG9N-D97Vzzh_MNMRplD0r_q8LkXf15WUqazxROvFpe46yQjJMEt5zV6CzRnBGEnr7rCRDSCgBrqjcNhYRVM4L1fAT0VWf"/>
+<div class="absolute bottom-8 left-8 z-20 text-white">
+<p class="text-[0.65rem] font-bold uppercase tracking-[0.2em] opacity-80 mb-2">Contextual Application</p>
+<h4 class="text-2xl font-bold font-headline leading-tight">Integration in <br/>Premium Workspaces</h4>
+</div>
+</div>
+</main>
+<!-- Bottom Nav for Mobile -->
+<div class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest h-16 flex items-center justify-around z-50">
+<div class="flex flex-col items-center text-stone-400">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="text-[10px] font-medium mt-1 uppercase tracking-tighter">Workspace</span>
+</div>
+<div class="flex flex-col items-center text-primary">
+<span class="material-symbols-outlined" data-icon="auto_awesome_motion">auto_awesome_motion</span>
+<span class="text-[10px] font-medium mt-1 uppercase tracking-tighter">Curations</span>
+</div>
+<div class="flex flex-col items-center text-stone-400">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="text-[10px] font-medium mt-1 uppercase tracking-tighter">Archive</span>
+</div>
+<div class="flex flex-col items-center text-stone-400">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-[10px] font-medium mt-1 uppercase tracking-tighter">Team</span>
+</div>
+</div>
+</body></html>
