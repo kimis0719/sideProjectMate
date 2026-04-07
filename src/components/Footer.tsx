@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation';
 export default function Footer() {
   const pathname = usePathname();
 
-  // admin 페이지에서는 글로벌 푸터 숨김 (admin layout 사용)
-  if (pathname?.startsWith('/admin')) return null;
+  // admin, chat 페이지에서는 글로벌 푸터 숨김
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/chat')) return null;
   const currentYear = new Date().getFullYear();
 
   const serviceLinks = [

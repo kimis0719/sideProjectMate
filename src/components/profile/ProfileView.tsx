@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import ProfileHeader from '@/components/profile/ProfileHeader';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useModal } from '@/hooks/useModal';
+import { useToastStore } from '@/components/common/Toast';
 import DetailProfileCard from '@/components/profile/DetailProfileCard';
 import StatusDashboard from '@/components/profile/StatusDashboard';
 
@@ -121,12 +121,7 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
     });
   }, [initialUserData]);
 
-  /**
-   * [교육적 설명] 핸들러 함수들
-   * readOnly 모드일 때는 저장 버튼 자체가 렌더링되지 않으므로,
-   * 보안상/로직상 핸들러 내부에서도 방어 코드를 짤 수는 있지만 여기선 UI 제어로 처리합니다.
-   */
-
+  // ── 소셜 링크: 개별 즉시 저장 (GitHub 연동 시 서버에서 Stats 업데이트 필요)
   const handleSaveSocialLink = async (key: string, value: string) => {
     const newLinks = { ...socialLinks, [key]: value };
     setSocialLinks(newLinks);
@@ -137,327 +132,256 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ socialLinks: newLinks }),
       });
-
-      if (!res.ok) throw new Error('Failed to save social links');
+      if (!res.ok) throw new Error('소셜 링크 저장 실패');
 
       const data = await res.json();
       if (data.success && data.data) {
-        // 서버에서 계산된 최신 데이터(GitHub Stats, Tech Tags 등)로 전체 업데이트
         setUserData(data.data);
-
-        // 개별 상태도 동기화 (SkillSection 등에 반영)
         if (data.data.techTags) setTechTags(data.data.techTags);
       }
-
-      await alert('소셜 링크', '소셜 링크가 저장되었습니다! ✅');
+      useToastStore.getState().show('소셜 링크가 저장되었습니다.', 'success');
     } catch (error) {
       console.error(error);
-      await alert('에러', '링크 저장 실패');
+      useToastStore.getState().show('소셜 링크 저장에 실패했습니다.', 'error');
     }
   };
 
-  const handleSaveAvailability = async () => {
-    try {
-      // 실제 API 호출 로직은 여기에 구현 (현재는 로그만 출력)
-      console.warn('가용성 정보 저장:', { schedule, preference, personalityTags });
-
-      // TODO: API 구현 필요 (Availability 테이블 등)
-      // 임시로 user collection에 저장한다고 가정
-      const res = await fetch('/api/users/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          availability: { schedule, preference, personalityTags }, // 스키마에 맞게 조정 필요
-        }),
-      });
-
-      if (res.ok) {
-        await alert('저장 완료', '가용성 정보가 저장되었습니다! ✅');
-      } else {
-        throw new Error('Save Failed');
-      }
-    } catch (error) {
-      console.error(error);
-      await alert('에러', '저장 실패');
-    }
-  };
-
-  const handleSaveIntroduction = async () => {
-    try {
-      const res = await fetch('/api/users/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ introduction }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setUserData({ ...userData, introduction });
-        await alert('저장 완료', '자기소개가 저장되었습니다! ✅');
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (error: unknown) {
-      console.error('Failed to save intro:', error);
-      await alert(
-        '에러',
-        `저장 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
-      );
-    }
-  };
-
-  const handleUpdateSkills = async (newTags: string[]) => {
-    // 즉시 반영
+  const handleUpdateSkills = (newTags: string[]) => {
     setTechTags(newTags);
     setUserData((prev: ProfileUserData) => ({ ...prev, techTags: newTags }));
+  };
 
-    try {
-      const res = await fetch('/api/users/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ techTags: newTags }),
-      });
-      if (!res.ok) throw new Error('Failed to save tags');
+  const handleUpdateBasicInfo = (field: string, value: string) => {
+    setUserData((prev: ProfileUserData) => ({ ...prev, [field]: value }));
+  };
 
-      // 저장 완료 알림 (너무 잦은 알림이 싫다면 Toast로 대체 가능하나 요청사항에 따라 Alert 사용)
-      await alert('저장 완료', '기술 스택이 저장되었습니다! ✅');
-    } catch (error) {
-      console.error(error);
-      await alert('에러', '기술 스택 저장 실패');
+  const handleAddPortfolio = (url: string) => {
+    if (!portfolioLinks.includes(url)) {
+      setPortfolioLinks((prev) => [...prev, url]);
+    } else {
+      alert('중복 링크', '이미 추가된 링크입니다.');
     }
   };
 
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-
-  const handleEditAvatar = () => {
-    setIsAvatarModalOpen(true);
+  const handleDeletePortfolio = (url: string) => {
+    setPortfolioLinks((prev) => prev.filter((l) => l !== url));
   };
 
+  // ── 아바타는 즉시 저장 (파일 업로드 후 URL 반영이므로 글로벌 저장과 별개)
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const handleEditAvatar = () => setIsAvatarModalOpen(true);
   const handleSaveAvatar = async (url: string) => {
     const res = await fetch('/api/users/me', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ avatarUrl: url }),
     });
-
     if (res.ok) {
-      setUserData({ ...userData, avatarUrl: url });
+      setUserData((prev: ProfileUserData) => ({ ...prev, avatarUrl: url }));
     } else {
       throw new Error('이미지 변경 실패');
     }
   };
 
-  // 포트폴리오 추가/삭제 핸들러
-  const handleAddPortfolio = async (url: string) => {
-    if (!portfolioLinks.includes(url)) {
-      const newLinks = [...portfolioLinks, url];
-      setPortfolioLinks(newLinks);
-      // Auto Save
-      await fetch('/api/users/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ portfolioLinks: newLinks }),
-      })
-        .then(async () => {
-          await alert('저장 완료', '포트폴리오가 저장되었습니다! 📂');
-        })
-        .catch(console.error);
-    } else {
-      await alert('중복 링크', '이미 추가된 링크입니다.');
-    }
-  };
-
-  const handleDeletePortfolio = async (url: string) => {
-    const newLinks = portfolioLinks.filter((l) => l !== url);
-    setPortfolioLinks(newLinks);
-    // Auto Save
-    await fetch('/api/users/me', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ portfolioLinks: newLinks }),
-    }).catch(console.error);
-  };
-
-  if (!userData) {
-    return <div className="p-8 text-center">데이터가 없습니다.</div>;
-  }
-
-  // 기본 정보(직군, 경력) 수정 및 자동 저장
-  const handleUpdateBasicInfo = async (field: string, value: string) => {
-    // 1. 상태 즉시 업데이트 (UI 반응성)
-    setUserData((prev: ProfileUserData) => ({ ...prev, [field]: value }));
-
-    // 2. API 저장 (De-bouncing 없이 일단 단순 구현, 필요시 최적화)
-    // 실제로는 텍스트 입력의 경우 Debounce가 필요하지만, 여기선 간단히 처리
+  // ── 글로벌 저장: 모든 변경사항을 한 번에 저장
+  const [isSaving, setIsSaving] = useState(false);
+  const handleSaveAll = useCallback(async () => {
+    setIsSaving(true);
     try {
-      // 직군(input)의 경우 너무 잦은 요청을 방지하기 위해
-      // 실제 앱에서는 lodash.debounce 등을 사용 권장.
-      // 여기서는 경력(Select) 변경이나 포지션 입력 후 포커스 아웃 등을 가정하지 않고
-      // 편의상 바로 요청하되, 에러 로그만 남김.
-      await fetch('/api/users/me', {
+      // 1. 프로필 기본 정보 저장 (User 모델)
+      const profileRes = await fetch('/api/users/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value }),
+        body: JSON.stringify({
+          position: userData.position,
+          career: userData.career,
+          status: userData.status,
+          introduction,
+          techTags,
+          portfolioLinks,
+        }),
       });
 
-      // [UX] 직군/경력 등 중요 정보 저장 시 사용자 피드백 제공 (요청사항)
-      await alert('저장 완료', '정보가 저장되었습니다! ✅');
+      if (!profileRes.ok) throw new Error('프로필 저장 실패');
+
+      const profileData = await profileRes.json();
+      if (profileData.success && profileData.data) {
+        setUserData(profileData.data);
+        if (profileData.data.techTags) setTechTags(profileData.data.techTags);
+      }
+
+      // 2. 가용성 정보 저장 (Availability 모델 — 별도 API)
+      const availRes = await fetch('/api/users/me/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schedule, preference, personalityTags }),
+      });
+
+      if (!availRes.ok) throw new Error('가용성 저장 실패');
+
+      useToastStore.getState().show('프로필이 저장되었습니다.', 'success');
     } catch (error) {
-      console.error('Failed to save basic info:', error);
-      await alert('에러', '저장 실패 ❌');
+      console.error('Save failed:', error);
+      await alert('에러', error instanceof Error ? error.message : '저장 실패');
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [
+    userData,
+    introduction,
+    techTags,
+    portfolioLinks,
+    schedule,
+    preference,
+    personalityTags,
+    alert,
+  ]);
+
+  if (!userData) {
+    return <div className="p-8 text-center text-on-surface-variant">데이터가 없습니다.</div>;
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8 relative">
-      {/* 1. 헤더 섹션 (DetailProfileCard로 교체) */}
-      {/* 1. 헤더 섹션 (DetailProfileCard + StatusDashboard) */}
-      <section className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-        <div className="lg:col-span-7 h-full">
-          <DetailProfileCard
-            user={userData}
-            title="프로필 상세"
-            isEditing={isEditing}
-            onEditAvatar={handleEditAvatar}
-            onUpdateUser={handleUpdateBasicInfo}
-          />
+    <>
+      {/* 페이지 헤더 */}
+      <header className="bg-surface-container-low border-b border-outline-variant/10">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 py-10 flex justify-between items-end">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-primary mb-2 block">
+              My Space
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-bold font-headline tracking-tighter text-on-surface">
+              {readOnly ? `${userData.nName}의 프로필` : '내 프로필'}
+            </h1>
+          </div>
+          {!readOnly && (
+            <button
+              onClick={handleSaveAll}
+              disabled={isSaving}
+              className="bg-primary text-white px-6 sm:px-8 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-primary/90 transition-all active:scale-95 shadow-sm disabled:opacity-60"
+            >
+              {isSaving ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span className="material-symbols-outlined text-[18px]">save</span>
+              )}
+              {isSaving ? '저장 중...' : '저장하기'}
+            </button>
+          )}
         </div>
-        <div className="lg:col-span-3 h-full">
-          <StatusDashboard
-            status={userData.status}
-            user={userData}
-            isEditing={isEditing}
-            socialLinks={socialLinks}
-            onSaveLink={handleSaveSocialLink}
-          />
-        </div>
-      </section>
+      </header>
 
-      {/* 2. 통계 및 활동 섹션 (GitHub, Skill, Blog, Solved.ac) */}
-      <section className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-        {/* Row 1: GitHub (70%) + Skill (30%) */}
-        <div className="lg:col-span-7">
-          <GitHubStats githubUrl={userData.socialLinks?.github} />
-        </div>
-        <div className="lg:col-span-3">
-          <SkillSection
-            techTags={userData.techTags || []}
-            githubVerifiedTags={userData.githubStats?.techStack || []}
-            onUpdateTags={readOnly ? undefined : handleUpdateSkills}
-          />
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-8 pb-32">
+        <div className="grid grid-cols-12 gap-6 lg:gap-12 mt-8 lg:mt-12 items-start">
+          {/* ── 좌측 컬럼 (8칸) */}
+          <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12">
+            {/* 1. 기본 정보 (DetailProfileCard) */}
+            <DetailProfileCard
+              user={userData}
+              isEditing={isEditing}
+              onEditAvatar={handleEditAvatar}
+              onUpdateUser={handleUpdateBasicInfo}
+            />
+
+            {/* 2. 기술 스택 */}
+            <SkillSection
+              techTags={techTags}
+              githubVerifiedTags={userData.githubStats?.techStack || []}
+              onUpdateTags={readOnly ? undefined : handleUpdateSkills}
+            />
+
+            {/* 3. 외부 연동 (GitHub, Blog, Solved.ac) */}
+            <GitHubStats githubUrl={userData.socialLinks?.github} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <BlogPostCard blogUrl={userData.socialLinks?.blog} />
+              <SolvedAcCard handle={userData.socialLinks?.solvedAc ?? ''} />
+            </div>
+
+            {/* 4. 포트폴리오 */}
+            <section className="bg-surface-container-lowest p-6 lg:p-10 rounded-xl shadow-sm">
+              <h2 className="text-2xl font-bold font-headline text-on-surface mb-8">포트폴리오</h2>
+              {!readOnly && isEditing && (
+                <div className="mb-6">
+                  <LinkInput onAdd={handleAddPortfolio} />
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {portfolioLinks.map((url, idx) => (
+                  <PortfolioCard
+                    key={`${url}-${idx}`}
+                    url={url}
+                    readOnly={readOnly || !isEditing}
+                    onDelete={() => handleDeletePortfolio(url)}
+                  />
+                ))}
+                {portfolioLinks.length === 0 && (
+                  <div className="col-span-full py-8 text-center text-on-surface-variant/50 text-sm bg-surface-container-low rounded-xl">
+                    등록된 포트폴리오가 없습니다.
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* 5. 자기소개 */}
+            <section className="bg-surface-container-lowest p-6 lg:p-10 rounded-xl shadow-sm">
+              <h2 className="text-2xl font-bold font-headline text-on-surface mb-8">자기소개</h2>
+              <div className="min-h-[300px]">
+                <div className={readOnly || !isEditing ? 'pointer-events-none' : ''}>
+                  <BlockEditor
+                    content={introduction}
+                    onChange={readOnly || !isEditing ? () => {} : setIntroduction}
+                  />
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* ── 우측 컬럼 (4칸) */}
+          <div className="col-span-12 lg:col-span-4 space-y-8 lg:space-y-12 lg:sticky lg:top-24">
+            {/* 소셜 링크 + 프로필 완성도 */}
+            <StatusDashboard
+              status={userData.status}
+              user={userData}
+              isEditing={isEditing}
+              socialLinks={socialLinks}
+              onSaveLink={handleSaveSocialLink}
+            />
+
+            {/* 주간 가능 시간 */}
+            <section className="bg-surface-container-lowest p-6 lg:p-8 rounded-xl shadow-sm">
+              <h2 className="text-xl font-bold font-headline text-on-surface mb-6">
+                주간 가능한 시간
+              </h2>
+              <div className={readOnly ? 'pointer-events-none' : ''}>
+                <AvailabilityScheduler
+                  initialSchedule={schedule}
+                  onChange={readOnly ? () => {} : setSchedule}
+                />
+              </div>
+            </section>
+
+            {/* 협업 스타일 */}
+            <section className="bg-surface-container-lowest p-6 lg:p-8 rounded-xl shadow-sm">
+              <h2 className="text-xl font-bold font-headline text-on-surface mb-6">협업 스타일</h2>
+              <div className={readOnly || !isEditing ? 'pointer-events-none' : ''}>
+                <CommunicationStyleSlider
+                  preference={preference}
+                  onChangePreference={readOnly || !isEditing ? () => {} : setPreference}
+                  tags={personalityTags}
+                  onChangeTags={readOnly || !isEditing ? () => {} : setPersonalityTags}
+                />
+              </div>
+            </section>
+          </div>
         </div>
 
-        {/* Row 2: Blog (70%) + Solved.ac (30%) */}
-        <div className="lg:col-span-7">
-          <BlogPostCard blogUrl={userData.socialLinks?.blog} />
-        </div>
-        <div className="lg:col-span-3">
-          <SolvedAcCard handle={userData.socialLinks?.solvedAc ?? ''} />
-        </div>
-      </section>
-
-      {/* 3. 포트폴리오 섹션 */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          📂 포트폴리오
-        </h2>
-
-        {/* 수정 모드일 때만 입력창 노출 */}
-        {!readOnly && isEditing && (
-          <div className="mb-6">
-            <LinkInput onAdd={handleAddPortfolio} />
+        {/* 6. 팀원 리뷰 (전체 너비) */}
+        {userData._id && (
+          <div className="mt-8 lg:mt-12">
+            <ReviewSection userId={userData._id.toString()} />
           </div>
         )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {portfolioLinks.map((url, idx) => (
-            <PortfolioCard
-              key={`${url}-${idx}`}
-              url={url}
-              readOnly={readOnly || !isEditing}
-              onDelete={() => handleDeletePortfolio(url)}
-            />
-          ))}
-          {portfolioLinks.length === 0 && (
-            <div className="col-span-full py-8 text-center text-gray-400 text-sm bg-gray-50 rounded-lg border border-dashed border-gray-200">
-              등록된 포트폴리오가 없습니다.
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 4. 가용성 및 협업 성향 섹션 */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800">📅 가용성 및 협업 성향</h2>
-          {!readOnly && isEditing && (
-            <button
-              onClick={handleSaveAvailability}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              저장하기
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-          <div className="flex flex-col h-full">
-            <h3 className="text-lg font-semibold mb-4 text-gray-700">주간 가능한 시간</h3>
-            <div
-              className={`border rounded-xl p-4 bg-gray-50 flex-1 ${readOnly ? 'pointer-events-none opacity-90' : ''}`}
-            >
-              <AvailabilityScheduler
-                initialSchedule={schedule}
-                onChange={readOnly ? () => {} : setSchedule} // readOnly면 변경 불가
-              />
-              {!readOnly && (
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  드래그하여 가능한 시간을 선택해주세요.
-                </p>
-              )}
-            </div>
-          </div>
-          <div
-            className={`flex flex-col h-full ${readOnly || !isEditing ? 'pointer-events-none opacity-90' : ''}`}
-          >
-            <h3 className="text-lg font-semibold mb-4 text-gray-700">협업 스타일</h3>
-            <span className="flex-1">
-              <CommunicationStyleSlider
-                preference={preference}
-                onChangePreference={readOnly || !isEditing ? () => {} : setPreference}
-                tags={personalityTags}
-                onChangeTags={readOnly || !isEditing ? () => {} : setPersonalityTags}
-              />
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. 자기소개 섹션 */}
-      <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800">📝 자기소개</h2>
-          {!readOnly && isEditing && (
-            <button
-              onClick={handleSaveIntroduction}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-            >
-              저장하기
-            </button>
-          )}
-        </div>
-
-        <div className="min-h-[400px]">
-          {/* BlockEditor는 readOnly prop을 지원해야 함. 지원 안 한다면 pointer-events-none 등으로 막아야 함 */}
-          <div className={readOnly || !isEditing ? 'pointer-events-none' : ''}>
-            <BlockEditor
-              content={introduction}
-              onChange={readOnly || !isEditing ? () => {} : setIntroduction}
-            />
-          </div>
-        </div>
-      </section>
-      {/* 6. 팀원 리뷰 섹션 */}
-      {userData._id && <ReviewSection userId={userData._id.toString()} />}
+      </main>
 
       {/* Image Edit Modal */}
       <ImageEditModal
@@ -466,6 +390,6 @@ export default function ProfileView({ initialUserData, readOnly }: ProfileViewPr
         onSave={handleSaveAvatar}
         currentUrl={userData.avatarUrl}
       />
-    </div>
+    </>
   );
 }

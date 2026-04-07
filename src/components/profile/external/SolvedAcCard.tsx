@@ -57,15 +57,17 @@ const getTierName = (tier: number) => {
 };
 
 const CardContainer = styled.div`
-  background: var(--card);
-  border-radius: 1rem;
+  background: var(--surface-container-lowest, #ffffff);
+  border-radius: 0.75rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(26, 28, 28, 0.04);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem; /* Increased gap */
-  height: 100%;
+  gap: 1.5rem;
+
+  @media (min-width: 1024px) {
+    padding: 2.5rem;
+  }
 `;
 
 const Header = styled.div`
@@ -73,14 +75,12 @@ const Header = styled.div`
   align-items: center;
   gap: 0.5rem;
   font-weight: 700;
-  color: var(--foreground);
-  font-size: 1.125rem;
+  color: var(--on-surface, #1a1c1c);
+  font-size: 1.5rem;
+  font-family: 'Manrope', sans-serif;
 `;
 
-const SolvedLogo = styled.img`
-  width: 24px;
-  height: 24px;
-`;
+// SolvedLogo 제거 — workspace_premium Material Symbol로 통일
 
 const StatGrid = styled.div`
   display: grid;
@@ -89,21 +89,30 @@ const StatGrid = styled.div`
 `;
 
 const StatItem = styled.div`
-  background: var(--muted);
+  background: var(--surface-container-low, #f3f4f3);
   padding: 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   text-align: center;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--surface-bright, #f9f9f8);
+  }
 `;
 
 const StatLabel = styled.div`
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--on-surface-variant, #434655);
   margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 `;
 
 const StatValue = styled.div`
   font-weight: 700;
-  color: var(--foreground);
+  color: var(--on-surface, #1a1c1c);
+  font-family: 'Manrope', sans-serif;
 `;
 
 const TierBadge = styled.div<{ $color: string }>`
@@ -133,7 +142,7 @@ const DistributionBar = styled.div`
   border-radius: 4px;
   overflow: hidden;
   width: 100%;
-  background-color: var(--muted);
+  background-color: var(--surface-container-high, #e8e8e7);
 `;
 
 const DistributionSegment = styled.div<{ $color: string; $width: number }>`
@@ -154,7 +163,7 @@ const LegendItem = styled.div<{ $color: string }>`
   align-items: center;
   gap: 0.25rem;
   font-size: 0.65rem;
-  color: var(--muted-foreground);
+  color: var(--on-surface-variant, #434655);
 
   &::before {
     content: '';
@@ -202,11 +211,9 @@ export default function SolvedAcCard({ handle }: SolvedAcCardProps) {
           textAlign: 'center',
         }}
       >
-        <SolvedLogo
-          src="https://static.solved.ac/logo.svg"
-          alt="solved.ac"
-          style={{ width: '48px', height: '48px', marginBottom: '1rem', opacity: 0.5 }}
-        />
+        <span className="material-symbols-outlined text-5xl text-on-surface-variant/50 mb-4">
+          workspace_premium
+        </span>
         <h3
           style={{
             fontSize: '1.125rem',
@@ -268,7 +275,7 @@ export default function SolvedAcCard({ handle }: SolvedAcCardProps) {
   return (
     <CardContainer>
       <Header>
-        <SolvedLogo src="https://static.solved.ac/logo.svg" alt="solved.ac" />
+        <span className="material-symbols-outlined text-2xl text-[#495c95]">workspace_premium</span>
         Solved.ac
         <span
           style={{

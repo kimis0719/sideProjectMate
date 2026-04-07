@@ -20,6 +20,7 @@ import { useSession } from 'next-auth/react';
 
 export default function PublicProfilePage({ params }: PublicProfilePageProps) {
   const { data: session } = useSession();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -33,8 +34,8 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
 
         const { data } = await res.json();
         setUserData(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : '알 수 없는 오류');
       } finally {
         setLoading(false);
       }
@@ -48,8 +49,8 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <div className="text-gray-500">사용자 정보를 불러오는 중...</div>
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+        <div className="text-on-surface-variant">사용자 정보를 불러오는 중...</div>
       </div>
     );
   }
@@ -57,15 +58,18 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
   if (error || !userData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
-        <div className="text-4xl mb-4">😢</div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">프로필을 찾을 수 없습니다.</h2>
-        <p className="text-gray-500">{error}</p>
+        <span className="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-4">
+          person_off
+        </span>
+        <h2 className="text-xl font-bold text-on-surface mb-2">프로필을 찾을 수 없습니다.</h2>
+        <p className="text-on-surface-variant">{error}</p>
       </div>
     );
   }
 
   // [Fix] 내 프로필이면 수정 가능하도록 readOnly 해제
   // session.user._id는 string일 수도 있고 ObjectId일 수도 있으므로 문자열 비교
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isMyProfile = session?.user && (session.user as any)._id === params.id;
 
   return <ProfileView initialUserData={userData} readOnly={!isMyProfile} />;

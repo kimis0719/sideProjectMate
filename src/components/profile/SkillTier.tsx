@@ -23,9 +23,7 @@ export default function SkillTier({ tierName, skills }: SkillTierProps) {
       <div className="mb-6">
         <h3
           className={`text-base font-bold mb-3 px-2 py-0.5 inline-flex items-center rounded-md ${
-            tierName === 'Pro'
-              ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-              : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+            tierName === 'Pro' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'
           }`}
         >
           <span className="mr-1.5 text-sm">{tierName === 'Pro' ? '🏆' : '⚡'}</span>
@@ -36,9 +34,9 @@ export default function SkillTier({ tierName, skills }: SkillTierProps) {
           {skills.map((skill) => (
             <div
               key={skill.name}
-              className="bg-card border border-border rounded-lg p-2 hover:border-indigo-500 transition-colors duration-200 flex items-center justify-between group shadow-sm hover:shadow-md min-w-[80px]"
+              className="bg-surface-container-lowest rounded-lg p-2 hover:bg-surface-bright transition-colors duration-200 flex items-center justify-between group shadow-sm hover:shadow-md min-w-[80px]"
             >
-              <span className="font-semibold text-sm text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+              <span className="font-semibold text-sm text-on-surface group-hover:text-primary transition-colors truncate">
                 {skill.name}
               </span>
               {skill.active && (

@@ -99,7 +99,7 @@ export default function Minimap({
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // 배경
-    ctx.fillStyle = theme === 'dark' ? '#1f2937' : 'rgba(250, 250, 249, 0.8)'; // zinc-50/80
+    ctx.fillStyle = 'rgba(250, 250, 249, 0.8)'; // surface (라이트모드 고정)
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     // dot-grid 패턴 (opacity 20%)

@@ -822,7 +822,7 @@ function InboxAccordion({
         ghostPos.y < rect.top ||
         ghostPos.y > rect.bottom
       ) {
-        useToastStore.getState().show('인박스 내 이동만 가능합니다', 'warning');
+        useToastStore.getState().show('인박스 내 이동만 가능합니다', 'error');
         setDragging(null);
         setDropTarget(null);
         return;

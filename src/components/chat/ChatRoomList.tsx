@@ -12,21 +12,15 @@ interface ChatRoomListProps {
   onRoomClick: (roomId: string) => void;
 }
 
-/**
- * 🎨 채팅방 리스트를 보여주는 컴포넌트야.
- * Step 3.2: 각 아이템 왼쪽에 카테고리별 색상 인디케이터(세로 바) 추가
- * Step 4.1: 상단 필터 탭 기능을 추가해서 카테고리별로 대화방을 골라볼 수 있게 했어!
- */
 export default function ChatRoomList({
   rooms,
   activeRoomId,
   currentUserId,
   onRoomClick,
 }: ChatRoomListProps) {
-  // 💡 Step 4.1: 현재 선택된 탭 상태를 관리. 'ALL'이면 전체 보기!
   const [activeTab, setActiveTab] = useState<ChatCategory | 'ALL'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // 💡 Step 4.1: 모든 탭 목록 정의 (전체 + 각 카테고리 영문/한글 매핑)
   const TABS: { id: ChatCategory | 'ALL'; label: string }[] = [
     { id: 'ALL', label: '전체' },
     { id: 'INQUIRY', label: '문의' },
@@ -35,109 +29,135 @@ export default function ChatRoomList({
     { id: 'DM', label: '개인' },
   ];
 
-  // 💡 Step 4.1: 탭에 맞게 방 목록 필터링
-  const filteredRooms =
-    activeTab === 'ALL' ? rooms : rooms.filter((room) => room.category === activeTab);
+  // 탭 + 검색 필터링 (채팅방 이름, 마지막 메시지, 참여자 닉네임으로 필터)
+  // 전체 채팅 이력 검색은 ChatWindow 내부에서 서버 API로 지원
+  const filteredRooms = rooms.filter((room) => {
+    const matchTab = activeTab === 'ALL' || room.category === activeTab;
+    if (!searchQuery) return matchTab;
+    const q = searchQuery.toLowerCase();
+    const displayName = getRoomDisplayName(room, currentUserId);
+    const matchName = displayName.toLowerCase().includes(q);
+    const matchMessage = room.lastMessage?.toLowerCase().includes(q);
+    const matchParticipant = room.participants?.some(
+      (p) => p.nName && p.nName.toLowerCase().includes(q)
+    );
+    return matchTab && (matchName || matchMessage || matchParticipant);
+  });
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* 🏷️ Step 4.1: 카테고리 필터링 탭 영역 */}
-      <div className="px-4 py-2 border-b border-border flex gap-1 overflow-x-auto scrollbar-hide shrink-0">
+      {/* 검색 */}
+      <div className="px-4 pt-4 pb-3 shrink-0">
+        <div className="relative">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-[18px]">
+            search
+          </span>
+          <input
+            type="text"
+            className="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border border-outline-variant/20 rounded-xl text-sm text-on-surface shadow-sm focus:ring-2 focus:ring-primary-container/30 focus:border-primary/30 transition-all placeholder:text-on-surface-variant/40"
+            placeholder="채팅방, 참여자, 메시지 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* 카테고리 필터 칩 */}
+      <div className="px-6 pb-3 flex gap-1.5 overflow-x-auto scrollbar-hide shrink-0">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`
-                            px-3 py-1.5 text-xs font-semibold rounded-full transition-colors whitespace-nowrap
-                            ${
-                              activeTab === tab.id
-                                ? 'bg-slate-800 text-white'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }
-                        `}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-all whitespace-nowrap ${
+              activeTab === tab.id
+                ? 'bg-primary text-white'
+                : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest'
+            }`}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* 필터링 결과가 없을 때의 예외 처리 UI */}
+      {/* 룸 리스트 */}
       {filteredRooms.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-1 text-muted-foreground p-4 text-center">
-          <p>해당하는 대화가 없습니다.</p>
+        <div className="flex flex-col items-center justify-center flex-1 text-on-surface-variant p-6 text-center">
+          <span className="material-symbols-outlined text-4xl text-on-surface-variant/30 mb-2">
+            chat_bubble_outline
+          </span>
+          <p className="text-sm">해당하는 대화가 없습니다.</p>
         </div>
       ) : (
-        <ul className="divide-y divide-border flex-1 overflow-y-auto bg-background dark:[color-scheme:dark]">
+        <div className="flex-1 overflow-y-auto px-3 space-y-1 no-scrollbar">
           {filteredRooms.map((room) => {
-            const categoryColor = getCategoryColor(room.category);
             const isActive = room._id === activeRoomId;
-
-            // 💡 Step 10 (STEP 3): getRoomDisplayName() 유틸로 표시명 결정
             const displayName = getRoomDisplayName(room, currentUserId);
             const unreadCount = room.myUnreadCount ?? 0;
             const unreadLabel = unreadCount > 99 ? '99+' : String(unreadCount);
+            const categoryColor = getCategoryColor(room.category);
+
+            // 아바타: 첫 글자 이니셜
+            const initial = displayName.charAt(0).toUpperCase();
 
             return (
-              <li
+              <div
                 key={room._id}
                 onClick={() => onRoomClick(room._id)}
-                // 🖱️ 호버 효과와 현재 활성화된 방 스타일을 다르게 줘서 UX를 높였어.
-                className={`
-                                    relative cursor-pointer transition-colors p-4
-                                    hover:bg-muted
-                                    ${isActive ? 'bg-primary/10' : 'bg-background'}
-                                `}
+                className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all border-l-4 ${
+                  isActive
+                    ? 'bg-surface-container-lowest shadow-sm'
+                    : 'hover:bg-surface-container-lowest/50'
+                }`}
+                style={{ borderLeftColor: isActive ? categoryColor : 'transparent' }}
               >
-                {/* 🌈 카테고리 컬러 인디케이터 (왼쪽 세로 바) */}
+                {/* 아바타 */}
                 <div
-                  className="absolute left-0 top-0 bottom-0 w-1.5"
-                  style={{ backgroundColor: categoryColor }}
-                />
+                  className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 font-bold text-sm"
+                  style={{
+                    backgroundColor: `${categoryColor}20`,
+                    color: categoryColor,
+                  }}
+                >
+                  {initial}
+                </div>
 
-                <div className="pl-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-foreground text-sm truncate pr-2">
+                {/* 내용 */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-1">
+                    <h4 className="font-semibold text-on-surface text-sm truncate">
                       {displayName}
-                    </h3>
-                    {/* 카테고리 배지 (우측 상단) */}
+                    </h4>
                     <span
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-                      style={{
-                        // 배경은 연하게, 글씨는 진하게 처리해서 가독성을 높여주는 센스!
-                        backgroundColor: `${categoryColor}20`, // Hex 테일윈드에서 20(Hex opacity)을 추가해서 투명도 12% 정도 적용
-                        color: categoryColor,
-                      }}
+                      className="text-[10px] text-on-surface-variant/60 whitespace-nowrap ml-2"
+                      suppressHydrationWarning
                     >
-                      {room.category}
+                      {new Date(room.updatedAt).toLocaleTimeString('ko-KR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   </div>
-
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                  <div className="flex justify-between items-center">
                     <p
-                      className={`truncate pr-2 flex-1 ${room.category === 'SYSTEM' || room.lastMessage?.startsWith('[시스템]') ? 'italic' : ''}`}
+                      className={`text-xs truncate flex-1 pr-2 ${
+                        unreadCount > 0
+                          ? 'text-on-surface font-semibold'
+                          : 'text-on-surface-variant/70'
+                      } ${room.lastMessage?.startsWith('[시스템]') ? 'italic' : ''}`}
                     >
                       {room.lastMessage || '대화를 시작해보세요'}
                     </p>
-                    {/* 🔴 Step 10 (STEP 3): 읽지 않은 메시지 배지 */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {unreadCount > 0 && (
-                        <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center leading-tight">
-                          {unreadLabel}
-                        </span>
-                      )}
-                      <span className="whitespace-nowrap" suppressHydrationWarning>
-                        {new Date(room.updatedAt).toLocaleTimeString('ko-KR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                    {unreadCount > 0 && (
+                      <span className="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[20px] text-center leading-tight shrink-0">
+                        {unreadLabel}
                       </span>
-                    </div>
+                    )}
                   </div>
                 </div>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );

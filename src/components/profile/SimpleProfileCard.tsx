@@ -54,7 +54,7 @@ export default function SimpleProfileCard({ user, onClick }: SimpleProfileCardPr
         {/* 텍스트 정보 영역 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <h3 className="font-bold text-foreground text-base truncate group-hover:text-indigo-600 transition-colors">
+            <h3 className="font-bold text-foreground text-base truncate group-hover:text-primary transition-colors">
               {user.nName}
             </h3>
             {user.level !== undefined && (

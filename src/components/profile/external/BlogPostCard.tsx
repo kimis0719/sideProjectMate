@@ -37,7 +37,7 @@ export default function BlogPostCard({ blogUrl }: BlogPostCardProps) {
 
   if (!blogUrl) {
     return (
-      <div className="bg-card rounded-2xl p-6 shadow-sm border border-border h-full flex flex-col items-center justify-center min-h-[300px] text-center">
+      <div className="bg-surface-container-lowest rounded-xl p-6 lg:p-10 shadow-sm flex flex-col items-center justify-center min-h-[300px] text-center">
         <div className="p-4 bg-muted rounded-full mb-4">
           <span className="text-3xl">✍️</span>
         </div>
@@ -50,34 +50,36 @@ export default function BlogPostCard({ blogUrl }: BlogPostCardProps) {
   }
 
   return (
-    <div className="bg-card rounded-2xl p-6 shadow-sm border border-border h-full">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <span className="text-2xl">✍️</span>
+    <div className="bg-surface-container-lowest rounded-xl p-6 lg:p-10 shadow-sm">
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-bold font-headline text-on-surface flex items-center gap-2">
+          <span className="material-symbols-outlined text-on-surface-variant text-xl">
+            rss_feed
+          </span>
           Tech Blog
         </h2>
         <a
           href={blogUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-muted-foreground hover:text-primary transition-colors"
+          className="text-xs font-bold text-primary flex items-center gap-1 hover:underline"
         >
-          블로그 방문 &rarr;
+          블로그 방문 <span className="material-symbols-outlined text-xs">open_in_new</span>
         </a>
       </div>
 
       {loading && (
         <div className="space-y-4 animate-pulse">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-muted rounded-lg"></div>
+            <div key={i} className="h-20 bg-surface-container-low rounded-xl" />
           ))}
         </div>
       )}
 
-      {error && <div className="text-sm text-destructive text-center py-4">{error}</div>}
+      {error && <div className="text-sm text-error text-center py-4">{error}</div>}
 
       {!loading && !error && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {posts.map((post, index) => (
             <a
               key={index}
@@ -86,15 +88,15 @@ export default function BlogPostCard({ blogUrl }: BlogPostCardProps) {
               rel="noopener noreferrer"
               className="block group"
             >
-              <div className="bg-card border border-border hover:border-primary/50 hover:shadow-md transition-all rounded-xl p-4">
-                <h3 className="font-semibold text-foreground group-hover:text-primary line-clamp-1 mb-1">
+              <div className="bg-surface-container-low hover:bg-surface-bright transition-all rounded-xl p-4">
+                <h3 className="font-semibold text-on-surface group-hover:text-primary line-clamp-1 mb-1">
                   {post.title}
                 </h3>
-                <div className="text-xs text-muted-foreground mb-2">
+                <div className="text-[10px] text-on-surface-variant mb-2">
                   {new Date(post.pubDate).toLocaleDateString()}
                 </div>
                 {post.contentSnippet && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <p className="text-sm text-on-surface-variant line-clamp-2">
                     {post.contentSnippet}
                   </p>
                 )}
@@ -102,7 +104,7 @@ export default function BlogPostCard({ blogUrl }: BlogPostCardProps) {
             </a>
           ))}
           {posts.length === 0 && (
-            <div className="text-center text-muted-foreground py-4 text-sm">
+            <div className="text-center text-on-surface-variant py-4 text-sm">
               최신 글이 없습니다.
             </div>
           )}

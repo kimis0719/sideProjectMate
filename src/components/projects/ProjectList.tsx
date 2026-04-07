@@ -19,7 +19,7 @@ import { useApplicationStore } from '@/store/applicationStore';
 import ProjectCard from './ProjectCard';
 import EmptyState from '@/components/common/EmptyState';
 
-function ProjectListContent() {
+function ProjectListContent({ mine }: { mine?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -56,6 +56,9 @@ function ProjectListContent() {
       setIsLoading(true);
       try {
         const params = new URLSearchParams(searchParams.toString());
+        if (mine && session?.user?._id) {
+          params.set('authorId', session.user._id);
+        }
         const response = await fetch(`/api/projects?${params.toString()}`);
         const data = await response.json();
         if (data.success) {
@@ -71,7 +74,9 @@ function ProjectListContent() {
       }
     };
     fetchProjects();
-  }, [searchParams]);
+  }, [searchParams, mine, session?.user?._id]);
+
+  const basePath = mine ? '/projects/mine' : '/projects';
 
   const updateUrlParams = (newParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -82,7 +87,7 @@ function ProjectListContent() {
         params.delete(key);
       }
     });
-    router.push(`/projects?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -102,7 +107,7 @@ function ProjectListContent() {
   };
 
   const clearAllFilters = () => {
-    router.push('/projects');
+    router.push(basePath);
   };
 
   const hasActiveFilters = stage || style || status || searchTerm;
@@ -224,9 +229,13 @@ function ProjectListContent() {
       <section className="px-6 lg:px-8 py-10">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-3xl font-bold font-headline text-on-surface">전체 프로젝트</h2>
+            <h2 className="text-3xl font-bold font-headline text-on-surface">
+              {mine ? '내 프로젝트' : '전체 프로젝트'}
+            </h2>
             <p className="text-on-surface-variant mt-1">
-              총 {totalProjects}개의 프로젝트가 있습니다.
+              {mine
+                ? `내가 만든 프로젝트 ${totalProjects}개`
+                : `총 ${totalProjects}개의 프로젝트가 있습니다.`}
             </p>
           </div>
           <Link
@@ -319,12 +328,12 @@ function ProjectListContent() {
   );
 }
 
-export default function ProjectList() {
+export default function ProjectList({ mine }: { mine?: boolean } = {}) {
   return (
     <Suspense
       fallback={<div className="text-center py-20 text-on-surface">페이지를 불러오는 중...</div>}
     >
-      <ProjectListContent />
+      <ProjectListContent mine={mine} />
     </Suspense>
   );
 }

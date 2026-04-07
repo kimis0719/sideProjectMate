@@ -74,6 +74,7 @@ function ChatPageContent() {
 
     // receive_message: 소켓이 join한 방(활성 채팅방)에서만 수신됨
     // → lastMessage/updatedAt 갱신만. unreadCount는 올리지 않음 (보고 있는 방이므로)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleReceiveMessage = (message: any) => {
       setRooms((prev) => {
         const updated = prev.map((room) => {
@@ -90,6 +91,7 @@ function ChatPageContent() {
 
     // Step 7: message-received: 개인 소켓 Room(user-{id})으로 수신
     // 발신자 포함 전체 참여자가 받음 (io.to 사용) → 모든 방의 lastMessage 갱신 커버
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleMessageReceived = (message: any) => {
       const isActive = message.roomId === activeRoomIdRef.current;
       const isSender = message.sender === session?.user?._id;
@@ -161,24 +163,21 @@ function ChatPageContent() {
   const activeRoom = rooms.find((r) => r._id === activeRoomId);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-muted overflow-hidden">
-      {/* 좌측 사이드바: 채팅방 리스트 영역
-                - PC(md 이상): 항상 표시 (block)
-                - 모바일: showListOnMobile 상태에 따라 표시/숨김 */}
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden -mb-16 md:mb-0">
+      {/* 좌측: 채팅방 리스트 */}
       <div
         className={`
-                w-full md:w-80 bg-background border-r border-border flex flex-col shadow-sm z-10 min-h-0 overflow-hidden
-                ${showListOnMobile ? 'flex' : 'hidden'} md:flex
-            `}
+          w-full md:w-[320px] bg-surface-container-low flex flex-col z-10 min-h-0 overflow-hidden
+          ${showListOnMobile ? 'flex' : 'hidden'} md:flex
+        `}
       >
-        <div className="p-4 border-b border-border">
-          <h2 className="text-lg font-bold text-foreground">메시지</h2>
+        <div className="px-6 pt-6 pb-2 shrink-0">
+          <h2 className="font-headline font-semibold text-xl text-on-surface">메시지</h2>
         </div>
 
-        {/* Step 9.2: 로딩 상태 처리 */}
         {isLoadingRooms ? (
-          <div className="flex flex-col items-center justify-center flex-1 text-muted-foreground gap-2">
-            <div className="w-5 h-5 border-2 border-border border-t-muted-foreground rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center flex-1 text-on-surface-variant gap-2">
+            <div className="w-5 h-5 border-2 border-outline-variant border-t-primary rounded-full animate-spin" />
             <p className="text-xs">채팅방 목록 불러오는 중...</p>
           </div>
         ) : (
@@ -191,40 +190,24 @@ function ChatPageContent() {
         )}
       </div>
 
-      {/* 우측 메인: 채팅 대화창 영역
-                - PC(md 이상): 항상 표시
-                - 모바일: showListOnMobile이 false일 때만 표시 (목록 숨길 때 나타남)
-                - ⚠️ min-h-0: flex 자식이 부모 높이를 넘지 않도록 강제! 이게 없으면 내부 스크롤이 깨짐 */}
+      {/* 우측: 채팅 대화창 */}
       <div
         className={`
-                flex-1 min-h-0 overflow-hidden
-                ${!showListOnMobile ? 'flex' : 'hidden'} md:flex
-                flex-col
-            `}
+          flex-1 min-h-0 overflow-hidden flex-col
+          ${!showListOnMobile ? 'flex' : 'hidden'} md:flex
+        `}
       >
         {activeRoom ? (
           <ChatWindow room={activeRoom} onBack={handleBackToList} onLeaveRoom={handleLeaveRoom} />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center bg-muted/50">
-            <div className="text-center text-muted-foreground">
-              <svg
-                className="w-16 h-16 mx-auto mb-4 text-muted-foreground/40"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              <p className="text-lg font-medium text-muted-foreground mb-1">
-                선택된 대화가 없습니다.
-              </p>
-              <p className="text-sm">왼쪽에서 채팅방을 선택해 주세요.</p>
-            </div>
+          <div className="flex-1 flex flex-col items-center justify-center bg-surface">
+            <span className="material-symbols-outlined text-6xl text-on-surface-variant/20 mb-4">
+              chat_bubble_outline
+            </span>
+            <p className="text-lg font-medium text-on-surface-variant mb-1">
+              선택된 대화가 없습니다.
+            </p>
+            <p className="text-sm text-on-surface-variant/60">왼쪽에서 채팅방을 선택해 주세요.</p>
           </div>
         )}
       </div>
@@ -238,8 +221,8 @@ export default function ChatPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-[calc(100vh-64px)] items-center justify-center">
-          <div className="w-6 h-6 border-2 border-border border-t-muted-foreground rounded-full animate-spin" />
+        <div className="flex h-[calc(100vh-64px)] items-center justify-center bg-surface">
+          <div className="w-6 h-6 border-2 border-outline-variant border-t-primary rounded-full animate-spin" />
         </div>
       }
     >

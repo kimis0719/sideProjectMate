@@ -61,9 +61,9 @@
     --popover: #ffffff;
     --popover-foreground: #111827;
 
-    /* === 버튼 Primary = 브랜드 컬러 === */
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
+    /* === 버튼 Primary = 브랜드 컬러 (MD3 디자인 시스템) === */
+    --primary: #004ac6;
+    --primary-hover: #003ea8;
     --primary-foreground: #ffffff;
 
     --secondary: #f3f4f6;
@@ -105,12 +105,10 @@
     --popover: #1f2937;
     --popover-foreground: #f3f4f6;
 
-    /* 다크모드에서도 브랜드 컬러 유지 */
-    --primary: #6366f1;
-    /* indigo-500 (살짝 밝게) */
-    --primary-hover: #4f46e5;
-    /* indigo-600 */
-    --primary-foreground: #ffffff;
+    /* 다크모드에서도 브랜드 컬러 유지 (MD3) */
+    --primary: #b4c5ff;
+    --primary-hover: #004ac6;
+    --primary-foreground: #00174b;
 
     --secondary: #1f2937;
     --secondary-foreground: #d1d5db;
