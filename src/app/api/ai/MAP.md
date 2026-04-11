@@ -8,6 +8,7 @@
 | POST | `/api/ai/execution-result` | `execution-result/route.ts` | 실행결과 파싱 & 노트 자동 완료처리 |
 | GET | `/api/ai/history/[id]` | `history/[id]/route.ts` | 지시서 히스토리 단건 조회 |
 | GET/POST | `/api/ai/presets` | `presets/route.ts` | AI 프리셋 목록 조회 / 생성 |
+| GET | `/api/ai/default-presets` | `default-presets/route.ts` | 기본 프리셋 목록 (로그인 유저 공개) |
 | POST | `/api/ai/recommend-harness` | `recommend-harness/route.ts` | 프로젝트/노트 기반 하네스 추천 (태그 필터링 + AI 정밀 매칭) |
 | GET | `/api/ai/harness-catalog` | `harness-catalog/route.ts` | 하네스 카탈로그 목록 조회 (filesCache 제외) |
 | GET | `/api/ai/history/[id]/download` | `history/[id]/download/route.ts` | 지시서 + 하네스 ZIP 다운로드 (?harnessId=&lang=ko\|en) |
