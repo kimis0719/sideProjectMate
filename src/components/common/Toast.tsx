@@ -101,7 +101,7 @@ export default function Toast() {
 
   return (
     <div
-      className="fixed z-[200] flex flex-col gap-2 w-[420px] max-w-[calc(100vw-2rem)] bottom-20 left-1/2 -translate-x-1/2 md:bottom-auto md:top-20 md:left-1/2 md:-translate-x-1/2"
+      className="fixed z-[10000] flex flex-col gap-2 w-[420px] max-w-[calc(100vw-2rem)] bottom-20 left-1/2 -translate-x-1/2 md:bottom-auto md:top-20 md:left-1/2 md:-translate-x-1/2"
       aria-live="polite"
       aria-atomic="false"
     >
