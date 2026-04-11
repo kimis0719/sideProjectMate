@@ -18,6 +18,7 @@
 | `AiPreset.ts`      | `aipresets`       | projectId, name, roleInstruction                |
 | `AiInstructionHistory.ts` | `aiinstructionhistories` | projectId, boardId, target, resultMarkdown |
 | `AiExecutionLog.ts`       | `aiexecutionlogs`        | instructionId, boardId, results[], testsResult, parseMethod |
+| `HarnessCatalog.ts`       | `harnesscatalogs`        | harnessId, name, domain, tags, techStacks, agents, skills, filesCache(ko/en) |
 | `kanban/`          | —                 | Board, Section, Note                            |
 | `wbs/`             | —                 | WBS Task                                        |
 
@@ -60,3 +61,4 @@ Hot Reload 대비 중복 등록 방지 패턴 필수.
 - `kanban/NoteModel.ts`
 - `kanban/SectionModel.ts`
 - `wbs/TaskModel.ts`
+- `HarnessCatalog.ts`
