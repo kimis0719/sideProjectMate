@@ -62,17 +62,47 @@ export default function InstructionModal() {
   const sections = useBoardStore((s) => s.sections);
   const notes = useBoardStore((s) => s.notes);
 
-  // AI 설정 fetch (프리셋 + 모델 정보)
+  // 프리셋 fetch (기본 프리셋 + 프로젝트별 커스텀 프리셋)
   const [presets, setPresets] = useState<
     Array<{ name: string; roleInstruction: string; description: string }>
   >([]);
   const fetchPresets = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/ai-settings');
-      const json = await res.json();
-      if (json.success && json.data.defaultPresets) {
-        setPresets(json.data.defaultPresets);
+      // 1. 기본 프리셋 (admin API — 관리자만 성공, 일반 유저는 빈 배열)
+      // 2. 공개 프리셋 API (로그인 유저 모두 접근 가능)
+      const [adminRes, publicRes] = await Promise.all([
+        fetch('/api/admin/ai-settings').catch(() => null),
+        fetch('/api/ai/presets').catch(() => null),
+      ]);
+
+      const allPresets: Array<{ name: string; roleInstruction: string; description: string }> = [];
+
+      // 기본 프리셋 (관리자 설정)
+      if (adminRes?.ok) {
+        const adminJson = await adminRes.json();
+        if (adminJson.success && adminJson.data.defaultPresets) {
+          allPresets.push(...adminJson.data.defaultPresets);
+        }
       }
+
+      // 프로젝트/글로벌 커스텀 프리셋
+      if (publicRes?.ok) {
+        const publicJson = await publicRes.json();
+        if (publicJson.success && Array.isArray(publicJson.data)) {
+          for (const p of publicJson.data) {
+            // 중복 이름 제외
+            if (!allPresets.find((a) => a.name === p.name)) {
+              allPresets.push({
+                name: p.name,
+                roleInstruction: p.roleInstruction,
+                description: p.description || '',
+              });
+            }
+          }
+        }
+      }
+
+      setPresets(allPresets);
     } catch {
       // 로드 실패 무시
     }
