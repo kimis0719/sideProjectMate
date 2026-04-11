@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { useToastStore } from '@/components/common/Toast';
 
 /* ── 타입 ── */
 interface TargetScope {
@@ -133,7 +134,12 @@ export const useInstructionStore = create<InstructionState & InstructionActions>
           // 비스트리밍 에러 처리
           if (!res.ok && res.headers.get('content-type')?.includes('application/json')) {
             const json = await res.json();
-            set({ isGenerating: false, error: json.message });
+            if (res.status === 429) {
+              useToastStore.getState().show(json.message, 'error');
+              set({ isGenerating: false });
+            } else {
+              set({ isGenerating: false, error: json.message });
+            }
             return;
           }
 
