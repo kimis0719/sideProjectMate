@@ -14,6 +14,7 @@ interface ProjectMember {
 
 interface ProjectData {
   _id: string;
+  title: string;
   ownerId: { _id: string } | string;
   members: ProjectMember[];
 }
@@ -32,6 +33,7 @@ export default function DashboardLayout({
 
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [projectTitle, setProjectTitle] = useState('');
 
   // 권한 체크
   useEffect(() => {
@@ -72,6 +74,7 @@ export default function DashboardLayout({
           if (isAuthor || isMember) {
             setIsAuthorized(true);
             setIsOwner(isAuthor);
+            setProjectTitle(project.title || '');
           } else {
             setIsAuthorized(false);
             router.replace('/');
@@ -108,7 +111,7 @@ export default function DashboardLayout({
   return (
     <SidebarShell
       title="프로젝트 대시보드"
-      subtitle={`ID: ${pid}`}
+      subtitle={projectTitle}
       menuItems={menuItems}
       adBannerUnitId={process.env.NEXT_PUBLIC_ADFIT_SIDEBAR}
       hideTriggerPaths={['/kanban']}
