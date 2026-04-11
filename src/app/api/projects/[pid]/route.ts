@@ -211,7 +211,15 @@ async function handlePatch(request: Request, { params }: { params: { pid: string
     // 업데이트 객체 구성
     const updateData: Record<string, unknown> = {};
     if (status) updateData.status = status;
-    if (overview !== undefined) updateData.overview = overview; // 빈 문자열 허용
+    if (overview !== undefined) {
+      if (typeof overview === 'string' && overview.length > 4000) {
+        return NextResponse.json(
+          { success: false, message: '프로젝트 개요는 4000자 이내로 작성해주세요.' },
+          { status: 400 }
+        );
+      }
+      updateData.overview = overview; // 빈 문자열 허용
+    }
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(

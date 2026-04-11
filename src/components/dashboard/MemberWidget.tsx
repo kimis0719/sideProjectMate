@@ -58,7 +58,7 @@ export default function MemberWidget({ members, currentUserId, projectId }: Memb
   }, [currentUserId]);
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.04)] p-6 md:p-8 h-full">
+    <div className="bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(26,28,28,0.04)] p-6 md:p-8 h-full md:max-h-[400px] flex flex-col">
       <h3 className="font-semibold font-headline text-on-surface mb-6 flex items-center justify-between">
         팀원
         <span className="text-xs bg-surface-container-high px-2 py-0.5 rounded-full text-on-surface-variant">
@@ -66,7 +66,7 @@ export default function MemberWidget({ members, currentUserId, projectId }: Memb
         </span>
       </h3>
 
-      <ul className="space-y-4">
+      <ul className="space-y-4 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
         {members.map((member) => {
           const isOnline = onlineUserIds.has(member._id) || member._id === currentUserId;
           const displayName =
@@ -109,7 +109,9 @@ export default function MemberWidget({ members, currentUserId, projectId }: Memb
       </ul>
 
       {members.length === 0 && (
-        <div className="text-sm text-on-surface-variant/50 py-4 text-center">팀원이 없습니다.</div>
+        <div className="flex-1 flex items-center justify-center text-sm text-on-surface-variant/50">
+          팀원이 없습니다.
+        </div>
       )}
     </div>
   );

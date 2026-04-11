@@ -88,7 +88,7 @@ const ProjectSchema: Schema = new Schema(
       default: 'recruiting',
     },
     delYn: { type: Boolean, default: false },
-    overview: { type: String },
+    overview: { type: String, maxlength: 4000 },
     resources: [
       {
         type: {
