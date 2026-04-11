@@ -225,7 +225,7 @@ export const useInstructionStore = create<InstructionState & InstructionActions>
             body: JSON.stringify({
               boardId,
               presetName: get().preset,
-              targetNoteIds: target.noteIds || [],
+              target,
             }),
           });
 
