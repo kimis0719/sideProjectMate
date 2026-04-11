@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { useToastStore } from '@/components/common/Toast';
 
 /* ── 타입 ── */
 interface TargetScope {
@@ -13,6 +14,17 @@ interface TargetScope {
 interface ReferenceScope {
   sectionIds?: string[];
   noteIds?: string[];
+}
+
+export interface HarnessRecommendation {
+  harnessId: string;
+  name: string;
+  domain: string;
+  matchScore: number;
+  matchReasons: string[];
+  agents: Array<{ name: string; role: string; description: string }>;
+  skills: Array<{ name: string; type: string; description: string }>;
+  architecturePattern: string;
 }
 
 interface InstructionState {
@@ -35,6 +47,13 @@ interface InstructionState {
   error: string | null;
   usage: { inputTokens: number; outputTokens: number } | null;
   historyId: string | null;
+
+  // 하네스 추천
+  harnessRecommendations: HarnessRecommendation[];
+  selectedHarnessId: string | null;
+  isLoadingHarness: boolean;
+  harnessLang: 'ko' | 'en';
+  includeHarness: boolean;
 }
 
 interface InstructionActions {
@@ -46,6 +65,12 @@ interface InstructionActions {
   setAdditionalInstruction: (text: string) => void;
   generate: () => Promise<void>;
   reset: () => void;
+  // 하네스 관련
+  fetchHarnessRecommendations: () => Promise<void>;
+  setSelectedHarnessId: (id: string | null) => void;
+  setHarnessLang: (lang: 'ko' | 'en') => void;
+  setIncludeHarness: (include: boolean) => void;
+  downloadWithHarness: () => Promise<void>;
 }
 
 const initialState: InstructionState = {
@@ -61,6 +86,11 @@ const initialState: InstructionState = {
   error: null,
   usage: null,
   historyId: null,
+  harnessRecommendations: [],
+  selectedHarnessId: null,
+  isLoadingHarness: false,
+  harnessLang: 'ko',
+  includeHarness: true,
 };
 
 export const useInstructionStore = create<InstructionState & InstructionActions>()(
@@ -100,6 +130,18 @@ export const useInstructionStore = create<InstructionState & InstructionActions>
               additionalInstruction,
             }),
           });
+
+          // 쿨타임/한도 초과 (429) — content-type 무관하게 토스트로 표시
+          if (res.status === 429) {
+            try {
+              const json = await res.json();
+              useToastStore.getState().show(json.message, 'error');
+            } catch {
+              useToastStore.getState().show('잠시 후 다시 시도해주세요.', 'error');
+            }
+            set({ isGenerating: false });
+            return;
+          }
 
           // 비스트리밍 에러 처리
           if (!res.ok && res.headers.get('content-type')?.includes('application/json')) {
@@ -175,6 +217,74 @@ export const useInstructionStore = create<InstructionState & InstructionActions>
       },
 
       reset: () => set(initialState),
+
+      // ── 하네스 관련 ──
+      fetchHarnessRecommendations: async () => {
+        const { boardId, target } = get();
+        if (!boardId) return;
+
+        set({ isLoadingHarness: true, harnessRecommendations: [] });
+
+        try {
+          const res = await fetch('/api/ai/recommend-harness', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              boardId,
+              presetName: get().preset,
+              target,
+            }),
+          });
+
+          const json = await res.json();
+          if (json.success && json.data?.recommendations) {
+            const recs = json.data.recommendations as HarnessRecommendation[];
+            set({
+              harnessRecommendations: recs,
+              selectedHarnessId: recs.length > 0 ? recs[0].harnessId : null,
+            });
+          }
+        } catch {
+          // 추천 실패해도 생성 기능은 영향 없음
+        } finally {
+          set({ isLoadingHarness: false });
+        }
+      },
+
+      setSelectedHarnessId: (id) => set({ selectedHarnessId: id }),
+
+      setHarnessLang: (lang) => set({ harnessLang: lang }),
+
+      setIncludeHarness: (include) => set({ includeHarness: include }),
+
+      downloadWithHarness: async () => {
+        const { historyId, selectedHarnessId, harnessLang, includeHarness } = get();
+        if (!historyId) return;
+
+        const params = new URLSearchParams();
+        if (includeHarness && selectedHarnessId) {
+          params.set('harnessId', selectedHarnessId);
+          params.set('lang', harnessLang);
+        }
+
+        const url = `/api/ai/history/${historyId}/download?${params.toString()}`;
+        const res = await fetch(url);
+
+        if (!res.ok) return;
+
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+
+        const disposition = res.headers.get('content-disposition');
+        const filenameMatch = disposition?.match(/filename="?([^"]+)"?/);
+        a.download = filenameMatch ? filenameMatch[1] : `spm-instruction.zip`;
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      },
     }),
     { name: 'instructionStore' }
   )

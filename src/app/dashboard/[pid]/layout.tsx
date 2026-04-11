@@ -14,6 +14,7 @@ interface ProjectMember {
 
 interface ProjectData {
   _id: string;
+  title: string;
   ownerId: { _id: string } | string;
   members: ProjectMember[];
 }
@@ -31,6 +32,8 @@ export default function DashboardLayout({
   const { data: session, status } = useSession();
 
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [projectTitle, setProjectTitle] = useState('');
 
   // 권한 체크
   useEffect(() => {
@@ -70,6 +73,8 @@ export default function DashboardLayout({
 
           if (isAuthor || isMember) {
             setIsAuthorized(true);
+            setIsOwner(isAuthor);
+            setProjectTitle(project.title || '');
           } else {
             setIsAuthorized(false);
             router.replace('/');
@@ -98,12 +103,15 @@ export default function DashboardLayout({
     { href: `/dashboard/${pid}`, icon: 'dashboard', label: '대시보드 홈' },
     { href: `/dashboard/${pid}/kanban`, icon: 'view_kanban', label: '칸반보드' },
     { href: `/projects/${pid}/manage`, icon: 'group', label: '멤버관리' },
+    ...(isOwner
+      ? [{ href: `/projects/${pid}/edit`, icon: 'settings', label: '프로젝트 설정' }]
+      : []),
   ];
 
   return (
     <SidebarShell
       title="프로젝트 대시보드"
-      subtitle={`ID: ${pid}`}
+      subtitle={projectTitle}
       menuItems={menuItems}
       adBannerUnitId={process.env.NEXT_PUBLIC_ADFIT_SIDEBAR}
       hideTriggerPaths={['/kanban']}

@@ -5,6 +5,7 @@ interface ProjectHeaderProps {
   categoryLabel?: string;
   isAuthor: boolean;
   onStatusChange: (newStatus: string) => Promise<void>;
+  onTeamChat?: () => void;
 }
 
 export default function ProjectHeader({
@@ -12,6 +13,7 @@ export default function ProjectHeader({
   categoryLabel,
   isAuthor,
   onStatusChange,
+  onTeamChat,
 }: ProjectHeaderProps) {
   // 상태 코드에 따른 라벨 및 스타일 매핑
   const getStatusInfo = (status: string) => {
@@ -77,8 +79,16 @@ export default function ProjectHeader({
         </h1>
       </div>
 
-      {/* 6단계에서 상태 변경 드롭다운 등 추가 예정 */}
-      <div className="flex items-center gap-2">{/* Placeholder for future action buttons */}</div>
+      <div className="flex items-center gap-2">
+        {onTeamChat && (
+          <button
+            onClick={onTeamChat}
+            className="py-2.5 px-5 bg-primary-container text-on-primary font-bold rounded-xl hover:opacity-90 transition-all flex items-center gap-2 text-sm"
+          >
+            <span className="material-symbols-outlined text-[20px]">chat_bubble</span>팀 채팅방 입장
+          </button>
+        )}
+      </div>
     </div>
   );
 }

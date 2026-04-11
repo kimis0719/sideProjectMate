@@ -209,6 +209,32 @@ export default function ManageApplicantsPage() {
     }
   };
 
+  // 멤버 강퇴 핸들러
+  const handleKickMember = async (userId: string, memberName: string) => {
+    const ok = await confirm(
+      '멤버 강퇴',
+      `정말 ${memberName}님을 프로젝트에서 강퇴하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+      { isDestructive: true, closeOnBackdropClick: false }
+    );
+    if (ok === true) {
+      try {
+        const response = await fetch(`/api/projects/${pid}/members/${userId}`, {
+          method: 'DELETE',
+        });
+        const data = await response.json();
+        if (data.success) {
+          await alert('강퇴 완료', `${memberName}님이 프로젝트에서 제거되었습니다.`);
+          fetchProjectData();
+          fetchApplications();
+        } else {
+          throw new Error(data.message);
+        }
+      } catch (err: unknown) {
+        await alert('에러', err instanceof Error ? err.message : '알 수 없는 오류');
+      }
+    }
+  };
+
   if (isLoading || sessionStatus === 'loading')
     return <div className="text-center py-20 text-on-surface">로딩 중...</div>;
   if (error) return <div className="text-center py-20 text-error">{error}</div>;
@@ -232,20 +258,34 @@ export default function ManageApplicantsPage() {
             {project.members.map((pm) => {
               const user = pm.userId;
               if (!user) return null;
+              const isOwner = user._id === session?.user?._id;
               return (
-                <SimpleProfileCard
-                  key={pm._id || Math.random()}
-                  user={{
-                    _id: user._id,
-                    nName: user.nName || '알 수 없음',
-                    position: user.position || pm.role || '팀원',
-                    career: user.career || '신입',
-                    level: user.level || 1,
-                    techTags: user.techTags || [],
-                    avatarUrl: user.avatarUrl,
-                  }}
-                  onClick={() => router.push(`/profile/${user._id}`)}
-                />
+                <div key={pm._id || Math.random()} className="relative group">
+                  <SimpleProfileCard
+                    user={{
+                      _id: user._id,
+                      nName: user.nName || '알 수 없음',
+                      position: user.position || pm.role || '팀원',
+                      career: user.career || '신입',
+                      level: user.level || 1,
+                      techTags: user.techTags || [],
+                      avatarUrl: user.avatarUrl,
+                    }}
+                    onClick={() => router.push(`/profile/${user._id}`)}
+                  />
+                  {!isOwner && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleKickMember(user._id, user.nName || '알 수 없음');
+                      }}
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-error-container/80 text-error hover:bg-error-container transition-all"
+                      title="멤버 강퇴"
+                    >
+                      <span className="material-symbols-outlined text-base">person_remove</span>
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>

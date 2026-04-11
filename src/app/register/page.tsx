@@ -1,16 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 
-const isTestEnv =
+const envTestFlag =
   process.env.NEXT_PUBLIC_APP_ENV === 'local' || process.env.NEXT_PUBLIC_APP_ENV === 'test';
 
 export default function RegisterPage() {
   const [isSocialLoading, setIsSocialLoading] = useState<'github' | 'google' | null>(null);
   const [error, setError] = useState('');
+  const [isTestEnv, setIsTestEnv] = useState(envTestFlag);
+
+  useEffect(() => {
+    if (!envTestFlag && window.location.hostname === 'localhost') {
+      setIsTestEnv(true);
+    }
+  }, []);
   const router = useRouter();
 
   // 테스트 회원가입 상태

@@ -48,6 +48,43 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    // 테스트 전용: 비밀번호 없이 이메일만으로 로그인 (local/test 환경 전용)
+    CredentialsProvider({
+      id: 'test-login',
+      name: 'TestLogin',
+      credentials: {
+        authorEmail: { label: 'Email', type: 'text' },
+      },
+      async authorize(credentials: Record<'authorEmail', string> | undefined) {
+        const appEnv = process.env.NEXT_PUBLIC_APP_ENV;
+        if (appEnv !== 'local' && appEnv !== 'test' && process.env.NODE_ENV !== 'development') {
+          throw new Error('테스트 로그인은 개발/테스트 환경에서만 사용할 수 있습니다.');
+        }
+
+        if (!credentials?.authorEmail) {
+          throw new Error('이메일을 입력해주세요.');
+        }
+
+        await dbConnect();
+        const user = await User.findOne({ authorEmail: credentials.authorEmail });
+
+        if (!user) {
+          throw new Error('존재하지 않는 계정입니다.');
+        }
+        if (user.delYn === true) {
+          throw new Error('비활성화된 계정입니다. 관리자에게 문의하세요.');
+        }
+
+        return {
+          id: user._id.toString(),
+          _id: user._id.toString(),
+          email: user.authorEmail,
+          name: user.nName,
+          image: user.avatarUrl,
+          memberType: user.memberType,
+        };
+      },
+    }),
   ],
   session: {
     strategy: 'jwt',

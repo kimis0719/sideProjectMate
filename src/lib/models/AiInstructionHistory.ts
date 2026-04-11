@@ -15,6 +15,7 @@ export interface IAiInstructionHistory extends Document {
     noteIds?: Types.ObjectId[];
   };
   additionalInstruction?: string;
+  resolvedNoteIds?: Types.ObjectId[];
   resultMarkdown: string;
   inputTokens: number;
   outputTokens: number;
@@ -43,6 +44,7 @@ const AiInstructionHistorySchema = new Schema<IAiInstructionHistory>(
       noteIds: [{ type: Schema.Types.ObjectId, ref: 'Note' }],
     },
     additionalInstruction: { type: String, default: '' },
+    resolvedNoteIds: [{ type: Schema.Types.ObjectId, ref: 'Note' }],
     resultMarkdown: { type: String, required: true },
     inputTokens: { type: Number, default: 0 },
     outputTokens: { type: Number, default: 0 },

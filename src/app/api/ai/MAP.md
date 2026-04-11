@@ -8,6 +8,10 @@
 | POST | `/api/ai/execution-result` | `execution-result/route.ts` | 실행결과 파싱 & 노트 자동 완료처리 |
 | GET | `/api/ai/history/[id]` | `history/[id]/route.ts` | 지시서 히스토리 단건 조회 |
 | GET/POST | `/api/ai/presets` | `presets/route.ts` | AI 프리셋 목록 조회 / 생성 |
+| GET | `/api/ai/default-presets` | `default-presets/route.ts` | 기본 프리셋 목록 (로그인 유저 공개) |
+| POST | `/api/ai/recommend-harness` | `recommend-harness/route.ts` | 프로젝트/노트 기반 하네스 추천 (태그 필터링 + AI 정밀 매칭) |
+| GET | `/api/ai/harness-catalog` | `harness-catalog/route.ts` | 하네스 카탈로그 목록 조회 (filesCache 제외) |
+| GET | `/api/ai/history/[id]/download` | `history/[id]/download/route.ts` | 지시서 + 하네스 ZIP 다운로드 (?harnessId=&lang=ko\|en) |
 
 ## 주요 유틸 (src/lib/utils/ai/)
 
@@ -17,6 +21,14 @@
 | `generateResultTemplate.ts` | 지시서에 삽입할 spm-result JSON 템플릿 생성 |
 | `buildAiContext.ts` | 보드 데이터 → systemPrompt + userMessage 조립 |
 | `validateAdditionalInstruction.ts` | additionalInstruction 가드레일 검증 (길이 500자·URL·금지패턴). null=유효, string=에러메시지 |
+| `recommendHarness.ts` | 프로젝트 기술스택+노트 기반 harness-100 추천 (태그 필터링 → AI 정밀 매칭) |
+
+## 하네스 유틸 (src/lib/utils/harness/)
+
+| 파일 | 역할 |
+|------|------|
+| `buildZipPackage.ts` | 지시서 + 하네스 파일을 ZIP으로 패키징 (SETUP-GUIDE.md, README.md 포함) |
+| `syncFromGithub.ts` | GitHub API로 harness-100 레포에서 최신 파일 가져와 DB 동기화 |
 
 ## 관련 모델
 

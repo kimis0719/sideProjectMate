@@ -38,6 +38,7 @@ async function handleGet(request: Request, { params }: { params: { pid: string }
 
     const applications = await Application.find({ projectId: project._id })
       .populate('applicantId', 'nName authorEmail')
+      .sort({ createdAt: -1 })
       .lean();
 
     return NextResponse.json({ success: true, data: applications });
