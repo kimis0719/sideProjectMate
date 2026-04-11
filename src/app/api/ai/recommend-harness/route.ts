@@ -10,6 +10,12 @@ import { recommendHarness } from '@/lib/utils/ai/recommendHarness';
 
 export const dynamic = 'force-dynamic';
 
+interface TargetScope {
+  type: 'all' | 'sections' | 'notes';
+  sectionIds?: string[];
+  noteIds?: string[];
+}
+
 // POST /api/ai/recommend-harness — 프로젝트/노트 기반 하네스 추천
 async function handlePost(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -20,10 +26,10 @@ async function handlePost(request: NextRequest) {
   await dbConnect();
 
   const body = await request.json();
-  const { boardId, presetName, targetNoteIds } = body as {
+  const { boardId, presetName, target } = body as {
     boardId: string;
     presetName?: string;
-    targetNoteIds?: string[];
+    target?: TargetScope;
   };
 
   if (!boardId) {
@@ -48,12 +54,27 @@ async function handlePost(request: NextRequest) {
     techStacks: string[];
   } | null;
 
-  // 대상 노트 텍스트 수집
+  // 대상 노트 텍스트 수집 — target 타입별로 generate-instruction과 동일하게 조회
   let targetNoteTexts: string[] = [];
-  if (targetNoteIds && targetNoteIds.length > 0) {
-    const notes = (await Note.find({ _id: { $in: targetNoteIds } })
+  const targetType = target?.type || 'all';
+
+  if (targetType === 'notes' && target?.noteIds?.length) {
+    const notes = (await Note.find({ _id: { $in: target.noteIds } })
       .select('text')
       .lean()) as unknown as Array<{ text: string }>;
+    targetNoteTexts = notes.map((n) => n.text);
+  } else if (targetType === 'sections' && target?.sectionIds?.length) {
+    const notes = (await Note.find(
+      { sectionId: { $in: target.sectionIds }, boardId, status: 'active' },
+      { text: 1 }
+    ).lean()) as unknown as Array<{ text: string }>;
+    targetNoteTexts = notes.map((n) => n.text);
+  } else {
+    // all 또는 target 미지정 시 보드 전체 active 노트 조회
+    const notes = (await Note.find(
+      { boardId, status: 'active' },
+      { text: 1 }
+    ).lean()) as unknown as Array<{ text: string }>;
     targetNoteTexts = notes.map((n) => n.text);
   }
 
