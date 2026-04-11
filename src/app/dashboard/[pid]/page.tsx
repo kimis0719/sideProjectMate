@@ -32,6 +32,8 @@ import ProjectHeader from '@/components/dashboard/ProjectHeader';
 import ResourceModal from '@/components/dashboard/ResourceModal';
 import ProjectOverview from '@/components/dashboard/ProjectOverview';
 import MemberWidget from '@/components/dashboard/MemberWidget';
+import SprintPulseWidget from '@/components/dashboard/SprintPulseWidget';
+import RecentChatWidget from '@/components/dashboard/RecentChatWidget';
 
 export default function DashboardPage({ params }: { params: { pid: string } }) {
   const { pid } = params;
@@ -278,44 +280,51 @@ export default function DashboardPage({ params }: { params: { pid: string } }) {
         categoryLabel=""
         isAuthor={isAuthor || false}
         onStatusChange={(newStatus) => handleUpdateProject({ status: newStatus })}
+        onTeamChat={handleTeamChat}
       />
 
       {/* 2. Bento Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* Project Overview — 8칸 */}
-        <div className="md:col-span-8">
-          <ProjectOverview
-            project={project as unknown as IProject}
-            isAuthor={isAuthor || false}
-            onUpdate={(newOverview) => handleUpdateProject({ overview: newOverview })}
-          />
+      <div className="space-y-6">
+        {/* Row 1: Overview + Member — 높이 동기화 */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:items-stretch">
+          <div className="md:col-span-8">
+            <ProjectOverview
+              project={project as unknown as IProject}
+              isAuthor={isAuthor || false}
+              onUpdate={(newOverview) => handleUpdateProject({ overview: newOverview })}
+            />
+          </div>
+          <div className="md:col-span-4">
+            {project && session?.user && (
+              <MemberWidget
+                members={(project.members || [])
+                  .filter((pm: PopulatedProjectMember) => pm.userId?._id)
+                  .map((pm: PopulatedProjectMember) => ({
+                    _id: pm.userId!._id,
+                    nName: pm.userId?.nName,
+                    email: pm.userId?.authorEmail,
+                    image: pm.userId?.avatarUrl,
+                    role: pm.role,
+                  }))}
+                currentUserId={session.user._id}
+                projectId={pid}
+              />
+            )}
+          </div>
         </div>
 
-        {/* Member Widget — 4칸 */}
-        <div className="md:col-span-4 space-y-6">
-          {/* 팀 채팅 진입 버튼 */}
-          <button
-            onClick={handleTeamChat}
-            className="w-full py-3 px-4 bg-primary-container text-on-primary font-bold rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2"
-          >
-            <span className="material-symbols-outlined text-[20px]">chat_bubble</span>팀 채팅방 입장
-          </button>
-
-          {project && session?.user && (
-            <MemberWidget
-              members={(project.members || [])
-                .filter((pm: PopulatedProjectMember) => pm.userId?._id)
-                .map((pm: PopulatedProjectMember) => ({
-                  _id: pm.userId!._id,
-                  nName: pm.userId?.nName,
-                  email: pm.userId?.authorEmail,
-                  image: pm.userId?.avatarUrl,
-                  role: pm.role,
-                }))}
-              currentUserId={session.user._id}
-              projectId={pid}
+        {/* Row 2: Sprint Pulse + Recent Chat — 높이 동기화 */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:items-stretch">
+          <div className="md:col-span-6">
+            <SprintPulseWidget pid={pid} />
+          </div>
+          <div className="md:col-span-6">
+            <RecentChatWidget
+              projectId={(project as unknown as { _id: string })._id}
+              pid={pid}
+              currentUserId={session?.user?._id || ''}
             />
-          )}
+          </div>
         </div>
       </div>
 

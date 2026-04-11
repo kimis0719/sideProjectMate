@@ -1,16 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 
-const isTestEnv =
+const envTestFlag =
   process.env.NEXT_PUBLIC_APP_ENV === 'local' || process.env.NEXT_PUBLIC_APP_ENV === 'test';
 
 export default function LoginPage() {
   const [isSocialLoading, setIsSocialLoading] = useState<'github' | 'google' | null>(null);
   const [error, setError] = useState('');
+  const [isTestEnv, setIsTestEnv] = useState(envTestFlag);
+
+  useEffect(() => {
+    if (!envTestFlag && window.location.hostname === 'localhost') {
+      setIsTestEnv(true);
+    }
+  }, []);
   const router = useRouter();
 
   // 테스트 로그인 상태
@@ -35,10 +42,11 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const result = await signIn('credentials', {
+      // 이메일 형식이면 그대로, 아니면 @test.com 붙이기
+      const email = testId.trim().includes('@') ? testId.trim() : `${testId.trim()}@test.com`;
+      const result = await signIn('test-login', {
         redirect: false,
-        authorEmail: `${testId.trim()}@test.com`,
-        password: '1234',
+        authorEmail: email,
       });
 
       if (result?.ok) {
@@ -233,20 +241,15 @@ export default function LoginPage() {
                   >
                     테스트 계정
                   </label>
-                  <div className="flex items-center gap-0">
-                    <input
-                      id="testId"
-                      type="text"
-                      required
-                      className="flex-1 px-5 py-3.5 bg-surface-container-low rounded-l-lg text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all border-none placeholder:text-outline/50"
-                      placeholder="admin"
-                      value={testId}
-                      onChange={(e) => setTestId(e.target.value)}
-                    />
-                    <span className="px-4 py-3.5 bg-surface-container-high rounded-r-lg text-on-surface-variant text-sm font-medium select-none">
-                      @test.com
-                    </span>
-                  </div>
+                  <input
+                    id="testId"
+                    type="text"
+                    required
+                    className="w-full px-5 py-3.5 bg-surface-container-low rounded-lg text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all border-none placeholder:text-outline/50"
+                    placeholder="admin 또는 user@example.com"
+                    value={testId}
+                    onChange={(e) => setTestId(e.target.value)}
+                  />
                 </div>
                 <button
                   type="submit"
