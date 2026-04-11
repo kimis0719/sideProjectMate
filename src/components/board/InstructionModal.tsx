@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useInstructionStore } from '@/store/instructionStore';
+import { useInstructionStore, type HarnessRecommendation } from '@/store/instructionStore';
 import { useBoardStore, type Section, type Note } from '@/store/boardStore';
 import { useExecutionResultStore } from '@/store/executionResultStore';
 import {
@@ -39,12 +39,22 @@ export default function InstructionModal() {
     error,
     usage,
     historyId,
+    harnessRecommendations,
+    selectedHarnessId,
+    isLoadingHarness,
+    harnessLang,
+    includeHarness,
     setTarget,
     setReference,
     setPreset,
     setAdditionalInstruction,
     generate,
     closeModal,
+    fetchHarnessRecommendations,
+    setSelectedHarnessId,
+    setHarnessLang,
+    setIncludeHarness,
+    downloadWithHarness,
   } = useInstructionStore();
 
   const openExecutionResult = useExecutionResultStore((s) => s.open);
@@ -71,6 +81,14 @@ export default function InstructionModal() {
   useEffect(() => {
     if (isOpen) fetchPresets();
   }, [isOpen, fetchPresets]);
+
+  // 지시서 생성 완료 시 하네스 추천 자동 요청
+  useEffect(() => {
+    if (resultMarkdown && historyId && harnessRecommendations.length === 0 && !isLoadingHarness) {
+      fetchHarnessRecommendations();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultMarkdown, historyId]);
 
   if (!isOpen) return null;
 
@@ -225,9 +243,18 @@ export default function InstructionModal() {
           {/* 결과 미리보기 */}
           {resultMarkdown && (
             <div>
-              <h3 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">
-                결과 미리보기
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider">
+                  결과 미리보기
+                </h3>
+                <button
+                  onClick={handleCopy}
+                  className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                  title="클립보드에 복사"
+                >
+                  <span className="material-symbols-outlined text-lg">content_copy</span>
+                </button>
+              </div>
               <div className="p-6 bg-surface-container-low rounded-xl max-h-96 overflow-y-auto">
                 <pre className="whitespace-pre-wrap text-sm text-on-surface font-mono leading-relaxed">
                   {resultMarkdown}
@@ -241,6 +268,20 @@ export default function InstructionModal() {
               )}
             </div>
           )}
+
+          {/* 하네스 추천 */}
+          {resultMarkdown && (
+            <HarnessRecommendPanel
+              recommendations={harnessRecommendations}
+              selectedId={selectedHarnessId}
+              isLoading={isLoadingHarness}
+              lang={harnessLang}
+              includeHarness={includeHarness}
+              onSelect={setSelectedHarnessId}
+              onLangChange={setHarnessLang}
+              onIncludeChange={setIncludeHarness}
+            />
+          )}
         </div>
 
         {/* 푸터 */}
@@ -248,19 +289,21 @@ export default function InstructionModal() {
           {resultMarkdown ? (
             <div className="flex gap-2 flex-wrap">
               <button
-                onClick={handleCopy}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg"
-              >
-                <span className="material-symbols-outlined text-lg">content_copy</span>
-                복사
-              </button>
-              <button
                 onClick={handleDownload}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg"
               >
                 <span className="material-symbols-outlined text-lg">download</span>
                 MD 다운로드
               </button>
+              {includeHarness && selectedHarnessId && (
+                <button
+                  onClick={downloadWithHarness}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-primary text-on-primary rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                >
+                  <span className="material-symbols-outlined text-lg">package_2</span>
+                  하네스 포함 다운로드
+                </button>
+              )}
               <button
                 onClick={() => {
                   useInstructionStore.setState({ resultMarkdown: '', error: null, usage: null });
@@ -286,19 +329,21 @@ export default function InstructionModal() {
           ) : (
             <div />
           )}
-          <button
-            onClick={generate}
-            disabled={isGenerateDisabled}
-            className="px-8 py-3 bg-primary-container text-on-primary font-bold rounded-xl hover:translate-x-1 active:opacity-80 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span
-              className="material-symbols-outlined"
-              style={{ fontVariationSettings: "'FILL' 1" }}
+          {!resultMarkdown && (
+            <button
+              onClick={generate}
+              disabled={isGenerateDisabled}
+              className="px-8 py-3 bg-primary-container text-on-primary font-bold rounded-xl hover:translate-x-1 active:opacity-80 transition-all duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              auto_awesome
-            </span>
-            {isGenerating ? '생성 중...' : '생성하기'}
-          </button>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                auto_awesome
+              </span>
+              {isGenerating ? '생성 중...' : '생성하기'}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -443,6 +488,149 @@ function ScopeSelector({
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   HarnessRecommendPanel — 하네스 추천 패널
+   ═══════════════════════════════════════════ */
+function HarnessRecommendPanel({
+  recommendations,
+  selectedId,
+  isLoading,
+  lang,
+  includeHarness,
+  onSelect,
+  onLangChange,
+  onIncludeChange,
+}: {
+  recommendations: HarnessRecommendation[];
+  selectedId: string | null;
+  isLoading: boolean;
+  lang: 'ko' | 'en';
+  includeHarness: boolean;
+  onSelect: (id: string | null) => void;
+  onLangChange: (lang: 'ko' | 'en') => void;
+  onIncludeChange: (include: boolean) => void;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">smart_toy</span>
+          하네스 추천
+        </h3>
+        <label className="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer">
+          <input
+            type="checkbox"
+            checked={includeHarness}
+            onChange={(e) => onIncludeChange(e.target.checked)}
+            className="rounded text-primary border-outline-variant focus:ring-primary"
+          />
+          하네스 포함
+        </label>
+      </div>
+
+      {isLoading && (
+        <div className="p-4 bg-surface-container-low rounded-xl flex items-center gap-3">
+          <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+          <span className="text-sm text-on-surface-variant">적합한 하네스를 찾는 중...</span>
+        </div>
+      )}
+
+      {!isLoading && includeHarness && recommendations.length > 0 && (
+        <div className="space-y-2">
+          {recommendations.map((rec) => (
+            <button
+              key={rec.harnessId}
+              onClick={() => onSelect(rec.harnessId)}
+              className={`w-full text-left p-4 rounded-xl transition-all ${
+                selectedId === rec.harnessId
+                  ? 'bg-primary-container/30 ring-2 ring-primary'
+                  : 'bg-surface-container-low hover:bg-surface-container-high'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold text-sm text-on-surface">{rec.name}</span>
+                <span className="text-xs font-bold text-primary bg-primary-container/40 px-2 py-0.5 rounded-full">
+                  {rec.matchScore}점
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-on-surface-variant mb-2">
+                <span>{rec.domain}</span>
+                <span>|</span>
+                <span>에이전트 {rec.agents.length}명</span>
+                <span>|</span>
+                <span>스킬 {rec.skills.length}개</span>
+                <span>|</span>
+                <span>{rec.architecturePattern}</span>
+              </div>
+              {rec.matchReasons.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {rec.matchReasons.map((reason, i) => (
+                    <span
+                      key={i}
+                      className="text-xs bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded-md"
+                    >
+                      {reason}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </button>
+          ))}
+
+          {/* 언어 선택 */}
+          <div className="flex items-center gap-3 pt-2">
+            <span className="material-symbols-outlined text-base text-on-surface-variant">
+              language
+            </span>
+            <div className="flex bg-surface-container-low rounded-lg overflow-hidden">
+              <button
+                onClick={() => onLangChange('ko')}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  lang === 'ko'
+                    ? 'bg-primary text-on-primary'
+                    : 'text-on-surface-variant hover:bg-surface-container-high'
+                }`}
+              >
+                한국어
+              </button>
+              <button
+                onClick={() => onLangChange('en')}
+                className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  lang === 'en'
+                    ? 'bg-primary text-on-primary'
+                    : 'text-on-surface-variant hover:bg-surface-container-high'
+                }`}
+              >
+                English
+              </button>
+            </div>
+          </div>
+
+          {/* 출처 표기 */}
+          <p className="text-xs text-on-surface-variant/60 pt-1">
+            Powered by{' '}
+            <a
+              href="https://github.com/revfactory/harness-100"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-primary"
+            >
+              revfactory/harness-100
+            </a>{' '}
+            (Apache 2.0)
+          </p>
+        </div>
+      )}
+
+      {!isLoading && includeHarness && recommendations.length === 0 && (
+        <p className="text-sm text-on-surface-variant/60 p-4 bg-surface-container-low rounded-xl">
+          추천 가능한 하네스가 없습니다.
+        </p>
+      )}
     </section>
   );
 }

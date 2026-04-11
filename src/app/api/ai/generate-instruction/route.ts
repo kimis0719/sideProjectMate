@@ -182,6 +182,9 @@ export async function POST(request: Request) {
           const resultTemplate = generateResultTemplate(historyId, targetNotes);
           const finalMarkdown = `${fullResult}\n\n${resultTemplate}`;
 
+          // 실제 resolve된 noteIds 저장 (다운로드 시 정확한 노트 참조용)
+          const resolvedNoteIds = targetNotes.map((n) => n._id);
+
           const history = await AiInstructionHistory.create({
             _id: tempHistory._id,
             projectId: board.pid,
@@ -190,6 +193,7 @@ export async function POST(request: Request) {
             preset: preset ?? '',
             target,
             reference: reference ?? undefined,
+            resolvedNoteIds,
             additionalInstruction: additionalInstruction ?? '',
             resultMarkdown: finalMarkdown,
             inputTokens: usage.inputTokens,

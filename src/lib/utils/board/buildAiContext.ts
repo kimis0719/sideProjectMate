@@ -182,7 +182,10 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
     overview: settings.contextIncludeOverview ? (project?.overview ?? undefined) : undefined,
     resources:
       settings.contextIncludeResources && project?.resources?.length
-        ? project.resources.map((r) => `- [${r.category}] ${r.content}`).join('\n')
+        ? project.resources
+            .filter((r) => !isSensitiveResource(r.content))
+            .map((r) => `- [${r.category}] ${r.content}`)
+            .join('\n') || undefined
         : undefined,
     members: membersText || undefined,
     referenceNotes: referenceNotesMarkdown || undefined,
@@ -210,4 +213,29 @@ export async function buildAiContext(params: BuildAiContextParams): Promise<AiCo
     systemPrompt,
     userMessage: userParts.join('\n'),
   };
+}
+
+/**
+ * 환경변수, 시크릿, DB URI 등 민감정보가 포함된 리소스인지 판별한다.
+ */
+function isSensitiveResource(content: string): boolean {
+  const lower = content.toLowerCase();
+  const patterns = [
+    /mongodb(\+srv)?:\/\//i,
+    /postgres(ql)?:\/\//i,
+    /mysql:\/\//i,
+    /redis:\/\//i,
+    /secret[_\s]*[:=]/i,
+    /password[_\s]*[:=]/i,
+    /api[_\s]*key[_\s]*[:=]/i,
+    /token[_\s]*[:=]/i,
+    /\b[a-f0-9]{32,}\b/,
+    /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----/,
+  ];
+  return (
+    patterns.some((p) => p.test(content)) ||
+    lower.includes('jwt') ||
+    lower.includes('auth_secret') ||
+    lower.includes('nextauth_secret')
+  );
 }
