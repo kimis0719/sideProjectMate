@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import type { Metadata } from 'next';
 import { Inter, Manrope, Noto_Sans_KR } from 'next/font/google';
 import './globals.css';
@@ -22,20 +23,25 @@ const notoSansKR = Noto_Sans_KR({
 const materialSymbolsUrl =
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap';
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Side Project Mate',
-    template: '%s | Side Project Mate',
-  },
-  description: '디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼',
-  openGraph: {
-    title: 'Side Project Mate',
+export function generateMetadata(): Metadata {
+  return {
+    title: {
+      default: 'Side Project Mate',
+      template: '%s | Side Project Mate',
+    },
     description: '디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼',
-    siteName: 'Side Project Mate',
-    locale: 'ko_KR',
-    type: 'website',
-  },
-};
+    openGraph: {
+      title: 'Side Project Mate',
+      description: '디자이너, 기획자, 개발자를 위한 사이드 프로젝트 팀 매칭 플랫폼',
+      siteName: 'Side Project Mate',
+      locale: 'ko_KR',
+      type: 'website',
+    },
+    other: {
+      ...Sentry.getTraceData(),
+    },
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
