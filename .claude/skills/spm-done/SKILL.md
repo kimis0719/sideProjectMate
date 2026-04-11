@@ -187,14 +187,16 @@ git diff origin/main...HEAD --stat        # 변경 통계
 현재 feature 브랜치에서 **코드 변경분만** 커밋하고 푸시합니다.
 work-log, CLAUDE.md, MAP.md 등 문서 변경은 이 커밋에 **포함하지 않습니다**.
 
+현재 브랜치와 연결된 Linear 이슈 ID를 브랜치명에서 추출합니다 (예: `feature/SPM-42-kanban-improve` → `SPM-42`).
+
 ```bash
 git add [코드 변경 파일만]
-git commit -m "[커밋 메시지]"
+git commit -m "[type]: [메시지] (SPM-[번호])"
 git push
 ```
 
 이어서 코드 PR을 생성합니다.
-현재 브랜치와 연결된 이슈 번호를 브랜치명에서 추출합니다 (예: `feature/180-spm-improve` → `#180`).
+PR 제목에 `(SPM-[번호])`를, PR 본문 마지막에 `Linear: SPM-[번호]`를 포함하여 Linear ↔ GitHub 자동 연동을 활성화합니다.
 
 `AskUserQuestion` 도구로 PR 초안 확인을 요청합니다:
 

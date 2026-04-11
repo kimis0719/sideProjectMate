@@ -22,9 +22,13 @@ description: >
 ## 1단계: 변경 내용 수집
 
 ```bash
-git diff HEAD --name-only   # 변경된 파일 목록
-git diff HEAD               # 전체 diff 내용
+git rev-parse --abbrev-ref HEAD  # 현재 브랜치명 → SPM-[번호] 추출
+git diff HEAD --name-only        # 변경된 파일 목록
+git diff HEAD                    # 전체 diff 내용
 ```
+
+현재 브랜치명에서 `SPM-[숫자]` 패턴을 추출합니다 (예: `feature/SPM-42-kanban-improve` → `SPM-42`).
+Linear 이슈 ID를 커밋 메시지에 포함하기 위해 사용합니다.
 
 변경된 파일이 없으면 커밋할 내용이 없다고 안내하고 종료합니다.
 
@@ -93,10 +97,11 @@ npx tsc --noEmit
 
 ## 5단계: 커밋 메시지 초안 작성
 
-변경 내용을 분석해 아래 형식으로 커밋 메시지 초안을 작성합니다:
+변경 내용을 분석해 아래 형식으로 커밋 메시지 초안을 작성합니다.
+1단계에서 추출한 Linear 이슈 ID(`SPM-[번호]`)를 제목 끝에 포함합니다:
 
 ```
-feat: 섹션 중첩 캡처 로직 추가 및 zIndex 3단 계층 재설계
+feat: 섹션 중첩 캡처 로직 추가 및 zIndex 3단 계층 재설계 (SPM-42)
 
 - SectionModel에 parentSectionId, depth 필드 추가
 - 부모 섹션 드래그 시 자식 섹션 동시 이동
@@ -123,7 +128,7 @@ feat: 섹션 중첩 캡처 로직 추가 및 zIndex 3단 계층 재설계
 
 ```
 preview 예시:
-feat: 섹션 중첩 캡처 로직 추가
+feat: 섹션 중첩 캡처 로직 추가 (SPM-42)
 
 - SectionModel에 parentSectionId, depth 필드 추가
 - BoardShell zIndex 계산 로직 개선

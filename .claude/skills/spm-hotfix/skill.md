@@ -2,15 +2,15 @@
 name: spm-hotfix
 description: >
   Side Project Mate 긴급수정 커맨드.
-  `/spm-hotfix [오류 설명]` 형태로 호출하면 main 브랜치에서 즉시 수정 후
-  이슈 생성 → 브랜치 → 수정 → 테스트 → PR → 머지까지 전자동으로 수행합니다.
+  `/spm-hotfix [SPM-번호] [오류 설명]` 형태로 호출하면 main 브랜치에서 즉시 수정 후
+  브랜치 → 수정 → 테스트 → PR → 머지까지 전자동으로 수행합니다.
   운영 크리티컬 오류가 발생하여 즉시 배포가 필요한 경우에만 사용하세요.
   일반 버그 수정은 `/spm-start`를 사용하세요.
 ---
 
 # spm-hotfix — 긴급수정 커맨드
 
-이 스킬은 `/spm-hotfix [오류 설명]` 형태로 호출됩니다.
+이 스킬은 `/spm-hotfix [SPM-번호] [오류 설명]` 형태로 호출됩니다.
 
 > **사용 조건**: 운영 서버에서 크리티컬 오류가 발생하여 **즉시 배포**가 필요한 경우에만 사용합니다.
 > 일반 버그 수정은 `/spm-start`로 시작하세요.
@@ -18,6 +18,10 @@ description: >
 > **핵심 차이**: `/spm-start` + `/spm-done` 플로우와 달리,
 > 이 스킬은 PR 생성 후 **자동 머지**까지 수행하고 main으로 복귀합니다.
 > work-log 생성, MAP.md 갱신 등 문서 작업도 최소화하여 속도에 집중합니다.
+
+> **이슈 관리**: 이슈는 **Linear**에서 관리합니다 (팀 식별자: `SPM`).
+> 긴급 상황이라도 Linear에서 이슈를 먼저 생성하거나, 이슈 ID를 입력해주세요.
+> 정말 급한 경우 이슈 없이 진행할 수 있지만, 완료 후 반드시 Linear에서 이슈를 생성해주세요.
 
 ---
 
@@ -76,33 +80,40 @@ git status --porcelain
 
 ---
 
-## 1단계: 오류 분석 및 이슈 생성
+## 1단계: 오류 분석 및 Linear 이슈 확인
 
-인자로 받은 오류 설명을 분석합니다. 인자가 없으면 `AskUserQuestion`으로 오류 내용을 입력받습니다.
+### Linear 이슈 ID 확인
+
+인자에서 `SPM-[숫자]` 패턴을 추출합니다.
+인자가 없거나 이슈 ID가 없으면 `AskUserQuestion`으로 확인합니다:
+
+- question: "Linear 이슈 ID를 입력해주세요. 아직 없으면 '없음'을 선택하세요."
+- header: "Linear 이슈"
+- options:
+  - label: "이슈 ID 입력 (Recommended)", description: "Other를 선택해 SPM-번호를 입력하세요 (예: SPM-42)"
+  - label: "없음 — 이슈 없이 진행", description: "hotfix 완료 후 Linear에서 반드시 이슈를 생성해주세요"
+
+### 오류 설명 확인
+
+인자에서 이슈 ID를 제외한 텍스트를 오류 설명으로 사용합니다.
+없으면 `AskUserQuestion`으로 오류 내용을 입력받습니다:
 
 - question: "운영에서 발생한 오류를 설명해주세요. (에러 메시지, 발생 페이지, 재현 조건 등)"
-
-### 이슈 생성
-
-AI가 오류 설명을 기반으로 이슈를 생성합니다. **사용자 확인 없이 즉시 생성합니다** (긴급 상황).
-
-```bash
-gh issue create --title "hotfix: [오류 요약]" --body "[오류 상세]" --label "bug,hotfix"
-```
-
-> `hotfix` 라벨이 없으면 `bug` 라벨만 사용합니다. 라벨 생성 실패는 무시하고 진행합니다.
-
-출력에서 이슈 번호를 추출합니다 (예: `#207`).
 
 ---
 
 ## 2단계: hotfix 브랜치 생성
 
-이슈 제목에서 영문 슬러그를 생성합니다:
+오류 설명에서 영문 슬러그를 생성합니다:
 
 ```bash
-git checkout -b hotfix/[이슈번호]-[슬러그]
-git push -u origin hotfix/[이슈번호]-[슬러그]
+# Linear 이슈가 있는 경우
+git checkout -b hotfix/SPM-[번호]-[슬러그]
+git push -u origin hotfix/SPM-[번호]-[슬러그]
+
+# Linear 이슈가 없는 경우
+git checkout -b hotfix/urgent-[슬러그]
+git push -u origin hotfix/urgent-[슬러그]
 ```
 
 ---
@@ -146,7 +157,15 @@ npx tsc --noEmit
 
 ```bash
 git add [변경된 파일들]
-git commit -m "hotfix: [수정 내용 요약] (#이슈번호)
+# Linear 이슈가 있는 경우
+git commit -m "hotfix: [수정 내용 요약] (SPM-[번호])
+
+[상세 설명]
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# Linear 이슈가 없는 경우
+git commit -m "hotfix: [수정 내용 요약]
 
 [상세 설명]
 
@@ -164,7 +183,8 @@ git push
 ### PR 생성
 
 ```bash
-gh pr create --title "hotfix: [수정 요약]" --body "$(cat <<'EOF'
+# Linear 이슈가 있는 경우
+gh pr create --title "hotfix: [수정 요약] (SPM-[번호])" --body "$(cat <<'EOF'
 ## 🚨 Hotfix
 
 - **오류**: [오류 설명]
@@ -176,11 +196,13 @@ gh pr create --title "hotfix: [수정 요약]" --body "$(cat <<'EOF'
 - [x] `npm run test:run` 통과
 - [x] `npx tsc --noEmit` 통과
 
-Closes #[이슈번호]
+Linear: SPM-[번호]
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
+
+# Linear 이슈가 없는 경우 — PR 본문에서 Linear 라인 생략
 ```
 
 ### 자동 머지
@@ -196,25 +218,6 @@ gh pr merge --squash --auto --delete-branch
 > ⚠️ 자동 머지가 실패했습니다. 아래 명령어로 수동 머지해주세요:
 >   gh pr merge [PR번호] --squash --delete-branch
 > ```
-
-### 머지 후 이슈 클로즈 확인
-
-> **배경**: squash 머지 시 GitHub가 커밋 메시지를 재구성하면서 PR 본문의
-> `Closes #N` 키워드가 스쿼시된 커밋에 포함되지 않을 수 있다.
-> 이 경우 이슈가 자동 클로즈되지 않으므로 반드시 확인 후 수동 처리한다.
-
-머지 완료 후 연결된 이슈의 상태를 확인합니다:
-
-```bash
-gh issue view [이슈번호] --json state -q '.state'
-```
-
-- **CLOSED**: 정상 — 다음 단계 진행
-- **OPEN**: 자동 클로즈 실패 — 수동으로 닫는다:
-
-```bash
-gh issue close [이슈번호] --comment "PR #[PR번호] 머지로 작업 완료"
-```
 
 ---
 
@@ -238,9 +241,9 @@ git stash pop
 ```
 🚨 Hotfix 완료
 ─────────────────────────────
-📌 이슈: #[번호] [이슈 제목]
+📌 Linear 이슈: SPM-[번호] [오류 요약]  (또는 "이슈 미등록 — Linear에서 생성 필요")
 🔀 PR: #[PR번호] (머지 완료)
-🌿 브랜치: hotfix/[번호]-[슬러그] (삭제됨)
+🌿 브랜치: hotfix/SPM-[번호]-[슬러그] (삭제됨)
 ─────────────────────────────
 📝 변경 파일:
    - [파일1]
@@ -250,3 +253,10 @@ git stash pop
 ─────────────────────────────
 Render 자동 배포가 트리거됩니다.
 ```
+
+> Linear 이슈 없이 진행한 경우, 마지막에 아래 경고를 추가합니다:
+>
+> ```
+> ⚠️ Linear 이슈가 등록되지 않았습니다.
+>    팀원이 진행상황을 파악할 수 있도록 Linear에서 이슈를 생성해주세요.
+> ```
