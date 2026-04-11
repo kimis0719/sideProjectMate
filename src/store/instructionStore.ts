@@ -131,15 +131,22 @@ export const useInstructionStore = create<InstructionState & InstructionActions>
             }),
           });
 
+          // 쿨타임/한도 초과 (429) — content-type 무관하게 토스트로 표시
+          if (res.status === 429) {
+            try {
+              const json = await res.json();
+              useToastStore.getState().show(json.message, 'error');
+            } catch {
+              useToastStore.getState().show('잠시 후 다시 시도해주세요.', 'error');
+            }
+            set({ isGenerating: false });
+            return;
+          }
+
           // 비스트리밍 에러 처리
           if (!res.ok && res.headers.get('content-type')?.includes('application/json')) {
             const json = await res.json();
-            if (res.status === 429) {
-              useToastStore.getState().show(json.message, 'error');
-              set({ isGenerating: false });
-            } else {
-              set({ isGenerating: false, error: json.message });
-            }
+            set({ isGenerating: false, error: json.message });
             return;
           }
 
