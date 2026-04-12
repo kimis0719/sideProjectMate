@@ -13,6 +13,7 @@ import { buildAiContext } from '@/lib/utils/board/buildAiContext';
 import { generateResultTemplate } from '@/lib/utils/ai/generateResultTemplate';
 import { validateAdditionalInstruction } from '@/lib/utils/ai/validateAdditionalInstruction';
 import type { TokenUsage } from '@/lib/ai/types';
+import { checkUsageThreshold } from '@/lib/ai/usageMonitor';
 
 export const dynamic = 'force-dynamic';
 
@@ -153,6 +154,9 @@ export async function POST(request: Request) {
             outputTokens: usage.outputTokens,
             estimatedCost: usage.estimatedCost,
           });
+
+          // 사용량 임계값 체크 (비동기, 응답 블로킹 안 함)
+          checkUsageThreshold().catch(console.error);
 
           // ── 실행결과 템플릿용 대상 노트 조회 ──
           type LeanNote = { _id: string; text: string };

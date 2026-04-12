@@ -47,6 +47,10 @@ async function handlePatch(request: Request) {
       'contextIncludeMembers',
       'contextIncludeDeadline',
       'defaultPresets',
+      'usageAlertThresholds',
+      'dailyRequestLimit',
+      'dailyTokenLimit',
+      'autoDisableOnLimit',
     ] as const;
 
     const update: Record<string, unknown> = {};

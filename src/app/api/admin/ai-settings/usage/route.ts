@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import AiUsage from '@/lib/models/AiUsage';
+import AiSettings from '@/lib/models/AiSettings';
+import AiUsageAlert from '@/lib/models/AiUsageAlert';
 import { requireAdmin } from '@/lib/adminAuth';
 import { withApiLogging } from '@/lib/apiLogger';
 
@@ -17,7 +19,18 @@ async function handleGet() {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const [totalCount, todayCount, tokenStats, topProjects] = await Promise.all([
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    const [
+      totalCount,
+      todayCount,
+      tokenStats,
+      todayTokenStats,
+      topProjects,
+      settings,
+      todayAlerts,
+    ] = await Promise.all([
       AiUsage.countDocuments(),
       AiUsage.countDocuments({ createdAt: { $gte: todayStart } }),
       AiUsage.aggregate([
@@ -27,6 +40,16 @@ async function handleGet() {
             totalInputTokens: { $sum: '$inputTokens' },
             totalOutputTokens: { $sum: '$outputTokens' },
             estimatedTotalCost: { $sum: '$estimatedCost' },
+          },
+        },
+      ]),
+      AiUsage.aggregate([
+        { $match: { createdAt: { $gte: todayStart } } },
+        {
+          $group: {
+            _id: null,
+            todayInputTokens: { $sum: '$inputTokens' },
+            todayOutputTokens: { $sum: '$outputTokens' },
           },
         },
       ]),
@@ -42,6 +65,8 @@ async function handleGet() {
         { $limit: 10 },
         { $project: { _id: 0, projectId: '$_id', count: 1, estimatedCost: 1 } },
       ]),
+      AiSettings.getInstance(),
+      AiUsageAlert.find({ date: todayStr }).lean(),
     ]);
 
     const stats = tokenStats[0] ?? {
@@ -49,6 +74,15 @@ async function handleGet() {
       totalOutputTokens: 0,
       estimatedTotalCost: 0,
     };
+
+    const todayStats = todayTokenStats[0] ?? {
+      todayInputTokens: 0,
+      todayOutputTokens: 0,
+    };
+
+    const todayTotalTokens = todayStats.todayInputTokens + todayStats.todayOutputTokens;
+    const dailyRequestLimit = settings.dailyRequestLimit ?? 1500;
+    const dailyTokenLimit = settings.dailyTokenLimit ?? 1000000;
 
     return NextResponse.json({
       success: true,
@@ -59,6 +93,21 @@ async function handleGet() {
         totalOutputTokens: stats.totalOutputTokens,
         estimatedTotalCost: stats.estimatedTotalCost,
         topProjects,
+        // 오늘 사용량 vs 한도
+        todayTotalTokens,
+        todayInputTokens: todayStats.todayInputTokens,
+        todayOutputTokens: todayStats.todayOutputTokens,
+        dailyRequestLimit,
+        dailyTokenLimit,
+        requestPercent:
+          dailyRequestLimit > 0 ? Math.round((todayCount / dailyRequestLimit) * 100) : 0,
+        tokenPercent:
+          dailyTokenLimit > 0 ? Math.round((todayTotalTokens / dailyTokenLimit) * 100) : 0,
+        todayAlerts: todayAlerts.map((a) => ({
+          level: a.level,
+          percent: a.percent,
+          notifiedAt: a.notifiedAt,
+        })),
       },
     });
   } catch (err: unknown) {
