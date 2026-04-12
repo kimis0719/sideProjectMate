@@ -603,7 +603,9 @@ export default function NoteItem({
         });
       }
 
-      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+      // setPointerCapture를 여기서 호출하지 않음 — 즉시 캡처하면
+      // 브라우저의 dblclick 이벤트 합성이 방해되어 더블클릭 수정모드 진입 불가.
+      // 대신 onPointerMove에서 실제 드래그 시작 시점에 캡처 설정.
     },
     [
       isEditing,
@@ -671,7 +673,15 @@ export default function NoteItem({
         if (isSelectionMode) return;
 
         if (dx !== 0 || dy !== 0) {
-          hasMoved.current = true;
+          if (!hasMoved.current) {
+            hasMoved.current = true;
+            // 첫 이동 시점에 포인터 캡처 설정 (드래그 중 포인터가 요소 밖으로 나가도 이벤트 수신)
+            try {
+              (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+            } catch {
+              /* 이미 캡처 상태이거나 유효하지 않은 포인터 */
+            }
+          }
           totalDragRef.current.x += dx;
           totalDragRef.current.y += dy;
 
@@ -752,7 +762,11 @@ export default function NoteItem({
       if (!isDragging.current) return;
       isDragging.current = false;
       useBoardStore.getState().setIsDraggingNote(false);
-      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+      try {
+        (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+      } catch {
+        /* 캡처가 설정되지 않은 경우 (클릭만 하고 드래그하지 않은 경우) */
+      }
       setAlignmentGuides([]);
 
       if (!hasMoved.current) {
@@ -884,7 +898,11 @@ export default function NoteItem({
       isDragging.current = false;
       useBoardStore.getState().setIsDraggingNote(false);
       isResizing.current = false;
-      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+      try {
+        (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+      } catch {
+        /* 캡처가 설정되지 않은 경우 */
+      }
       setAlignmentGuides([]);
       // Visual 되돌리기 (원상복구)
       if (visualRef.current) {
