@@ -182,20 +182,22 @@ git diff origin/main...HEAD --stat        # 변경 통계
 
 ---
 
-## 10단계: 코드 커밋 & 코드 PR 생성
+## 10단계: 코드 + 문서 통합 커밋 & PR 생성
 
-현재 feature 브랜치에서 **코드 변경분만** 커밋하고 푸시합니다.
-work-log, CLAUDE.md, MAP.md 등 문서 변경은 이 커밋에 **포함하지 않습니다**.
+현재 feature 브랜치에서 **코드 변경 + work-log + 문서 갱신을 모두 포함**하여 커밋하고 푸시합니다.
+
+> **중요**: 코드와 문서를 하나의 PR로 합칩니다. 분리하면 문서 PR이 먼저 머지되어 순서 역전,
+> Render 불필요 배포, update-maps 워크플로우 이중 트리거 등의 문제가 발생합니다.
 
 현재 브랜치와 연결된 Linear 이슈 ID를 브랜치명에서 추출합니다 (예: `feature/SPM-42-kanban-improve` → `SPM-42`).
 
 ```bash
-git add [코드 변경 파일만]
+git add [코드 변경 파일] [work-logs/] [CLAUDE.md] [갱신된 MAP.md 등]
 git commit -m "[type]: [메시지] (SPM-[번호])"
 git push
 ```
 
-이어서 코드 PR을 생성합니다.
+이어서 PR을 생성합니다.
 PR 제목에 `(SPM-[번호])`를, PR 본문 마지막에 `Linear: SPM-[번호]`를 포함하여 Linear ↔ GitHub 자동 연동을 활성화합니다.
 
 `AskUserQuestion` 도구로 PR 초안 확인을 요청합니다:
@@ -217,65 +219,26 @@ gh pr create \
 ```
 
 - PR URL을 출력합니다.
-- 테스트 서버 배포 안내: `🚀 코드 PR 생성 완료 — 테스트 서버에 자동 배포됩니다. 검증 완료 후 수동으로 머지해주세요.`
+- 테스트 서버 배포 안내: `🚀 PR 생성 완료 — 테스트 서버에 자동 배포됩니다. 검증 완료 후 수동으로 머지해주세요.`
 - **⚠️ `gh pr merge --auto`를 실행하지 않습니다.** 테스트 서버 검증 → 수동 머지가 운영 배포 프로세스입니다.
 
 ---
 
-## 11단계: work-log/문서 갱신 — 별도 브랜치 PR로 분리
-
-work-log, CLAUDE.md, MAP.md 등 문서 변경은 **코드 PR과 분리**하여 별도 브랜치 → PR → 즉시 squash merge합니다.
-main 브랜치가 보호되어 있으므로 직접 push 대신 PR 방식을 사용합니다.
-
-```bash
-# main으로 이동
-git checkout main
-git pull origin main
-
-# 문서 전용 브랜치 생성
-DOCS_BRANCH="auto/worklog-[브랜치명]-$(date +%Y%m%d-%H%M%S)"
-git checkout -b "$DOCS_BRANCH"
-
-# work-log, 문서 변경 커밋
-git add work-logs/ CLAUDE.md [갱신된 MAP.md 등]
-git commit -m "chore: work-log 및 문서 갱신 ([브랜치명])"
-git push -u origin "$DOCS_BRANCH"
-
-# PR 생성 + 즉시 squash merge
-gh pr create \
-  --title "chore: work-log 및 문서 갱신 ([브랜치명])" \
-  --body "work-log 및 세션 문서 자동 갱신 (코드 변경 없음)" \
-  --base main \
-  --head "$DOCS_BRANCH"
-
-gh pr merge "$DOCS_BRANCH" --squash --delete-branch
-
-# 원래 feature 브랜치로 복귀
-git checkout [feature 브랜치명]
-```
-
-> **주의:**
-> - `gh pr merge --squash`가 "clean status" 오류로 실패할 수 있습니다. 이 경우 CI 통과를 기다린 후 재시도하거나, 사용자에게 수동 머지를 안내합니다.
-> - 문서 PR은 코드가 없으므로 빌드에 영향 없습니다 (render.yaml ignoredPaths에 docs/**, work-logs/**, **/*.md 포함).
-
----
-
-## 12단계: 완료 메시지 출력
+## 11단계: 완료 메시지 출력
 
 ```
 ✅ SPM 세션 종료
 ─────────────────────────────
 👤 [작업자]의 작업 구역이 해제되었습니다.
 🌿 브랜치: [브랜치명]
-🔗 코드 PR: [코드 PR URL]
-🔗 문서 PR: [문서 PR URL] (자동 머지)
+🔗 PR: [PR URL]
 📝 work-log 생성 완료:
    - work-logs/2026-03-28-HJ-a1b2c3d.md
 📄 갱신된 문서:
    - CLAUDE.md
    - src/app/api/kanban/MAP.md
 ─────────────────────────────
-🚀 코드 PR은 테스트 서버 검증 후 수동으로 머지해주세요.
+🚀 테스트 서버 검증 후 수동으로 머지해주세요.
 ```
 
 변경된 파일이 없어 work-log를 생성하지 않은 경우:

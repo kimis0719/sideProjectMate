@@ -5,7 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'src/**'
+      - 'src/**/*.ts'
+      - 'src/**/*.tsx'
+      - 'src/**/*.js'
+      - 'src/**/*.jsx'
+      - 'src/**/*.css'
+      - 'src/**/*.json'
 
 jobs:
   update-maps:
