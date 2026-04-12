@@ -64,19 +64,34 @@ export default function AdBanner({
   useEffect(() => {
     if (!shouldShow) return;
 
-    // 기존 스크립트 제거 → 재주입하여 SDK가 현재 DOM의 ins 태그를 재스캔
-    document.getElementById(ADFIT_SCRIPT_ID)?.remove();
+    // AdFit SDK 로드 후 ins 태그를 초기화
+    // 스크립트가 이미 있으면 재주입하지 않고, SDK의 adfit() 함수로 직접 초기화
+    const existingScript = document.getElementById(ADFIT_SCRIPT_ID);
 
+    const initAd = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof (window as any).adfit === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).adfit();
+      }
+    };
+
+    if (existingScript) {
+      // SDK 이미 로드됨 — 약간의 딜레이 후 재초기화 (ins 태그가 DOM에 마운트된 후)
+      const timer = setTimeout(initAd, 100);
+      return () => clearTimeout(timer);
+    }
+
+    // SDK 최초 로드
     const script = document.createElement('script');
     script.id = ADFIT_SCRIPT_ID;
     script.type = 'text/javascript';
     script.src = ADFIT_SCRIPT_SRC;
     script.async = true;
+    script.onload = initAd;
     document.head.appendChild(script);
 
-    return () => {
-      document.getElementById(ADFIT_SCRIPT_ID)?.remove();
-    };
+    // cleanup에서 스크립트를 제거하지 않음 — 다른 AdBanner 인스턴스가 공유
   }, [shouldShow, resolvedUnitId, width, height]);
 
   if (!shouldShow) {
