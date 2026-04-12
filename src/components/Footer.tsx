@@ -25,7 +25,7 @@ export default function Footer() {
   const socialLinks = [
     {
       label: 'GitHub',
-      href: 'https://github.com/kimis0719/sideProjectMate',
+      href: 'https://github.com/sideprojectmate/sideProjectMate',
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path

@@ -114,7 +114,7 @@
 **1. 저장소 클론**
 
 ```bash
-git clone https://github.com/kimis0719/sideProjectMate.git
+git clone https://github.com/sideprojectmate/sideProjectMate.git
 cd sideProjectMate
 ```
 
