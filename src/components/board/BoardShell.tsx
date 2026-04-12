@@ -784,7 +784,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
 
       <main
         ref={containerRef}
-        className={`absolute inset-0 overflow-hidden select-none transition-colors duration-300 ${
+        className={`absolute inset-0 overflow-clip select-none transition-colors duration-300 ${
           viewMode === 'done' ? 'bg-gray-100 dark:bg-gray-900' : 'bg-[#f9f9f8]'
         }`}
         aria-label="화이트보드"
