@@ -17,6 +17,11 @@ interface ModelPriority {
   priority: number;
 }
 
+interface UsageAlertThreshold {
+  percent: number;
+  level: 'info' | 'warning' | 'critical';
+}
+
 interface AiSettingsData {
   provider: 'gemini' | 'anthropic' | 'openai';
   modelName: string;
@@ -30,14 +35,19 @@ interface AiSettingsData {
   contextIncludeMembers: boolean;
   contextIncludeDeadline: boolean;
   defaultPresets: DefaultPreset[];
+  usageAlertThresholds: UsageAlertThreshold[];
+  dailyRequestLimit: number;
+  dailyTokenLimit: number;
+  autoDisableOnLimit: boolean;
 }
 
-type TabKey = 'basic' | 'prompt' | 'presets';
+type TabKey = 'basic' | 'prompt' | 'presets' | 'alerts';
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'basic', label: '기본 설정' },
   { key: 'prompt', label: '프롬프트 템플릿' },
   { key: 'presets', label: '기본 프리셋' },
+  { key: 'alerts', label: '사용량 알림' },
 ];
 
 const PROVIDERS = [
@@ -237,6 +247,7 @@ export default function AiSettingsManager() {
           removePreset={removePreset}
         />
       )}
+      {activeTab === 'alerts' && <UsageAlertTab settings={settings} update={update} />}
     </div>
   );
 }
@@ -658,6 +669,342 @@ function PresetsTab({
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   사용량 알림 탭
+   ═══════════════════════════════════════════ */
+
+const LEVEL_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  info: { label: '알림', color: 'text-blue-600', bg: 'bg-blue-500' },
+  warning: { label: '경고', color: 'text-amber-600', bg: 'bg-amber-500' },
+  critical: { label: '위험', color: 'text-red-600', bg: 'bg-red-500' },
+};
+
+interface UsageData {
+  todayCount: number;
+  todayTotalTokens: number;
+  todayInputTokens: number;
+  todayOutputTokens: number;
+  dailyRequestLimit: number;
+  dailyTokenLimit: number;
+  requestPercent: number;
+  tokenPercent: number;
+  todayAlerts: { level: string; percent: number; notifiedAt: string }[];
+}
+
+function UsageAlertTab({
+  settings,
+  update,
+}: {
+  settings: AiSettingsData;
+  update: <K extends keyof AiSettingsData>(key: K, value: AiSettingsData[K]) => void;
+}) {
+  const { alert } = useModal();
+  const [usage, setUsage] = useState<UsageData | null>(null);
+  const [usageLoading, setUsageLoading] = useState(true);
+  const [testSending, setTestSending] = useState(false);
+
+  const fetchUsage = useCallback(async () => {
+    setUsageLoading(true);
+    try {
+      const res = await fetch('/api/admin/ai-settings/usage');
+      const json = await res.json();
+      if (json.success) setUsage(json.data);
+    } finally {
+      setUsageLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsage();
+  }, [fetchUsage]);
+
+  const handleTestAlert = async () => {
+    setTestSending(true);
+    try {
+      const res = await fetch('/api/admin/ai-settings/test-alert', { method: 'POST' });
+      const json = await res.json();
+      await alert(json.success ? '전송 완료' : '전송 실패', json.message);
+    } catch {
+      await alert('오류', '네트워크 오류가 발생했습니다.');
+    } finally {
+      setTestSending(false);
+    }
+  };
+
+  const updateThreshold = (index: number, field: 'percent' | 'level', value: number | string) => {
+    const updated = [...(settings.usageAlertThresholds || [])];
+    updated[index] = { ...updated[index], [field]: value };
+    update('usageAlertThresholds', updated);
+  };
+
+  const addThreshold = () => {
+    const current = settings.usageAlertThresholds || [];
+    update('usageAlertThresholds', [...current, { percent: 50, level: 'info' as const }]);
+  };
+
+  const removeThreshold = (index: number) => {
+    const current = settings.usageAlertThresholds || [];
+    update(
+      'usageAlertThresholds',
+      current.filter((_, i) => i !== index)
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* ── 오늘 사용량 현황 ── */}
+      <div className="p-5 bg-surface-container-low rounded-lg space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-on-surface font-body text-body-md">오늘 사용량 현황</h3>
+          <button
+            onClick={fetchUsage}
+            disabled={usageLoading}
+            className="font-body text-label-md text-primary hover:text-primary/80 transition-colors disabled:opacity-40"
+          >
+            {usageLoading ? '로딩 중...' : '새로고침'}
+          </button>
+        </div>
+
+        {usageLoading || !usage ? (
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 bg-surface-container-high rounded w-2/3" />
+            <div className="h-4 bg-surface-container-high rounded w-1/2" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* 요청 수 프로그레스 */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-body text-label-md text-on-surface-variant">
+                  일일 요청 수
+                </span>
+                <span className="font-body text-label-md font-semibold text-on-surface">
+                  {usage.todayCount.toLocaleString()} / {usage.dailyRequestLimit.toLocaleString()}
+                  <span className="ml-1 text-on-surface-variant">({usage.requestPercent}%)</span>
+                </span>
+              </div>
+              <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    usage.requestPercent >= 95
+                      ? 'bg-red-500'
+                      : usage.requestPercent >= 80
+                        ? 'bg-amber-500'
+                        : usage.requestPercent >= 50
+                          ? 'bg-blue-500'
+                          : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${Math.min(usage.requestPercent, 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* 토큰 수 프로그레스 */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-body text-label-md text-on-surface-variant">
+                  일일 토큰 수
+                </span>
+                <span className="font-body text-label-md font-semibold text-on-surface">
+                  {usage.todayTotalTokens.toLocaleString()} /{' '}
+                  {usage.dailyTokenLimit.toLocaleString()}
+                  <span className="ml-1 text-on-surface-variant">({usage.tokenPercent}%)</span>
+                </span>
+              </div>
+              <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    usage.tokenPercent >= 95
+                      ? 'bg-red-500'
+                      : usage.tokenPercent >= 80
+                        ? 'bg-amber-500'
+                        : usage.tokenPercent >= 50
+                          ? 'bg-blue-500'
+                          : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${Math.min(usage.tokenPercent, 100)}%` }}
+                />
+              </div>
+              <div className="flex gap-4 mt-1">
+                <span className="font-body text-label-md text-on-surface-variant">
+                  입력: {usage.todayInputTokens.toLocaleString()}
+                </span>
+                <span className="font-body text-label-md text-on-surface-variant">
+                  출력: {usage.todayOutputTokens.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {/* 오늘 발송된 알림 */}
+            {usage.todayAlerts.length > 0 && (
+              <div className="pt-3 border-t border-outline-variant/15">
+                <span className="font-body text-label-md text-on-surface-variant">
+                  오늘 발송된 알림:
+                </span>
+                <div className="flex gap-2 mt-1">
+                  {usage.todayAlerts.map((a, i) => {
+                    const cfg = LEVEL_CONFIG[a.level] ?? {
+                      label: a.level,
+                      color: 'text-on-surface-variant',
+                    };
+                    return (
+                      <span
+                        key={i}
+                        className={`inline-flex items-center px-2 py-0.5 rounded font-body text-label-md font-medium ${cfg.color} bg-surface-container-high`}
+                      >
+                        {cfg.label} ({a.percent}%)
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── 할당량 한도 설정 ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FieldGroup label="일일 요청 한도 (RPD)" desc="Gemini 무료 티어 기준 일일 최대 요청 수">
+          <input
+            type="number"
+            min={1}
+            value={settings.dailyRequestLimit ?? 1500}
+            onChange={(e) => update('dailyRequestLimit', Number(e.target.value))}
+            className="w-full bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
+        </FieldGroup>
+        <FieldGroup label="일일 토큰 한도" desc="Gemini 무료 티어 기준 일일 최대 토큰 수">
+          <input
+            type="number"
+            min={1}
+            value={settings.dailyTokenLimit ?? 1000000}
+            onChange={(e) => update('dailyTokenLimit', Number(e.target.value))}
+            className="w-full bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
+        </FieldGroup>
+      </div>
+
+      {/* ── 임계값 설정 ── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="font-body text-body-md font-semibold text-on-surface">알림 임계값</h3>
+            <p className="font-body text-label-md text-on-surface-variant">
+              할당량 대비 사용률이 임계값에 도달하면 Discord로 알림을 발송합니다.
+            </p>
+          </div>
+          <button
+            onClick={addThreshold}
+            className="bg-primary-container text-on-primary rounded-lg px-4 py-2 font-body text-label-md font-semibold transition-colors"
+          >
+            + 추가
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {(settings.usageAlertThresholds || []).map((t, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg"
+            >
+              {/* 퍼센트 입력 */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={t.percent}
+                  onChange={(e) => updateThreshold(i, 'percent', Number(e.target.value))}
+                  className="w-20 bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary text-center"
+                />
+                <span className="font-body text-body-md text-on-surface-variant">%</span>
+              </div>
+
+              {/* 레벨 선택 */}
+              <select
+                value={t.level}
+                onChange={(e) => updateThreshold(i, 'level', e.target.value)}
+                className="bg-surface-container-lowest rounded-lg px-3 py-2 border border-outline-variant/15 font-body text-body-md text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                <option value="info">알림 (정보)</option>
+                <option value="warning">경고</option>
+                <option value="critical">위험</option>
+              </select>
+
+              {/* 레벨 뱃지 */}
+              <span
+                className={`inline-block w-3 h-3 rounded-full ${LEVEL_CONFIG[t.level]?.bg ?? 'bg-gray-400'}`}
+              />
+
+              {/* 삭제 */}
+              <button
+                onClick={() => removeThreshold(i)}
+                className="ml-auto text-on-surface-variant hover:text-error transition-colors font-body text-label-md"
+              >
+                삭제
+              </button>
+            </div>
+          ))}
+
+          {(settings.usageAlertThresholds || []).length === 0 && (
+            <div className="text-center py-6 text-on-surface-variant font-body text-body-md">
+              설정된 알림 임계값이 없습니다.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 자동 차단 설정 ── */}
+      <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg">
+        <div>
+          <h3 className="font-semibold text-on-surface font-body text-body-md">
+            100% 도달 시 자동 차단
+          </h3>
+          <p className="font-body text-label-md text-on-surface-variant">
+            할당량 100%에 도달하면 AI 지시서 기능을 자동으로 비활성화합니다.
+            <br />
+            차단 후 어드민이 기본 설정 탭에서 수동으로 다시 활성화해야 합니다.
+          </p>
+        </div>
+        <button
+          onClick={() => update('autoDisableOnLimit', !(settings.autoDisableOnLimit ?? true))}
+          className={`relative inline-flex items-center w-12 h-6 rounded-full transition-colors duration-200 ${
+            (settings.autoDisableOnLimit ?? true) ? 'bg-primary' : 'bg-surface-container-high'
+          }`}
+        >
+          <span
+            className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+              (settings.autoDisableOnLimit ?? true) ? 'translate-x-6' : 'translate-x-0.5'
+            }`}
+          />
+        </button>
+      </div>
+
+      {/* ── Discord Webhook 테스트 ── */}
+      <div className="p-4 bg-surface-container-low rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-on-surface font-body text-body-md">
+              Discord Webhook 테스트
+            </h3>
+            <p className="font-body text-label-md text-on-surface-variant">
+              테스트 메시지를 전송하여 Discord 알림이 정상 동작하는지 확인합니다.
+            </p>
+          </div>
+          <button
+            onClick={handleTestAlert}
+            disabled={testSending}
+            className="bg-primary-container text-on-primary rounded-lg px-6 py-2.5 font-body text-body-md font-semibold disabled:opacity-40 transition-colors"
+          >
+            {testSending ? '전송 중...' : '테스트 전송'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

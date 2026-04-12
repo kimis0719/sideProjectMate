@@ -13,6 +13,11 @@ export interface IModelPriority {
   priority: number; // 1 = 최우선, 2, 3
 }
 
+export interface IUsageAlertThreshold {
+  percent: number; // 50, 80, 95
+  level: 'info' | 'warning' | 'critical';
+}
+
 export interface IAiSettings extends Document {
   // 기본 설정
   provider: 'gemini' | 'anthropic' | 'openai';
@@ -21,6 +26,12 @@ export interface IAiSettings extends Document {
   enabled: boolean;
   cooldownMinutes: number;
   dailyLimitPerProject: number;
+
+  // 사용량 알림 설정
+  usageAlertThresholds: IUsageAlertThreshold[];
+  dailyRequestLimit: number; // Gemini 무료 티어 RPD (기본 1500)
+  dailyTokenLimit: number; // Gemini 무료 티어 TPM 기준 일 환산 (기본 1000000)
+  autoDisableOnLimit: boolean; // 100% 도달 시 자동 차단 (기본 true)
 
   // 프롬프트 템플릿
   systemPromptTemplate: string;
@@ -158,6 +169,28 @@ const AiSettingsSchema = new Schema<IAiSettings>(
     enabled: { type: Boolean, default: true },
     cooldownMinutes: { type: Number, default: 3, min: 0 },
     dailyLimitPerProject: { type: Number, default: 50, min: 1 },
+
+    // 사용량 알림 설정
+    usageAlertThresholds: {
+      type: [
+        {
+          percent: { type: Number, required: true },
+          level: {
+            type: String,
+            enum: ['info', 'warning', 'critical'],
+            required: true,
+          },
+        },
+      ],
+      default: [
+        { percent: 50, level: 'info' },
+        { percent: 80, level: 'warning' },
+        { percent: 95, level: 'critical' },
+      ],
+    },
+    dailyRequestLimit: { type: Number, default: 1500, min: 1 },
+    dailyTokenLimit: { type: Number, default: 1000000, min: 1 },
+    autoDisableOnLimit: { type: Boolean, default: true },
 
     systemPromptTemplate: {
       type: String,
