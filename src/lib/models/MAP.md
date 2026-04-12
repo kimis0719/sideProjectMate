@@ -13,8 +13,9 @@
 | `CommonCode.ts`    | `commoncodes`     | group, code, label                              |
 | `Review.ts`        | `reviews`         | reviewerId, revieweeId, projectId, rating       |
 | `Availability.ts`  | `availabilities`  | userId, schedule                                |
-| `AiSettings.ts`    | `aisettings`      | provider, modelPriority, systemPromptTemplate, defaultPresets |
+| `AiSettings.ts`    | `aisettings`      | provider, modelPriority, systemPromptTemplate, defaultPresets, usageAlertThresholds, dailyRequestLimit, dailyTokenLimit, autoDisableOnLimit |
 | `AiUsage.ts`       | `aiusages`        | userId, projectId, provider, inputTokens        |
+| `AiUsageAlert.ts`  | `aiusagealerts`   | date, level, percent, todayRequests, todayTokens |
 | `AiPreset.ts`      | `aipresets`       | projectId, name, roleInstruction                |
 | `AiInstructionHistory.ts` | `aiinstructionhistories` | projectId, boardId, target, resultMarkdown |
 | `AiExecutionLog.ts`       | `aiexecutionlogs`        | instructionId, boardId, results[], testsResult, parseMethod |
@@ -42,6 +43,7 @@ Hot Reload 대비 중복 등록 방지 패턴 필수.
 - `AiPreset.ts`
 - `AiSettings.ts`
 - `AiUsage.ts`
+- `AiUsageAlert.ts`
 - `Application.ts`
 - `Availability.ts`
 - `ChatMessage.ts`

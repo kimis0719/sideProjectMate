@@ -34,8 +34,9 @@
 
 - `AiInstructionHistory` — 지시서 히스토리 (resultMarkdown에 spm-result 템플릿 포함)
 - `AiExecutionLog` — 실행결과 로그 (instructionId, results[], testsResult, parseMethod)
-- `AiSettings` — AI 설정 (provider, modelPriority, cooldown, dailyLimit, **guardRailPatterns**)
+- `AiSettings` — AI 설정 (provider, modelPriority, cooldown, dailyLimit, **guardRailPatterns**, **usageAlertThresholds**, dailyRequestLimit, dailyTokenLimit, autoDisableOnLimit)
 - `AiUsage` — 사용량 기록
+- `AiUsageAlert` — 사용량 알림 발송 기록 (date+level 유니크, 중복 방지)
 
 ## 실행결과 처리 흐름
 
@@ -49,6 +50,16 @@
 → boardStore.completeNote() 호출 (보드 상태 + socket 동기화)
 → AiExecutionLog 저장
 ```
+
+## 사용량 모니터링 (src/lib/ai/usageMonitor.ts)
+
+| 함수 | 역할 |
+|------|------|
+| `checkUsageThreshold()` | 일 단위 AiUsage 집계 → 임계값(50/80/95%) 비교 → Discord Webhook 알림 → 100% 시 AiSettings.enabled=false 자동 차단 |
+
+- `generate-instruction` 라우트의 `AiUsage.create()` 직후 비동기 호출 (응답 블로킹 없음)
+- 중복 방지: `AiUsageAlert` 모델 (date+level unique index)
+- Discord 발송: `src/lib/notifications/discord.ts` (`DISCORD_WEBHOOK_URL` 환경변수)
 
 ## 주의
 
