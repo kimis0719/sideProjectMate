@@ -8,6 +8,7 @@
 | `instructionStore.ts` | AI 지시서 모달/생성 | openModal, generate (SSE), setTarget, setPreset |
 | `executionResultStore.ts` | AI 실행결과 처리 모달 | open, close, submit (input→confirming 2단계) |
 | `applicationStore.ts` | 내 지원 상태 맵 | fetchMyApplications, addApplication, withdrawApplication, getStatus |
+| `chatWidgetStore.ts` | 채팅 위젯 상태 | toggle, close, openRoom, backToList |
 
 ## 공통 패턴
 
@@ -33,6 +34,7 @@ export const useFooStore = create<FooState & FooActions>()(
 
 - `applicationStore.ts`
 - `boardStore.ts`
+- `chatWidgetStore.ts`
 - `executionResultStore.ts`
 - `instructionStore.ts`
 - `modalStore.ts`
