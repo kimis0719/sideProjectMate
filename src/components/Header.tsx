@@ -9,6 +9,8 @@ import { useNotificationStore } from '@/lib/store/notificationStore';
 import { socketClient } from '@/lib/socket';
 import { useModal } from '@/hooks/useModal';
 import { useToastStore } from '@/components/common/Toast';
+import { useChatWidgetStore } from '@/store/chatWidgetStore';
+import ChatWidget from '@/components/chat/ChatWidget';
 
 interface Notification {
   _id: string;
@@ -317,24 +319,33 @@ export default function Header() {
                 <div className="h-8 w-8 bg-surface-container-high rounded-full animate-pulse" />
               ) : session ? (
                 <>
-                  {/* 💬 Step 5: 채팅 숏컷 버튼 */}
-                  <button
-                    onClick={() => router.push('/chat')}
-                    className="relative p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors"
-                    aria-label="채팅"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                    {totalUnreadChat > 0 && (
-                      <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-error ring-2 ring-surface" />
-                    )}
-                  </button>
+                  {/* 💬 채팅 위젯 토글 버튼 */}
+                  <div className="relative">
+                    <button
+                      data-chat-toggle
+                      onClick={() => useChatWidgetStore.getState().toggle()}
+                      className="relative p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors"
+                      aria-label="채팅"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
+                      {totalUnreadChat > 0 && (
+                        <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-error ring-2 ring-surface" />
+                      )}
+                    </button>
+                    <ChatWidget />
+                  </div>
 
                   {/* 알림 버튼 */}
                   <div className="relative" ref={notificationRef}>
@@ -363,7 +374,7 @@ export default function Header() {
 
                     {/* 알림 드롭다운 */}
                     {isNotificationOpen && (
-                      <div className="absolute right-0 top-full mt-2 w-80 bg-surface-container-lowest rounded-lg shadow-modal overflow-hidden z-20 animate-fade-in">
+                      <div className="fixed top-16 left-0 w-screen sm:absolute sm:top-full sm:mt-2 sm:right-0 sm:left-auto sm:w-80 bg-surface-container-lowest rounded-b-lg sm:rounded-lg shadow-modal overflow-hidden z-20 animate-fade-in">
                         <div className="px-4 py-3 font-semibold text-on-surface flex justify-between items-center bg-surface-container-low">
                           <span>알림</span>
                           {notifications.length > 0 && (
@@ -564,63 +575,6 @@ export default function Header() {
           </div>
         </div>
 
-        {/* ── 모바일 메뉴 오버레이 (항상 마운트, translateX로 슬라이드) */}
-        {/* 백드롭 */}
-        <div
-          className={`md:hidden fixed inset-0 top-16 bg-black/40 z-30 transition-opacity duration-300 ${
-            isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-          }`}
-          onClick={() => setIsMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
-        {/* 슬라이드 패널 */}
-        <div
-          id="mobile-nav"
-          role="navigation"
-          aria-label="모바일 메뉴"
-          className={`md:hidden fixed top-16 left-0 h-[calc(100vh-4rem)] w-64
-                    bg-surface-container-lowest z-40 shadow-modal overflow-y-auto
-                    transition-transform duration-300 ease-in-out
-                    ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-                `}
-        >
-          <nav className="flex flex-col p-4 gap-1">
-            {mainCategories.map((category) => (
-              <Link
-                key={category.label}
-                href={category.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive(category.path)
-                    ? 'bg-primary-container/10 text-primary font-semibold'
-                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
-                }`}
-              >
-                {category.label}
-              </Link>
-            ))}
-
-            {session && (
-              <>
-                <div className="my-2 h-px bg-surface-container-high" />
-                <Link
-                  href="/mypage"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
-                >
-                  마이페이지
-                </Link>
-                <button
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                  className="px-3 py-2.5 rounded-lg text-sm text-error hover:bg-error-container/20 transition-colors text-left"
-                >
-                  로그아웃
-                </button>
-              </>
-            )}
-          </nav>
-        </div>
-
         {/* aria-live — 알림/토스트 상태 변경을 스크린리더에 알림 */}
         <div
           role="status"
@@ -630,6 +584,63 @@ export default function Header() {
           id="header-live-region"
         />
       </header>
+
+      {/* ── 모바일 메뉴 오버레이 (header 바깥: backdrop-blur containing block 회피) */}
+      {/* 백드롭 */}
+      <div
+        className={`md:hidden fixed inset-0 top-16 bg-black/40 z-30 cursor-pointer transition-opacity duration-300 ${
+          isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+      {/* 슬라이드 패널 */}
+      <div
+        id="mobile-nav"
+        role="navigation"
+        aria-label="모바일 메뉴"
+        className={`md:hidden fixed top-16 left-0 h-[calc(100vh-4rem)] w-64
+                  bg-surface-container-lowest z-40 shadow-modal overflow-y-auto
+                  transition-transform duration-300 ease-in-out
+                  ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+              `}
+      >
+        <nav className="flex flex-col p-4 gap-1">
+          {mainCategories.map((category) => (
+            <Link
+              key={category.label}
+              href={category.path}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive(category.path)
+                  ? 'bg-primary-container/10 text-primary font-semibold'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+              }`}
+            >
+              {category.label}
+            </Link>
+          ))}
+
+          {session && (
+            <>
+              <div className="my-2 h-px bg-surface-container-high" />
+              <Link
+                href="/mypage"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-3 py-2.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+              >
+                마이페이지
+              </Link>
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="px-3 py-2.5 rounded-lg text-sm text-error hover:bg-error-container/20 transition-colors text-left"
+              >
+                로그아웃
+              </button>
+            </>
+          )}
+        </nav>
+      </div>
 
       {/* 공지사항 모달 */}
       {announcementModal && (

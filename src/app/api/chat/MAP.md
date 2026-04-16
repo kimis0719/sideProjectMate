@@ -28,6 +28,9 @@ REST API는 초기 로딩용. 실시간 메시지는 **Socket.io** 사용.
 
 - `src/components/chat/ChatRoomList.tsx`
 - `src/components/chat/ChatWindow.tsx`
+- `src/components/chat/ChatWidget.tsx` (글로벌 위젯 컨테이너)
+- `src/components/chat/ChatWidgetRoomList.tsx` (위젯용 경량 룸 리스트)
+- `src/components/chat/ChatWidgetWindow.tsx` (위젯용 미니 채팅)
 
 ## 자동 생성 파일 목록
 
