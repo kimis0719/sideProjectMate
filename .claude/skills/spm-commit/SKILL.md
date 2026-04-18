@@ -9,6 +9,11 @@ description: >
 
 # spm-commit — 중간 커밋 커맨드
 
+## Codex 분기 규칙
+
+- Codex(Default mode)에서는 `AskUserQuestion` 도구를 사용하지 않고, 확인이 필요하면 일반 대화 질문으로 대체합니다.
+- 기본값은 문서의 Recommended 흐름을 따릅니다.
+
 이 스킬은 `/spm-commit` 형태로 호출됩니다.
 
 목표는 세 가지입니다.

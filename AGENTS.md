@@ -1,5 +1,12 @@
 # AGENTS.md — Side Project Mate (OpenAI Codex용)
 
+## 인코딩 안전 규칙 (필수)
+
+- `CLAUDE.md`, `AGENTS.md`, `docs/*.md`, `work-logs/*.md`는 반드시 UTF-8(한글 정상 표시)로 유지한다.
+- PowerShell에서 `Set-Content` / `Out-File`로 파일 전체 재저장할 때는 인코딩 손상 위험이 있으므로 기본 금지한다.
+- 문서 수정은 기본적으로 `apply_patch`를 사용해 필요한 줄만 최소 변경한다.
+- 인코딩이 의심되면 즉시 `git restore -- <file>`로 복구 후 다시 수정한다.
+
 > 이 파일은 `CLAUDE.md`와 동일한 프로젝트 규칙을 OpenAI Codex 에이전트에게 전달합니다.
 > Claude Code 팀원과 **동일한 품질·컨벤션·워크플로우**를 유지하는 것이 목표입니다.
 

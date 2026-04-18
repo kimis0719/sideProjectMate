@@ -9,6 +9,11 @@ description: >
 
 # spm-revert — 작업 롤백 커맨드
 
+## Codex 분기 규칙
+
+- Codex(Default mode)에서는 `AskUserQuestion` 도구를 사용하지 않고, 선택 단계는 일반 대화 질문으로 대체합니다.
+- 추천 선택지가 있는 단계는 기본적으로 Recommended를 적용하고, 사용자 요청 시 대체 옵션으로 전환합니다.
+
 이 스킬은 `/spm-revert` 형태로 호출됩니다.
 
 ---
