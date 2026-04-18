@@ -14,10 +14,15 @@ const PROJECTS_MENU: SidebarMenuItem[] = [
 ];
 
 // 대시보드 사이드바 메뉴 (dashboard/[pid]/layout.tsx와 동일 패턴)
-const createDashboardMenu = (pid: string): SidebarMenuItem[] => [
+const createDashboardMenu = (pid: string, isOwner = false): SidebarMenuItem[] => [
   { href: `/dashboard/${pid}`, icon: 'dashboard', label: '대시보드 홈' },
   { href: `/dashboard/${pid}/kanban`, icon: 'view_kanban', label: '칸반보드' },
-  { href: `/projects/${pid}/manage`, icon: 'group', label: '멤버관리' },
+  ...(isOwner
+    ? [
+        { href: `/projects/${pid}/manage`, icon: 'group', label: '멤버관리' },
+        { href: `/projects/${pid}/edit`, icon: 'settings', label: '프로젝트 설정' },
+      ]
+    : []),
 ];
 
 /** isActive 판별 순수 함수 (SidebarShell 내부 로직과 동일) */
@@ -32,9 +37,14 @@ describe('SidebarShell — 메뉴 config 구조', () => {
     expect(PROJECTS_MENU).toHaveLength(2);
   });
 
-  it('대시보드 메뉴는 3개 항목을 가진다', () => {
+  it('대시보드 메뉴는 일반 멤버 기준 2개 항목을 가진다', () => {
     const menu = createDashboardMenu('42');
-    expect(menu).toHaveLength(3);
+    expect(menu).toHaveLength(2);
+  });
+
+  it('대시보드 메뉴는 소유자 기준 4개 항목을 가진다', () => {
+    const menu = createDashboardMenu('42', true);
+    expect(menu).toHaveLength(4);
   });
 
   it('모든 메뉴 항목은 href, icon, label을 가진다', () => {
@@ -50,10 +60,11 @@ describe('SidebarShell — 메뉴 config 구조', () => {
   });
 
   it('대시보드 메뉴 href에 pid가 올바르게 포함된다', () => {
-    const menu = createDashboardMenu('99');
+    const menu = createDashboardMenu('99', true);
     expect(menu[0].href).toBe('/dashboard/99');
     expect(menu[1].href).toBe('/dashboard/99/kanban');
     expect(menu[2].href).toBe('/projects/99/manage');
+    expect(menu[3].href).toBe('/projects/99/edit');
   });
 });
 
