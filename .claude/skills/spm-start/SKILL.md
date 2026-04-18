@@ -10,6 +10,13 @@ description: >
 
 # spm-start — 작업 시작 커맨드
 
+## Codex 분기 규칙
+
+- Codex 환경에서는 `mcp__claude_ai_Linear__get_issue`, `mcp__claude_ai_Linear__save_issue`를 호출하지 않습니다.
+- 위 Linear MCP 단계는 `linear-cli` 또는 Linear 웹 UI 조회/생성/수정으로 대체합니다.
+- Codex(Default mode)에서는 `AskUserQuestion` 도구를 사용하지 않고, 동일 내용을 일반 대화 질문 1개로 확인합니다.
+- 선택지가 필요한 단계는 "권장안 우선 적용 + 사용자 요청 시 대안 적용"으로 진행합니다.
+
 이 스킬은 `/spm-start [SPM-번호] [작업내용]` 형태로 호출됩니다.
 인자 없이 `/spm-start`만 호출하면 대화형으로 진행합니다.
 

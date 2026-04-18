@@ -9,6 +9,11 @@ description: >
 
 # spm-done — 작업 종료 커맨드
 
+## Codex 분기 규칙
+
+- Codex(Default mode)에서는 `AskUserQuestion` 도구를 사용하지 않고, 확인이 필요하면 일반 대화 질문으로 대체합니다.
+- PR 생성 및 Linear 연동은 `gh pr create` + PR 본문 `Linear: SPM-[번호]` 방식으로 유지합니다.
+
 이 스킬은 `/spm-done` 형태로 호출됩니다.
 
 ---

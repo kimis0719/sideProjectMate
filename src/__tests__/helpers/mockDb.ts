@@ -8,7 +8,26 @@ let mongod: MongoMemoryServer | null = null;
  * beforeAll()에서 호출하세요.
  */
 export async function setupTestDB() {
-  mongod = await MongoMemoryServer.create();
+  if (!mongod) {
+    let lastError: unknown = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        mongod = await MongoMemoryServer.create();
+        break;
+      } catch (error) {
+        lastError = error;
+        if (attempt === 3) {
+          throw lastError;
+        }
+        await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+      }
+    }
+  }
+
+  if (!mongod) {
+    throw new Error('Failed to initialize MongoMemoryServer');
+  }
+
   const uri = mongod.getUri();
 
   // 기존 연결이 있으면 끊기
