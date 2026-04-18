@@ -102,9 +102,11 @@ export default function DashboardLayout({
   const menuItems: SidebarMenuItem[] = [
     { href: `/dashboard/${pid}`, icon: 'dashboard', label: '대시보드 홈' },
     { href: `/dashboard/${pid}/kanban`, icon: 'view_kanban', label: '칸반보드' },
-    { href: `/projects/${pid}/manage`, icon: 'group', label: '멤버관리' },
     ...(isOwner
-      ? [{ href: `/projects/${pid}/edit`, icon: 'settings', label: '프로젝트 설정' }]
+      ? [
+          { href: `/projects/${pid}/manage`, icon: 'group', label: '멤버관리' },
+          { href: `/projects/${pid}/edit`, icon: 'settings', label: '프로젝트 설정' },
+        ]
       : []),
   ];
 
