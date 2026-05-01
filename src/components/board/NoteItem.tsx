@@ -354,7 +354,7 @@ export default function NoteItem({
   }));
 
   const { data: session } = useSession();
-  const myUserId = session?.user?.id || 'anonymous';
+  const myUserId = session?.user?._id || 'anonymous';
 
   const [isEditing, setIsEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(text);

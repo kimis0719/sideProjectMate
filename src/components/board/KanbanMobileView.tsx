@@ -357,23 +357,28 @@ export default function KanbanMobileView({ pid }: Props) {
     initBoard(pid);
   }, [pid, initBoard]);
 
+  // BoardShell.tsx와 동일 사유: session 객체 참조 변경으로 useEffect 재실행되지 않도록 primitive deps 사용.
+  const userId = session?.user?._id;
+  const userName = session?.user?.name;
+  const userImage = session?.user?.image;
+
   React.useEffect(() => {
-    if (session?.user?.id) setCurrentUserId(session.user.id);
-  }, [session, setCurrentUserId]);
+    if (userId) setCurrentUserId(userId);
+  }, [userId, setCurrentUserId]);
 
   // 소켓 접속 (접속자 정보 수신) + cleanup
   React.useEffect(() => {
-    if (boardId && session?.user) {
+    if (boardId && userId) {
       initSocket({
-        _id: session.user.id,
-        nName: session.user.name || 'Unknown',
-        avatarUrl: session.user.image || undefined,
+        _id: userId,
+        nName: userName || 'Unknown',
+        avatarUrl: userImage || undefined,
       });
       return () => {
-        socketClient.socket?.emit('leave-board', { boardId, userId: session.user.id });
+        socketClient.socket?.emit('leave-board', { boardId, userId });
       };
     }
-  }, [boardId, session, initSocket]);
+  }, [boardId, userId, userName, userImage, initSocket]);
 
   const handleTabSwitch = (mode: 'active' | 'done') => {
     setViewMode(mode);
@@ -497,13 +502,13 @@ export default function KanbanMobileView({ pid }: Props) {
             ...(session?.user
               ? [
                   {
-                    _id: session.user.id,
+                    _id: session.user._id,
                     nName: session.user.name || 'Me',
                     avatarUrl: session.user.image || undefined,
                   },
                 ]
               : []),
-            ...(activeUsers || []).filter((u) => u._id !== session?.user?.id),
+            ...(activeUsers || []).filter((u) => u._id !== session?.user?._id),
           ]
             .slice(0, 3)
             .map((user, idx) => (
@@ -511,7 +516,7 @@ export default function KanbanMobileView({ pid }: Props) {
                 key={`${user._id}-${idx}`}
                 title={user.nName}
                 className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold shadow-sm ${
-                  user._id === session?.user?.id
+                  user._id === session?.user?._id
                     ? 'bg-blue-600 text-white'
                     : 'bg-zinc-200 text-zinc-500'
                 }`}

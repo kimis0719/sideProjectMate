@@ -257,7 +257,7 @@ export default function SectionItem({ section, readOnly = false }: Props) {
 
   const { data: session } = useSession();
   const { confirm, alert } = useModal();
-  const myUserId = session?.user?.id || 'anonymous';
+  const myUserId = session?.user?._id || 'anonymous';
 
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
   const [titleDraft, setTitleDraft] = React.useState(section.title);

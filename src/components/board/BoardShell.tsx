@@ -153,24 +153,30 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
     });
   }, [boardPid, initBoard, fitToContent, searchParams]);
 
+  // session 객체 참조 변경(NextAuth 포커스 refetch)으로 Presence useEffect가 재실행되며
+  // leave-board → re-init 사이클이 발생하지 않도록 primitive 값으로 deps를 좁힌다.
+  const userId = session?.user?._id;
+  const userName = session?.user?.name;
+  const userImage = session?.user?.image;
+
   // Set current user ID
   React.useEffect(() => {
-    if (session?.user?.id) {
-      setCurrentUserId(session.user.id);
+    if (userId) {
+      setCurrentUserId(userId);
     }
-  }, [session, setCurrentUserId]);
+  }, [userId, setCurrentUserId]);
 
   // --- Presence & Socket Integration ---
   React.useEffect(() => {
-    if (boardPid && session?.user && boardId) {
+    if (boardPid && userId && boardId) {
       initSocket({
-        _id: session.user.id,
-        nName: session.user.name || 'Unknown',
-        avatarUrl: session.user.image || undefined, // next-auth의 image를 avatarUrl로 매핑
+        _id: userId,
+        nName: userName || 'Unknown',
+        avatarUrl: userImage || undefined,
       });
 
       return () => {
-        socketClient.socket?.emit('leave-board', { boardId, userId: session.user.id });
+        socketClient.socket?.emit('leave-board', { boardId, userId });
         const socket = socketClient.socket;
         if (socket) {
           socket.off('note-created');
@@ -195,7 +201,7 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
         }
       };
     }
-  }, [boardPid, session, boardId, initSocket]);
+  }, [boardPid, userId, userName, userImage, boardId, initSocket]);
 
   // Handle Note Highlight & Center
   const handledNoteIdRef = React.useRef<string | null>(null);
@@ -584,13 +590,13 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
               ...(session?.user
                 ? [
                     {
-                      _id: session.user.id,
+                      _id: session.user._id,
                       nName: session.user.name || 'Me',
                       avatarUrl: session.user.image || undefined,
                     },
                   ]
                 : []),
-              ...(activeUsers || []).filter((u) => u._id !== session?.user?.id),
+              ...(activeUsers || []).filter((u) => u._id !== session?.user?._id),
             ]
               .slice(0, 5)
               .map((user, idx) => (
@@ -599,16 +605,16 @@ const BoardShell: React.FC<Props> = ({ pid }) => {
                     <Image
                       src={user.avatarUrl}
                       alt={user.nName}
-                      title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
+                      title={`${user.nName}${user._id === session?.user?._id ? ' (나)' : ''}`}
                       width={28}
                       height={28}
-                      className={`w-7 h-7 rounded-full border-2 border-white object-cover z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'border-blue-400' : ''}`}
+                      className={`w-7 h-7 rounded-full border-2 border-white object-cover z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?._id ? 'border-blue-400' : ''}`}
                       unoptimized
                     />
                   ) : (
                     <div
-                      title={`${user.nName}${user._id === session?.user?.id ? ' (나)' : ''}`}
-                      className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?.id ? 'bg-blue-600 text-white border-blue-400' : 'bg-zinc-200 text-zinc-500'}`}
+                      title={`${user.nName}${user._id === session?.user?._id ? ' (나)' : ''}`}
+                      className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold z-10 transition-transform hover:z-20 hover:scale-110 shadow-sm ${user._id === session?.user?._id ? 'bg-blue-600 text-white border-blue-400' : 'bg-zinc-200 text-zinc-500'}`}
                     >
                       {user.nName ? user.nName.charAt(0).toUpperCase() : '?'}
                     </div>
