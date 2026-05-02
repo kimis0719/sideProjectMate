@@ -1,119 +1,120 @@
-﻿# CLAUDE.md — Side Project Mate
+﻿# CLAUDE.md ??Side Project Mate
 
-> AI 에이전트 및 팀원을 위한 **빠른 참조 카드**입니다.
-> 상세 내용은 `docs/` 하위 파일을 필요할 때만 읽으세요.
-
----
-
-## 프로젝트 핵심 정보
-
-- **스택**: Next.js 14 / TypeScript / MongoDB(Mongoose) / Zustand / Socket.io / Tailwind
-- **서버**: `server.ts` (Express + Socket.io) 위에서 Next.js App Router 구동
-- **배포**: Render.com (`render.yaml`)
-- **경로 별칭**: `@/` → `src/` (항상 `@/` 사용, 상대경로 금지)
+> AI ?먯씠?꾪듃 諛???먯쓣 ?꾪븳 **鍮좊Ⅸ 李몄“ 移대뱶**?낅땲??
+> ?곸꽭 ?댁슜? `docs/` ?섏쐞 ?뚯씪???꾩슂???뚮쭔 ?쎌쑝?몄슂.
 
 ---
 
-## AI 컨텍스트 로딩 가이드
+## ?꾨줈?앺듃 ?듭떖 ?뺣낫
 
-### 항상 읽을 것 (모든 세션 필수)
+- **?ㅽ깮**: Next.js 14 / TypeScript / MongoDB(Mongoose) / Zustand / Socket.io / Tailwind
+- **?쒕쾭**: `server.ts` (Express + Socket.io) ?꾩뿉??Next.js App Router 援щ룞
+- **諛고룷**: Render.com (`render.yaml`)
+- **寃쎈줈 蹂꾩묶**: `@/` ??`src/` (??긽 `@/` ?ъ슜, ?곷?寃쎈줈 湲덉?)
 
-1. `.workzones.yml` — locked 구역 확인 (충돌 방지)
-2. `work-logs/` 최신 3개 — 팀원 최근 작업 파악
+---
 
-### 작업 유형별 추가 로딩
+## AI 而⑦뀓?ㅽ듃 濡쒕뵫 媛?대뱶
 
-| 작업             | 읽을 파일                                        |
+### ??긽 ?쎌쓣 寃?(紐⑤뱺 ?몄뀡 ?꾩닔)
+
+1. `.workzones.yml` ??locked 援ъ뿭 ?뺤씤 (異⑸룎 諛⑹?)
+2. `work-logs/` 理쒖떊 3媛??????理쒓렐 ?묒뾽 ?뚯븙
+
+### ?묒뾽 ?좏삎蹂?異붽? 濡쒕뵫
+
+| ?묒뾽             | ?쎌쓣 ?뚯씪                                        |
 | ---------------- | ------------------------------------------------ |
-| API 작업         | `src/app/api/MAP.md` → 해당 도메인 `MAP.md`      |
-| 칸반 작업        | `src/app/api/kanban/MAP.md` + `src/store/MAP.md` |
-| 프로젝트 작업    | `src/app/api/projects/MAP.md`                    |
-| 유저/프로필 작업 | `src/app/api/users/MAP.md`                       |
-| WBS 작업         | `src/app/api/wbs/MAP.md`                         |
-| 채팅 작업        | `src/app/api/chat/MAP.md`                        |
-| 모델 작업        | `src/lib/models/MAP.md`                          |
-| 스토어 작업      | `src/store/MAP.md`                               |
-| 컨벤션 확인      | `docs/conventions.md`                            |
-| 아키텍처 확인    | `docs/architecture.md`                           |
-| 테스트 작성      | `docs/testing-guide.md`                          |
+| API ?묒뾽         | `src/app/api/MAP.md` ???대떦 ?꾨찓??`MAP.md`      |
+| AI 湲곕뒫 ?묒뾽     | `src/app/api/ai/MAP.md`                          |
+| 移몃컲 ?묒뾽        | `src/app/api/kanban/MAP.md` + `src/store/MAP.md` |
+| ?꾨줈?앺듃 ?묒뾽    | `src/app/api/projects/MAP.md`                    |
+| ?좎?/?꾨줈???묒뾽 | `src/app/api/users/MAP.md`                       |
+| WBS ?묒뾽         | `src/app/api/wbs/MAP.md`                         |
+| 梨꾪똿 ?묒뾽        | `src/app/api/chat/MAP.md`                        |
+| 紐⑤뜽 ?묒뾽        | `src/lib/models/MAP.md`                          |
+| ?ㅽ넗???묒뾽      | `src/store/MAP.md`                               |
+| 而⑤깽???뺤씤      | `docs/conventions.md`                            |
+| ?꾪궎?띿쿂 ?뺤씤    | `docs/architecture.md`                           |
+| ?뚯뒪???묒꽦      | `docs/testing-guide.md`                          |
 
-> 위 파일들로 대부분의 컨텍스트가 확보됩니다.
-> `DEV_ROADMAP.md`, `docs/plans/` 등은 기획 확인 시에만 읽으세요.
+> ???뚯씪?ㅻ줈 ?遺遺꾩쓽 而⑦뀓?ㅽ듃媛 ?뺣낫?⑸땲??
+> `DEV_ROADMAP.md`, `docs/plans/` ?깆? 湲고쉷 ?뺤씤 ?쒖뿉留??쎌쑝?몄슂.
 
 ---
 
-## API Route 필수 패턴
+## API Route ?꾩닔 ?⑦꽩
 
 ```ts
 import { withApiLogging } from '@/lib/apiLogger';
 
 export const dynamic = 'force-dynamic';
 
-// 핸들러는 export 하지 않고, withApiLogging 래퍼로 감싸서 export
+// ?몃뱾?щ뒗 export ?섏? ?딄퀬, withApiLogging ?섑띁濡?媛먯떥??export
 async function _GET(request: NextRequest) {
   await dbConnect();
-  // 인증 필요 시:
+  // ?몄쬆 ?꾩슂 ??
   const session = await getServerSession(authOptions);
   if (!session?.user?._id)
-    return NextResponse.json({ success: false, message: '로그인이 필요합니다.' }, { status: 401 });
-  // 성공 응답:
+    return NextResponse.json({ success: false, message: '濡쒓렇?몄씠 ?꾩슂?⑸땲??' }, { status: 401 });
+  // ?깃났 ?묐떟:
   return NextResponse.json({ success: true, data: { ... } });
-  // 실패 응답:
+  // ?ㅽ뙣 ?묐떟:
   return NextResponse.json({ success: false, message: '...' }, { status: 400 });
 }
 
-export const GET = withApiLogging(_GET, '/api/도메인/경로');
+export const GET = withApiLogging(_GET, '/api/?꾨찓??寃쎈줈');
 ```
 
-> **주의**: Streaming 응답(`Response` 반환)을 사용하는 API는 래퍼 적용 불가 (예: `ai/generate-instruction`)
+> **二쇱쓽**: Streaming ?묐떟(`Response` 諛섑솚)???ъ슜?섎뒗 API???섑띁 ?곸슜 遺덇? (?? `ai/generate-instruction`)
 
-### 성능 관련 환경변수
+### ?깅뒫 愿???섍꼍蹂??
 
-| 환경변수 | 기본값 | 설명 |
+| ?섍꼍蹂??| 湲곕낯媛?| ?ㅻ챸 |
 |---------|--------|------|
-| `API_LOGGING` | 활성화 | `false`로 설정 시 API 로깅/집계 비활성화 |
-| `MONGODB_DEBUG` | 비활성화 | `true`로 설정 시 Mongoose 쿼리 로그 출력 |
+| `API_LOGGING` | ?쒖꽦??| `false`濡??ㅼ젙 ??API 濡쒓퉭/吏묎퀎 鍮꾪솢?깊솕 |
+| `MONGODB_DEBUG` | 鍮꾪솢?깊솕 | `true`濡??ㅼ젙 ??Mongoose 荑쇰━ 濡쒓렇 異쒕젰 |
 
-### 성능 모니터링
+### ?깅뒫 紐⑤땲?곕쭅
 
-- `/api/health` — 서버 가동 이후 누적된 API 응답시간 통계 확인
-- 500ms 초과 API는 `[SLOW API]` 로그로 자동 경고
-
----
-
-## 코드 생성 체크리스트
-
-- [ ] `'use client'` 선언 (클라이언트 컴포넌트)
-- [ ] API Route: `dynamic` + `dbConnect()` + 인증 체크 + `withApiLogging` 래퍼
-- [ ] API Route: 읽기 전용 쿼리에 `.lean()` 사용
-- [ ] 응답 형식 `{ success, data | message }` 통일
-- [ ] Mongoose 모델 중복 등록 방지 패턴
-- [ ] Zustand 스토어에 `devtools` 미들웨어
-- [ ] Socket `socket.off()` cleanup 등록
-- [ ] `@/` 경로 별칭 사용 / `any` 타입 금지
+- `/api/health` ???쒕쾭 媛???댄썑 ?꾩쟻??API ?묐떟?쒓컙 ?듦퀎 ?뺤씤
+- 500ms 珥덇낵 API??`[SLOW API]` 濡쒓렇濡??먮룞 寃쎄퀬
 
 ---
 
-## 테스트 체크리스트
+## 肄붾뱶 ?앹꽦 泥댄겕由ъ뒪??
 
-- [ ] 코드 추가/수정 시 `*.test.ts` 파일 함께 생성
-- [ ] `npm run test:run` 전체 통과 확인
-- [ ] 기존 `src/__tests__/fixtures/` fixture 재사용
-- [ ] 상세 패턴: `docs/testing-guide.md`
+- [ ] `'use client'` ?좎뼵 (?대씪?댁뼵??而댄룷?뚰듃)
+- [ ] API Route: `dynamic` + `dbConnect()` + ?몄쬆 泥댄겕 + `withApiLogging` ?섑띁
+- [ ] API Route: ?쎄린 ?꾩슜 荑쇰━??`.lean()` ?ъ슜
+- [ ] ?묐떟 ?뺤떇 `{ success, data | message }` ?듭씪
+- [ ] Mongoose 紐⑤뜽 以묐났 ?깅줉 諛⑹? ?⑦꽩
+- [ ] Zustand ?ㅽ넗?댁뿉 `devtools` 誘몃뱾?⑥뼱
+- [ ] Socket `socket.off()` cleanup ?깅줉
+- [ ] `@/` 寃쎈줈 蹂꾩묶 ?ъ슜 / `any` ???湲덉?
 
 ---
 
-## Git 전략
+## ?뚯뒪??泥댄겕由ъ뒪??
+
+- [ ] 肄붾뱶 異붽?/?섏젙 ??`*.test.ts` ?뚯씪 ?④퍡 ?앹꽦
+- [ ] `npm run test:run` ?꾩껜 ?듦낵 ?뺤씤
+- [ ] 湲곗〈 `src/__tests__/fixtures/` fixture ?ъ궗??
+- [ ] ?곸꽭 ?⑦꽩: `docs/testing-guide.md`
+
+---
+
+## Git ?꾨왂
 
 ```
-main → 배포 (Render 자동 배포)
+main ??諛고룷 (Render ?먮룞 諛고룷)
 feature/* / fix/* /
 ```
 
 ---
 
-## 현재 진행 중인 작업 현황
+## ?꾩옱 吏꾪뻾 以묒씤 ?묒뾽 ?꾪솴
 
-| 담당 영역                  | 작업자 | 상태    | 작업 내용 |
+| ?대떦 ?곸뿭                  | ?묒뾽??| ?곹깭    | ?묒뾽 ?댁슜 |
 | -------------------------- | ------ | ------- | --------- |
 | (현재 작업 중인 항목 없음) | — | 🟢 자유 | — |
