@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/lib/models/Project';
 import { headers } from 'next/headers';
-import mongoose from 'mongoose';
 import { fetchOGMetadata, validateResource } from '@/lib/utils/resourceUtils';
 import { withApiLogging } from '@/lib/apiLogger';
 
@@ -124,11 +123,10 @@ async function handlePost(request: Request, { params }: { params: { pid: string 
 
     // * ProjectMember 모델을 동적 import 하거나 상단에서 import 필요 (여기서는 상단 추가 가정하거나 직접 쿼리)
     // 간단하게 ProjectMember collection 직접 조회
-    const isMember = await mongoose.model('ProjectMember').exists({
-      projectId: project._id,
-      userId: session.user._id,
-      status: 'active',
-    });
+    const isMember = project.members.some(
+      (member: { userId?: { toString: () => string }; status?: string }) =>
+        member.userId?.toString() === session.user._id && member.status === 'active'
+    );
 
     if (!isProjectAuthor && !isMember) {
       return NextResponse.json(
